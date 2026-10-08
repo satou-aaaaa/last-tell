@@ -1,0 +1,2317 @@
+<title>LAST TELL（最後のテル）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Oswald:wght@500;700&display=swap">
+<style>
+/* layout: hard-edged noir UI — cut-corner panels, parallelogram buttons, one crimson slash behind strong characters; cute characters get a soft pastel stage instead. Single dark look by choice. */
+:root{
+  --bg:#0d0e13; --panel:#161821; --panel2:#1f2230; --ink:#f1ede4; --muted:#9a9cab; --gold:#e2b65b;
+  --crimson:#d7263d; --felt:#11362f; --felt-hi:#1a5146; --line:#2c2f3d; --cardred:#c8213a; --cute:#ffb8cf;
+  --venue:#33384a;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --num:"Oswald","Zen Kaku Gothic New",sans-serif;
+  --cw:46px; --cut:12px;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;font-weight:500;min-height:100vh;
+  background-image:linear-gradient(180deg,#0e1220 0%,#0a0b12 45%,#07080c 100%)}
+/* 背景：夜の街。ぼやけた街の灯り・アールデコの扇模様・ビルの影 */
+body::before{content:"";position:fixed;inset:-10%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 12% 18%,rgba(226,182,91,.22) 0 2.2%,transparent 6%),
+    radial-gradient(circle at 82% 12%,rgba(215,38,61,.22) 0 2.6%,transparent 7%),
+    radial-gradient(circle at 64% 30%,rgba(127,200,255,.12) 0 1.6%,transparent 5%),
+    radial-gradient(circle at 30% 40%,rgba(226,182,91,.12) 0 1.4%,transparent 4.5%),
+    radial-gradient(circle at 92% 46%,rgba(226,182,91,.16) 0 2%,transparent 5.5%),
+    radial-gradient(circle at 6% 62%,rgba(215,38,61,.14) 0 2%,transparent 6%),
+    radial-gradient(ellipse 70% 40% at 50% 0%,rgba(215,38,61,.10),transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 100%,rgba(226,182,91,.10),transparent 70%);
+  filter:blur(2px);animation:bokeh 40s ease-in-out infinite alternate}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201600%20320%22%20preserveAspectRatio%3D%22xMidYMax%20slice%22%3E%3Cg%20fill%3D%22%2305060a%22%3E%3Crect%20x%3D%220%22%20y%3D%22202%22%20width%3D%2281%22%20height%3D%22118%22%2F%3E%3Crect%20x%3D%2276%22%20y%3D%22164%22%20width%3D%22113%22%20height%3D%22156%22%2F%3E%3Crect%20x%3D%22185%22%20y%3D%22152%22%20width%3D%2272%22%20height%3D%22168%22%2F%3E%3Crect%20x%3D%22260%22%20y%3D%22118%22%20width%3D%2240%22%20height%3D%22202%22%2F%3E%3Crect%20x%3D%22302%22%20y%3D%2245%22%20width%3D%2270%22%20height%3D%22275%22%2F%3E%3Crect%20x%3D%22368%22%20y%3D%2223%22%20width%3D%2294%22%20height%3D%22297%22%2F%3E%3Crect%20x%3D%22464%22%20y%3D%22217%22%20width%3D%22108%22%20height%3D%22103%22%2F%3E%3Crect%20x%3D%22574%22%20y%3D%22148%22%20width%3D%2273%22%20height%3D%22172%22%2F%3E%3Crect%20x%3D%22608%22%20y%3D%22113%22%20width%3D%224%22%20height%3D%2240%22%2F%3E%3Crect%20x%3D%22649%22%20y%3D%22197%22%20width%3D%2256%22%20height%3D%22123%22%2F%3E%3Crect%20x%3D%22704%22%20y%3D%22113%22%20width%3D%2247%22%20height%3D%22207%22%2F%3E%3Crect%20x%3D%22747%22%20y%3D%22176%22%20width%3D%22120%22%20height%3D%22144%22%2F%3E%3Crect%20x%3D%22867%22%20y%3D%2244%22%20width%3D%2285%22%20height%3D%22276%22%2F%3E%3Crect%20x%3D%22946%22%20y%3D%2277%22%20width%3D%2253%22%20height%3D%22243%22%2F%3E%3Crect%20x%3D%22995%22%20y%3D%22117%22%20width%3D%2245%22%20height%3D%22203%22%2F%3E%3Crect%20x%3D%221041%22%20y%3D%2233%22%20width%3D%2262%22%20height%3D%22287%22%2F%3E%3Crect%20x%3D%221097%22%20y%3D%22184%22%20width%3D%2244%22%20height%3D%22136%22%2F%3E%3Crect%20x%3D%221117%22%20y%3D%22150%22%20width%3D%224%22%20height%3D%2240%22%2F%3E%3Crect%20x%3D%221135%22%20y%3D%2275%22%20width%3D%2247%22%20height%3D%22245%22%2F%3E%3Crect%20x%3D%221179%22%20y%3D%22111%22%20width%3D%2250%22%20height%3D%22209%22%2F%3E%3Crect%20x%3D%221202%22%20y%3D%2288%22%20width%3D%224%22%20height%3D%2240%22%2F%3E%3Crect%20x%3D%221231%22%20y%3D%2247%22%20width%3D%2248%22%20height%3D%22273%22%2F%3E%3Crect%20x%3D%221274%22%20y%3D%22115%22%20width%3D%2250%22%20height%3D%22205%22%2F%3E%3Crect%20x%3D%221321%22%20y%3D%2286%22%20width%3D%2281%22%20height%3D%22234%22%2F%3E%3Crect%20x%3D%221402%22%20y%3D%22184%22%20width%3D%22107%22%20height%3D%22136%22%2F%3E%3Crect%20x%3D%221504%22%20y%3D%22210%22%20width%3D%22111%22%20height%3D%22110%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22%23e2b65b%22%20opacity%3D%22.55%22%3E%3Crect%20x%3D%226%22%20y%3D%22212%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2230%22%20y%3D%22212%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%226%22%20y%3D%22226%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2254%22%20y%3D%22226%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%22240%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2266%22%20y%3D%22240%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2230%22%20y%3D%22268%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2266%22%20y%3D%22268%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22130%22%20y%3D%22174%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2282%22%20y%3D%22188%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22142%22%20y%3D%22202%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22130%22%20y%3D%22216%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22166%22%20y%3D%22216%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22178%22%20y%3D%22216%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2294%22%20y%3D%22230%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22142%22%20y%3D%22230%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22142%22%20y%3D%22258%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22142%22%20y%3D%22272%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22118%22%20y%3D%22286%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22142%22%20y%3D%22286%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%22286%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%2294%22%20y%3D%22300%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22106%22%20y%3D%22300%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22130%22%20y%3D%22300%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%22300%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22203%22%20y%3D%22162%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22191%22%20y%3D%22218%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22239%22%20y%3D%22288%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22191%22%20y%3D%22302%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%22142%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22278%22%20y%3D%22170%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%22198%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%22212%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22278%22%20y%3D%22254%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22278%22%20y%3D%22268%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22278%22%20y%3D%22296%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22344%22%20y%3D%2283%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22320%22%20y%3D%2297%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22320%22%20y%3D%22125%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22332%22%20y%3D%22195%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22356%22%20y%3D%22195%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22320%22%20y%3D%22209%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22356%22%20y%3D%22265%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22332%22%20y%3D%22279%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22320%22%20y%3D%22293%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%22307%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22332%22%20y%3D%22307%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22446%22%20y%3D%2233%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22374%22%20y%3D%2247%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22410%22%20y%3D%2247%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22374%22%20y%3D%2261%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22398%22%20y%3D%2261%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22398%22%20y%3D%2275%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22434%22%20y%3D%2275%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22374%22%20y%3D%2289%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22398%22%20y%3D%22103%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22422%22%20y%3D%22103%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22410%22%20y%3D%22117%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22422%22%20y%3D%22145%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22434%22%20y%3D%22145%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22446%22%20y%3D%22145%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22410%22%20y%3D%22159%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22374%22%20y%3D%22201%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22446%22%20y%3D%22201%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22386%22%20y%3D%22215%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22410%22%20y%3D%22215%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22422%22%20y%3D%22215%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22434%22%20y%3D%22243%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22386%22%20y%3D%22285%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22422%22%20y%3D%22285%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22422%22%20y%3D%22299%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22470%22%20y%3D%22227%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22506%22%20y%3D%22227%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22470%22%20y%3D%22255%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22542%22%20y%3D%22255%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22554%22%20y%3D%22255%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22470%22%20y%3D%22283%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22530%22%20y%3D%22283%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22592%22%20y%3D%22172%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22604%22%20y%3D%22172%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22580%22%20y%3D%22200%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22616%22%20y%3D%22200%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22580%22%20y%3D%22242%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22592%22%20y%3D%22242%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22616%22%20y%3D%22284%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22628%22%20y%3D%22298%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22655%22%20y%3D%22277%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22679%22%20y%3D%22277%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22722%22%20y%3D%22123%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22722%22%20y%3D%22179%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22734%22%20y%3D%22179%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22722%22%20y%3D%22207%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22734%22%20y%3D%22235%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22710%22%20y%3D%22291%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22777%22%20y%3D%22186%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22849%22%20y%3D%22186%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22849%22%20y%3D%22200%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22777%22%20y%3D%22214%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22825%22%20y%3D%22214%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22825%22%20y%3D%22228%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22753%22%20y%3D%22242%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22849%22%20y%3D%22242%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22813%22%20y%3D%22256%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22849%22%20y%3D%22256%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22753%22%20y%3D%22270%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22849%22%20y%3D%22270%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22753%22%20y%3D%22284%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22777%22%20y%3D%22298%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22789%22%20y%3D%22298%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22801%22%20y%3D%22298%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22897%22%20y%3D%2254%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22909%22%20y%3D%2268%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22885%22%20y%3D%2282%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22897%22%20y%3D%2282%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22909%22%20y%3D%2282%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22921%22%20y%3D%22110%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22909%22%20y%3D%22124%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22933%22%20y%3D%22166%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22909%22%20y%3D%22180%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22921%22%20y%3D%22180%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22933%22%20y%3D%22194%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22873%22%20y%3D%22208%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22933%22%20y%3D%22222%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22885%22%20y%3D%22278%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22873%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22897%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22964%22%20y%3D%22115%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22964%22%20y%3D%22143%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22976%22%20y%3D%22143%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22976%22%20y%3D%22157%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22988%22%20y%3D%22213%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22988%22%20y%3D%22241%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22988%22%20y%3D%22255%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%22988%22%20y%3D%22283%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221025%22%20y%3D%22127%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221013%22%20y%3D%22183%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221013%22%20y%3D%22295%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221047%22%20y%3D%2243%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221059%22%20y%3D%2243%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221083%22%20y%3D%2243%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221071%22%20y%3D%2257%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221047%22%20y%3D%2271%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221047%22%20y%3D%2285%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221059%22%20y%3D%22141%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221083%22%20y%3D%22183%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221083%22%20y%3D%22211%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221083%22%20y%3D%22239%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221047%22%20y%3D%22295%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221103%22%20y%3D%22208%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221103%22%20y%3D%22222%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221115%22%20y%3D%22222%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221103%22%20y%3D%22278%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221115%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221153%22%20y%3D%22113%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221165%22%20y%3D%22113%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221141%22%20y%3D%22127%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221153%22%20y%3D%22141%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221141%22%20y%3D%22197%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221141%22%20y%3D%22239%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221141%22%20y%3D%22267%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221165%22%20y%3D%22281%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221197%22%20y%3D%22191%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221209%22%20y%3D%22191%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221209%22%20y%3D%22233%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221185%22%20y%3D%22247%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221209%22%20y%3D%22261%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221209%22%20y%3D%22275%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221185%22%20y%3D%22289%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221197%22%20y%3D%22289%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221249%22%20y%3D%2257%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221237%22%20y%3D%2271%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221249%22%20y%3D%2271%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221261%22%20y%3D%2299%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221237%22%20y%3D%22113%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221261%22%20y%3D%22127%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221237%22%20y%3D%22183%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221237%22%20y%3D%22225%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221237%22%20y%3D%22239%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221249%22%20y%3D%22253%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221292%22%20y%3D%22153%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221280%22%20y%3D%22167%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221304%22%20y%3D%22265%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221387%22%20y%3D%2296%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221339%22%20y%3D%22110%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221363%22%20y%3D%22124%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221327%22%20y%3D%22138%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221363%22%20y%3D%22194%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221363%22%20y%3D%22236%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221363%22%20y%3D%22250%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221387%22%20y%3D%22278%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221351%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221387%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221456%22%20y%3D%22194%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221432%22%20y%3D%22250%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221492%22%20y%3D%22250%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221408%22%20y%3D%22278%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221480%22%20y%3D%22292%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221468%22%20y%3D%22306%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221546%22%20y%3D%22220%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221522%22%20y%3D%22234%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221522%22%20y%3D%22248%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221558%22%20y%3D%22248%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221558%22%20y%3D%22262%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3Crect%20x%3D%221582%22%20y%3D%22304%22%20width%3D%225%22%20height%3D%227%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") bottom center/max(100%,1100px) auto no-repeat,
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22120%22%20height%3D%2260%22%20viewBox%3D%220%200%20120%2060%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e2b65b%22%20stroke-width%3D%221%22%20opacity%3D%22.07%22%3E%3Cpath%20d%3D%22M0%2060a60%2060%200%200%201%20120%200%22%2F%3E%3Cpath%20d%3D%22M15%2060a45%2045%200%200%201%2090%200%22%2F%3E%3Cpath%20d%3D%22M30%2060a30%2030%200%200%201%2060%200%22%2F%3E%3Cpath%20d%3D%22M45%2060a15%2015%200%200%201%2030%200%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 0 0/120px 60px,
+    radial-gradient(ellipse at 50% 40%,transparent 50%,rgba(0,0,0,.6) 100%);
+  opacity:.9}
+@keyframes bokeh{to{transform:translate(2%,-3%) scale(1.05)}}
+@media (prefers-reduced-motion:reduce){body::before{animation:none}}
+.wrap{position:relative;z-index:1}
+.wrap{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:18px 28px;display:grid;gap:14px}
+h1,h2,h3{text-wrap:balance}
+.cut{clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+button{font:inherit;font-weight:900;letter-spacing:.06em;border:0;background:var(--panel2);color:var(--ink);padding:10px 22px;cursor:pointer;min-height:44px;
+  clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);transition:background .12s,transform .12s}
+button:hover:not(:disabled){background:#2a2e40}
+button:active:not(:disabled){transform:translateY(1px)}
+button:focus-visible,input:focus-visible,.box:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+button:disabled{opacity:.35;cursor:default}
+button.primary{background:var(--crimson);color:#fff}
+button.primary:hover:not(:disabled){background:#ec3550}
+button.ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+button.danger{background:#262833}
+button.small{padding:5px 14px;min-height:36px;font-size:.82rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.av{display:block;width:100%;height:100%}
+.stars{font-family:var(--num);color:var(--gold);letter-spacing:.05em;font-size:.75rem}
+
+/* ---------- タイトル ---------- */
+#title{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:20px;align-items:center;padding-block:30px 10px}
+.logo{display:grid;gap:16px}
+.logo .eyebrow{font-family:var(--num);color:var(--crimson);letter-spacing:.35em;font-size:.85rem}
+.logo h1{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,10vw,4.8rem);margin:0;line-height:1.08;color:var(--ink);letter-spacing:.04em}
+.logo h1 span{color:var(--gold)}
+.logo .subtitle{font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.5em;color:var(--gold);margin:6px 0 2px}
+.logo p{margin:0;line-height:1.9;max-width:30em;color:var(--muted);border-left:3px solid var(--crimson);padding-left:12px}
+.hero{position:relative;aspect-ratio:1;max-width:100%;background:
+  linear-gradient(115deg,transparent 38%,var(--crimson) 38% 56%,transparent 56%),radial-gradient(circle at 55% 45%,#2b2f40,var(--bg) 70%);
+  overflow:hidden}
+.hero .tagname{position:absolute;left:0;bottom:12px;background:var(--gold);color:#111;padding:3px 16px 3px 12px;font-weight:900;font-size:.85rem;
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+@media (max-width:620px){#title{grid-template-columns:1fr}.hero{width:70%;justify-self:center}}
+
+/* ---------- 章選択 ---------- */
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.top h2{font-family:var(--display);font-weight:800;margin:0;font-size:1.6rem}
+.chapters{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ch{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 16px;align-items:center;
+  padding:14px 18px;background:var(--panel);border-left:4px solid var(--crimson)}
+.ch .no{font-family:var(--num);font-weight:700;font-size:2rem;color:var(--gold);width:1.6em;text-align:center;grid-row:span 2;line-height:1}
+.ch .t{font-weight:900;font-size:1.05rem;min-width:0}
+.ch .v{color:var(--muted);font-size:.85rem;min-width:0}
+.ch .act{grid-row:span 2}
+.ch.locked{opacity:.4;border-left-color:var(--line)}
+.ch .done{background:var(--gold);color:#111;font-size:.7rem;padding:1px 8px;margin-left:8px;vertical-align:2px;font-weight:900}
+.hint{color:var(--muted);font-size:.88rem}
+
+/* ---------- 会話シーン ---------- */
+#scene{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:16px;position:relative;overflow:hidden;
+  min-height:min(82vh,720px);align-content:end;background:linear-gradient(180deg,color-mix(in srgb,var(--venue) 55%,var(--bg)),var(--bg) 80%)}
+.venue{position:absolute;top:16px;left:16px;right:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.venue .vchip{background:var(--crimson);color:#fff;padding:3px 14px 3px 10px;font-weight:900;font-size:.8rem;clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.venue .vn{font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:.06em}
+.stage{height:min(48vh,360px);min-width:0;overflow:hidden;display:flex;justify-content:center;align-items:flex-end;position:relative}
+.stage::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .25s}
+.stage.cool::before{opacity:1;background:linear-gradient(110deg,transparent 30%,var(--crimson) 30% 46%,transparent 46%)}
+.stage.cute::before{opacity:1;background:radial-gradient(circle at 30% 40%,rgba(255,184,207,.35) 0 16%,transparent 17%),
+  radial-gradient(circle at 72% 30%,rgba(255,225,140,.3) 0 12%,transparent 13%),radial-gradient(circle at 60% 70%,rgba(160,200,255,.28) 0 14%,transparent 15%)}
+.portrait{position:relative;height:100%;aspect-ratio:1;max-width:100%;animation:slide .3s ease-out}
+.stage.cute .portrait{animation:bounce .35s ease-out}
+@keyframes slide{from{transform:translateX(-18px);opacity:.2}to{transform:none;opacity:1}}
+@keyframes bounce{0%{transform:translateY(14px) scale(.96)}60%{transform:translateY(-4px)}100%{transform:none}}
+.box{position:relative;background:rgba(14,15,20,.94);box-shadow:inset 0 0 0 1px var(--line);padding:24px 18px 16px;cursor:pointer;min-height:120px;
+  clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%)}
+.nametag{position:absolute;top:0;left:0;display:flex;gap:10px;align-items:baseline;background:var(--gold);color:#111;
+  padding:2px 22px 2px 14px;font-weight:900;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+.nametag.cute{background:var(--cute)}
+.nametag .stars{color:#111;font-size:.7rem}
+.line{line-height:1.95;font-size:1.06rem;font-weight:700;min-width:0}
+.line.narr{color:var(--muted);font-weight:500}
+.lesson{display:grid;gap:6px}
+.lesson .lt{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--gold)}
+.lesson p{margin:0;line-height:1.9;max-width:38em}
+.lesson-tag{position:absolute;top:0;left:0;background:var(--crimson);color:#fff;padding:2px 22px 2px 14px;font-weight:900;font-size:.85rem;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+.scene-btns{justify-content:flex-end}
+@media (prefers-reduced-motion:reduce){.portrait,.stage.cute .portrait{animation:none}button{transition:none}}
+
+/* ---------- 卓 ---------- */
+header.g{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 16px}
+header.g h1{font-family:var(--display);font-weight:800;font-size:1.25rem;margin:0;letter-spacing:.04em}
+.goal{font-weight:900;font-size:.88rem;background:var(--crimson);color:#fff;padding:5px 18px 5px 12px;font-variant-numeric:tabular-nums;
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.meta{color:var(--muted);font-size:.8rem;font-family:var(--num);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.table{
+  background:radial-gradient(ellipse at 50% 42%,var(--felt-hi),var(--felt) 70%);
+  border:6px solid #1b1d26;box-shadow:inset 0 0 0 1px var(--gold),0 0 0 1px var(--line),0 18px 40px rgba(0,0,0,.6);
+  border-radius:140px;padding:22px 28px;
+  display:grid;grid-template-columns:1fr minmax(0,2.2fr) 1fr;
+  grid-template-areas:". p2 ." "p1 board p3" ". p0 .";gap:14px 12px;align-items:center;justify-items:center;
+}
+.board{grid-area:board;display:grid;gap:8px;justify-items:center;text-align:center;min-width:0}
+.seat{display:grid;gap:4px;justify-items:center;padding:8px 10px;min-width:0;background:rgba(13,14,19,.82);
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);transition:background .2s}
+.seat.turn{background:rgba(226,182,91,.22);box-shadow:inset 0 0 0 2px var(--gold)}
+.seat.out{opacity:.35}
+.seat .ava{width:46px;height:46px;overflow:hidden;background:var(--panel2);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.seat .ava.cute{background:#3b2f45}
+.seat .ava.cool{background:linear-gradient(115deg,var(--panel2) 40%,var(--crimson) 40% 58%,var(--panel2) 58%)}
+.seat .name{font-weight:900;display:flex;gap:6px;align-items:center}
+.seat .style{font-size:.7rem;color:var(--muted)}
+.seat .stack-n{font-family:var(--num);font-weight:500;font-size:.95rem;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.dealer{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#111;font-size:.68rem;font-weight:900}
+.hand{display:flex;gap:4px}
+.hand.folded{opacity:.3;filter:grayscale(1)}
+.tag{font-size:.75rem;padding:0 8px;background:#262833;color:var(--muted);min-height:1.3em}
+.tag.bet{color:#fff;background:var(--crimson)}
+.tag.win{background:var(--gold);color:#111;font-weight:900}
+.handname{font-family:var(--display);font-weight:800;font-size:.85rem;color:var(--gold);min-height:1.1em}
+.card{width:var(--cw);aspect-ratio:5/7;max-width:100%;border-radius:5px;background:#f6f3ec;color:#16171c;
+  display:grid;place-content:center;justify-items:center;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.5);
+  font-family:var(--num);font-weight:700;animation:deal .22s ease-out}
+.card .r{font-size:calc(var(--cw)*.42)}.card .s{font-size:calc(var(--cw)*.4)}
+.card.red{color:var(--cardred)}
+.card.back{background:#1b1d26;background-image:linear-gradient(135deg,transparent 45%,var(--crimson) 45% 55%,transparent 55%),
+  repeating-linear-gradient(45deg,rgba(226,182,91,.25) 0 1px,transparent 1px 6px);box-shadow:inset 0 0 0 2px var(--gold),0 3px 8px rgba(0,0,0,.5)}
+.card.slot{background:transparent;box-shadow:inset 0 0 0 1px rgba(226,182,91,.35);animation:none}
+@keyframes deal{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.card{animation:none}.seat{transition:none}}
+.street{font-family:var(--num);font-size:.95rem;letter-spacing:.3em;color:var(--gold)}
+.cards5{display:flex;gap:6px;flex-wrap:nowrap}
+.pot{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:1.05rem;letter-spacing:.06em}
+.msg{min-height:1.4em;font-size:.92rem;font-weight:700}
+.panel{background:var(--panel);padding:14px;display:grid;gap:12px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.sensei{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}
+.sensei .ava{width:50px;height:50px;overflow:hidden;background:linear-gradient(115deg,var(--panel2) 40%,var(--crimson) 40% 58%,var(--panel2) 58%);
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.sensei p{margin:0;line-height:1.6;font-weight:700;border-left:3px solid var(--gold);padding:2px 0 2px 12px}
+.raise{display:flex;gap:8px;align-items:center;flex:1 1 260px;min-width:0}
+.raise input[type=range]{flex:1;min-width:0;accent-color:var(--crimson)}
+.result{font-family:var(--display);font-weight:800;font-size:1.25rem;color:var(--gold)}
+.log{list-style:none;margin:0;padding:0;max-height:160px;overflow:auto;font-size:.85rem;color:var(--muted);display:grid;gap:3px}
+.log li.hd{color:var(--gold);font-weight:900;margin-top:6px}
+.log li:first-child{margin-top:0}
+h2.lbl{margin:0;font-size:.75rem;letter-spacing:.2em;color:var(--muted);font-family:var(--num);font-weight:500}
+@media (max-width:620px){
+  :root{--cw:38px}
+  .table{border-radius:34px;border-width:5px;padding:14px 8px;grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-areas:"p1 p2 p3" "board board board" "p0 p0 p0"}
+  .seat{padding:6px 4px}
+  .seat:not(.me){--cw:28px}
+  .seat .ava{width:36px;height:36px}
+  .seat .name{font-size:.82rem}
+}
+/* ---------- プレイ画面 v2：下部アクションバー、立体カード、立体チップ ---------- */
+.gwrap{display:grid;gap:12px}
+.table{perspective:900px}
+.seat{grid-template-rows:auto;position:relative;overflow:visible}
+.seat .tag{min-height:1.4em;font-weight:700}
+.seat .tag.act-fold{background:#262833;color:var(--muted)}
+.seat .tag.act-raise{background:var(--crimson);color:#fff}
+.seat .tag.act-call{background:#2f6f5f;color:#fff}
+.seat .tag.think{background:transparent;color:var(--gold);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.35}}
+.seat.turn{box-shadow:inset 0 0 0 2px var(--gold),0 0 22px rgba(226,182,91,.45)}
+.betzone{display:flex;align-items:flex-end;gap:6px;min-height:30px;font-family:var(--num);font-size:.85rem}
+.myhand{font-family:var(--display);font-weight:800;color:var(--gold);font-size:.9rem;min-height:1.2em}
+
+/* カード：厚み・ツヤ・配る時の回転 */
+.card{position:relative;border-radius:6px;background:linear-gradient(160deg,#fffdf7,#efe9dc);
+  box-shadow:0 1px 0 #d8d0bf,0 2px 0 #c6bda9,0 3px 0 #b3aa95,0 8px 14px rgba(0,0,0,.55);
+  display:block;animation:flip .45s cubic-bezier(.2,.8,.3,1.2) both;transform-style:preserve-3d}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(125deg,rgba(255,255,255,.75) 0%,rgba(255,255,255,0) 38%,rgba(0,0,0,0) 70%,rgba(0,0,0,.08))}
+.card .r{position:absolute;top:6%;left:9%;font-size:calc(var(--cw)*.36);line-height:1;display:grid;justify-items:center}
+.card .r i{font-style:normal;font-size:.8em;margin-top:1px}
+.card .s{position:absolute;inset:0;display:grid;place-items:center;padding-top:28%;padding-left:24%;font-size:calc(var(--cw)*.6)}
+.card.back{background:#1b1d26;background-image:linear-gradient(135deg,transparent 44%,var(--crimson) 44% 56%,transparent 56%),
+  repeating-linear-gradient(45deg,rgba(226,182,91,.28) 0 1px,transparent 1px 6px);
+  box-shadow:inset 0 0 0 2px var(--gold),0 1px 0 #0b0c10,0 2px 0 #0b0c10,0 7px 12px rgba(0,0,0,.55)}
+.card.slot{background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 1px rgba(226,182,91,.35);animation:none}
+.card.slot::after{display:none}
+@keyframes flip{from{transform:translateY(-14px) rotateY(90deg);opacity:0}to{transform:none;opacity:1}}
+.cards5{transform:rotateX(14deg);transform-origin:50% 100%}
+.seat.me{--cw:62px}
+.seat.me .hand{gap:0}
+.seat.me .hand .card:first-child{transform:rotate(-7deg) translateX(6px)}
+.seat.me .hand .card:last-child{transform:rotate(7deg) translateX(-6px) translateY(2px)}
+.seat.me .hand .card{animation-name:flipMe}
+@keyframes flipMe{from{opacity:0;translate:0 -14px}to{opacity:1;translate:0 0}}
+.card.win{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(226,182,91,.8),0 8px 14px rgba(0,0,0,.55)}
+
+/* チップ：楕円の上面＋側面の縞で立体に積む */
+.stack{display:inline-flex;align-items:flex-end;gap:2px;font-variant-numeric:tabular-nums}
+.col{position:relative;width:26px}
+.chip{position:absolute;left:0;width:26px;height:11px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 45%,var(--c) 0 36%,rgba(255,255,255,.95) 38% 44%,var(--c) 46% 100%);
+  box-shadow:0 3.5px 0 var(--d),0 4px 3px rgba(0,0,0,.45)}
+.chip::after{content:"";position:absolute;left:0;right:0;top:5.5px;height:5px;border-radius:0 0 50% 50%/0 0 100% 100%;
+  background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.85) 3px 5px,transparent 5px 8px);
+  -webkit-mask:linear-gradient(transparent 0 40%,#000 40%);mask:linear-gradient(transparent 0 40%,#000 40%)}
+.chip.c1{--c:#3c7bd6;--d:#24528f}
+.chip.c2{--c:#2c9a5e;--d:#1b6640}
+.chip.c3{--c:#d7263d;--d:#8f1626}
+.chip.c4{--c:#26272f;--d:#0d0e12}
+.chip.c5{--c:#e2b65b;--d:#9c7a2e}
+.chip.c6{--c:#8b4fd6;--d:#5a2f94}
+.amt-label{font-family:var(--num);font-size:.85rem;color:var(--ink);background:rgba(0,0,0,.55);padding:0 6px;border-radius:3px;margin-left:4px;align-self:center}
+.potzone{display:flex;align-items:flex-end;justify-content:center;gap:4px;min-height:44px}
+
+/* アクションバー（画面下に固定） */
+.actionbar{display:grid;gap:10px;background:rgba(13,14,19,.96);
+  padding:10px 12px 12px;border-top:2px solid var(--crimson)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+button.act{min-height:58px;display:grid;place-content:center;gap:2px;padding:6px 10px;font-size:1rem;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+button.act b{font-weight:900}
+button.act small{font-family:var(--num);font-size:.85rem;font-weight:500;opacity:.9;min-height:1em}
+button.act.fold{background:#2a2c37}
+button.act.call{background:#2f6f5f;color:#fff}
+button.act.call:hover:not(:disabled){background:#3a8572}
+button.act.raise{background:var(--crimson);color:#fff}
+button.act.raise:hover:not(:disabled){background:#ec3550}
+button.act.raise.open{background:var(--gold);color:#111}
+.waiting{text-align:center;color:var(--muted);padding:12px 0;font-weight:700}
+.raisepanel{display:grid;gap:10px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.amtrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.amt{text-align:center;display:grid}
+.amt small{color:var(--muted);font-size:.75rem;letter-spacing:.1em}
+.amt output{font-family:var(--num);font-size:2rem;font-weight:700;color:var(--gold);line-height:1.1;font-variant-numeric:tabular-nums}
+button.step{width:52px;min-height:48px;padding:0;font-size:1.4rem}
+.raisepanel input[type=range]{width:100%;accent-color:var(--crimson);height:28px}
+.presets{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.presets button{padding:6px 2px;min-height:40px;font-size:.8rem;clip-path:none;border-radius:4px}
+.presets button.on{background:var(--gold);color:#111}
+.tauntbox{display:flex;gap:8px;align-items:center;margin:8px 0 0;font-size:.85rem;color:var(--muted)}
+.tauntbox[hidden]{display:none}
+.betweenrow{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.logbox{background:var(--panel);padding:10px 14px}
+.logbox summary{cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:700}
+.logbox .log{margin-top:8px}
+.sensei{background:var(--panel);padding:10px 12px}
+@media (max-width:620px){
+  .seat.me{--cw:52px}
+  .betzone{min-height:18px}
+  .seat .stars,.seat .style{display:none}
+  .col,.chip{width:20px}.chip{height:9px}.chip::after{top:4.5px;height:4px}
+  button.act{min-height:54px;font-size:.92rem}
+}
+
+.card.noanim,.seat.me .hand .card.noanim{animation:none}
+@media (prefers-reduced-motion:reduce){.card,.seat.me .hand .card{animation:none}.seat .tag.think{animation:none}}
+/* ---------- 座っている視点の卓（自分の席から見た遠近） ---------- */
+.gwrap{max-width:560px;margin:0 auto;width:100%}
+.t3d{position:relative;height:min(76vh,720px);min-height:560px;overflow:hidden;isolation:isolate;
+  background:radial-gradient(ellipse 90% 60% at 50% 18%,color-mix(in srgb,var(--venue) 65%,#000),#07080b 75%)}
+.room{position:absolute;inset:0;z-index:0;opacity:.8;background:
+  radial-gradient(circle at 12% 12%,rgba(226,182,91,.35) 0 2.5%,transparent 3%),radial-gradient(circle at 30% 6%,rgba(255,255,255,.18) 0 1.5%,transparent 2%),
+  radial-gradient(circle at 72% 9%,rgba(215,38,61,.3) 0 3%,transparent 3.5%),radial-gradient(circle at 90% 18%,rgba(226,182,91,.25) 0 2%,transparent 2.5%),
+  linear-gradient(transparent 26%,rgba(0,0,0,.5) 36%)}
+/* 相手の上半身：卓のふち（top:33%）の裏に下半分が隠れる */
+.busts{position:absolute;inset:0;z-index:1}
+.bust{position:absolute;bottom:calc(100% - 37%);transform:translateX(-50%);aspect-ratio:1;transition:filter .2s}
+.bust.turn{filter:drop-shadow(0 0 14px rgba(226,182,91,.75))}
+.bust.folded{filter:brightness(.45) saturate(.5)}
+.bust.out{opacity:.2}
+.bust.cool::before{content:"";position:absolute;inset:8% 6% 0;background:linear-gradient(110deg,transparent 34%,rgba(215,38,61,.55) 34% 50%,transparent 50%);z-index:-1}
+.felt-wrap{position:absolute;left:-32%;right:-32%;top:33%;bottom:-40%;perspective:620px;perspective-origin:50% -30%;z-index:2}
+.felt{position:absolute;inset:0;transform:rotateX(50deg);transform-origin:50% 0;transform-style:preserve-3d;
+  border-radius:50% 50% 8% 8%/22% 22% 4% 4%;
+  background:radial-gradient(ellipse 60% 40% at 50% 34%,var(--felt-hi),var(--felt) 70%);
+  box-shadow:inset 0 0 0 16px #2a1b12,inset 0 0 0 18px var(--gold),inset 0 0 0 20px #120c08,inset 0 30px 60px rgba(0,0,0,.4)}
+.felt .spot,.felt .boardspot,.dbtn{position:absolute;transform:translate(-50%,-50%)}
+.boardspot{left:50%;top:26%;display:grid;justify-items:center;gap:8px}
+.felt .cards5{transform:none;gap:8px}
+.felt .card{--cw:50px}
+.felt .card.slot{background:rgba(0,0,0,.2);box-shadow:inset 0 0 0 2px rgba(226,182,91,.4)}
+.spot{display:grid;justify-items:center;gap:6px}
+.spot .hand{display:flex;gap:2px}
+.spot .card{--cw:34px}
+.spot .hand.folded{opacity:0}
+.felt .chip{width:34px;height:14px}.felt .col{width:34px}
+.felt .chip::after{top:7px;height:6px}
+.dbtn{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#d9d2c2);color:#111;
+  display:grid;place-items:center;font:700 .9rem var(--num);box-shadow:0 3px 0 #9c9482,0 5px 6px rgba(0,0,0,.5);transition:left .4s,top .4s}
+/* 名札：上半身の手前に重ねる */
+.plates{position:absolute;inset:0;z-index:3;pointer-events:none}
+.plate{position:absolute;top:36.5%;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 8px;max-width:31%;
+  background:rgba(8,9,12,.88);padding:4px 10px 5px;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.plate.turn{background:rgba(60,46,14,.95);box-shadow:inset 0 0 0 2px var(--gold)}
+.plate .nm{font-weight:900;font-size:.82rem;display:grid;justify-items:center;line-height:1.2}
+.plate .nm .stars{font-size:.62rem}
+.plate .chp{font-family:var(--num);font-size:.9rem;font-variant-numeric:tabular-nums}
+.plate .tag{font-size:.7rem}
+.plate .handname{font-size:.75rem;min-height:0}
+.hud{position:absolute;left:0;right:0;top:10px;z-index:3;display:grid;justify-items:center;gap:4px;pointer-events:none;text-shadow:0 2px 4px #000}
+.hud .street{font-size:.72rem;background:rgba(0,0,0,.55);padding:1px 10px}
+.hud .pot{font-family:var(--num);font-size:1.05rem;background:rgba(0,0,0,.55);padding:0 12px}
+.hud .msg{font-size:.9rem;font-weight:700;min-height:1.3em;text-align:center;padding-inline:12px}
+/* 自分：手前のチップと、手に持った2枚 */
+.mine{position:absolute;left:0;right:0;bottom:0;z-index:4;display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:8px;padding:0 12px 10px}
+.mine .mybet{grid-column:1/-1;justify-self:center;min-height:30px}
+.mine .hold{display:flex;justify-content:center;padding-bottom:4px}
+.mine .hold .card{--cw:84px;box-shadow:0 1px 0 #d8d0bf,0 2px 0 #c6bda9,0 3px 0 #b3aa95,0 14px 22px rgba(0,0,0,.7)}
+.mine .hold .card:first-child{transform:rotate(-9deg) translate(10px,4px)}
+.mine .hold .card:last-child{transform:rotate(8deg) translate(-10px,0)}
+.mine .hold.folded{opacity:.35;filter:grayscale(1)}
+.mine .me-l{justify-self:start;display:grid;gap:4px;justify-items:start}
+.mine .me-r{justify-self:end;display:grid;gap:4px;justify-items:end;text-align:right}
+.mine .me-ava{width:46px;height:46px;overflow:hidden;background:#3b2f45;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.mine.turn .me-ava{box-shadow:inset 0 0 0 2px var(--gold)}
+.mine .chp{font-family:var(--num);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.mine .lbl2{font-size:.7rem;color:var(--muted)}
+@media (max-width:620px){
+  .t3d{height:min(74vh,640px);min-height:520px}
+  .felt .card{--cw:40px}
+  .spot .card{--cw:28px}
+  .mine .hold .card{--cw:72px}
+}
+.amtsub{font-size:.85rem;color:var(--muted)}
+.amtsub b{color:var(--ink);font-family:var(--num);font-size:1rem}
+.rangewrap{display:grid;gap:2px}
+.rangelbl{display:flex;justify-content:space-between;font-family:var(--num);font-size:.75rem;color:var(--muted)}
+.presets button{display:grid;gap:1px;line-height:1.2}
+.presets button i{font-style:normal;font-family:var(--num);font-size:.78rem;opacity:.85}
+button.act:disabled{opacity:.3}
+.mine .hold .card{animation-name:flipMe}
+.mine .me-ava{position:relative;overflow:visible;clip-path:none}
+.mine .me-ava svg{display:block}
+.dbadge{position:absolute;right:-12px;top:-10px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#d9d2c2);color:#111;
+  display:grid;place-items:center;font:700 .8rem var(--num);box-shadow:0 2px 0 #9c9482,0 4px 6px rgba(0,0,0,.5)}
+/* ---------- キャラ演出 ---------- */
+.hud{left:10px;right:auto;justify-items:start}
+.bust .body{animation:breathe 3.4s ease-in-out infinite;transform-origin:50% 100%;transition:translate .5s}
+.bust.folded .body{translate:0 7%}
+.bust.think .av{animation:tilt 1.8s ease-in-out infinite;transform-origin:50% 80%}
+.av .eyes{animation:blink 4.6s infinite;transform-box:fill-box;transform-origin:center}
+.bust:nth-child(2) .av .eyes{animation-delay:-1.7s}.bust:nth-child(3) .av .eyes{animation-delay:-3.1s}
+@keyframes breathe{50%{transform:translateY(1.2%) scaleY(.99)}}
+/* 立体感：店の灯りで輪郭を光らせ、奥の壁に影を落とす */
+.bust .body svg{filter:drop-shadow(1.4px -1.2px 0 color-mix(in srgb,var(--lamp,#e2b65b) 75%,transparent)) drop-shadow(-1px -.5px 0 rgba(255,255,255,.14)) drop-shadow(9px 7px 9px rgba(0,0,0,.55))}
+.bust{animation:sway 7.5s ease-in-out infinite;transform-origin:50% 100%}
+.bust:nth-child(2){animation-delay:-2.4s;animation-duration:8.3s}.bust:nth-child(3){animation-delay:-5.1s;animation-duration:6.9s}.bust:nth-child(4){animation-delay:-1.2s}
+@keyframes sway{0%,100%{rotate:-.9deg;translate:-.6% 0}50%{rotate:.9deg;translate:.6% 0}}
+/* 奥行き：Depth が translate を直接書く。遠い背景は逆へ、キャラは少しだけ同じ向きへ動く */
+.room{inset:-6%;will-change:translate}
+.busts{will-change:translate}
+.no-depth .bust{animation:none}
+/* ---------- ドキドキ演出 ---------- */
+.bust .body{transition:translate .5s,scale .9s}
+.bust.stare .body{scale:1.08;translate:0 4%}
+.t3d .room,.t3d .lamp,.t3d .bust{transition:opacity .8s,filter .8s}
+.t3d.hush .room{opacity:.4}
+.t3d.hush .lamp{opacity:.85}
+.t3d.hush .bust:not(.stare):not(.turn){filter:brightness(.55) saturate(.7)}
+.felt .card.back.tease{box-shadow:0 0 0 2px var(--gold),0 0 22px rgba(226,182,91,.7);animation:tease 1s ease-in-out infinite}
+@keyframes tease{50%{translate:0 -5px}}
+.card.slowflip{animation:flipSlow 1.2s cubic-bezier(.4,0,.2,1) both}
+@keyframes flipSlow{0%{transform:translateY(0) rotateY(90deg);opacity:0}45%{transform:translateY(-10px) rotateY(70deg);opacity:1}100%{transform:none;opacity:1}}
+.eqb{font-family:var(--num);font-size:.8rem;background:#0d0e12;color:var(--gold);padding:0 6px;letter-spacing:.03em;flex-basis:100%;text-align:center}
+.eqb.up{color:#7fe0a8}.eqb.down{color:#ff8a8a}
+.mine .eqb{flex-basis:auto;font-size:.9rem}
+.clock{position:relative;height:22px;margin:0 0 8px;background:#1d1f29;overflow:hidden;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+.clock[hidden]{display:none}
+.clock i{position:absolute;inset:0 auto 0 0;width:100%;background:linear-gradient(90deg,#9c7a2e,var(--gold));transform-origin:0 50%}
+.clock.low i{background:linear-gradient(90deg,#7a1020,var(--crimson))}
+.clock.low{animation:clockPulse .6s ease-in-out infinite}
+@keyframes clockPulse{50%{filter:brightness(1.4)}}
+.clock span{position:relative;display:block;text-align:center;font:700 .78rem/22px var(--body);color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.06em}
+@media (prefers-reduced-motion:reduce){.felt .card.back.tease,.card.slowflip,.clock.low{animation:none}.bust .body{transition:none}}
+@keyframes tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-4deg)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.say{position:absolute;top:4%;transform:translateX(-50%);max-width:46%;opacity:0;pointer-events:none;z-index:5;
+  background:#f6f3ec;color:#16171c;padding:5px 12px 6px;display:grid;gap:1px;text-align:center;
+  clip-path:polygon(0 0,100% 0,100% 82%,58% 82%,50% 100%,42% 82%,0 82%);padding-bottom:12px}
+.say.l{transform:translateX(-25%)}.say.r{transform:translateX(-75%)}
+.say b{font-family:var(--num);font-size:1rem;letter-spacing:.04em;color:var(--crimson)}
+.say span{font-size:.75rem;font-weight:700;line-height:1.35}
+.say.go{animation:say 2.6s ease-out forwards}
+@keyframes say{0%{opacity:0;translate:0 6px}8%{opacity:1;translate:0 0}80%{opacity:1}100%{opacity:0}}
+.plate .betamt{font-size:.75rem;color:var(--muted)}
+.plate .betamt b{font-family:var(--num);font-size:1.05rem;color:var(--gold);font-weight:500}
+.chipwrap.slide{animation:chipIn .45s cubic-bezier(.2,.8,.3,1.1)}
+.chipwrap.up.slide{animation-name:chipUp}
+@keyframes chipIn{from{transform:translateY(-60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes chipUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.felt .amt-label{font-size:1.1rem;padding:1px 8px;background:rgba(0,0,0,.7);color:var(--gold)}
+/* 桁が増えたぶん、スマホでは金額を少し詰めて表示する */
+@media (max-width:620px){
+  .felt .amt-label{font-size:.88rem;padding:1px 5px;margin-left:2px}
+  .plate{padding:4px 6px 5px;gap:2px 5px}
+  .plate .chp{font-size:.8rem}
+  .mine .mybet{justify-self:start}
+}
+.cutin{position:absolute;inset:0;z-index:9;display:grid;align-items:center;pointer-events:none;background:rgba(0,0,0,.35)}
+.cutin .band{position:relative;height:38%;display:grid;grid-template-columns:42% 1fr;align-items:center;
+  background:linear-gradient(100deg,var(--crimson) 0 60%,#7e1222);clip-path:polygon(0 12%,100% 0,100% 88%,0 100%);overflow:hidden}
+.cutin .cav{height:120%;align-self:end;aspect-ratio:1;justify-self:center}
+.cutin .ctext{display:grid;gap:2px;padding-right:12px;color:#fff}
+.cutin .ctext b{font-family:var(--display);font-size:1.6rem}
+.cutin .ctext span{font-family:var(--num);letter-spacing:.3em;color:var(--gold);font-size:.9rem}
+.cutin .ctext p{margin:0;font-weight:900;line-height:1.5}
+.cutin.go .band{animation:cut 1.8s cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes cut{0%{transform:translateX(110%)}18%{transform:translateX(0)}80%{transform:translateX(0);opacity:1}100%{transform:translateX(-110%);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.bust,.bust .body,.bust.think .av,.av .eyes,.chipwrap.slide{animation:none}.cutin.go .band{animation:none}}
+.say{top:1%;max-width:62%;width:max-content;font-size:.78rem;font-weight:700;line-height:1.35;padding:5px 10px 11px;text-align:left}
+.plate .tag{font-size:.78rem;padding:1px 8px}
+.plate .tag b,.mine .tag b{font-family:var(--num);font-size:1.05rem;font-weight:700;letter-spacing:.02em}
+.plate.flash{animation:flash .7s ease-out}
+@keyframes flash{0%{background:rgba(226,182,91,.6)}100%{background:rgba(8,9,12,.88)}}
+.say{top:41%;clip-path:polygon(0 18%,42% 18%,50% 0,58% 18%,100% 18%,100% 100%,0 100%);padding:11px 10px 5px}
+.say.l{transform:translateX(-30%);clip-path:polygon(0 18%,22% 18%,30% 0,38% 18%,100% 18%,100% 100%,0 100%)}
+.say.r{transform:translateX(-70%);clip-path:polygon(0 18%,62% 18%,70% 0,78% 18%,100% 18%,100% 100%,0 100%)}
+.plate{max-width:36%}
+.plate .tag{white-space:nowrap}
+
+/* テル（クセ） */
+.bust .cue{position:absolute;right:6%;top:6%;z-index:6;font:800 .8rem/1 var(--sans,sans-serif);color:#1a1206;background:var(--gold,#e2b65b);
+  padding:4px 7px;border-radius:999px;box-shadow:0 2px 8px #0008;pointer-events:auto;white-space:nowrap}
+.bust .cue.go{animation:cuePop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes cuePop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+.bust.cue-still .body{animation-play-state:paused;filter:saturate(.85)}
+.bust.cue-glance .body svg{animation:cueGlance 1s ease-in-out 2}
+@keyframes cueGlance{50%{transform:translateY(4%) rotate(-3deg)}}
+.bust.cue-stare .body svg{animation:cueStare 1.2s ease-out forwards}
+@keyframes cueStare{to{transform:scale(1.06) translateY(-2%)}}
+.bust.cue-talk .body svg{animation:cueTalk .3s ease-in-out 5}
+@keyframes cueTalk{50%{transform:rotate(2deg) translateY(-1%)}}
+.bust.cue-smile .body svg{animation:cueSmile 1.4s ease-in-out}
+@keyframes cueSmile{40%{transform:scale(1.03)}}
+.bust.cue-sweat .cue,.bust.cue-fast .cue{background:#9fd8ff}
+.needlerow{display:flex;justify-content:flex-start;flex-wrap:wrap;gap:6px}
+.rulepick{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:.8rem;opacity:.85}
+.rulepick select{background:#15151c;color:inherit;border:1px solid #ffffff33;border-radius:6px;padding:4px 6px;font:inherit}
+.needle{margin:0 0 8px;font:700 .78rem/1 inherit;padding:7px 12px;border-radius:999px;background:#2a2333;border:1px solid #6b5a86;color:#e6dcff;cursor:pointer}
+.needle[hidden]{display:none}
+.settings{display:flex;justify-content:flex-end;padding:4px 2px}
+.settings .mini{font-size:.75rem;padding:4px 10px;border-radius:999px;background:transparent;border:1px solid #ffffff33;color:inherit;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.bust .cue.go,.bust[class*="cue-"] .body svg{animation:none}}
+
+/* ディーラーの声・照明・演出 */
+.lamp{position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:screen;opacity:.55;
+  background:radial-gradient(ellipse 55% 38% at 50% 0%,color-mix(in srgb,var(--lamp,#e2b65b) 55%,transparent),transparent 70%),
+    radial-gradient(ellipse 40% 25% at 50% 62%,color-mix(in srgb,var(--lamp,#e2b65b) 18%,transparent),transparent 70%)}
+.dcall{position:absolute;left:10px;top:40px;z-index:6;pointer-events:none;opacity:0;white-space:nowrap;
+  font:800 .95rem/1 var(--display,serif);letter-spacing:.12em;color:#f6ead0;background:rgba(6,7,10,.78);padding:7px 16px;
+  border-top:1px solid var(--gold,#e2b65b);border-bottom:1px solid var(--gold,#e2b65b)}
+.dcall.go{animation:dcall 1.3s ease-out forwards}
+@keyframes dcall{0%{opacity:0;transform:translateX(-12px)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+.potfly{position:absolute;z-index:7;pointer-events:none}
+.spot .hand.muck{animation:muck .6s ease-in forwards}
+@keyframes muck{0%{opacity:1;transform:none}100%{opacity:0;transform:translateY(70%) rotate(12deg) scale(.7)}}
+.settings{gap:6px}
+@media (prefers-reduced-motion:reduce){.dcall.go{animation:none;opacity:1}.spot .hand.muck{animation:none}}
+
+/* ポット：卓の中央に置いたチップと、立てた金額札 */
+.felt .boardspot{transform-style:preserve-3d}
+.felt .potzone{display:flex;align-items:flex-end;justify-content:center;gap:14px;min-width:210px;min-height:46px;padding:6px 20px;margin-top:2px;
+  border-radius:50%;border:2px dashed rgba(226,182,91,.55);background:radial-gradient(ellipse,rgba(0,0,0,.3),rgba(0,0,0,.08) 70%,transparent);transform-style:preserve-3d}
+@media (min-width:700px){.felt .boardspot{top:23.5%;gap:4px}.felt .spot:not(#spot0){top:10.5%!important}}
+.potchips{display:grid;place-items:end center;min-width:40px}
+.potchips .stack{gap:4px}
+.potsign{transform:rotateX(-50deg);transform-origin:50% 100%;display:grid;justify-items:center;line-height:1.05;padding:4px 14px 5px;white-space:nowrap;
+  background:linear-gradient(#17121c,#07080b);border:1.5px solid var(--gold);box-shadow:0 8px 10px rgba(0,0,0,.5)}
+.potsign[hidden]{display:none}
+.potsign .pl{font-size:.72rem;letter-spacing:.3em;color:var(--gold);font-weight:800}
+.potsign .pv{font-family:var(--num);font-size:1.75rem;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.potsign .ps{font-size:.68rem;opacity:.8;margin-top:2px}
+
+/* ---------- 本物のテーブルらしさ：紙のカード・カジノチップ・布のフェルト ---------- */
+.felt{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(ellipse 60% 40% at 50% 34%,var(--felt-hi),var(--felt) 70%)}
+.felt::before{content:"";position:absolute;inset:9% 12% 30%;border-radius:50%;border:1.5px solid rgba(240,225,180,.22);pointer-events:none}
+.card{border-radius:7%/5%;background:linear-gradient(160deg,#fffefa,#f1ece1);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 1px 0 #d8d0bf,0 2px 0 #c6bda9,0 3px 0 #b3aa95,0 8px 14px rgba(0,0,0,.55)}
+.card .r{top:5%;left:7%;font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-.04em;font-size:calc(var(--cw)*.3)}
+.card .r i{font-size:.85em}
+.card .r2{top:auto;left:auto;bottom:5%;right:7%;transform:rotate(180deg)}
+.card .s{padding:0;font-size:calc(var(--cw)*.48)}
+.card .s.ace{font-size:calc(var(--cw)*.62)}
+.card .court{position:absolute;inset:17% 20%;border:1px solid currentColor;border-radius:3px;display:grid;place-content:center;justify-items:center;
+  background:linear-gradient(160deg,rgba(226,182,91,.28),rgba(226,182,91,.08));line-height:.95}
+.card .court b{font-family:Georgia,'Times New Roman',serif;font-size:calc(var(--cw)*.36)}
+.card .court i{font-style:normal;font-size:calc(var(--cw)*.24)}
+.spot .card .r2,.spot .card .r i{display:none}
+.card.back{background:
+  repeating-linear-gradient(45deg,transparent 0 5px,rgba(255,255,255,.22) 5px 6px),
+  repeating-linear-gradient(-45deg,transparent 0 5px,rgba(255,255,255,.22) 5px 6px),
+  radial-gradient(circle,#b0213a,#7d1426);
+  box-shadow:inset 0 0 0 calc(var(--cw)*.07) #fbf8f1,inset 0 0 0 calc(var(--cw)*.085) #7d1426,0 1px 0 #d8d0bf,0 2px 0 #c6bda9,0 7px 12px rgba(0,0,0,.55)}
+/* カジノチップ：ふちの白いインサートと中央の円 */
+.chip{background:
+  radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--c) 55%,#fff) 0 27%,rgba(255,255,255,.9) 29% 32%,transparent 34%),
+  repeating-conic-gradient(from 8deg,var(--c) 0 30deg,#f6f2e8 30deg 45deg);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 3.5px 0 var(--d),0 4px 3px rgba(0,0,0,.45)}
+.mystack{display:flex;justify-content:center;min-height:0}
+.spot{position:relative}
+.spot .mystack{position:absolute;top:-6px;transform:scale(.7);transform-origin:50% 100%}
+.spot[data-side="l"] .mystack{left:100%;margin-left:2px}
+.spot[data-side="r"] .mystack{right:100%;margin-right:2px}
+.spot[data-c] .mystack{left:100%;right:auto;margin-left:2px}
+.mine .me-r .mystack{justify-content:flex-end;margin-bottom:2px}
+
+/* ---------- あるある：称号・プロテクター・スクイーズ ---------- */
+.t3d::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:#000;opacity:var(--night,0);transition:opacity 1.5s}
+.toast{position:absolute;left:50%;top:44%;z-index:10;transform:translate(-50%,-50%);display:flex;gap:10px;align-items:center;width:min(88%,360px);
+  background:rgba(8,9,12,.94);border:1.5px solid var(--gold);padding:8px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none}
+.toast[hidden]{display:none}
+.toast .tava{width:44px;height:44px;flex:none;overflow:hidden}.toast .tava svg{width:100%;height:100%}
+.toast b{display:block;color:var(--gold);font-size:.92rem}.toast em{font-style:normal;font-size:.8rem;opacity:.9}
+.toast.go{animation:toastIn 4.2s ease forwards}
+@keyframes toastIn{0%{opacity:0;transform:translate(-50%,-30%)}8%{opacity:1;transform:translate(-50%,-50%)}85%{opacity:1}100%{opacity:0}}
+.mine .hold{position:relative}
+.mine .hold.squeeze{cursor:pointer}
+.mine .hold.squeeze .card{transition:transform .35s cubic-bezier(.3,.7,.3,1)}
+.mine .hold.squeeze.lift .card:first-child{transform:rotate(-14deg) translateY(-8px) skewY(-4deg)}
+.mine .hold.squeeze.lift .card:nth-child(2){transform:rotate(9deg) translateY(-10px) skewY(4deg)}
+.peekhint{position:absolute;left:50%;bottom:38%;transform:translateX(-50%);white-space:nowrap;font-size:.72rem;font-weight:800;
+  background:rgba(0,0,0,.72);color:#f6ead0;padding:3px 8px;border:1px solid var(--gold);pointer-events:none}
+.protector{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:42px;height:42px;pointer-events:none;filter:drop-shadow(0 4px 4px rgba(0,0,0,.6))}
+.protector svg{width:100%;height:100%}
+.extras{display:grid;gap:12px;margin-top:16px}
+@media (min-width:760px){.extras{grid-template-columns:1fr 1fr}}
+.exbox{background:var(--panel);padding:12px 14px}
+.exbox h3{margin:0 0 6px;font-size:.95rem;color:var(--gold);letter-spacing:.08em}
+.exnote{margin:0 0 8px;font-size:.78rem;color:var(--muted)}
+.prot{display:flex;flex-wrap:wrap;gap:8px}
+.pbtn{display:grid;justify-items:center;gap:4px;width:74px;padding:6px 4px;background:#15161d;border:1px solid #ffffff22;color:inherit;font:inherit;font-size:.72rem;cursor:pointer}
+.pbtn.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.pbtn:disabled{opacity:.45;cursor:default}
+.pbtn .pic{width:40px;height:40px;display:grid;place-items:center}.pbtn .pic svg{width:100%;height:100%}
+.pbtn .lk{font-size:1.2rem;color:var(--muted)}
+.titles{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.titles li{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:4px 8px;background:#15161d;color:var(--muted)}
+.titles li.got{color:var(--ink)}.titles li.got b{color:var(--gold)}
+.titles li span{text-align:right}
+.ch .photo{display:block;width:fit-content;white-space:nowrap;margin-top:3px;font-size:.66rem;padding:0 6px;border:1px solid var(--gold);color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.toast.go{animation:none}.mine .hold.squeeze .card{transition:none}}
+.plate .dbadge{position:static;width:20px;height:20px;font-size:.72rem;box-shadow:0 2px 0 #9c9482}
+
+/* 勝利条件カード */
+.goalcard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:10px 14px;
+  background:linear-gradient(100deg,rgba(215,38,61,.22),rgba(22,24,33,.92) 55%);border-left:4px solid var(--crimson);box-shadow:inset 0 0 0 1px rgba(226,182,91,.18)}
+.goalcard .gl{font-size:.7rem;letter-spacing:.2em;color:var(--gold);font-weight:800;writing-mode:horizontal-tb}
+.goalcard .gm{font-weight:900;font-size:1.05rem;line-height:1.3}
+.goalcard .pips{display:flex;align-items:center;gap:5px}
+.goalcard .pips i{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold);display:block}
+.goalcard .pips i.on{background:var(--gold);box-shadow:0 0 8px rgba(226,182,91,.8)}
+.goalcard .pips b{font-family:var(--num);font-size:.95rem;margin-left:4px}
+.goalcard .gs{grid-column:1/-1;font-size:.74rem;color:var(--muted)}
+.goalcard.bump{animation:gbump .7s ease}
+@keyframes gbump{30%{transform:scale(1.03);box-shadow:inset 0 0 0 2px var(--gold),0 0 18px rgba(226,182,91,.5)}}
+@media (max-width:420px){.goalcard{grid-template-columns:minmax(0,1fr) auto}.goalcard .gl{grid-column:1/-1}}
+/* 対戦相手の紹介 */
+.gwrap{position:relative}
+.vs{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(5,6,10,.86);backdrop-filter:blur(3px)}
+.vs[hidden]{display:none}
+.vsin{width:min(100%,720px);display:grid;gap:14px;justify-items:center;text-align:center}
+.vshead{display:grid;justify-items:center}
+.vsv{font-family:var(--display);font-weight:800;font-size:3rem;line-height:1;color:var(--crimson);letter-spacing:.1em;text-shadow:0 0 18px rgba(215,38,61,.6)}
+.vst{font-size:.85rem;color:var(--gold);letter-spacing:.12em}
+.vsopps{display:grid;gap:10px;width:100%}
+.vsopps.n1{grid-template-columns:minmax(0,260px);justify-content:center}
+.vsopps.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.vsopps.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.vscard{background:var(--panel);padding:10px 8px 12px;display:grid;justify-items:center;gap:3px;animation:vsIn .5s cubic-bezier(.2,.9,.3,1.2) both;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.vscard.cool{background:linear-gradient(160deg,#2a1218,var(--panel) 60%);box-shadow:inset 0 0 0 1px rgba(226,182,91,.35)}
+.vsava{width:min(100%,130px);aspect-ratio:1}.vsava svg{width:100%;height:100%}
+.vsname{font-weight:900;font-size:1.05rem;display:grid;justify-items:center;line-height:1.2}.vsname .stars{font-size:.7rem;color:var(--gold)}
+.vsrole{font-size:.75rem;color:var(--gold)}.vsrole span{margin-left:6px;color:var(--muted)}
+.vsq{font-size:.78rem;line-height:1.4}
+.vschips{font-family:var(--num);font-size:.78rem;color:var(--muted)}
+.vsgoal{font-weight:900;font-size:.95rem;background:rgba(215,38,61,.2);border-left:4px solid var(--crimson);padding:6px 14px}
+.vsgoal span{font-size:.7rem;color:var(--gold);letter-spacing:.2em;margin-right:10px}
+@keyframes vsIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@media (max-width:480px){.vsopps.n3 .vsq{display:none}.vsv{font-size:2.4rem}}
+@media (prefers-reduced-motion:reduce){.vscard,.goalcard.bump{animation:none}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+          <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
+          <linearGradient id="shadeBody" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+        </defs></svg>
+
+<div class="wrap">
+
+  <!-- タイトル -->
+  <section id="title">
+    <div class="logo">
+      <div class="eyebrow">TEXAS HOLD'EM STORY</div>
+      <h1 lang="en">LAST<br><span>TELL</span></h1>
+      <div class="subtitle">最後のテル</div>
+      <p>港のバーで出会った老人は、昔姿を消した伝説のプレイヤーだった。教えを受けながら、街のクラブを一軒ずつ制していこう。</p>
+      <div class="row">
+        <button class="primary" id="btnStory">ストーリー</button>
+        <button id="btnFree">フリー対戦</button>
+      </div>
+      <label class="rulepick">フリー対戦の店ルール
+        <select id="freeRule"><option value="">なし</option><option value="straddle">ストラドル</option><option value="bomb">ボムポット</option><option value="seven2">7-2ゲーム</option></select>
+      </label>
+      <label class="rulepick"><input type="checkbox" id="freeRude"> 感じの悪い客を入れる</label>
+    </div>
+    <div class="hero" id="hero"><span class="tagname">師匠ジン ★★★★★</span></div>
+  </section>
+
+  <!-- 章選択 -->
+  <section id="chapters" hidden>
+    <div class="top">
+      <h2>章を選ぶ</h2>
+      <button class="ghost small" data-home>タイトルへ</button>
+    </div>
+    <ul class="chapters" id="chList"></ul>
+    <div class="extras">
+      <section class="exbox"><h3>カードプロテクター</h3><p class="exnote">章をクリアするともらえるお守りです。手札の上に置きます（見た目だけ）。</p><div class="prot" id="protList"></div></section>
+      <section class="exbox"><h3>あるある称号</h3><ul class="titles" id="titleList"></ul></section>
+    </div>
+  </section>
+
+  <!-- 会話 -->
+  <section id="scene" hidden>
+    <div class="venue" id="venue"></div>
+    <div class="stage" id="stage"></div>
+    <div class="box" id="box" role="button" tabindex="0" aria-label="次へ進む"></div>
+    <div class="row scene-btns">
+      <button class="ghost small" id="btnSkip">スキップ</button>
+      <button class="primary" id="btnAdv">次へ</button>
+    </div>
+  </section>
+
+  <!-- 卓 -->
+  <section id="game" hidden>
+    <div class="gwrap">
+      <div class="vs" id="vs" hidden role="dialog" aria-label="対戦相手の紹介"></div>
+      <header class="g">
+        <h1 id="gTitle"></h1>
+        <button class="ghost small" id="btnQuit">やめる</button>
+      </header>
+      <div class="goalcard" id="goal" aria-live="polite"></div>
+      <div class="meta" id="meta"></div>
+      <section class="t3d" id="table" aria-label="ポーカーテーブル">
+        <div class="room"></div><div class="lamp"></div><div class="dcall" id="dcall" aria-live="polite"></div><div class="toast" id="toast" hidden aria-live="polite"></div>
+        <div class="busts" id="busts"></div>
+        <div class="felt-wrap"><div class="felt" id="felt">
+          <div class="boardspot"><div class="cards5" id="boardCards"></div><div class="potzone"><div class="potchips" id="potChips"></div><div class="potsign" id="potSign"></div></div></div>
+          <div class="dbtn" id="dbtn">D</div>
+        </div></div>
+        <div class="plates" id="plates"></div>
+        <div class="hud"><div class="street" id="street"></div><div class="msg" id="msg" aria-live="polite"></div></div>
+        <div class="mine" id="mine"></div>
+        <div class="cutin" id="cutin" hidden><div class="band"><div class="cav"></div><div class="ctext"></div></div></div>
+      </section>
+      <div class="sensei" id="sensei" hidden><div class="ava" id="senseiAva"></div><p id="senseiText"></p></div>
+      <div class="actionbar" id="controls">
+        <div class="clock" id="clock" hidden role="timer" aria-live="off"><i></i><span></span></div>
+        <div class="raisepanel" id="raisePanel" hidden>
+          <div class="amtrow">
+            <button class="step" id="btnMinus" aria-label="減らす">−</button>
+            <div class="amt"><small id="raiseWord">レイズ額</small><output id="raiseAmt">0</output><span class="amtsub" id="raiseSub"></span></div>
+            <button class="step" id="btnPlus" aria-label="増やす">＋</button>
+          </div>
+          <div class="rangewrap"><input type="range" id="raiseRange" step="1000" aria-label="レイズ額"><div class="rangelbl"><span id="rMin"></span><span id="rMax"></span></div></div>
+          <div class="presets">
+            <button data-q="min">最小</button>
+            <button data-q="half">½ポット</button>
+            <button data-q="threeq">¾ポット</button>
+            <button data-q="pot">ポット</button>
+            <button data-q="all">全額</button>
+          </div>
+        </div>
+        <div class="needlerow"><button id="btnNeedle" class="needle" hidden>揺さぶる（相手に話しかける）</button><button id="btnStraddle" class="needle" hidden></button></div>
+        <div class="acts" id="acts">
+          <button id="btnFold" class="act fold"><b>フォールド</b><small>降りる</small></button>
+          <button id="btnCall" class="act call"><b>チェック</b><small></small></button>
+          <button id="btnRaise" class="act raise"><b>レイズ</b><small></small></button>
+        </div>
+        <div class="waiting" id="waiting" hidden></div>
+      </div>
+      <div class="actionbar" id="between" hidden>
+        <div class="betweenrow">
+          <span class="result" id="resultText"></span>
+          <span class="hint" id="betweenHint"></span>
+        </div>
+        <div class="tauntbox" id="tauntBox" hidden><span>言い返す？</span><button class="mini" id="btnIgnore">無視する</button><button class="mini" id="btnNice">ナイスハンド</button></div>
+        <div class="acts">
+          <button id="btnAlt" class="act" hidden></button>
+          <button id="btnNext" class="act raise">次のハンドへ</button>
+        </div>
+      </div>
+      <details class="logbox"><summary>ハンドの記録</summary><ul class="log" id="log"></ul></details>
+      <details class="logbox" id="notesBox"><summary>相手メモ（クセの答え合わせ）</summary><ul class="log" id="notes"></ul></details>
+      <div class="settings"><button id="btnPeek" class="mini"></button><button id="btnSound" class="mini"></button><button id="btnSpeed" class="mini"></button><button id="btnDepth" class="mini"></button><button id="btnClock" class="mini"></button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =========================================================
+   章データ（会話はここを書き足すだけで増やせる）
+   line: ['話し手','セリフ'] / 話し手が '' なら地の文 / {lesson,body} は師匠の教え
+   ========================================================= */
+const CHAPTERS=[
+ {no:1,lamp:'#ffb15a',bgm:1,title:'降りるのも勝負',venue:'港のバー「錨亭」',color:'#cfe6ff',
+  goalText:'ゲンのチップを全部取る',goal:{type:'bust'},hint:'hand',
+  lore:'この店では昔、7と2の最弱の手で勝つと、卓の全員が一杯おごるという決まりがあったらしい。',
+  you:60000,blinds:[1000,2000],opps:[{name:'ゲン',style:'station',chips:60000,label:'何でも参加'}],
+  intro:[
+   ['','雨の夜。港のはずれにあるバー「錨亭」。'],
+   ['','仕事帰りに覚えたポーカーで、今夜も負けが込んでいる。'],
+   ['ゲン','おう新入り、もう一勝負だ！配られた札は全部勝負、それがポーカーってもんよ！'],
+   ['','カウンターの隅で、酔いつぶれていた老人が顔を上げた。'],
+   ['老人','……お前、負け方が下手だな'],
+   ['','老人は顎の古い傷を指でなぞりながら、こちらの手札をのぞきこんだ。'],
+   ['老人','ゲンは何にでも参加する。だから、お前は強い手のときだけ戦えばいい。それだけで勝てる'],
+   ['ジン','ジンでいい。昔、少しだけカードをやっていた'],
+   ['店主','ジンさんが人に口を出すなんて、何年ぶりだろうね'],
+   {lesson:'ハンドの選び方',body:'ポーカーは、配られた2枚で参加するかを決めるゲームです。ペアや、Aと絵札の組み合わせのような強い2枚なら勝負し、弱い2枚なら降ります。この章では、ジンがあなたの手札の強さを教えてくれます。'},
+   ['ジン','いいか。降りるのも勝負のうちだ'],
+   ['ジン','それと、ゲンは顔に出る。いい手が来ると、すぐにニヤける'],
+  ],
+  outro:[
+   ['ゲン','参った！お前、急に固くなりやがったな'],
+   ['ジン','弱い手で突っ込まなくなった。それだけのことだ'],
+   ['店主','約束だよ、ゲンさん。今夜から錨亭の看板はこの子のものだ'],
+   ['ゲン','待て待て、今のは俺のフラッシュだろ！……あ、ハートとダイヤか'],
+   ['店主','ゲンさん、カードは見せたとおりに判定するよ。「カードがしゃべる」ってやつだ'],
+   ['','壁に掛かっていた古い錨の札が、こちらに手渡された。店主はそのお守りの錨を手札の上に置けと言う。'],
+   ['店主','それと、うちの壁に写真を一枚貼らせておくれ。新しい看板の主だからね'],
+   ['ジン','次は「銀の扉」だ。あそこの主はロク。……昔の知り合いだ'],
+  ],
+  lose:'ゲンに付き合いすぎたな。弱い手は捨てろ。'},
+
+ {no:2,lamp:'#b9c6ff',bgm:2,title:'後ろの席から盗め',venue:'古いクラブ「銀の扉」',color:'#e2dcff',
+  goalText:'ブラインドを3回盗む',goal:{type:'steal',n:3},hint:'position',refill:true,
+  lore:'この店では昔、配る前に倍のブラインドを置く「ストラドル」が流行っていたそうだ。',
+  you:80000,blinds:[1000,2000],opps:[{name:'ロク',style:'tight',chips:80000,label:'慎重'},{name:'ハル',style:'tight2',chips:80000,label:'慎重'}],
+  intro:[
+   ['','路地の奥にある、銀色に塗られた重い扉。中は静かで、客は皆じっとカードを見ている。'],
+   ['ロク','……ジン。生きていたのか'],
+   ['ジン','死んだことにしておいてくれ'],
+   ['ロク','弟子を連れてくるとはな。うちの客は慎重だ。簡単には崩れんよ'],
+   ['ジン','慎重な奴ほど、盗みやすい'],
+   {lesson:'ポジションとブラインド',body:'ディーラーボタン（D）に近い席ほど、後から動けて有利です。後ろの席から先にレイズすると、慎重な相手は弱い手を降ります。全員を降ろせば、ブラインドの分のチップがあなたのものになります。これを「ブラインドを盗む」と言います。'},
+   ['ジン','後ろの席で、まだ誰も参加していなかったら仕掛けろ。3回盗めたら、ロクも認める'],
+  ],
+  outro:[
+   ['ロク','……ジンの打ち方、そのままだ。あの夜を思い出す'],
+   ['ジン','昔話はいい'],
+   ['ロク','弟子よ。こいつがなぜ急に消えたか、聞いたことはあるか'],
+   ['ロク','この街には古い決まりがある。店の看板を6枚そろえた者だけが、王冠の看板戦に挑める'],
+   ['ロク','ジン。まだあの卓に未練があるのか'],
+   ['ジン','ない'],
+   ['','そう答えるジンの指は、顎の傷をなぞっていた。'],
+   ['ジン','行くぞ。次は「月影」だ'],
+   ['','銀の扉の看板と、小さな銀の鍵を受け取った。カードの上に置くお守りにちょうどいい。'],
+   ['','時計は午前0時を回っている。「あとワンハンドだけ」と言いかけて、ジンににらまれた。'],
+  ],
+  lose:'前の席で無理をしたな。盗むのは後ろの席からだ。'},
+
+ {no:3,lamp:'#ff5fa2',bgm:3,title:'何もない手で勝つ',venue:'ジャズクラブ「月影」',color:'#ffd8e6',
+  goalText:'ブラフで2回勝つ',goal:{type:'bluff',n:2},hint:'bluff',refill:true,
+  lore:'この店では昔、閉店前の一回だけ全員が同じ額を出し合う「ボムポット」をやっていたという。',
+  you:80000,blinds:[1000,2000],opps:[{name:'セキ',style:'nit',chips:80000,label:'すぐ降りる'},{name:'ミナ',style:'nit2',chips:80000,label:'慎重'}],
+  intro:[
+   ['','サックスの音が低く流れる、地下のジャズクラブ。'],
+   ['セキ','ジン君か。君の弟子なら、紳士的に勝負しよう'],
+   ['ジン','この人は、少しでも怪しいと思ったらすぐ降りる'],
+   ['セキ','慎重と言ってほしいね'],
+   {lesson:'ブラフ',body:'役ができていなくても、強そうに賭ければ相手が降りることがあります。これがブラフです。降りやすい相手に、フロップ以降で賭けるのが基本です。この章では、役なし（ハイカード）のまま賭けて全員を降ろすと、ブラフ成功として数えます。'},
+   ['ジン','何もない手で2回勝ってみろ。ただし、相手が強く打ち返してきたら引け'],
+  ],
+  outro:[
+   ['セキ','見事に騙された。気持ちのいい負けだよ'],
+   ['セキ','……ジン君。あの夜のことを、この子にはまだ話していないのかね'],
+   ['セキ','あの夜、ジン君の手は読まれていた。まるで、誰かに答えを教えられていたようにね'],
+   ['ジン','いずれ話す'],
+   ['セキ','記念にこれを。月の刻まれた古いコインだ。カードの上に置くといい'],
+   ['','時計は午前1時。サックスの最後の曲が終わった。'],
+   ['','次の店は、ホテル最上階のラウンジ。そこには、ブラフを見抜くディーラーがいるという。'],
+  ],
+  lose:'ブラフは相手を選べ。打ち返してくる相手には引くんだ。'},
+ {no:4,lamp:'#ffd98a',bgm:4,title:'嘘を見抜け',venue:'ホテルのラウンジ「天空」',color:'#ffe9b8',
+  goalText:'相手のブラフをコールして2回勝つ',goal:{type:'readcall',n:2},hint:'tell',refill:true,tells:true,
+  lore:'このラウンジでは、ディーラーも客と一緒に卓につく。',
+  you:80000,blinds:[1000,2000],opps:[{name:'レイカ',style:'liar',chips:80000,label:'ブラフ多め'},{name:'ソウ',style:'liar2',chips:80000,label:'見習い'}],
+  intro:[
+   ['','ホテル最上階のラウンジ。窓の外に、街の灯りが広がっている。'],
+   ['レイカ','いらっしゃい。ジンさんのお弟子さんね。噂は聞いてるわ'],
+   ['ジン','このディーラーは、とにかくよく賭ける。半分は嘘だ'],
+   ['ソウ','ぼ、僕はまだ見習いです。よろしくお願いします！'],
+   ['レイカ','嘘かどうかなんて、顔を見たってわからないわよ'],
+   {lesson:'テル（相手のクセ）',body:'ライブのポーカーでは、表情やしぐさから手の強さが漏れることがあります。これを「テル」と言います。強い手のときに出るクセと、ブラフのときに出るクセを見分けましょう。ただしクセはいつも出るわけではなく、当たるのは7割ほどです。手が見えたら答え合わせをして、相手メモに記録されます。'},
+   ['ジン','顔をよく見ておけ。相手のブラフを見抜いてコールし、2回勝ってみろ'],
+  ],
+  outro:[
+   ['レイカ','……見抜かれたのは久しぶり。ジンさんの目を受け継いだのね'],
+   ['ジン','まだ半人前だ'],
+   ['','そう言い切ったとき、ジンの指は顎の傷に触れていなかった。'],
+   ['レイカ','ジンさんにもクセがあった。誰も知らないはずのね'],
+   ['レイカ','次は地下よ。あそこには、ジンさんの昔のお弟子さんがいる'],
+   ['ジン','……'],
+   ['レイカ','これは餞別。天空の羽よ。縁起かつぎに、手札の上に置きなさい'],
+   ['','窓の外が、少しだけ白み始めていた。'],
+   ['','（第5章は準備中です）'],
+  ],
+  lose:'クセだけを信じるな。賭け方と、場のカードも見ろ。'},
+];
+const LOCKED=[
+ {no:5,title:'少ないチップからの逆転',venue:'地下の賭場跡'},
+ {no:6,title:'街一番の卓',venue:'カードルーム「王冠」'},
+ {no:7,title:'卒業試験',venue:'錨亭、閉店後'},
+];
+
+/* ---------- キャラの立ち絵（SVG）：rank 1〜2 はかわいい、3以上はかっこいい ----------
+   mood: normal / think / confident / worried / win / lose */
+const CHARS={
+  'ゲン':{rank:1,hair:'#4a3020',style:'buzz',cloth:'#4f8fe0',band:'#ff6b8b',blush:1,mouth:'open',eyes:'grin'},
+  'ハル':{rank:1,hair:'#ff9fbe',style:'bob',cloth:'#ffd166',mouth:'smile',iris:'#d94f78'},
+  '店主':{rank:1,hair:'#7a4330',style:'bun',cloth:'#ffffff',apron:1,mouth:'smile',iris:'#7a4330'},
+  'ミナ':{rank:2,hair:'#8d6be0',style:'long',cloth:'#38305c',mouth:'smile',iris:'#8d6be0'},
+  'ケンジ':{rank:2,hair:'#2b2d4a',style:'short',cloth:'#ff6b8b',mouth:'smile'},
+  'ミサキ':{rank:2,hair:'#c0763a',style:'long',cloth:'#7fd1ff',mouth:'smile',iris:'#a35a24'},
+  'タロウ':{rank:1,hair:'#4a3b2b',style:'buzz',cloth:'#ffc93c',mouth:'open'},
+  'あなた':{rank:2,hair:'#ff9c5b',style:'spiky',cloth:'#2fb39a',mouth:'smile',iris:'#c2621f'},
+  'ロク':{rank:3,cool:'slick',hair:'#14151c',cloth:'#2a2c38',glow:'#e0344a',skin:'#e9cdb6',mustache:1},
+  'セキ':{rank:4,cool:'gent',hair:'#b9bfd0',cloth:'#1b1d27',glow:'#7fc8ff',skin:'#ecd3c0',monocle:1},
+  'レイカ':{rank:4,cool:'lady',hair:'#1a1420',cloth:'#5a1830',glow:'#e2b65b',skin:'#f0d6c4'},
+  'ゴウ':{rank:3,cool:'rude',hair:'#3b2416',cloth:'#4a1d26',glow:'#ff8a3d',skin:'#e6c3a4'},
+  'ソウ':{rank:2,hair:'#5b4a8a',style:'short',cloth:'#7a2234',mouth:'smile',iris:'#5b4a8a'},
+  'ジン':{rank:5,cool:'master',hair:'#e9e6df',cloth:'#2b2119',glow:'#e2b65b',skin:'#e4c3a6',beard:1,scar:1},
+  '老人':{rank:5,cool:'master',hair:'#e9e6df',cloth:'#2b2119',glow:'#e2b65b',skin:'#e4c3a6',beard:1,scar:1},
+};
+const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const rankOf=name=>(CHARS[name]||{}).rank||2;
+function avatar(name,mood){const c=CHARS[name]||CHARS['ケンジ'];mood=mood||'normal';return c.cool?coolAvatar(name,c,mood):cuteAvatar(name,c,mood)}
+const SWEAT=(x,y)=>`<path d="M${x} ${y} q-4 7 0 9 q4 -2 0 -9Z" fill="#9fd8ff" stroke="#2b2d4a" stroke-width="1.2"/>`;
+
+/* かわいい：頭が大きいちびキャラ。表情は大きく */
+function cuteAvatar(name,c,mood){
+  const L='#2b2d4a',SK='#ffe2cc',sw=`stroke="${L}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`;
+  let back='',eyes='',ex='',mouth='',fx='';
+  if(c.style==='long')back=`<path d="M20 50 Q18 16 50 14 Q82 16 80 50 L84 92 Q50 98 16 92Z" fill="${c.hair}" ${sw}/>`;
+  if(c.style==='bob')back=`<path d="M20 50 Q18 16 50 14 Q82 16 80 50 L81 70 Q70 74 64 68 L36 68 Q30 74 19 70Z" fill="${c.hair}" ${sw}/>`;
+  if(c.style==='bun')back=`<circle cx="50" cy="10" r="9" fill="${c.hair}" ${sw}/>`;
+  const fringe={
+    short:`<path d="M21 48 Q19 13 50 12 Q81 13 79 48 Q72 30 60 31 Q55 24 46 31 Q32 29 21 48Z" fill="${c.hair}" ${sw}/>`,
+    long:`<path d="M21 50 Q20 14 50 13 Q80 14 79 50 Q68 32 50 28 Q38 38 21 50Z" fill="${c.hair}" ${sw}/>`,
+    bob:`<path d="M21 50 Q20 14 50 13 Q80 14 79 50 Q64 38 48 30 Q36 40 21 50Z" fill="${c.hair}" ${sw}/>`,
+    bun:`<path d="M21 46 Q21 15 50 15 Q79 15 79 46 Q66 28 50 27 Q34 28 21 46Z" fill="${c.hair}" ${sw}/>`,
+    buzz:`<path d="M22 40 Q24 15 50 15 Q76 15 78 40 Q50 28 22 40Z" fill="${c.hair}" ${sw}/>`,
+    spiky:`<path d="M20 48 L17 26 L30 30 L32 12 L44 25 L54 8 L59 25 L72 12 L70 30 L83 27 L79 48 Q64 32 50 34 Q36 32 20 48Z" fill="${c.hair}" ${sw}/>`,
+  }[c.style];
+  const iris=c.iris||L;
+  const bigEyes=(dx,dy)=>`<g class="eyes"><ellipse cx="39" cy="54" rx="5.6" ry="7.4" fill="#fff" stroke="${L}" stroke-width="1.8"/><ellipse cx="61" cy="54" rx="5.6" ry="7.4" fill="#fff" stroke="${L}" stroke-width="1.8"/>
+    <ellipse cx="${39+dx}" cy="${54+dy}" rx="4.6" ry="6.2" fill="${iris}"/><ellipse cx="${61+dx}" cy="${54+dy}" rx="4.6" ry="6.2" fill="${iris}"/>
+    <circle cx="${41+dx}" cy="${51+dy}" r="2.2" fill="#fff"/><circle cx="${63+dx}" cy="${51+dy}" r="2.2" fill="#fff"/></g>`;
+  const blushO=c.blush||mood==='win'?.95:.6;
+  if(mood==='think'){eyes=bigEyes(1.6,-2);mouth=`<ellipse cx="52" cy="66" rx="2.6" ry="2" fill="#ff7a8a" ${sw}/>`;
+    fx=`<text x="80" y="22" font-size="16" font-weight="900" fill="#e2b65b" stroke="${L}" stroke-width=".8">?</text>`}
+  else if(mood==='confident'){eyes=bigEyes(0,0)+`<path d="M31 41 L46 46 M69 41 L54 46" ${sw} stroke-width="3"/>`;
+    mouth=`<path d="M42 63 Q50 72 58 63Z" fill="#ff7a8a" ${sw}/>`;fx=`<path d="M82 30 l6 -6 M84 38 l8 -2 M80 22 l2 -8" stroke="#ff5f86" stroke-width="2.4" stroke-linecap="round"/>`}
+  else if(mood==='worried'){eyes=bigEyes(0,1)+`<path d="M31 46 L45 41 M69 46 L55 41" ${sw}/>`;
+    mouth=`<path d="M43 67 q3.5 -4 7 0 q3.5 4 7 0" fill="none" ${sw}/>`;fx=SWEAT(78,30)}
+  else if(mood==='win'){eyes=`<g class="eyes"><path d="M32 56 Q39 46 46 56 M54 56 Q61 46 68 56" fill="none" ${sw} stroke-width="3"/></g>`;
+    mouth=`<path d="M41 62 Q50 75 59 62Z" fill="#ff7a8a" ${sw}/>`;
+    fx=`<path d="M12 22 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2Z M86 14 l1.6 4.4 l4.4 1.6 l-4.4 1.6 l-1.6 4.4 l-1.6 -4.4 l-4.4 -1.6 l4.4 -1.6Z" fill="#ffd34d" stroke="${L}" stroke-width="1"/>`}
+  else if(mood==='lose'){eyes=`<g class="eyes"><path d="M33 52 Q39 58 45 52 M55 52 Q61 58 67 52" fill="none" ${sw} stroke-width="2.6"/></g>`;
+    mouth=`<path d="M44 68 Q50 63 56 68" fill="none" ${sw}/>`;
+    fx=`<path d="M37 58 q-3 8 0 12 q3 -4 0 -12Z M63 58 q-3 8 0 12 q3 -4 0 -12Z" fill="#9fd8ff" stroke="${L}" stroke-width="1"/>`}
+  else{
+    if(c.eyes==='grin')eyes=`<g class="eyes"><path d="M34 54 Q40 46 46 54 M54 54 Q60 46 66 54" fill="none" ${sw}/></g>`;
+    else eyes=bigEyes(0,0);
+    mouth={smile:`<path d="M46 66 Q50 69 54 66" fill="none" ${sw}/>`,open:`<path d="M44 64 Q50 73 56 64Z" fill="#ff7a8a" ${sw}/>`}[c.mouth];
+  }
+  ex+=`<ellipse cx="31" cy="63" rx="5" ry="2.8" fill="#ff9fb3" opacity="${blushO}"/><ellipse cx="69" cy="63" rx="5" ry="2.8" fill="#ff9fb3" opacity="${blushO}"/>`;
+  if(c.band)ex+=`<path d="M21 38 Q50 27 79 38 L79 44 Q50 33 21 44Z" fill="${c.band}" ${sw}/>`;
+  let body=`<path d="M24 100 Q26 82 50 81 Q74 82 76 100Z" fill="${c.cloth}" ${sw}/>`;
+  if(c.apron)body+=`<path d="M38 100 L39 87 Q50 90 61 87 L62 100Z" fill="#ffb3c6" ${sw}/>`;
+  // 陰影：同じ形に光と影のグラデーションを重ねる
+  const shade=(svg,g)=>svg.replace(/fill="[^"]*"/,`fill="url(#${g})"`).replace(/stroke="[^"]*"|stroke-width="[^"]*"/g,'');
+  return`<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${esc(name)}">${back}${shade(back,'shadeHead')}${body}${shade(body,'shadeBody')}
+    <g class="head"><ellipse cx="18" cy="55" rx="4" ry="6" fill="${SK}" ${sw}/><ellipse cx="82" cy="55" rx="4" ry="6" fill="${SK}" ${sw}/>
+    <ellipse cx="50" cy="50" rx="31" ry="30" fill="${SK}" ${sw}/><ellipse cx="50" cy="50" rx="31" ry="30" fill="url(#shadeHead)"/>${fringe}${shade(fringe,'shadeHead')}${eyes}${mouth}${ex}${fx}</g></svg>`;
+}
+
+/* かっこいい：細い顔、鋭い目、強い陰影。表情は静かに */
+function coolAvatar(name,c,mood){
+  const id='g'+Math.random().toString(36).slice(2,7),D='#0b0c10',G=c.glow,SK=c.skin;
+  const ln=`stroke="${D}" stroke-width="1.6" stroke-linejoin="round"`;
+  let hairBack='',hair='',ex='';
+  if(c.cool==='master'){
+    hairBack=`<path d="M27 40 Q24 14 52 12 Q78 14 76 38 L80 60 L72 52 L74 70 L66 58 Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M28 38 Q30 16 54 15 Q74 17 74 34 Q64 24 50 26 L56 22 Q42 22 34 32 L38 26 Q30 30 28 38Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<path d="M36 64 Q38 82 50 90 Q62 82 64 64 Q58 70 50 69 Q42 70 36 64Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<path d="M58 36 L66 54" stroke="#b56a5a" stroke-width="1.8"/>`;
+  }else if(c.cool==='lady'){
+    hairBack=`<path d="M26 42 Q22 12 52 12 Q80 13 76 44 L82 92 L60 80 L40 80 L20 92Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M29 44 Q28 16 52 15 Q75 16 73 40 Q66 24 50 24 Q40 30 36 50 Q32 46 29 44Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<circle cx="31" cy="60" r="2.2" fill="${G}"/><path d="M46 64.5 Q51 67 55 64.5" fill="none" stroke="#b0203a" stroke-width="2.2" stroke-linecap="round"/>`;
+  }else if(c.cool==='gent'){
+    hair=`<path d="M29 40 Q28 16 52 15 Q74 16 73 38 Q70 26 60 24 Q46 22 38 28 Q34 32 29 40Z" fill="${c.hair}" ${ln}/><path d="M60 24 Q66 22 70 30" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.2"/>`;
+    ex+=`<path d="M42 62 Q46 59 50 61 Q54 59 58 62 Q54 64 50 62.5 Q46 64 42 62Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<circle cx="58" cy="48" r="6.5" fill="${G}" fill-opacity=".18" stroke="#d9dde8" stroke-width="1.6"/><path d="M64.5 49 Q67 62 63 76" fill="none" stroke="#d9dde8" stroke-width="1"/>`;
+  }else{
+    hair=`<path d="M28 42 Q24 14 54 14 Q76 16 74 40 Q72 28 62 25 L44 26 Q34 30 28 42Z" fill="${c.hair}" ${ln}/><path d="M44 26 Q36 34 34 46 L30 40Z" fill="${c.hair}"/>`;
+    ex+=`<path d="M41 62 L50 59.5 L59 62 L56 63.5 L50 61.5 L44 63.5Z" fill="${c.hair}"/>`;
+  }
+  const glowOp={think:.45,confident:1,win:1,worried:.7,lose:.25}[mood]??.9;
+  const brows={normal:'M33 42 L47 43.5 M67 42 L53 43.5',think:'M34 44 L47 45 M66 42.5 L53 45',confident:'M33 41 L47 44.5 M67 41 L53 44.5',
+    worried:'M33 44 L47 41.5 M67 44 L53 41.5',win:'M33 42 L47 43.5 M67 42 L53 43.5',lose:'M34 45 L47 44 M66 45 L53 44'}[mood]||'M33 42 L47 43.5 M67 42 L53 43.5';
+  let eyes;
+  if(mood==='lose')eyes=`<g class="eyes"><path d="M36 48.5 L46 48 M54 48 L64 48.5" stroke="${D}" stroke-width="2"/></g>`;
+  else eyes=`<g class="eyes"><path d="M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z" fill="${D}"/>
+    <path d="M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z" fill="${G}" opacity="${glowOp}" ${mood==='confident'||mood==='win'?`filter="url(#${id}b)"`:''}/></g>`;
+  eyes+=`<path d="${brows}" stroke="${D}" stroke-width="2.6" stroke-linecap="round"/>`;
+  const mouth={confident:'M45 65 Q51 66.5 57 62.5',win:'M45 64.5 Q51 67 57 62',worried:'M47 64.5 Q51 66.5 55 64.5',lose:'M46 66 Q51 64 56 66'}[mood]||'M46 64.5 L55 64';
+  let fx='';
+  if(mood==='worried')fx=SWEAT(72,34);
+  if(mood==='win')fx=`<path d="M68 40 l1.4 3.6 l3.6 1.4 l-3.6 1.4 l-1.4 3.6 l-1.4 -3.6 l-3.6 -1.4 l3.6 -1.4Z" fill="${G}"/>`;
+  return`<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${esc(name)}">
+    <defs><linearGradient id="${id}" x1="0" x2="1"><stop offset=".55" stop-color="${D}" stop-opacity="0"/><stop offset="1" stop-color="${D}" stop-opacity=".45"/></linearGradient>
+    <filter id="${id}b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    ${hairBack}${hairBack.replace(/fill="[^"]*"/,'fill="url(#shadeHead)"').replace(/stroke="[^"]*"|stroke-width="[^"]*"/g,'')}
+    <path d="M6 100 L12 82 Q28 72 50 72 Q72 72 88 82 L94 100Z" fill="${c.cloth}" ${ln}/>
+    <path d="M6 100 L12 82 Q28 72 50 72 Q72 72 88 82 L94 100Z" fill="url(#shadeBody)"/>
+    <path d="M38 73 L50 96 L62 73" fill="none" stroke="${G}" stroke-width="1.6"/>
+    <path d="M44 62 L44 75 L50 80 L56 75 L56 62Z" fill="${SK}" ${ln}/>
+    <g class="head">
+    <path d="M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z" fill="${SK}" ${ln}/>
+    <path d="M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z" fill="url(#${id})"/>
+    <path d="M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z" fill="url(#shadeHead)" opacity=".8"/>
+    <path d="M51 49 L49 58 L52 58.5" fill="none" stroke="${D}" stroke-width="1.2" stroke-opacity=".6"/>
+    <path d="${mouth}" fill="none" stroke="${D}" stroke-width="1.6" stroke-linecap="round"/>
+    ${eyes}${hair}${hair.replace(/fill="[^"]*"/,'fill="url(#shadeHead)"').replace(/stroke="[^"]*"|stroke-width="[^"]*"/g,'')}${ex}${fx}
+    <path d="M71 40 L69 54 Q65 67 51 73" fill="none" stroke="${G}" stroke-width="1.4" stroke-opacity=".9"/></g>
+  </svg>`;
+}
+
+/* ---------- テル（クセ）：rate=その状態で出る確率、false=関係ないときに出る確率 ---------- */
+const TELLS={
+  'ゲン':{strong:{cue:'smile',rate:.75,false:.1},bluff:{cue:'talk',rate:.7,false:.15}},
+  'ハル':{strong:{cue:'glance',rate:.7,false:.1},bluff:{cue:'sweat',rate:.7,false:.1}},
+  'ロク':{strong:{cue:'still',rate:.7,false:.1},bluff:{cue:'stare',rate:.6,false:.1}},
+  'セキ':{strong:{cue:'glance',rate:.7,false:.1},bluff:{cue:'talk',rate:.7,false:.15}},
+  'ミナ':{strong:{cue:'smile',rate:.6,false:.15},bluff:{cue:'fast',rate:.7,false:.1}},
+  'レイカ':{strong:{cue:'glance',rate:.7,false:.1},bluff:{cue:'talk',rate:.7,false:.15},reverse:true},
+  'ソウ':{strong:{cue:'smile',rate:.7,false:.1},bluff:{cue:'sweat',rate:.75,false:.1}},
+  'ケンジ':{strong:{cue:'glance',rate:.65,false:.1},bluff:{cue:'talk',rate:.65,false:.1}},
+  'ミサキ':{strong:{cue:'smile',rate:.65,false:.1},bluff:{cue:'fast',rate:.65,false:.1}},
+  'タロウ':{strong:{cue:'still',rate:.65,false:.1},bluff:{cue:'sweat',rate:.7,false:.1}},
+};
+const CUE_LABEL={glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
+  talk:'いつもより口数が多い',fast:'考えずにすぐ賭けた',sweat:'汗をかいている'};
+const CUE_SFX={glance:'ちらっ',still:'…',smile:'ニヤ',stare:'じっ',talk:'ペラペラ',fast:'サッ',sweat:'タラ…'};
+const TRUTH_JP={strong:'強い手',bluff:'ブラフ',none:'特に意味なし'};
+const SET_KEY='shisho-settings';
+let SETTINGS={speed:'normal',sound:false,peek:true,protector:'',depth:true,clock:true};
+try{const o=JSON.parse(localStorage.getItem(SET_KEY))||{};delete o.v;Object.assign(SETTINGS,o)}catch(e){}
+function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify({v:1,...SETTINGS}))}catch(e){}}
+const SPEED=()=>SETTINGS.speed==='fast'?.5:1;
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NOTE_KEY='shisho-notes';
+function loadNotes(){
+  const obj=o=>o&&typeof o==='object'&&!Array.isArray(o);
+  try{const n=JSON.parse(localStorage.getItem(NOTE_KEY));if(!obj(n))return{};delete n.v;
+    Object.keys(n).forEach(k=>{if(!obj(n[k])){delete n[k];return}
+      Object.keys(n[k]).forEach(c=>{const r=n[k][c];if(!obj(r)||!CUE_LABEL[c])delete n[k][c];else['strong','bluff','none'].forEach(t=>r[t]=+r[t]||0)})});
+    return n}catch(e){return{}}}
+function noteTell(name,cue,truth){
+  const n=loadNotes();n[name]=n[name]||{};n[name][cue]=n[name][cue]||{strong:0,bluff:0,none:0};n[name][cue][truth]++;
+  try{localStorage.setItem(NOTE_KEY,JSON.stringify({v:1,...n}))}catch(e){}
+}
+function renderNotes(){
+  const n=loadNotes(),rows=[];
+  Object.keys(n).forEach(name=>Object.keys(n[name]).forEach(cue=>{
+    const r=n[name][cue],tot=r.strong+r.bluff+r.none;
+    rows.push(`<li><b>${esc(name)}</b>「${CUE_LABEL[cue]}」→ 強い手 ${r.strong}／ブラフ ${r.bluff}／意味なし ${r.none}（${tot}回）</li>`);
+  }));
+  $('notes').innerHTML=rows.length?rows.join(''):'<li>まだ記録はありません。手が見えたときに、出ていたクセを自動で書き込みます。</li>';
+}
+/* 考えているあいだにクセを見せる */
+/* 第4章からは全員、第1〜3章は一般キャラ（★1〜2）だけクセが出る。CPUの打ち方は変えない */
+const tellsOn=p=>CFG.tells||(!!CFG.ch&&rankOf(p.name)<=2);
+function showTell(i,d){
+  const p=S.players[i];p.tell=null;
+  const T=TELLS[p.name];if(!tellsOn(p)||!T)return;
+  const rev=!!T.reverse&&(S.handNo>=10||p.chips<p.start/2);
+  let shown=null;
+  for(const cat of ['strong','bluff']){
+    const t=T[cat];let prob=d.state===cat?t.rate:t.false;
+    if(S.needle===S.street&&t.cue==='talk')prob=Math.min(.95,prob+.15);
+    if(Math.random()<prob){shown=cat;break}
+  }
+  if(!shown)return;
+  const cueCat=rev?(shown==='strong'?'bluff':'strong'):shown;
+  S.tellSeq=(S.tellSeq||0)+1;
+  p.tell={cue:T[cueCat].cue,meaning:cueCat,truth:d.state,street:S.street,seq:S.tellSeq,rev};
+  p.tellLog.push(p.tell);
+  if(rev&&!S.revSaid){S.revSaid=S.handNo+':'+S.street}
+  if(reducedMotion())log(`${p.name}：${CUE_LABEL[p.tell.cue]}`);
+}
+
+/* ---------- 対戦中のおしゃべり ---------- */
+// 考えている間のひとこと（手の強さとは関係なく選ぶので、クセにはならない）
+const THINK={
+  'ゲン':['どれどれ……','へへ、どうすっかな','うーん、迷うぜ'],
+  'ハル':['うーん……','ここは……','ちょっと待ってくださいね'],
+  'ロク':['……','ふむ','さて'],
+  'セキ':['さて、どうしたものかな','ふむ、興味深い','少し考えさせてくれたまえ'],
+  'ミナ':['えーっと……','どうしよっかなー','んー、迷う！'],
+  'レイカ':['そうねえ……','ふうん','どうしようかしら'],
+  'ソウ':['え、えっと……','ど、どうしよう','落ち着け、落ち着け……'],
+  'ケンジ':['よし……','ここは攻めたいな','うーん'],
+  'ミサキ':['うーん','どうしようかな','ちょっと考えさせて'],
+  'タロウ':['どうしようかな……','また微妙な手だ','うーん'],
+  _cute:['えーっと……','どうしよう'],_cool:['……','ふむ'],
+};
+// 大きく賭けられたときのひとこと（場に見えている情報だけで選ぶ）
+const FACING={
+  'ゲン':['でけえな……！','おいおい、本気か？'],'ハル':['うわ、大きい……'],'ロク':['……強気だな'],'セキ':['ほう、大きく来たね'],
+  'ミナ':['えっ、そんなに！？'],'レイカ':['あら、大胆ね'],'ソウ':['ひえっ……'],'ケンジ':['マジか'],'ミサキ':['うわー、来たね'],'タロウ':['えぇ……'],
+  _cute:['うわ、大きい！'],_cool:['……大きく来たな'],
+};
+// ハンドの始めの掛け合い（その卓にいるキャラだけで成り立つものを選ぶ）
+const BANTER=[
+  [['ゲン','おう新入り、さっきの手は何だったんだ？']],
+  [['ゲン','店主！もう一杯……いや、水でいいや']],
+  [['ゲン','ジンさんよ、そいつに何を教えてんだ？']],
+  [['ハル','ロクさん、今夜はやけに静かですね'],['ロク','……ジンが来ているからな']],
+  [['ロク','ハル、手札ばかり見るな'],['ハル','す、すみません']],
+  [['ハル','この席、勝てる気がするんですよ'],['ロク','席で勝てるなら苦労はせん']],
+  [['ミナ','セキさん、また降りるの？'],['セキ','降りるのも紳士のたしなみだよ']],
+  [['セキ','ミナ君、今夜の曲はいいね'],['ミナ','でしょ？わたしのリクエスト！']],
+  [['ミナ','ねえ、さっきのってブラフだったでしょ？'],['セキ','さあ、どうだったかな']],
+  [['ソウ','レイカさん、さっきのは本当に強かったんですか？'],['レイカ','教えたら勉強にならないでしょ']],
+  [['レイカ','ソウ、顔に出てるわよ'],['ソウ','え、えっ！？']],
+  [['ソウ','窓の外、きれいですね'],['レイカ','よそ見してると負けるわよ']],
+  [['ケンジ','タロウ、さっきから降りてばっかりだな'],['タロウ','カードが来ないんだよ……']],
+  [['ミサキ','ケンジ、今日は強気だね'],['ケンジ','負けを取り返すんだよ']],
+  [['タロウ','もうワンハンドだけ……'],['ミサキ','それ、さっきも言ってたよ']],
+  [['ミサキ','このチップ、さっきより減ってない？'],['ケンジ','気のせいだって']],
+];
+function sayLine(i,line){const p=S.players[i];if(!p||!line)return;p.say={seq:(S.saySeq=(S.saySeq||0)+1),line,talk:true};render()}
+function thinkLine(p,toCall){
+  const pot=potTotal(),big=toCall>0&&toCall>=Math.max(BB()*3,pot*.45);
+  const src=big?FACING:THINK,L=src[p.name]||(rankOf(p.name)>=3?src._cool:src._cute);
+  return L[Math.floor(Math.random()*L.length)];
+}
+function startBanter(){
+  const seated=S.players.filter(p=>!p.out&&!p.human).map(p=>p.name);
+  const ok=BANTER.filter(b=>b.every(([n])=>seated.includes(n)));
+  if(!ok.length||Math.random()>.35)return 0;
+  const b=ok[Math.floor(Math.random()*ok.length)],s0=S,h0=S.handNo,gap=1500*SPEED();
+  b.forEach(([n,line],k)=>setTimeout(()=>{if(S===s0&&S.handNo===h0)sayLine(S.players.findIndex(p=>p.name===n),line)},k*gap));
+  return b.length*gap;
+}
+
+/* ---------- あるある称号（勝ち負けには関係しない） ---------- */
+/* ---------- マナーの悪い相手（第5章以降とフリー対戦だけ。第1〜4章の勝負には出さない） ---------- */
+const MANNERS={
+  'ハヤト':{slowroll:.8,angles:['faketap','onechip'],angleRate:.12,gloat:true,tilt:{bluff:.3,margin:-.06,hands:4}},
+  'ゴウ':{slowroll:.6,angles:['faketap','onechip'],angleRate:.15,gloat:true,tilt:{bluff:.3,margin:-.06,hands:4}},
+};
+const mannerOf=p=>p&&!p.human&&!(CFG.ch&&CFG.ch.no<=4)?MANNERS[p.name]||null:null;
+const styleOf=p=>{const m=mannerOf(p);return m&&p.tilt>0?{...p.style,bluff:m.tilt.bluff,margin:m.tilt.margin}:p.style};
+const jinNote=(t,hands)=>{S.jinNote={t,until:S.handNo+(hands||0)}};
+const MANNER_KEY='shisho-manners';
+function bumpNice(){let n=0;try{n=+(JSON.parse(localStorage.getItem(MANNER_KEY))||{}).nice||0}catch(e){}n++;try{localStorage.setItem(MANNER_KEY,JSON.stringify({v:1,nice:n}))}catch(e){}return n}
+// 煽られたあとの返し：「無視する」「ナイスハンド」。押さなくても進む
+function taunt(p,kind){
+  const line=lineFor(p.name,kind);if(!line)return;
+  p.say={seq:(S.saySeq=(S.saySeq||0)+1)+1000,act:'',line};
+  S.taunt=S.players.indexOf(p);
+}
+function renderTaunt(){
+  const box=$('tauntBox');if(!box)return;
+  const on=S.handOver&&S.taunt>0&&!S.result;box.hidden=!on;
+}
+// ディーラーがアングルショットを止める
+function angleCall(i,kind){
+  const p=S.players[i];
+  p.say={seq:(S.saySeq=(S.saySeq||0)+1),line:lineFor(p.name,kind==='faketap'?'angleTap':'angleChip'),talk:true};render();
+  if(kind==='onechip'&&!reducedMotion()){
+    const src=$('spot'+i)&&$('spot'+i).querySelector('.mystack'),to=potRect(),tb=$('table').getBoundingClientRect();
+    if(src&&to){const r=src.getBoundingClientRect();const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(100000,false);
+      el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
+      el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${(to.left-r.left)*.45}px),calc(-50% + ${(to.top-r.top)*.45}px))`,opacity:.2}],{duration:700*SPEED(),fill:'forwards'}).onfinish=()=>el.remove()}
+  }
+}
+function angleRuling(i,kind){
+  const p=S.players[i];
+  dealerSay(kind==='faketap'?'テーブルを叩いたので、チェックです':'宣言がないので、コールです');
+  log(kind==='faketap'?'ディーラー：ライブでは、テーブルを叩くとチェック。取り消せない':'ディーラー：黙って大きいチップを1枚出すと、コール扱い');
+  if(!S.angleSeen){S.angleSeen=true;jinNote('ああいうのを「アングル」と言う。ルールのすき間を使う打ち方だ',1)}
+  if(!S.players[0].folded)grantTitle('angle');
+  setTimeout(()=>{if(S.players[i]===p){p.say={seq:(S.saySeq=(S.saySeq||0)+1),line:lineFor(p.name,'caught'),talk:true};render()}},700*SPEED());
+}
+const TITLES=[
+  {id:'seven2',name:'7-2で勝った',hint:'一番弱い手で勝つ',jin:'一番弱い手で勝ったか。店中が笑う夜だな。'},
+  {id:'badbeat',name:'バッドビート',hint:'ターンまで勝っていたのに、最後の1枚で負ける',jin:'最後の一枚で負けたか。それもポーカーだ。'},
+  {id:'aalose',name:'AAで負けた',hint:'最強の手札で負ける',jin:'AAでも負ける。だから面白い。'},
+  {id:'cooler',name:'クーラー',hint:'フルハウス以上で負ける',jin:'あれは降りられん。運が悪かっただけだ。'},
+  {id:'tankfold',name:'長考の末に降りた',hint:'じっくり15秒考えてから降りる',jin:'考え抜いて降りるのも、立派な一手だ。'},
+  {id:'dry',name:'カードが来ない夜',hint:'8ハンド続けて、最初に降りる',jin:'来ない夜は来ない。待てる者が勝つ。'},
+  {id:'onemore',name:'あとワンハンドだけ',hint:'ひとつの卓で30ハンド遊ぶ',jin:'……そろそろ終電だぞ。'},
+  {id:'quads',name:'ナイスハンド',hint:'フォーカード以上で勝つ',jin:'見事だ。今夜の話題はお前だな。'},
+  {id:'allin',name:'首の皮一枚',hint:'オールインして勝ち残る',jin:'首の皮一枚だな。だが生き残った。'},
+  {id:'read',name:'ブラフを見抜いた',hint:'相手のブラフをコールして勝つ',jin:'見抜いたな。顔を見ていた甲斐があった。'},
+  {id:'slowrolled',name:'スロウロールされた',hint:'わざとゆっくり手を見せられる',jin:'ああいう勝ち方をする奴は、いずれ客を失う。'},
+  {id:'tiltwin',name:'熱くなった相手から取った',hint:'熱くなった相手に勝つ',jin:'冷めた方が勝つ。覚えておけ。'},
+  {id:'gentle',name:'大人の対応',hint:'嫌な勝ち方をされても「ナイスハンド」と言う',jin:'それが一番効く。'},
+  {id:'angle',name:'アングルを見た',hint:'ディーラーがずるい打ち方を止める',jin:'ルールは守る者の味方だ。'},
+];
+const TITLE_KEY='shisho-titles';
+function loadTitles(){try{const t=JSON.parse(localStorage.getItem(TITLE_KEY));return t&&typeof t==='object'&&t.got&&typeof t.got==='object'?t.got:{}}catch(e){return{}}}
+function grantTitle(id){
+  const got=loadTitles();const t=TITLES.find(x=>x.id===id);if(!t)return;
+  const first=!got[id];got[id]=(got[id]||0)+1;
+  try{localStorage.setItem(TITLE_KEY,JSON.stringify({v:1,got}))}catch(e){}
+  if(!first)return;
+  log(`称号「${t.name}」を手に入れた`);
+  const el=$('toast');el.innerHTML=`<span class="tava">${avatar('ジン')}</span><span><b>称号「${esc(t.name)}」</b><em>ジン「${esc(t.jin)}」</em></span>`;
+  el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+  clearTimeout(grantTitle.t);grantTitle.t=setTimeout(()=>{el.hidden=true},4200);
+}
+/* カードプロテクター：章クリアでもらえる見た目だけのお守り */
+const PROTECTORS=[
+  {id:'',name:'なし',ch:0},
+  {id:'anchor',name:'錨',ch:1},
+  {id:'key',name:'銀の鍵',ch:2},
+  {id:'moon',name:'月のコイン',ch:3},
+  {id:'feather',name:'天空の羽',ch:4},
+];
+function protectorSVG(id){
+  const coin=(fill,ring,inner)=>`<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="30" cy="33" rx="27" ry="24" fill="#0006"/><circle cx="30" cy="29" r="26" fill="${ring}"/><circle cx="30" cy="29" r="22" fill="${fill}" stroke="#0004" stroke-width="1.5"/>${inner}</svg>`;
+  if(id==='anchor')return coin('#3a3f4a','#b98c3f','<g fill="none" stroke="#e8d3a0" stroke-width="3" stroke-linecap="round"><circle cx="30" cy="15" r="3.5"/><path d="M30 19v22M22 25h16M17 33q3 10 13 10q10 0 13-10"/></g>');
+  if(id==='key')return coin('#cfd6e2','#8d97a8','<g fill="none" stroke="#4d5668" stroke-width="3" stroke-linecap="round"><circle cx="22" cy="29" r="6"/><path d="M28 29h15M38 29v6M43 29v5"/></g>');
+  if(id==='moon')return coin('#e6c66c','#a67d2a','<path d="M35 13a16 16 0 1 0 0 32a13 13 0 1 1 0-32z" fill="#fff6d6" stroke="#8a6620" stroke-width="1.5"/>');
+  if(id==='feather')return coin('#f4efe4','#d7263d','<path d="M40 14q-18 4-20 26l-4 6M20 40q12-2 18-16M22 33l8-2M25 26l8-2" fill="none" stroke="#c8213a" stroke-width="2.6" stroke-linecap="round"/>');
+  return'';
+}
+/* ハンドの合間の噂話（勝負とは関係ない雑談） */
+const GOSSIP={
+  1:[['店主','ゲンさんは毎晩来て、毎晩負けて帰るんだよ'],['ゲン','このお守りの錨じゃないと勝てねえんだよな'],['店主','名物のカレー、あとで食べていきな']],
+  2:[['常連','ロクさん、昔はジンさんと組んでたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ']],
+  3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、卓が荒れるんだよなあ']],
+  4:[['ソウ','レイカさん、ディーラーのときは絶対に表情を変えないんです'],['常連','このラウンジ、朝まで卓が立つらしいね'],['ソウ','あ、あとワンハンドだけ……']],
+  0:[['ケンジ','あっちの卓で、7-2で勝った人がいるらしいよ'],['ミサキ','この席、さっきから当たりが続いてるんだよね'],['タロウ','もうワンハンドだけ……']],
+};
+
+/* 行動に合わせたひとこと（なければ性格別の定番） */
+const LINES={
+  'ゲン':{raise:['よっしゃ、上乗せだ！','いい札が来たぜ！'],call:['ええい、コールだ！','付き合うぜ！'],check:['様子見だ'],fold:['ちぇっ、今回は降りる'],allin:['全部だ！ぜーんぶ賭けるぜ！'],win:['がっはっは！']},
+  'ハル':{raise:['ここは攻めます！'],call:['うーん、ついていきます'],check:['チェックで'],fold:['ご、ごめんなさい…降ります'],allin:['えいっ、全部！'],win:['やった！']},
+  'ロク':{rate:.5,raise_strong:['……'],raise_bluff:['見せてもらおうか'],talk:['どうした、ジンの弟子。迷っているのか'],raise:['見せてもらおうか'],call:['……受けよう'],check:['……'],fold:['今は引く'],allin:['ここで終わりだ、ジンの弟子'],win:['甘いな']},
+  'セキ':{raise_strong:['少し上げさせてもらうよ'],raise_bluff:['今夜はツイているようでね、もう少し上げよう'],talk:['いやあ、いい夜だ。こんな夜は不思議と手が入るものでね、もう少し上げさせてもらうよ'],raise:['少し上げさせてもらうよ'],call:['お付き合いしよう'],check:['どうぞ'],fold:['ここは降りておこう'],allin:['紳士の勝負も、ここまでだ'],win:['失礼、いただくよ']},
+  'ミナ':{talk:['ねえねえ、今の手どう？わたしはね、すっごくいいの！だから上げるね'],raise:['ふふ、上げるね'],call:['いいよ'],check:['チェック'],fold:['パス'],allin:['全部いくよ'],win:['ごちそうさま']},
+  'レイカ':{raise_strong:['レイズ'],raise_bluff:['もう少し上げようかしら'],talk:['あら、怖い顔。わたしの手が気になる？教えてあげてもいいけど……そうね、上げておくわ'],raise:['上げるわ'],call:['受けるわ'],check:['チェック'],fold:['今回は譲るわ'],allin:['全部よ。読めるものなら読んでみなさい'],win:['ふふ、ごちそうさま'],needled:['揺さぶりのつもり？かわいいわね']},
+  'ソウ':{raise_strong:['あ、上げます！'],raise_bluff:['え、えっと……上げます'],talk:['いや、あの、これはですね、その、たぶんいい手なので、上げます、はい'],raise:['上げます'],call:['ついていきます'],check:['チェックです'],fold:['降ります……'],allin:['ぜ、全部いきます！'],win:['や、やった……！'],needled:['え、えっ……そんなこと言われても……']},
+  'ゴウ':{rate:.85,raise:['ほら、上げるぞ','ついてこれるか？'],call:['見てやるよ'],check:['ほらよ'],fold:['ちっ、くれてやる'],allin:['全部だ。降りな'],win:['悪いな、また俺だ'],
+    gloat:['おいおい、それでコールするか？','ごちそうさん。授業料だな','顔に出てたぜ、新人'],slowroll:['いい手だな。……勝ったと思ったか？','さあ、何だと思う？'],
+    tilt:['……今のはまぐれだ','次は取り返す。黙って見てろ'],angleTap:['（トントン）……いや、ベットだ'],angleChip:['（黙って大きいチップを1枚すべらせる）'],caught:['……チッ'],nice:['……ふん']},
+  'ハヤト':{gloat:['師匠の真似事か？'],slowroll:['いい手だな。……勝ったと思ったか？'],tilt:['……今のはまぐれだ'],angleTap:['（トントン）……いや、ベットだ'],angleChip:['（黙って大きいチップを1枚すべらせる）'],caught:['……チッ'],nice:['……ふん']},
+  _cute:{needled:['う、うるさいなあ！'],raise:['いくよ！'],call:['ついていく！'],check:['チェック！'],fold:['うう、降ります'],allin:['オールイン！'],win:['勝ったー！']},
+  _cool:{needled:['安い挑発だ'],raise:['上げる'],call:['受けよう'],check:['……'],fold:['降りる'],allin:['全部だ'],win:['悪くない']},
+};
+function lineFor(name,kind){
+  const L=LINES[name]||{},D=rankOf(name)>=3?LINES._cool:LINES._cute;
+  const arr=L[kind]||(kind.includes('_')?L[kind.split('_')[0]]:null)||D[kind.split('_')[0]]||[];
+  return arr[Math.floor(Math.random()*arr.length)]||'';
+}
+const talkRate=name=>(LINES[name]&&LINES[name].rate)||.75;
+
+/* ---------- CPUの性格（参加・レイズ・ブラフ・降りやすさ） ---------- */
+const STYLES={
+  normal:{hi:1.7,mid:1.3,midP:.4,bluff:.08,margin:.03,defPre:0,defPost:0},
+  station:{hi:2.1,mid:1.7,midP:.25,bluff:.02,margin:-.12,defPre:0,defPost:0,loose:true},
+  tight:{hi:1.8,mid:1.5,midP:.3,bluff:.02,margin:.06,defPre:1.05,defPost:0},
+  tight2:{hi:1.8,mid:1.4,midP:.35,bluff:.04,margin:.05,defPre:0.95,defPost:0},
+  nit:{hi:1.9,mid:1.6,midP:.3,bluff:.01,margin:.1,defPre:1.2,defPost:1.25},
+  nit2:{hi:1.8,mid:1.5,midP:.3,bluff:.02,margin:.08,defPre:1.1,defPost:1.1},
+  liar:{hi:1.7,mid:1.3,midP:.4,bluff:.25,margin:.03,defPre:0,defPost:0},
+  liar2:{hi:1.7,mid:1.35,midP:.35,bluff:.12,margin:.04,defPre:0,defPost:0},
+  rude:{hi:1.6,mid:1.25,midP:.45,bluff:.12,margin:.02,defPre:0,defPost:0},
+};
+
+/* ---------- 進行の保存（消えても困らない範囲） ---------- */
+const SAVE_KEY='shisho-progress';
+const SAVE_VER=1; // セーブ形式の版番号。形を変えたら上げて、読み込み時に移し替える
+function loadCleared(){try{return +(JSON.parse(localStorage.getItem(SAVE_KEY))||{}).cleared||0}catch(e){return 0}}
+function saveCleared(n){try{localStorage.setItem(SAVE_KEY,JSON.stringify({v:SAVE_VER,cleared:Math.max(n,loadCleared())}))}catch(e){}}
+
+/* ---------- 広告の差し込み位置（今は何もしない） ----------
+   本番では AdSense H5 Games Ads の adBreak() をここで呼ぶ。章の区切りだけで出す。 */
+function showInterstitial(done){Sound.pause();const fin=()=>{Sound.resume();done()};fin()} // 広告を入れるときは、閉じたあとに fin() を呼ぶ
+
+const SUITS=['♠','♥','♦','♣'];
+const STREET_JP={preflop:'プリフロップ',flop:'フロップ',turn:'ターン',river:'リバー',showdown:'ショーダウン'};
+const HAND_JP=['ハイカード','ワンペア','ツーペア','スリーカード','ストレート','フラッシュ','フルハウス','フォーカード','ストレートフラッシュ'];
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('ja-JP');
+const rankStr=r=>({14:'A',13:'K',12:'Q',11:'J'})[r]||String(r);
+const cardStr=c=>SUITS[c.s]+rankStr(c.r);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+
+/* ---------- 画面切り替え ---------- */
+function show(id){if(id!=='game'&&typeof Sound!=='undefined')Sound.stop();['title','chapters','scene','game'].forEach(s=>$(s).hidden=s!==id);window.scrollTo(0,0)}
+
+function showChapters(){
+  const cleared=loadCleared();
+  const items=CHAPTERS.map(c=>{
+    const open=c.no<=cleared+1;
+    return`<li class="ch${open?'':' locked'}" style="--chc:${c.color}"><span class="no">${c.no}</span>
+      <span class="t">${esc(c.title)}${c.no<=cleared?'<span class="done">クリア</span>':''}</span>
+      <span class="act">${open?`<button class="${c.no===cleared+1?'primary':''}" data-ch="${c.no}">${c.no<=cleared?'もう一度':'はじめる'}</button>`:'<span class="hint">前の章をクリア</span>'}</span>
+      <span class="v">${esc(c.venue)}${c.no<=cleared?'<span class="photo">壁にあなたの写真</span>':''}</span></li>`;
+  }).concat(LOCKED.map(c=>`<li class="ch locked"><span class="no">${c.no}</span><span class="t">${esc(c.title)}</span>
+      <span class="act"><span class="hint">準備中</span></span><span class="v">${esc(c.venue)}</span></li>`));
+  $('chList').innerHTML=items.join('');
+  $('chList').querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>startChapter(CHAPTERS[b.dataset.ch-1]));
+  $('protList').innerHTML=PROTECTORS.map(pr=>{const ok=pr.ch<=cleared;
+    return`<button class="pbtn${SETTINGS.protector===pr.id?' on':''}" data-pid="${pr.id}" ${ok?'':'disabled'} aria-pressed="${SETTINGS.protector===pr.id}">
+      <span class="pic">${pr.id?(ok?protectorSVG(pr.id):'<span class="lk">？</span>'):'<span class="lk">―</span>'}</span><span>${ok?esc(pr.name):`第${pr.ch}章で`}</span></button>`}).join('');
+  $('protList').querySelectorAll('[data-pid]').forEach(b=>b.onclick=()=>{SETTINGS.protector=b.dataset.pid;saveSettings();showChapters()});
+  const got=loadTitles();
+  $('titleList').innerHTML=TITLES.map(t=>got[t.id]?`<li class="got"><b>${esc(t.name)}</b><span>${got[t.id]}回</span></li>`:`<li><b>？？？</b><span>${esc(t.hint)}</span></li>`).join('');
+  show('chapters');
+}
+
+/* ---------- 会話シーン ---------- */
+let SC=null;
+function playScene(ch,lines,done){
+  SC={ch,lines,i:0,done};
+  document.documentElement.style.setProperty('--venue',ch.color);
+  $('venue').innerHTML=`<span class="vchip">第${ch.no}章　${esc(ch.title)}</span><span class="vn">${esc(ch.venue)}</span>`;
+  show('scene');renderLine();
+}
+function renderLine(){
+  const l=SC.lines[SC.i];
+  if(!Array.isArray(l)){
+    setStage('ジン');
+    $('box').innerHTML=`<span class="lesson-tag">師匠の教え</span><div class="lesson"><div class="lt">${esc(l.lesson)}</div><p>${esc(l.body)}</p></div>`;
+  }else{
+    const [who,text]=l,prev=SC.i>0&&Array.isArray(SC.lines[SC.i-1])?SC.lines[SC.i-1][0]:null;
+    if(who&&who!==prev)setStage(who);
+    else if(!who)setStage(null);
+    const cute=rankOf(who)<3;
+    $('box').innerHTML=`${who?`<span class="nametag${cute?' cute':''}">${esc(who)}${CHARS[who]?`<span class="stars">${stars(rankOf(who))}</span>`:''}</span>`:''}<div class="line${who?'':' narr'}">${who?'「'+esc(text)+'」':esc(text)}</div>`;
+  }
+  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';
+}
+function setStage(who){
+  const st=$('stage');
+  if(!who){st.className='stage';st.innerHTML='';return}
+  st.className='stage '+(rankOf(who)>=3?'cool':'cute');
+  st.innerHTML=`<div class="portrait">${avatar(who)}</div>`;
+}
+function advance(){if(!SC)return;SC.i++;if(SC.i>=SC.lines.length){const d=SC.done;SC=null;d()}else renderLine()}
+$('btnAdv').onclick=advance;
+$('box').onclick=advance;
+$('box').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance()}};
+$('btnSkip').onclick=()=>{if(!SC)return;const d=SC.done;SC=null;d()};
+
+function startChapter(ch,skipIntro){
+  const go=()=>startGame({
+    ch,title:`第${ch.no}章　${ch.venue}`,blinds:ch.blinds,
+    seats:[{name:'あなた',chips:ch.you,human:true}].concat(ch.opps.map(o=>({...o}))),
+    goal:ch.goal,hint:ch.hint,refill:!!ch.refill,tells:!!ch.tells,house:ch.house||null,lamp:ch.lamp,bgm:ch.bgm,lore:ch.lore||''});
+  skipIntro?go():playScene(ch,ch.intro,go);
+}
+function startFree(){
+  startGame({ch:null,title:'フリー対戦'+(HOUSE[$('freeRule').value]?'（'+HOUSE[$('freeRule').value].name+'）':''),blinds:[1000,2000],goal:{type:'free'},hint:null,refill:false,tells:true,house:$('freeRule').value||null,lamp:'#e2b65b',bgm:0,
+    seats:[{name:'あなた',chips:100000,human:true},{name:'ケンジ',style:'normal',chips:100000},
+           {name:'ミサキ',style:'normal',chips:100000},$('freeRude').checked?{name:'ゴウ',style:'rude',chips:100000}:{name:'タロウ',style:'normal',chips:100000}]});
+}
+
+/* ---------- 山札・役判定 ---------- */
+function fullDeck(){const d=[];for(let s=0;s<4;s++)for(let r=2;r<=14;r++)d.push({r,s});return d}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function eval5(cs){
+  const rs=cs.map(c=>c.r).sort((a,b)=>b-a);
+  const flush=cs.every(c=>c.s===cs[0].s);
+  const uniq=[...new Set(rs)];
+  let straightHigh=0;
+  if(uniq.length===5){
+    if(rs[0]-rs[4]===4)straightHigh=rs[0];
+    else if(rs[0]===14&&rs[1]===5)straightHigh=5;
+  }
+  const cnt={};rs.forEach(r=>cnt[r]=(cnt[r]||0)+1);
+  const groups=Object.entries(cnt).map(([r,n])=>[+r,n]).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);
+  const kick=groups.map(g=>g[0]);
+  if(straightHigh&&flush)return[8,straightHigh];
+  if(groups[0][1]===4)return[7,...kick];
+  if(groups[0][1]===3&&groups[1][1]===2)return[6,...kick];
+  if(flush)return[5,...rs];
+  if(straightHigh)return[4,straightHigh];
+  if(groups[0][1]===3)return[3,...kick];
+  if(groups[0][1]===2&&groups[1][1]===2)return[2,...kick];
+  if(groups[0][1]===2)return[1,...kick];
+  return[0,...rs];
+}
+function cmp(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d}return 0}
+/* 5〜7枚から最強の5枚 */
+function bestN(cs){
+  let best=null;const n=cs.length,idx=[];
+  (function rec(st,k){
+    if(k===5){const s=eval5(idx.map(i=>cs[i]));if(!best||cmp(s,best)>0)best=s;return}
+    for(let i=st;i<=n-(5-k);i++){idx.push(i);rec(i+1,k+1);idx.pop()}
+  })(0,0);
+  return best;
+}
+/* 5枚未満でも使える「ペア系の役の段階」 */
+function groupCat(cs){
+  if(cs.length===5)return eval5(cs)[0];
+  const cnt={};cs.forEach(c=>cnt[c.r]=(cnt[c.r]||0)+1);
+  const v=Object.values(cnt).sort((a,b)=>b-a);
+  if(v[0]===4)return 7;if(v[0]===3)return 3;if(v[0]===2&&v[1]===2)return 2;if(v[0]===2)return 1;return 0;
+}
+/* 自分の2枚が役に絡んでいない＝実質「何もない」 */
+function isWeak(hand,board){
+  if(board.length<3)return false;
+  const mine=bestN(hand.concat(board))[0];
+  return mine===0||mine<=groupCat(board);
+}
+function handName(s){if(s[0]===8&&s[1]===14)return'ロイヤルフラッシュ';return HAND_JP[s[0]]}
+function preTier(h){
+  const [a,b]=[h[0].r,h[1].r].sort((x,y)=>y-x),suited=h[0].s===h[1].s;
+  if(a===b)return a>=7?2:1;
+  if(a===14&&b>=11)return 2;
+  if(a===13&&b===12)return 2;
+  if(a===14&&suited)return 1;
+  if(a>=10&&b>=10)return 1;
+  if(suited&&a-b<=2&&b>=5)return 1;
+  if(a===14&&b>=9)return 1;
+  return 0;
+}
+
+/* ---------- 状態 ---------- */
+let S,CFG;
+const N=()=>S.players.length;
+const inHand=p=>!p.out&&!p.folded;
+const canAct=p=>inHand(p)&&!p.allIn;
+const needs=p=>canAct(p)&&(!p.acted||p.bet<S.currentBet);
+function nextIdx(i,pred){for(let k=1;k<=N();k++){const j=(i+k)%N();if(pred(S.players[j]))return j}return -1}
+const potTotal=()=>S.players.reduce((a,p)=>a+p.total,0);
+const SB=()=>CFG.blinds[0],BB=()=>CFG.blinds[1];
+
+function startGame(cfg){
+  CFG=cfg;
+  S={players:cfg.seats.map(s=>({name:s.name,chips:s.chips,start:s.chips,style:STYLES[s.style||'normal'],label:s.label||'',
+      hand:[],folded:false,allIn:false,bet:0,total:0,acted:false,human:!!s.human,out:false,show:false,won:0,hname:''})),
+     dealer:Math.floor(Math.random()*cfg.seats.length),board:[],deck:[],street:'preflop',currentBet:0,minRaise:BB(),
+     toAct:-1,handOver:true,result:null,handNo:0,raises:0,msg:'',aggr:-1,myPostAggro:false,steals:0,bluffs:0};
+  buildSeats();
+  $('gTitle').textContent=cfg.title;
+  $('log').innerHTML='';
+  $('notesBox').hidden=!(cfg.tells||cfg.ch);renderNotes();
+  $('dcall').classList.remove('go');$('dcall').textContent='';
+  $('table').style.setProperty('--lamp',cfg.lamp||'#e2b65b');$('table').style.setProperty('--night','0');$('toast').hidden=true;Depth.recenter();
+  if(SETTINGS.protector){const pr=PROTECTORS.find(x=>x.id===SETTINGS.protector);if(pr)log(`いつもの「${pr.name}」を手札の上に置いた`)}
+  Sound.bgm(cfg.bgm||0);
+  $('goal').dataset.k='';
+  show('game');
+  showVersus(()=>{if(S.handNo===0)startHand()});
+}
+/* 対戦の始めの相手紹介 */
+const INTRO={
+  'ゲン':['港の酔客','配られた札は全部勝負！'],
+  'ロク':['銀の扉の主','うちの客は慎重だ。簡単には崩れんよ'],
+  'ハル':['銀の扉の常連','この席、勝てる気がするんです'],
+  'セキ':['月影の老紳士','紳士的に勝負しよう'],
+  'ミナ':['月影の常連','ふふ、負けないよ？'],
+  'レイカ':['読めないディーラー','嘘かどうか、顔を見たってわからないわよ'],
+  'ソウ':['見習いディーラー','よ、よろしくお願いします！'],
+  'ケンジ':['強気な常連','今夜は取り返すぜ'],
+  'ミサキ':['気ままな常連','よろしくね'],
+  'タロウ':['慎重な常連','もうワンハンドだけ……'],
+  'ゴウ':['感じの悪い客','新人か。授業料、置いていけよ'],
+};
+function showVersus(done){
+  const v=$('vs'),opps=S.players.filter(p=>!p.human);
+  v.innerHTML=`<div class="vsin">
+    <div class="vshead"><span class="vsv">VS</span><span class="vst">${esc(CFG.title)}</span></div>
+    <div class="vsopps n${opps.length}">${opps.map((p,k)=>{const r=rankOf(p.name),it=INTRO[p.name]||['','']; return`
+      <div class="vscard ${r>=3?'cool':'cute'}" style="animation-delay:${(k*.18).toFixed(2)}s">
+        <div class="vsava">${avatar(p.name,r>=3?'confident':'normal')}</div>
+        <div class="vsname">${esc(p.name)}<span class="stars">${stars(r)}</span></div>
+        <div class="vsrole">${esc(it[0])}${p.label?`<span>${esc(p.label)}</span>`:''}</div>
+        <div class="vsq">「${esc(it[1])}」</div>
+        <div class="vschips">持ち点 ${fmt(p.chips)}</div></div>`}).join('')}</div>
+    <div class="vsgoal"><span>勝利条件</span>${esc(CFG.goal.type==='free'?'最後の一人になる':CFG.ch.goalText)}</div>
+    <button class="primary" id="vsGo">勝負開始</button></div>`;
+  v.hidden=false;
+  let closed=false;const close=()=>{if(closed)return;closed=true;v.hidden=true;done()};
+  $('vsGo').onclick=()=>{Depth.ask();close()};$('vsGo').focus({preventScroll:true});
+}
+/* 卓の配置：相手は奥、自分は手前。x は画面の横位置(%) */
+const LAYOUT={1:[50],2:[26,74],3:[17,50,83]};
+const feltX=x=>(x+32)/164*100;
+function buildSeats(){
+  const xs=LAYOUT[N()-1];
+  $('busts').innerHTML='';$('plates').innerHTML='';
+  $('felt').querySelectorAll('.spot').forEach(e=>e.remove());
+  S.players.forEach((p,i)=>{
+    if(i===0){
+      const sp=document.createElement('div');sp.className='spot';sp.id='spot0';sp.style.left='37%';sp.style.top='34%';
+      $('felt').appendChild(sp);return;
+    }
+    const x=xs[i-1],r=rankOf(p.name),solo=N()===2;
+    const w=(solo?52:N()===3?36:28)+r*(solo?3:2);
+    $('busts').insertAdjacentHTML('beforeend',`<div class="bust ${r>=3?'cool':'cute'}" id="bust${i}" style="left:${x}%;width:${w}%"><div class="body" style="animation-delay:-${(i*1.1).toFixed(1)}s">${avatar(p.name)}</div></div>`);
+    $('plates').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()===4?31:44}%"></div>`);
+    $('plates').insertAdjacentHTML('beforeend',`<div class="plate" id="plate${i}" style="left:${x}%"></div>`);
+    const sp=document.createElement('div');sp.className='spot';sp.id='spot'+i;
+    sp.style.left=feltX(x)+'%';sp.style.top='13%';
+    $('felt').appendChild(sp);
+  });
+}
+function moodOf(p,i){
+  if(p.out)return'lose';
+  if(p.won>0)return'win';
+  if(S.handOver&&p.show)return'lose';
+  if(p.folded)return'worried';
+  if(S.toAct===i&&!p.human)return'think';
+  if(p.human&&S.meSmug)return'confident';
+  if(p.tilt>0&&!p.human&&mannerOf(p))return'worried';
+  if(p.actKind==='raise'||p.actKind==='allin')return'confident';
+  return'normal';
+}
+/* チップが置かれた瞬間だけすべり込ませる */
+function slideKey(p,i){const k=S.handNo+':'+S.street+':'+p.bet;if(p.bet&&p._slid!==k){p._slid=k;return' slide'}return''}
+function motion(el,kind,cool){
+  const svg=el.querySelector('.av');if(!svg||!svg.animate||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const K={raise:[[0,0,1],[7,0,1.08],[0,0,1]],allin:[[0,0,1],[9,0,1.12],[2,0,1.04],[0,0,1]],call:[[0,0,1],[3,0,1],[0,0,1]],check:[[0,0,1],[2,0,1],[0,0,1]],
+    fold:[[0,0,1],[5,-4,.98],[0,0,1]],win:cool?[[0,0,1],[4,0,1],[0,0,1],[3,0,1],[0,0,1]]:[[0,0,1],[-12,0,1],[0,0,1],[-7,0,1],[0,0,1]]}[kind];
+  if(!K)return;
+  svg.animate(K.map(([y,r,s])=>({transform:`translateY(${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='win'?900:kind==='allin'?800:500,easing:'ease-out'});
+}
+function placeDealer(){
+  const d=$('dbtn'),sp=$('spot'+S.dealer);
+  d.hidden=S.dealer===0;if(!sp||S.dealer===0)return;
+  const l=parseFloat(sp.style.left),t=parseFloat(sp.style.top);
+  // 相手のチップの山は内側にあるので、ボタンは外側（中央の人は左）
+  // 相手が3人のときは卓が混むので、ボタンは名札に付ける（plateの .dbadge）
+  if(N()>=4){d.hidden=true;return}
+  const out=Math.abs(l-50)<1?-8:(l<50?-7:7);
+  d.style.left=(l+out)+'%';d.style.top=(t+1-(matchMedia('(min-width:700px)').matches?3:0))+'%';
+}
+
+/* ---------- ディーラーの声・演出 ---------- */
+let dcallT=0;
+function dealerSay(text){
+  const d=$('dcall');d.textContent=text;d.style.animationDuration=(1.3*SPEED())+'s';d.classList.remove('go');void d.offsetWidth;d.classList.add('go');
+  clearTimeout(dcallT);dcallT=setTimeout(()=>d.classList.remove('go'),1300*SPEED());
+}
+/* ポットのチップを勝った人の席へすべらせる */
+function potFly(from,amount){
+  if(!from||!amount||reducedMotion())return;
+  const tb=$('table').getBoundingClientRect();
+  const ws=S.players.map((p,i)=>i).filter(i=>S.players[i].won>0);
+  ws.forEach(i=>{
+    const tgt=i===0?$('mine').querySelector('.me-r'):$('plate'+i);if(!tgt)return;
+    const r=tgt.getBoundingClientRect();
+    const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(Math.round(amount/ws.length/1000)*1000||amount,false);
+    el.style.left=(from.left+from.width/2-tb.left)+'px';el.style.top=(from.top+from.height/2-tb.top)+'px';
+    $('table').appendChild(el);
+    const dx=r.left+r.width/2-from.left-from.width/2,dy=r.top+r.height/2-from.top-from.height/2;
+    el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.7)`,opacity:.2}],
+      {duration:700*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
+  });
+}
+function potCall(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
+  dealerSay('ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ');Sound.sfx(ws.some(w=>w.human)?'win':'chip')}
+function gatherBets(){
+  if(reducedMotion())return;
+  const to=$('potChips').getBoundingClientRect(),tb=$('table').getBoundingClientRect();
+  const tx=to.left+to.width/2,ty=to.top+to.height/2;
+  S.players.forEach((p,i)=>{
+    if(!p.bet)return;
+    const src=(i===0?$('mine').querySelector('.mybet .stack'):$('spot'+i).querySelector('.chipwrap .stack'));if(!src)return;
+    const r=src.getBoundingClientRect();if(!r.width)return;
+    const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(p.bet,false);
+    el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';
+    $('table').appendChild(el);src.style.visibility='hidden';
+    el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${tx-r.left-r.width/2}px),calc(-50% + ${ty-r.top-r.height/2}px)) scale(.8)`,opacity:.3}],
+      {duration:450*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
+  });
+}
+function potRect(){const e=$('potChips');const r=e&&e.getBoundingClientRect();return r&&r.width?r:null}
+
+/* ---------- 音（WebAudio・最初はオフ） ---------- */
+const Sound=(()=>{
+  let ac=null,master=null,loop=0,cur=-1,paused=false,riffle=0;
+  const CH=[ // 店ごとの和音（周波数）と間隔
+    {ch:[[110,164.8,220,277.2],[98,146.8,196,246.9]],gap:4200,wave:'triangle'},             // フリー
+    {ch:[[73.4,110,146.8,174.6],[65.4,98,130.8,164.8]],gap:5200,wave:'triangle'},           // 錨亭：低くて暗い
+    {ch:[[82.4,123.5,164.8,207.7],[87.3,130.8,174.6,220]],gap:4800,wave:'sine'},            // 銀の扉：静か
+    {ch:[[98,146.8,185,233.1,293.7],[87.3,130.8,164.8,207.7,261.6]],gap:3600,wave:'triangle'},// 月影：ジャズの和音
+    {ch:[[110,164.8,207.7,246.9,329.6],[123.5,185,233.1,277.2,349.2]],gap:4400,wave:'sine'},// 天空：明るく上品
+  ];
+  function ctx(){if(!ac){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A();master=ac.createGain();master.gain.value=.5;master.connect(ac.destination)}
+    if(ac.state==='suspended')ac.resume();return ac}
+  function tone(f,dur,vol,wave,at){
+    const c=ctx();if(!c)return;const t=c.currentTime+(at||0);
+    const o=c.createOscillator(),g=c.createGain();o.type=wave||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+Math.min(.6,dur/3));g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05);
+  }
+  function click(f,vol){const c=ctx();if(!c)return;const t=c.currentTime;
+    const b=c.createBuffer(1,Math.floor(c.sampleRate*.04),c.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,3);
+    const s=c.createBufferSource(),bp=c.createBiquadFilter(),g=c.createGain();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=4;g.gain.value=vol;
+    s.buffer=b;s.connect(bp);bp.connect(g);g.connect(master);s.start(t)}
+  function play(){const set=CH[cur];if(!set)return;const k=Math.floor(Date.now()/set.gap)%set.ch.length;
+    set.ch[k].forEach((f,j)=>tone(f,set.gap/1000*1.1,.035-j*.004,set.wave,j*.03))}
+  return{
+    sfx(kind){if(!SETTINGS.sound||paused)return;
+      if(kind==='chip'){click(3200,.5);setTimeout(()=>click(2600,.35),60)}
+      else if(kind==='card')click(1400,.35);
+      else if(kind==='win'){[523,659,784].forEach((f,j)=>tone(f,.5,.06,'triangle',j*.08))}},
+    // 静まり返る：BGMを止め、チップをいじる音だけを鳴らす
+    hush(on){clearInterval(riffle);riffle=0;
+      if(on){clearInterval(loop);loop=0;if(SETTINGS.sound&&!paused)riffle=setInterval(()=>{if(!SETTINGS.sound||paused)return;click(3000+Math.random()*600,.18);setTimeout(()=>click(2700,.12),70)},650)}
+      else if(SETTINGS.sound&&!paused&&cur>=0&&!loop&&!$('game').hidden)this.bgm(cur)},
+    heart(){if(!SETTINGS.sound||paused)return;tone(58,.18,.3,'sine');tone(52,.2,.22,'sine',.16)},
+    thud(){if(!SETTINGS.sound||paused)return;tone(46,.6,.32,'sine');click(900,.4)},
+    bgm(n){cur=n;clearInterval(loop);if(!SETTINGS.sound||paused||!CH[n])return;play();loop=setInterval(play,CH[n].gap)},
+    stop(){clearInterval(loop);loop=0},
+    // 裏に回ったときや広告の表示中は止め、戻ったら再開する
+    pause(){paused=true;clearInterval(loop);loop=0;clearInterval(riffle);riffle=0;if(ac&&ac.state==='running')ac.suspend()},
+    resume(){if(!paused)return;paused=false;if(ac&&SETTINGS.sound)ac.resume();if(SETTINGS.sound&&cur>=0&&!$('game').hidden)this.bgm(cur)},
+  };
+})();
+document.addEventListener('visibilitychange',()=>document.hidden?Sound.pause():Sound.resume());
+function renderSound(){$('btnSound').textContent='音：'+(SETTINGS.sound?'オン':'オフ')}
+
+/* ---------- 店ごとのハウスルール ---------- */
+const HOUSE={
+  straddle:{name:'ストラドル',desc:'ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は最後に話せる）'},
+  bomb:{name:'ボムポット',desc:'5ハンドに1回、全員がBBの2倍を出し合い、フロップから始める'},
+  seven2:{name:'7-2ゲーム',desc:'7と2の手で勝つと、ほかの全員からBBの2倍のボーナス'},
+};
+let myStraddle=false;
+function payHouse72(){
+  if(CFG.house!=='seven2')return;
+  const is72=p=>{const rs=p.hand.map(c=>c.r).sort((a,b)=>a-b);return rs[0]===2&&rs[1]===7};
+  const ws=S.players.filter(p=>p.won>0&&is72(p));if(ws.length!==1)return;
+  const w=ws[0];
+  let got=0;
+  S.players.forEach(p=>{if(p===w||p.out)return;const a=Math.min(p.chips,BB()*2);p.chips-=a;got+=a});
+  w.chips+=got;w.won+=got;
+  log(`7-2ゲーム！ ${w.name}が全員からボーナス ${fmt(got)}`);
+  S.msg=`7-2ゲーム！ ${w.name}にボーナス +${fmt(got)}　/　${S.msg}`;
+  if(w.hand&&w.show===false&&!w.human)w.show=true;
+}
+function post(p,amt){const a=Math.max(0,Math.min(amt,p.chips));p.chips-=a;p.bet+=a;p.total+=a;if(p.chips===0)p.allIn=true;return a}
+
+function startHand(){
+  if(CFG.refill)S.players.forEach(p=>{if(!p.human&&p.chips<=0){p.chips=p.start;log(`${p.name}がチップを補充して席に戻った`)}});
+  S.players.forEach(p=>{p.out=p.chips<=0});
+  S.handNo++;
+  S.dealer=nextIdx(S.dealer,p=>!p.out);
+  S.taunt=-1;S.slowrolled=-1;S.meSmug=false;S.angleActing=-1;S.players.forEach(p=>{if(p.tilt>0&&S.handNo>0&&p.tiltHand!==S.handNo){p.tiltHand=S.handNo;p.tilt--}});S.needle=null;S.runout=false;S.tease=false;S.reveal=false;S.stare=-1;S.stareKey='';$('table').classList.remove('hush');Sound.hush(false);Clock.stop();S.myPreFold=false;S.myTurnAt=0;S.myTurnKey='';S.deck=shuffle(fullDeck());S.board=[];S.street='preflop';S.handOver=false;S.msg='';S.raises=0;S.aggr=-1;S.lastCalled=-1;S.myPostAggro=false;
+  S.players.forEach(p=>{Object.assign(p,{hand:p.out?[]:[S.deck.pop(),S.deck.pop()],folded:p.out,allIn:false,
+    bet:0,total:0,acted:false,show:false,won:0,hname:'',lastAct:'',lastType:'',seen:null,actKind:'',say:null,peeked:false,tell:null,tellLog:[],lastState:'',answered:false,hs:p.chips,showN:0,slow:false,eq:null,eqDir:'',seenArr:null})});
+  const live=p=>!p.out;
+  const alive=S.players.filter(live).length;
+  const sb=alive===2?S.dealer:nextIdx(S.dealer,live);
+  const bb=nextIdx(sb,live);
+  log(`ハンド #${S.handNo}`,true);
+  if(CFG.tells)$('table').style.setProperty('--night',Math.min(.35,S.handNo*.015).toFixed(3));
+  if(S.handNo===1)log('基本ルール：スモールブラインド・ビッグブラインド・BBアンティ（BBの人が全員分のアンティを払う）');
+  if(S.handNo===1&&(CFG.house||CFG.lore)){
+    const h=HOUSE[CFG.house];
+    const note=h?`この店のルール：${h.name}（${h.desc}）`:CFG.lore;
+    log(note);S.msg=h?`この店のルール：${h.name}`:'';
+  }
+  if(CFG.house==='bomb'&&S.handNo%5===0&&alive>=2){
+    const ante=BB()*2;
+    S.players.forEach(p=>{if(p.out)return;const a=Math.min(ante,p.chips);p.chips-=a;p.total+=a;if(p.chips===0)p.allIn=true});
+    log(`ボムポット！ 全員が ${fmt(ante)} ずつ出して、フロップから始める`);
+    S.msg='ボムポット！ 全員参加でフロップから';dealerSay('ボムポット');
+    S.currentBet=0;S.minRaise=BB();
+    return nextStreet();
+  }
+  post(S.players[sb],SB());log(`${S.players[sb].name}：スモールブラインド ${SB()}`);
+  post(S.players[bb],BB());log(`${S.players[bb].name}：ビッグブラインド ${BB()}`);
+  // BBアンティ：BBの人が全員分のアンティ（BBと同額）をまとめてポットに入れる
+  {const q=S.players[bb],a=Math.min(BB(),q.chips);if(a>0){q.chips-=a;q.total+=a;if(q.chips===0)q.allIn=true;log(`${q.name}：BBアンティ ${a}`)}}
+  S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB();
+  S.toAct=nextIdx(bb,needs);
+  if(CFG.house==='straddle'&&alive>=3){
+    const u=S.players[S.toAct];
+    const want=u.human?myStraddle:(u.chips>BB()*6&&Math.random()<.35);
+    if(want){post(u,BB()*2);u.lastAct=`ストラドル ${BB()*2}`;u.lastType='raise';
+      log(`${u.name}：ストラドル ${BB()*2}`);S.msg=`${u.name}がストラドル（${BB()*2}）`;
+      S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB()*2;S.toAct=nextIdx(S.toAct,needs)}
+  }
+  S.hold=startBanter();
+  proceed();
+}
+/* ---------- ドキドキ演出 ---------- */
+// 1. オールイン後の勝率：残りの場札を全部（多いときは無作為に）試して数える
+function calcEq(){
+  const live=S.players.filter(inHand);if(live.length<2)return;
+  const need=5-S.board.length,deck=S.deck.slice(),win=live.map(()=>0);let n=0;
+  const score=b=>{const sc=live.map(p=>bestN(p.hand.concat(b)));let top=sc[0];sc.forEach(x=>{if(cmp(x,top)>0)top=x});
+    const ws=sc.map((x,k)=>cmp(x,top)===0?k:-1).filter(k=>k>=0);ws.forEach(k=>win[k]+=1/ws.length);n++};
+  if(need===0)score(S.board);
+  else if(need===1)deck.forEach(c=>score(S.board.concat([c])));
+  else if(need===2){for(let a=0;a<deck.length;a++)for(let b=a+1;b<deck.length;b++)score(S.board.concat([deck[a],deck[b]]))}
+  else for(let t=0;t<600;t++){const d=deck.slice(),add=[];for(let k=0;k<need;k++)add.push(d.splice(Math.floor(Math.random()*d.length),1)[0]);score(S.board.concat(add))}
+  live.forEach((p,k)=>{const v=Math.round(win[k]/n*100);p.eqDir=p.eq==null?'':v>p.eq?' up':v<p.eq?' down':'';p.eq=v});
+}
+const eqBadge=p=>S.runout&&p.eq!=null&&!S.handOver&&!p.folded?`<span class="eqb${p.eqDir||''}">勝率 ${p.eq}%</span>`:'';
+// 4. オールイン：チップの山を前へ押し出して、卓が静まり返る
+function pushChips(i){
+  const p=S.players[i];
+  S.hold=Math.max(S.hold||0,900*SPEED());
+  Sound.thud();Sound.hush(true);$('table').classList.add('hush');
+  const s0=S,h0=S.handNo;
+  setTimeout(()=>{if(S===s0&&S.handNo===h0&&S.stare<0){$('table').classList.remove('hush');Sound.hush(false)}},1500*SPEED());
+  if(reducedMotion())return;
+  const src=i===0?$('mine').querySelector('.mystack'):$('spot'+i).querySelector('.mystack'),to=potRect();
+  if(!src||!to)return;const r=src.getBoundingClientRect(),tb=$('table').getBoundingClientRect();if(!r.width)return;
+  const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(p.bet,false,true);
+  el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
+  const dx=(to.left+to.width/2-r.left-r.width/2)*.55,dy=(to.top+to.height/2-r.top-r.height/2)*.55;
+  el.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.25},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,opacity:.9}],
+    {duration:800*SPEED(),easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'}).onfinish=()=>setTimeout(()=>el.remove(),200);
+}
+// 3. 大事な場面の持ち時間。第1〜3章は時間が切れても自動では降りない（難しさを変えないため）
+const Clock=(()=>{
+  let iv=0,key='',left=0,last=0,beat=0;
+  const limit=()=>CFG.ch&&CFG.ch.no<=3?45:30;
+  function stop(){clearInterval(iv);iv=0;key='';$('clock').hidden=true;$('clock').classList.remove('low')}
+  function start(k){
+    if(!SETTINGS.clock||key===k)return;stop();key=k;left=limit()*1000;last=Date.now();beat=0;
+    const s0=S,h0=S.handNo;$('clock').hidden=false;draw();
+    iv=setInterval(()=>{
+      if(S!==s0||S.handNo!==h0||S.handOver||S.toAct!==0||$('game').hidden)return stop();
+      const now=Date.now(),dt=now-last;last=now;if(document.hidden)return; // 裏に回っている間は減らさない
+      left-=dt;beat-=dt;
+      if(left<=15000&&beat<=0){Sound.heart();if(left<=6000&&navigator.vibrate)try{navigator.vibrate(25)}catch(e){};beat=left<=6000?520:950}
+      draw();
+      if(left<=0)timeUp();
+    },100);
+  }
+  function draw(){
+    const t=Math.max(0,left),c=$('clock');
+    c.querySelector('i').style.transform=`scaleX(${(t/(limit()*1000)).toFixed(3)})`;
+    c.querySelector('span').textContent=t>0?`持ち時間 ${Math.ceil(t/1000)}秒`:'時間です';
+    c.classList.toggle('low',t<=6000);
+  }
+  function timeUp(){
+    clearInterval(iv);iv=0;
+    if(CFG.ch&&CFG.ch.no<=3){S.msg='ジン「時間だ。そろそろ決めろ」';$('msg').textContent=S.msg;return}
+    const me=S.players[0],toCall=S.currentBet-me.bet;stop();
+    log(toCall>0?'時間切れ：フォールド扱い':'時間切れ：チェック扱い');S.msg=toCall>0?'時間切れでフォールド':'時間切れでチェック';
+    act(0,toCall>0?'fold':'call');
+  }
+  return{start,stop};
+})();
+function bigSpotForMe(){
+  const me=S.players[0],toCall=S.currentBet-me.bet;
+  return toCall>0&&(toCall>=me.chips||toCall>=Math.max(BB()*5,potTotal()*.5));
+}
+// 5. ショーダウン：相手が1枚ずつ、焦らしながら開く
+function revealThenShowdown(){
+  const s0=S,h0=S.handNo,ok=()=>S===s0&&S.handNo===h0;
+  const cont=S.players.filter(inHand),opp=cont.filter(p=>!p.human);
+  if(!opp.length||S.runout)return showdown();
+  S.reveal=true;S.toAct=-1;
+  // 最後に攻めた人から開く。いなければボタンの左から
+  const seat=p=>(S.players.indexOf(p)-S.dealer-1+N())%N();
+  opp.sort((a,b)=>seat(a)-seat(b));
+  const ag=S.players[S.aggr];if(ag&&opp.includes(ag)){opp.splice(opp.indexOf(ag),1);opp.unshift(ag)}
+  // スロウロール：勝っているマナーの悪い相手が、最後にわざとゆっくり開く
+  const sc=cont.map(p=>bestN(p.hand.concat(S.board)));let top=sc[0];sc.forEach(x=>{if(cmp(x,top)>0)top=x});
+  const slow=!S.players[0].folded&&cont.includes(S.players[0])&&cmp(sc[cont.indexOf(S.players[0])],top)<0?
+    opp.find(p=>{const m=mannerOf(p);return m&&cmp(sc[cont.indexOf(p)],top)===0&&Math.random()<m.slowroll}):null;
+  if(slow){opp.splice(opp.indexOf(slow),1);opp.push(slow)}
+  dealerSay('ショーダウン');render();
+  let t=600*SPEED();
+  opp.forEach((p,k)=>{
+    const lastOne=k===opp.length-1;
+    if(p===slow){
+      setTimeout(()=>{if(!ok())return;p.say={seq:(S.saySeq=(S.saySeq||0)+1),line:lineFor(p.name,'slowroll'),talk:true};S.meSmug=true;render()},t);
+      t+=(reducedMotion()||SETTINGS.speed==='fast'?1000:2300);
+      setTimeout(()=>{if(!ok())return;S.meSmug=false;p.showN=1;p.slow=true;Sound.sfx('card');render()},t);t+=1500*SPEED();
+      setTimeout(()=>{if(!ok())return;p.showN=2;Sound.sfx('card');render()},t);t+=1300*SPEED();
+      setTimeout(()=>{if(!ok())return;S.slowrolled=S.players.indexOf(p)},t-10);
+      return;
+    }
+    setTimeout(()=>{if(!ok())return;p.showN=1;Sound.sfx('card');render()},t);t+=(lastOne?1300:800)*SPEED();
+    setTimeout(()=>{if(!ok())return;p.showN=2;p.slow=lastOne;Sound.sfx('card');render()},t);t+=(lastOne?1300:700)*SPEED();
+  });
+  setTimeout(()=>{if(!ok())return;S.reveal=false;showdown()},t);
+}
+
+function roundComplete(){
+  const ca=S.players.filter(canAct);
+  if(ca.length===0)return true;
+  if(ca.length===1&&ca[0].bet>=S.currentBet)return true;
+  return !ca.some(needs);
+}
+function proceed(){
+  const live=S.players.filter(inHand);
+  if(live.length===1)return winUncontested(live[0]);
+  const hold=S.hold||0;S.hold=0;
+  const s0=S,h0=S.handNo; // 章を出入りしたあとに古いタイマーが動かないように
+  if(roundComplete()){
+    const next={preflop:'flop',flop:'turn',turn:'river'}[S.street];
+    // 1. オールインで勝負がついたら、全員の手を開き、残りの場札を1枚ずつ溜めてめくる
+    if(next&&!S.runout&&live.filter(p=>!p.allIn).length<=1){
+      S.runout=true;live.forEach(p=>{p.show=true});calcEq();
+      log('オールイン：手札を開いて、残りのカードを配ります');dealerSay('ハンドをオープン');
+    }
+    render();
+    const go=()=>{if(S===s0&&S.handNo===h0)nextStreet()};
+    if(S.runout&&next&&next!=='flop')
+      return setTimeout(()=>{if(S!==s0||S.handNo!==h0)return;S.tease=true;render();Sound.heart();
+        setTimeout(go,(next==='river'?1700:1100)*SPEED())},1000*SPEED()+hold);
+    return setTimeout(go,(S.runout?1300:800)*SPEED()+hold);
+  }
+  render();
+  const i=S.toAct,p=S.players[i];
+  if(p.human&&S.myTurnKey!==S.handNo+S.street+S.currentBet){S.myTurnKey=S.handNo+S.street+S.currentBet;S.myTurnAt=Date.now()}
+  if(p.human&&bigSpotForMe())Clock.start(S.myTurnKey);
+  if(!p.human){
+    const d=cpuDecide(i);p.lastState=d.state;showTell(i,d);
+    const fast=p.tell&&p.tell.cue==='fast';
+    // 考えている間に、ときどきひとこと（速攻のクセのときは黙ってすぐ賭ける）
+    const talk=!fast&&!(p.tell&&p.tell.cue==='talk')&&Math.random()<.4;
+    if(talk){p.say={seq:(S.saySeq=(S.saySeq||0)+1),line:thinkLine(p,S.currentBet-p.bet),talk:true}}
+    // 2. 大きな賭けの前は、黙り込んでこちらをじっと見る。BGMが止まり、チップの音だけになる
+    const toCall=S.currentBet-p.bet,pot=potTotal();
+    const big=!fast&&S.stareKey!==S.handNo+S.street+i&&(d.type==='raise'&&(d.to>=p.bet+p.chips||d.to-p.bet>=Math.max(BB()*6,pot*.6))||d.type!=='fold'&&toCall>=Math.max(BB()*6,p.chips*.4));
+    if(big){S.stare=i;S.stareKey=S.handNo+S.street+i;p.say=null;$('table').classList.add('hush');Sound.hush(true)}
+    render();
+    // アングルショット：1ハンドに1回まで。ディーラーが止めるので、得はさせない
+    const mn=mannerOf(p);let angle='';
+    if(mn&&!big&&S.angleHand!==S.handNo&&d.type==='raise'&&Math.random()<mn.angleRate){
+      const tc=S.currentBet-p.bet;
+      if(tc===0&&d.rel&&mn.angles.includes('faketap'))angle='faketap';
+      else if(tc>0&&mn.angles.includes('onechip'))angle='onechip';
+      if(angle){S.angleHand=S.handNo;d.type='call';delete d.to}
+    }
+    const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()+hold;
+    if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
+      setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}},wait+1300*SPEED());return}
+    setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
+  }
+}
+function act(i,type,to){
+  const p=S.players[i];
+  if(S.handOver||i!==S.toAct)return;
+  const toCall=S.currentBet-p.bet;
+  if(p.human&&type==='fold'){if(S.myTurnAt&&Date.now()-S.myTurnAt>=15000)grantTitle('tankfold');if(S.street==='preflop')S.myPreFold=true}
+  if(type==='raise'&&p.acted)type='call'; // 足りないオールインのあとは、レイズできない
+  if(p.human)Clock.stop();
+  if(S.stare===i){S.stare=-1;$('table').classList.remove('hush');Sound.hush(false)}
+  if(type==='fold'){p.folded=true;p.lastAct='フォールド';p.lastType='fold';log(`${p.name}：フォールド`)}
+  else if(type==='call'){
+    if(toCall<=0){p.lastAct='チェック';p.lastType='call';log(`${p.name}：チェック`)}
+    else{const a=post(p,toCall);p.lastAct=p.allIn?`オールイン ${fmt(p.bet)}`:`コール ${fmt(a)}`;p.lastType='call';log(`${p.name}：コール ${fmt(a)}${p.allIn?'（オールイン）':''}`)}
+  }else{
+    to=Math.min(to,p.bet+p.chips);
+    const prev=S.currentBet;
+    post(p,to-p.bet);
+    if(p.bet>prev){
+      const inc=p.bet-prev;
+      const full=inc>=S.minRaise;if(full)S.minRaise=inc;
+      S.currentBet=p.bet;S.raises++;S.aggr=i;S.lastCalled=-1;
+      if(p.human&&S.street!=='preflop')S.myPostAggro=true;
+      // 足りないオールインは、すでに話した人にレイズの権利を戻さない（コールかフォールドだけ）
+      if(full)S.players.forEach(q=>{if(q!==p)q.acted=false});
+      p.lastAct=p.allIn?`オールイン ${fmt(p.bet)}`:`${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}`;p.lastType='raise';log(`${p.name}：${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}${p.allIn?'（オールイン）':''}`);
+      dealerSay(p.allIn?'オールイン':`${prev===0?'ベット':'レイズ'}、${fmt(p.bet)}`);
+    }else{p.lastAct='コール';p.lastType='call';log(`${p.name}：コール${p.allIn?'（オールイン）':''}`)}
+  }
+  if(p.human&&type==='call'&&toCall>0)S.lastCalled=S.aggr;
+  p.acted=true;
+  if(type!=='fold'&&(type==='raise'||toCall>0))Sound.sfx('chip');
+  afterAct(i,type,toCall);
+  S.toAct=nextIdx(i,needs);
+  proceed();
+}
+/* 行動のあと：吹き出し・動き・カットイン */
+function afterAct(i,type,toCall){
+  const p=S.players[i];
+  let kind=type==='fold'?'fold':type==='call'?(toCall<=0?'check':'call'):'raise';
+  if(p.allIn&&type!=='fold')kind='allin';
+  p.actSeq=(p.actSeq||0)+1;p.actKind=kind;
+  if(kind==='allin')pushChips(i);
+  if(p.human)return;
+  let line='';
+  const st=p.lastState==='strong'?'_strong':p.lastState==='bluff'?'_bluff':'';
+  if(p.tell&&p.tell.cue==='talk'&&p.tell.street===S.street&&kind!=='fold')line=lineFor(p.name,'talk');
+  else if(S.needle===S.street&&!p.answered&&Math.random()<.7){line=lineFor(p.name,'needled');p.answered=true}
+  else if(Math.random()<talkRate(p.name)||kind==='allin')line=lineFor(p.name,(kind==='raise'||kind==='allin')?kind+st:kind);
+  if(S.angleHand===S.handNo&&S.angleActing===i){S.angleActing=-1;line=''}
+  p.say={seq:(S.saySeq=(S.saySeq||0)+1),act:p.lastAct,line};
+  const boss=rankOf(p.name)>=3||(CFG.ch&&i===1);
+  if(kind==='allin'&&boss)cutIn(p.name,lineFor(p.name,'allin'));
+}
+function cutIn(name,line){
+  const c=$('cutin');
+  c.querySelector('.cav').innerHTML=avatar(name,'confident');
+  c.querySelector('.ctext').innerHTML=`<b>${esc(name)}</b><span>オールイン</span><p>「${esc(line)}」</p>`;
+  c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');
+  S.hold=1700;
+  setTimeout(()=>{c.hidden=true},1800);
+}
+
+function nextStreet(){
+  if(S.handOver)return;
+  gatherBets();
+  S.players.forEach(p=>{p.bet=0;p.acted=false;if(!p.folded&&!p.allIn)p.lastAct=''});
+  S.currentBet=0;S.minRaise=BB();S.raises=0;S.tease=false;
+  if(S.street==='river')return revealThenShowdown();
+  const next={preflop:'flop',flop:'turn',turn:'river'}[S.street];
+  const n=next==='flop'?3:1;
+  S.deck.pop();
+  const dealt=[];for(let k=0;k<n;k++){const c=S.deck.pop();S.board.push(c);dealt.push(c)}
+  S.street=next;
+  log(`${STREET_JP[next]}：${dealt.map(cardStr).join(' ')}`);
+  dealerSay(STREET_JP[next]);Sound.sfx('card');
+  if(S.runout)calcEq();
+  S.toAct=nextIdx(S.dealer,needs);
+  proceed();
+}
+function winUncontested(p){
+  const pr=potRect();
+  const pot=potTotal();p.chips+=pot;p.won=pot;
+  S.handOver=true;S.toAct=-1;
+  S.msg=`${p.name}の勝ち（+${fmt(pot)}）`;
+  log(`${p.name}がポット ${fmt(pot)} を獲得`);
+  if(p.human&&S.street==='preflop'&&S.aggr===0){S.steals++;if(CFG.goal.type==='steal')S.msg=`ブラインドを盗んだ！（+${fmt(pot)}）`}
+  if(p.human&&S.street!=='preflop'&&S.myPostAggro&&isWeak(p.hand,S.board)){S.bluffs++;if(CFG.goal.type==='bluff')S.msg=`ブラフ成功！（+${fmt(pot)}）`}
+  payHouse72();
+  if(mannerOf(p)&&mannerOf(p).gloat&&S.players[0].total>=BB()*3&&Math.random()<.35)taunt(p,'gloat');
+  endHand();
+  potFly(pr,pot);potCall();
+}
+function showdown(){
+  const pr=potRect(),potAmt=potTotal();
+  S.street='showdown';
+  const cont=S.players.filter(inHand);
+  cont.forEach(p=>{p.show=true;p.score=bestN(p.hand.concat(S.board));p.hname=handName(p.score)});
+  const contrib=S.players.filter(p=>p.total>0);
+  const levels=[...new Set(contrib.map(p=>p.total))].sort((a,b)=>a-b);
+  let prev=0;
+  for(const L of levels){
+    let amt=0;contrib.forEach(p=>{amt+=Math.min(p.total,L)-Math.min(p.total,prev)});
+    let elig=cont.filter(p=>p.total>=L);
+    if(!elig.length)elig=cont;
+    const top=elig.reduce((a,b)=>cmp(a.score,b.score)>=0?a:b);
+    const seat=p=>(S.players.indexOf(p)-S.dealer-1+N())%N();
+    const winners=elig.filter(p=>cmp(p.score,top.score)===0).sort((a,b)=>seat(a)-seat(b)); // 端数はボタンの左から
+    const share=Math.floor(amt/winners.length/1000)*1000;
+    let rem=amt-share*winners.length;
+    winners.forEach((w,k)=>{const g=share+(k===0?rem:0);w.chips+=g;w.won+=g});
+    prev=L;
+  }
+  cont.forEach(p=>log(`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname}）`));
+  cont.forEach(p=>(p.tellLog||[]).forEach(t=>{log(`答え合わせ：${p.name}の「${CUE_LABEL[t.cue]}」は${TRUTH_JP[t.truth]}だった`);noteTell(p.name,t.cue,t.truth)}));
+  if(CFG.tells||CFG.ch)renderNotes();
+  const ag=S.players[S.aggr];
+  if(S.aggr>0&&S.lastCalled===S.aggr&&ag&&ag.show&&S.players[0].won>0&&(ag.lastState==='bluff'||isWeak(ag.hand,S.board))){S.reads=(S.reads||0)+1;S.readMsg=true}
+  const ws=S.players.filter(p=>p.won>0);
+  ws.forEach(w=>log(`${w.name}が ${fmt(w.won)} を獲得`));
+  S.msg=ws.map(w=>`${w.name}の勝ち（${w.hname}・+${fmt(w.won)}）`).join(' / ');
+  if(S.readMsg){S.readMsg=false;S.msg=`ブラフを見抜いた！ ${S.msg}`;grantTitle('read')}
+  const me=S.players[0];
+  if(me.show){
+    if(me.won>0){
+      if(me.score[0]>=7)grantTitle('quads');
+      if(me.allIn)grantTitle('allin');
+      const loser=cont.filter(q=>!q.human&&!q.won).pop();
+      if(loser){loser.say={seq:(loser.actSeq||0)+1000,act:'',line:Math.random()<.5?'ナイスハンド':lineFor(loser.name,'fold')||'ナイスハンド'}}
+    }else{
+      const ws2=cont.filter(q=>q.won>0);
+      if(me.hand[0].r===14&&me.hand[1].r===14)grantTitle('aalose');
+      if(me.score[0]>=6)grantTitle('cooler');
+      if(S.board.length===5&&ws2.length){const turn=b=>bestN(b.hand.concat(S.board.slice(0,4)));
+        if(ws2.every(w=>cmp(turn(me),turn(w))>0))grantTitle('badbeat')}
+    }
+  }
+  payHouse72();
+  S.handOver=true;S.toAct=-1;
+  if(S.slowrolled>0){const sp=S.players[S.slowrolled];grantTitle('slowrolled');taunt(sp,'gloat');
+    jinNote('顔に出すな。ああいう勝ち方をする奴は、もう焦っている',0)}
+  else{const g=ws.find(w=>mannerOf(w)&&mannerOf(w).gloat);if(g&&me.show&&!me.won&&Math.random()<.6)taunt(g,'gloat')}
+  endHand();
+  potFly(pr,potAmt);potCall();
+}
+function endHand(){
+  // ティルト：マナーの悪い相手が、1ハンドで持ち点の3割以上を取られたら熱くなる
+  if(S.players[0].won>0)S.players.forEach(q=>{const m=mannerOf(q);if(!m||q.won>0)return;
+    if(q.tilt>0&&q.total>=BB()*5)grantTitle('tiltwin');
+    if(q.hs&&q.total>=q.hs*.3&&!q.out){const was=q.tilt>0;q.tilt=m.tilt.hands;
+      if(!was){q.say={seq:(S.saySeq=(S.saySeq||0)+1)+2000,act:'',line:lineFor(q.name,'tilt')};log(`${q.name}が熱くなっている`);
+        jinNote(`${q.name}が熱くなった。強い手で待て`,1)}}});
+  S.dryStreak=S.myPreFold?(S.dryStreak||0)+1:0;
+  if(S.dryStreak>=8)grantTitle('dry');
+  if(S.handNo>=30)grantTitle('onemore');
+  if(S.players[0].won>0&&S.players[0].hand.length===2){const rs=S.players[0].hand.map(c=>c.r).sort((a,b)=>a-b);if(rs[0]===2&&rs[1]===7)grantTitle('seven2')}
+  const me=S.players[0],opps=S.players.slice(1),g=CFG.goal;
+  if(me.chips<=0)S.result='lose';
+  else if(opps.every(p=>p.chips<=0)){S.result='win';if(g.type!=='bust'&&g.type!=='free')S.msg=`相手のチップを全部取った！ ${S.msg}`}
+  else if(g.type==='steal'&&S.steals>=g.n)S.result='win';
+  else if(g.type==='bluff'&&S.bluffs>=g.n)S.result='win';
+  else if(g.type==='readcall'&&(S.reads||0)>=g.n)S.result='win';
+  if(S.result)log(S.result==='win'?'目標達成':'チップがなくなった',true);
+  render();
+}
+
+/* ---------- CPU：勝率を見積もり、性格で判断を変える ---------- */
+function equity(hand,board,opps,sims){
+  const known=hand.concat(board);
+  const rest=fullDeck().filter(c=>!known.some(k=>k.r===c.r&&k.s===c.s));
+  const need=opps*2+(5-board.length);
+  let score=0;
+  for(let t=0;t<sims;t++){
+    for(let i=0;i<need;i++){const j=i+Math.floor(Math.random()*(rest.length-i));[rest[i],rest[j]]=[rest[j],rest[i]]}
+    const b=board.concat(rest.slice(opps*2,need));
+    const mine=bestN(hand.concat(b));
+    let lose=false,ties=0;
+    for(let o=0;o<opps;o++){
+      const d=cmp(bestN([rest[o*2],rest[o*2+1]].concat(b)),mine);
+      if(d>0){lose=true;break}
+      if(d===0)ties++;
+    }
+    if(!lose)score+=ties?1/(ties+1):1;
+  }
+  return score/sims;
+}
+function cpuDecide(i){
+  const p=S.players[i],st=styleOf(p);
+  const toCall=Math.min(S.currentBet-p.bet,p.chips);
+  const opps=S.players.filter(q=>inHand(q)&&q!==p).length;
+  const eq=equity(p.hand,S.board,opps,S.street==='preflop'?200:300);
+  const pot=potTotal();
+  const odds=toCall/(pot+toCall);
+  const rel=eq*(opps+1);
+  const r=Math.random();
+  const canRaise=p.chips>toCall&&S.raises<3&&!p.acted;
+  if(canRaise&&(rel>st.hi||(rel>st.mid&&r<st.midP)||(toCall===0&&r<st.bluff))){
+    const size=Math.max(S.minRaise,Math.round(pot*(0.5+Math.random()*0.4)/1000)*1000);
+    return{type:'raise',to:S.currentBet+size,state:rel>st.hi?'strong':rel<1?'bluff':'none',rel:rel>st.mid};
+  }
+  if(toCall===0)return{type:'call',state:rel>st.hi?'strong':'none'};
+  // 慎重な性格：レイズや賭けを受けたら、強い手以外は降りる
+  if(S.street==='preflop'&&S.currentBet>BB()&&st.defPre&&rel<st.defPre)return{type:'fold',state:'none'};
+  if(S.street!=='preflop'&&st.defPost&&rel<st.defPost)return{type:'fold',state:'none'};
+  if(eq>=odds+st.margin||(toCall<=BB()&&rel>0.8))return{type:'call',state:rel>st.hi?'strong':'none'};
+  if(st.loose&&toCall<=BB()*4&&rel>0.5)return{type:'call',state:rel>st.hi?'strong':'none'};
+  return{type:'fold',state:'none'};
+}
+
+function cpuAct(i){if(S.handOver||S.toAct!==i)return;const d=cpuDecide(i);act(i,d.type,d.to)}
+
+/* ---------- 師匠のひとこと ---------- */
+function isLatePos(){
+  // ディーラー、またはディーラーの直前の席
+  const live=S.players.map((p,i)=>i).filter(i=>!S.players[i].out);
+  if(S.dealer===0)return true;
+  return live.length>=3&&nextIdx(0,p=>!p.out)===S.dealer;
+}
+function senseiLine(){
+  if(S.jinNote&&S.handNo<=S.jinNote.until)return S.jinNote.t;
+  if(!CFG.hint||S.handOver||S.toAct!==0)return'';
+  const me=S.players[0],toCall=S.currentBet-me.bet;
+  if(CFG.hint==='hand'){
+    if(S.street==='preflop'){
+      const t=preTier(me.hand);
+      if(t===2)return'いい手だ。勝負しろ。';
+      if(t===1)return toCall<=BB()?'悪くない。安く入れるなら参加していい。':'悪くない手だが、大きく賭けられたら考えろ。';
+      return toCall<=0?'弱い手だ。ただで見られるならチェックでいい。':'弱い手だ。降りろ。ゲンにくれてやれ。';
+    }
+    return isWeak(me.hand,S.board)?'何もできていない。ゲン相手にブラフは効かんぞ。':'役ができた。ゲンは降りない。しっかり賭けろ。';
+  }
+  if(CFG.hint==='position'){
+    if(S.street!=='preflop')return'盗みはプリフロップで決めろ。ここからは手の強さで勝負だ。';
+    const nobodyIn=S.players.every((p,i)=>i===0||p.bet<=BB())&&S.currentBet<=BB();
+    if(isLatePos()&&nobodyIn)return'後ろの席で、誰も参加していない。手が弱くてもレイズで盗め。';
+    if(isLatePos())return'誰かが先に参加した。盗むのはやめて、強い手だけで行け。';
+    return preTier(me.hand)===2?'前の席だが、いい手だ。参加していい。':'前の席は不利だ。強い手以外は降りろ。';
+  }
+  if(CFG.hint==='tell'){
+    if(S.revSaid===S.handNo+':'+S.street)return'……今のは、わざとだ。クセを信じすぎるな。';
+    const t=S.players.map((q,j)=>({q,j})).filter(o=>!o.q.human&&o.q.tell&&o.q.tell.street===S.street&&!o.q.folded);
+    if(t.length){
+      const {q}=t[t.length-1];
+      if(S.handNo>=8&&S.handNo%3)return'さっきのクセ、意味は覚えているか。自分で読め。';
+      return q.tell.meaning==='strong'?`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。強いぞ。`
+        :`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。ブラフかもしれん。`;
+    }
+    if(S.street==='preflop')return'相手の顔を見ろ。賭ける前に、何かが出る。';
+    return toCall>0?'相手が賭けてきた。そのとき何が出ていたか思い出せ。':'手がなければ無理するな。チェックで様子を見ろ。';
+  }
+  if(CFG.hint==='bluff'){
+    if(S.street==='preflop')return'フロップを見てから仕掛けろ。安く入れるなら参加していい。';
+    const weak=isWeak(me.hand,S.board);
+    if(weak&&toCall<=0)return'何もない。だが相手も迷っている。賭けてみろ。';
+    if(weak)return'相手が打ってきた。今回は引け。';
+    return'手ができた。普通に勝負しろ。';
+  }
+  return'';
+}
+
+/* ---------- 描画 ---------- */
+function cardHTML(c,hidden,extra){
+  if(!c)return'<div class="card slot"></div>';
+  if(hidden)return`<div class="card back${extra||''}" aria-label="伏せたカード"></div>`;
+  const red=c.s===1||c.s===2;
+  const court=c.r>=11&&c.r<=13;
+  const mid=court?`<span class="court"><b>${rankStr(c.r)}</b><i>${SUITS[c.s]}</i></span>`:`<span class="s${c.r===14?' ace':''}">${SUITS[c.s]}</span>`;
+  return`<div class="card${red?' red':''}${extra||''}" aria-label="${cardStr(c)}"><span class="r">${rankStr(c.r)}<i>${SUITS[c.s]}</i></span>${mid}<span class="r r2">${rankStr(c.r)}<i>${SUITS[c.s]}</i></span></div>`;
+}
+/* 金額をチップの山に分ける */
+const DENOMS=[[100000,'c6'],[50000,'c5'],[10000,'c4'],[5000,'c3'],[2500,'c2'],[1000,'c1']];
+function chipStack(amount,label,big,small){
+  if(!amount)return'';
+  let rest=amount,chips=[];
+  for(const [v,cls] of (small?DENOMS.filter(d=>d[0]<=10000):DENOMS)){while(rest>=v&&chips.length<(big?40:24)){chips.push(cls);rest-=v}}
+  const cols=[];for(let i=0;i<chips.length;i+=8)cols.push(chips.slice(i,i+8));
+  const step=window.innerWidth<620?3:4;
+  const html=cols.slice(0,big?5:3).map(col=>`<span class="col" style="height:${11+step*(col.length-1)+4}px">${
+    col.map((cls,k)=>`<span class="chip ${cls}" style="bottom:${k*step+4}px;left:${(((k*7+col.length*3)%5)-2)*.5}px"></span>`).join('')}</span>`).join('');
+  return`<span class="stack" aria-label="${fmt(amount)}">${html}${label!==false?`<span class="amt-label">${fmt(amount)}</span>`:''}</span>`;
+}
+function renderGoal(){
+  const g=CFG.goal,el=$('goal');
+  let main,cnt=null,sub='';
+  if(g.type==='free'){main='最後の一人になる';sub='相手全員のチップを取ったら優勝'}
+  else{main=CFG.ch.goalText;
+    if(g.type!=='bust'){cnt=Math.min(g.type==='steal'?S.steals:g.type==='readcall'?(S.reads||0):S.bluffs,g.n);sub='または、相手全員のチップを取る'}}
+  const pips=cnt===null?'':`<span class="pips" aria-label="${cnt}/${g.n}">${Array.from({length:g.n},(_,k)=>`<i class="${k<cnt?'on':''}"></i>`).join('')}<b>${cnt}/${g.n}</b></span>`;
+  const key=main+cnt;
+  if(el.dataset.k===key)return;
+  const bump=el.dataset.k&&cnt!==null&&el.dataset.cnt!==String(cnt);
+  el.dataset.k=key;el.dataset.cnt=String(cnt);
+  el.innerHTML=`<span class="gl">勝利条件</span><span class="gm">${esc(main)}</span>${pips}<span class="gs">${sub?esc(sub)+'　／　':''}自分のチップが0になったら負け</span>`;
+  if(bump&&!reducedMotion()){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')}
+}
+function goalLabel(){
+  const g=CFG.goal;
+  if(g.type==='free')return'最後の一人になる';
+  if(g.type==='bust')return'目標：'+CFG.ch.goalText;
+  const n=g.type==='steal'?S.steals:g.type==='readcall'?(S.reads||0):S.bluffs;
+  return`目標：${CFG.ch.goalText}（${Math.min(n,g.n)}/${g.n}）`;
+}
+function render(){
+  renderGoal();
+  $('meta').textContent=`ブラインド ${SB()}/${BB()}　ハンド #${S.handNo}`;
+  S.players.forEach((p,i)=>{
+    let tag;
+    if(p.out)tag='<span class="tag">脱落</span>';
+    else if(p.won)tag=`<span class="tag win">勝ち +${fmt(p.won)}</span>`;
+    else if(S.toAct===i&&!p.human)tag='<span class="tag think">考え中…</span>';
+    else if(p.lastAct){const [w,n]=p.lastAct.split(' ').map((x,k)=>k&&p.lastAct.startsWith('オールイン')&&N()>=4?'':x);tag=`<span class="tag act-${p.lastType}">${w}${n?` <b>${n}</b>`:''}</span>`}
+    else tag='';
+    const reveal=p.human||p.show;
+    const anim=p.seen===reveal?' noanim':'';
+    const seenNow=reveal;setTimeout(()=>{p.seen=seenNow},0);
+    // 相手の手札は1枚ずつ開くことがある。開いた瞬間のカードだけめくる動きを付ける
+    const shownN=reveal?2:(p.showN||0),prevArr=p.seenArr||[];
+    const cardAnim=k=>{const now=k<shownN;return prevArr[k]===now?' noanim':now&&p.slow&&(k===1||mannerOf(p))?' slowflip':''};
+    const nowArr=[0,1].map(k=>k<shownN);setTimeout(()=>{p.seenArr=nowArr},0);
+    const turn=S.toAct===i;
+    if(i===0){
+      const hideMine=SETTINGS.peek&&!p.peeked&&!p.folded&&!S.handOver&&!p.out;
+      const live=!hideMine&&!p.out&&S.board.length>=3&&!p.folded?(p.hname||handName(bestN(p.hand.concat(S.board)))):'';
+      $('mine').className='mine'+(turn?' turn':'');
+      $('mine').innerHTML=`
+        <div class="mybet"><div class="chipwrap up${slideKey(p,i)}">${chipStack(p.bet)}</div></div>
+        <div class="me-l"><div class="me-ava">${avatar(p.name,moodOf(p,0))}${S.dealer===0?'<span class="dbadge" title="ディーラー">D</span>':''}</div>${tag}</div>
+        <div class="hold${p.folded?' folded':''}${hideMine?' squeeze':''}" ${hideMine?'role="button" tabindex="0" aria-label="手札をめくる"':''}>${p.hand.map(c=>cardHTML(c,hideMine,anim)).join('')}${hideMine&&p.hand.length?'<span class="peekhint">タップしてめくる</span>':''}${SETTINGS.protector&&p.hand.length&&!p.folded?`<span class="protector">${protectorSVG(SETTINGS.protector)}</span>`:''}</div>
+        <div class="me-r"><div class="mystack" aria-hidden="true">${chipStack(p.chips,false,false,true)}</div><span class="lbl2">あなたのチップ</span><span class="chp">${fmt(p.chips)}</span><span class="myhand">${live}</span>${eqBadge(p)}</div>`;
+      return;
+    }
+    const b=$('bust'+i),m=moodOf(p,i),bd=b.querySelector('.body');
+    b.className=`bust ${rankOf(p.name)>=3?'cool':'cute'}${turn?' turn':''}${turn&&!p.human?' think':''}${S.stare===i&&turn?' stare':''}${p.folded&&!p.out?' folded':''}${p.out?' out':''}`;
+    if(bd.dataset.mood!==m){bd.innerHTML=avatar(p.name,m);bd.dataset.mood=m}
+    if(p.actKind&&bd.dataset.seq!==String(p.actSeq)){bd.dataset.seq=String(p.actSeq);motion(bd,p.actKind,rankOf(p.name)>=3)}
+    const wk=S.handNo+':'+p.won;if(p.won>0&&bd.dataset.win!==wk){bd.dataset.win=wk;motion(bd,'win',rankOf(p.name)>=3)}
+    const showCue=p.tell&&p.tell.street===S.street&&!S.handOver&&!p.folded;
+    b.classList.toggle('cue-'+(p.tell&&p.tell.cue),!!showCue);
+    let cb=b.querySelector('.cue');
+    if(showCue){if(!cb){cb=document.createElement('span');cb.className='cue';b.appendChild(cb)}
+      if(cb.dataset.seq!==String(p.tell.seq)){cb.dataset.seq=String(p.tell.seq);cb.textContent=CUE_SFX[p.tell.cue];cb.title=CUE_LABEL[p.tell.cue];
+        cb.classList.remove('go');void cb.offsetWidth;cb.classList.add('go')}}
+    else if(cb)cb.remove();
+    const sy=$('say'+i),pl=$('plate'+i);
+    if(p.say&&sy.dataset.seq!==S.handNo+':'+p.say.seq){sy.dataset.seq=S.handNo+':'+p.say.seq;
+      if(p.say.line){sy.textContent=p.say.line;sy.classList.remove('go');void sy.offsetWidth;sy.classList.add('go')}
+      if(!p.say.talk){pl.classList.add('flash');setTimeout(()=>pl.classList.remove('flash'),700)}}
+    pl.className='plate'+(turn?' turn':'')+(pl.classList.contains('flash')?' flash':'');
+    pl.innerHTML=`<span class="nm">${esc(p.name)}<span class="stars">${stars(rankOf(p.name))}</span></span>
+      <span class="chp">${fmt(p.chips)}</span>${tag}${N()>=4&&S.dealer===i?'<span class="dbadge" title="ディーラー">D</span>':''}${p.hname?`<span class="handname">${p.hname}</span>`:''}${eqBadge(p)}`;
+    const sp=$('spot'+i),mk=p.folded&&!p.out&&sp.dataset.muck!==String(S.handNo);if(mk)sp.dataset.muck=String(S.handNo);
+    const lx=parseFloat(sp.style.left);sp.dataset.side=lx<50?'l':'r';if(Math.abs(lx-50)<1)sp.dataset.c='1';
+    sp.innerHTML=`<div class="mystack" aria-hidden="true">${p.out?'':chipStack(p.chips,false,false,true)}</div><div class="hand${p.folded&&!p.out?' folded':''}${mk?' muck':''}">${p.hand.map((c,k)=>cardHTML(c,k>=shownN,cardAnim(k))).join('')}</div><div class="chipwrap${slideKey(p,i)}">${chipStack(p.bet)}</div>`;
+  });
+  placeDealer();
+  $('street').textContent=S.result?(S.result==='win'?'勝利':'敗北'):STREET_JP[S.street];
+  const bk=S.board.map(cardStr).join(',')+(S.tease?'+t':'');
+  if($('boardCards').dataset.k!==bk||!S.board.length){$('boardCards').innerHTML=[0,1,2,3,4].map(k=>S.tease&&k===S.board.length?cardHTML({},true,' tease'):cardHTML(S.board[k])).join('');$('boardCards').dataset.k=bk}
+  const pot=potTotal()-S.players.reduce((a,p)=>a+p.bet,0);
+  const paid=S.handOver&&S.players.some(p=>p.won>0);
+  const pk=paid?'paid':String(pot);
+  if($('potChips').dataset.k!==pk){$('potChips').dataset.k=pk;$('potChips').innerHTML=paid?'':chipStack(pot,false,true)}
+  const live=potTotal()-pot;
+  $('potSign').hidden=paid||!potTotal();
+  $('potSign').innerHTML=`<span class="pl">ポット</span><span class="pv">${fmt(potTotal())}</span>${live>0&&pot>0?`<span class="ps">卓 ${fmt(pot)}＋賭け ${fmt(live)}</span>`:''}`;
+  $('msg').textContent=S.msg||'';
+  const line=senseiLine();
+  $('sensei').hidden=!line;$('senseiText').textContent=line;
+  renderControls();renderTaunt();
+}
+let raiseOpen=false;
+function raiseBounds(){
+  const me=S.players[0],maxTo=me.bet+me.chips;
+  return{minTo:Math.min(S.currentBet+S.minRaise,maxTo),maxTo};
+}
+function renderControls(){
+  const me=S.players[0];
+  const myTurn=!S.handOver&&S.toAct===0;
+  $('controls').hidden=S.handOver;
+  $('between').hidden=!S.handOver;
+  if(S.handOver){
+    raiseOpen=false;
+    const alt=$('btnAlt');
+    if(S.result==='win'){
+      $('resultText').textContent=CFG.ch?'目標達成！':'あなたの優勝です';
+      $('btnNext').textContent=CFG.ch?'先へ進む':'もう一度遊ぶ';
+      alt.hidden=!!CFG.ch;alt.textContent='タイトルへ';
+      $('betweenHint').textContent='';
+    }else if(S.result==='lose'){
+      $('resultText').textContent='チップがなくなった';
+      $('btnNext').textContent='もう一度挑戦';
+      alt.hidden=false;alt.textContent=CFG.ch?'章を選ぶ':'タイトルへ';
+      $('betweenHint').textContent=CFG.ch?'ジン「'+CFG.ch.lose+'」':'';
+    }else{
+      $('resultText').textContent=S.msg||'';
+      $('btnNext').textContent='次のハンドへ';alt.hidden=true;
+      const gp=GOSSIP[CFG.ch?CFG.ch.no:0]||[];
+      if(S.handNo%3===0&&gp.length){const g=gp[(S.handNo/3)%gp.length];$('betweenHint').textContent=`${g[0]}「${g[1]}」`}
+      else $('betweenHint').textContent=`あなたのチップ：${fmt(me.chips)}`;
+    }
+    return;
+  }
+  $('acts').hidden=!myTurn;$('waiting').hidden=myTurn;
+  if(!myTurn){raiseOpen=false;$('raisePanel').hidden=true;
+    $('waiting').textContent=S.toAct>0?`${S.players[S.toAct].name}の番です`:'次のカードを配っています…';return}
+  const toCall=Math.min(S.currentBet-me.bet,me.chips);
+  $('btnCall').querySelector('b').textContent=toCall<=0?'チェック':toCall>=me.chips?'オールイン':'コール';
+  $('btnCall').querySelector('small').textContent=toCall<=0?'':fmt(toCall);
+  const {minTo,maxTo}=raiseBounds();
+  const canRaise=me.chips>toCall&&!me.acted;
+  $('btnRaise').disabled=!canRaise;
+  $('btnNeedle').hidden=!(CFG.tells&&S.toAct===0&&!S.handOver&&S.needle!==S.street&&S.players.some(q=>!q.human&&inHand(q)));
+  $('btnStraddle').hidden=CFG.house!=='straddle';
+  $('btnStraddle').textContent=`次に順番が来たらストラドル：${myStraddle?'する':'しない'}`;
+  $('btnFold').disabled=toCall<=0;
+  $('btnFold').querySelector('small').textContent=toCall<=0?'チェックできます':'降りる';
+  const range=$('raiseRange');
+  range.min=minTo;range.max=maxTo;
+  if(!raiseOpen)range.value=Math.min(maxTo,Math.max(minTo,S.currentBet===0?Math.round(potTotal()/2/1000)*1000:S.currentBet*3-me.bet*0));
+  $('raisePanel').hidden=!raiseOpen;
+  $('btnRaise').classList.toggle('open',raiseOpen);
+  $('raiseWord').textContent=S.currentBet===0?'いくら賭ける？':`今の賭け額 ${fmt(S.currentBet)} → いくらにする？`;
+  $('rMin').textContent='最小 '+fmt(minTo);$('rMax').textContent='全額 '+fmt(maxTo);
+  updateRaiseLabel();
+}
+function updateRaiseLabel(){
+  const me=S.players[0],v=+$('raiseRange').value,all=v>=me.bet+me.chips;
+  const word=S.currentBet===0?'ベット':'レイズ';
+  const pay=v-me.bet;
+  $('raiseAmt').textContent=fmt(v);
+  $('raiseSub').innerHTML=`出すチップ <b>${fmt(pay)}</b> ／ 残り ${fmt(me.chips-pay)}`;
+  $('btnRaise').querySelector('b').textContent=raiseOpen?(all?'オールイン':`${fmt(v)} に${word}`):word;
+  $('btnRaise').querySelector('small').textContent=raiseOpen?'確定':'額を選ぶ';
+  const pot=potTotal(),toCall=S.currentBet-me.bet;
+  const q=presetValues(pot,toCall);
+  const names={min:'最小',half:'½ポット',threeq:'¾ポット',pot:'ポット',all:'全額'};
+  document.querySelectorAll('[data-q]').forEach(b=>{b.classList.toggle('on',q[b.dataset.q]===v);b.innerHTML=`${names[b.dataset.q]}<i>${fmt(q[b.dataset.q])}</i>`});
+}
+function presetValues(pot,toCall){
+  const {minTo,maxTo}=raiseBounds(),clamp=v=>Math.max(minTo,Math.min(maxTo,Math.round(v/1000)*1000));
+  const base=pot+toCall;
+  return{min:minTo,half:clamp(S.currentBet+base/2),threeq:clamp(S.currentBet+base*.75),pot:clamp(S.currentBet+base),all:maxTo};
+}
+function log(text,head){
+  const li=document.createElement('li');li.textContent=text;if(head)li.className='hd';
+  $('log').prepend(li);
+}
+
+/* ---------- 操作 ---------- */
+const NEEDLES=['その手、本当に強いの？','顔に出てるよ','さっきから考えすぎじゃない？','降りたほうがいいんじゃない？'];
+$('btnNeedle').onclick=()=>{S.needleN=(S.needleN||0)+1;const rude=S.players.find(q=>mannerOf(q)&&!q.out);if(rude&&S.needleN>=3&&!S.needleWarned){S.needleWarned=true;jinNote(`口で勝とうとするな。それは${rude.name==='ハヤト'?'ハヤト':'ああいう客'}のやり方だ`,0)}S.needle=S.street;S.players.forEach(q=>q.answered=false);log(`あなた：「${NEEDLES[Math.floor(Math.random()*NEEDLES.length)]}」`);S.msg='相手に話しかけた。口数が増えるかもしれない';render()};
+$('btnStraddle').onclick=()=>{myStraddle=!myStraddle;renderControls()};
+function renderSpeed(){$('btnSpeed').textContent='演出の速さ：'+(SETTINGS.speed==='fast'?'速い':'ふつう')}
+$('btnSound').onclick=()=>{SETTINGS.sound=!SETTINGS.sound;saveSettings();renderSound();if(SETTINGS.sound&&CFG)Sound.bgm(CFG.bgm||0);else Sound.stop()};
+renderSound();
+$('btnSpeed').onclick=()=>{SETTINGS.speed=SETTINGS.speed==='fast'?'normal':'fast';saveSettings();renderSpeed()};
+renderSpeed();
+function peekMine(){const me=S&&S.players&&S.players[0];if(!me||me.peeked||!SETTINGS.peek)return;
+  const h=$('mine').querySelector('.hold.squeeze');if(!h)return;
+  h.classList.add('lift');setTimeout(()=>{me.peeked=true;me.seen=null;render()},reducedMotion()?0:380*SPEED())}
+$('mine').addEventListener('click',e=>{if(e.target.closest('.hold.squeeze'))peekMine()});
+$('mine').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('.hold.squeeze')){e.preventDefault();peekMine()}});
+/* 奥行き：マウスの位置や端末の傾きで、背景とキャラを別々にずらす */
+const Depth=(()=>{
+  let tx=0,ty=0,x=0,y=0,raf=0,asked=false,base=null;
+  const on=()=>SETTINGS.depth&&!reducedMotion();
+  function tick(){
+    x+=(tx-x)*.12;y+=(ty-y)*.12;
+    // 卓全体の変数を書き換えると全要素のスタイル計算が走って重いので、動かす3つだけに書く
+    const t=$('table'),mv=(sel,kx,ky)=>{const el=t.querySelector(sel);if(el)el.style.translate=`${(x*kx).toFixed(1)}px ${(y*ky).toFixed(1)}px`};
+    mv('.room',-16,-9);mv('.lamp',-9,-5);mv('.busts',8,3);
+    raf=Math.abs(tx-x)+Math.abs(ty-y)>.003?requestAnimationFrame(tick):0;
+  }
+  function aim(nx,ny){
+    if(!on())nx=ny=0;
+    tx=Math.max(-1,Math.min(1,nx));ty=Math.max(-1,Math.min(1,ny));
+    if(!raf)raf=requestAnimationFrame(tick);
+  }
+  addEventListener('pointermove',e=>{
+    if(e.pointerType!=='mouse')return;
+    const r=$('table').getBoundingClientRect();if(!r.width)return;
+    aim((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1);
+  },{passive:true});
+  document.addEventListener('mouseleave',()=>aim(0,0));
+  // 傾き：持ち始めの角度を基準にし、持ち方が変わってもゆっくり基準を戻す
+  addEventListener('deviceorientation',e=>{
+    if(e.gamma==null||e.beta==null)return;
+    if(!base)base={b:e.beta,g:e.gamma};
+    base.b+=(e.beta-base.b)*.01;base.g+=(e.gamma-base.g)*.01;
+    aim((e.gamma-base.g)/18,(e.beta-base.b)/18);
+  });
+  // iPhone は、タップしたときに傾きの許可を求める必要がある
+  function ask(){
+    if(asked||!on())return;asked=true;
+    const D=window.DeviceOrientationEvent;
+    if(D&&typeof D.requestPermission==='function')D.requestPermission().catch(()=>{});
+  }
+  return{aim,ask,recenter(){base=null}};
+})();
+function renderDepth(){$('btnDepth').textContent='立体：'+(SETTINGS.depth?'オン':'オフ');document.body.classList.toggle('no-depth',!SETTINGS.depth);if(!SETTINGS.depth)Depth.aim(0,0)}
+$('btnDepth').onclick=()=>{SETTINGS.depth=!SETTINGS.depth;saveSettings();renderDepth();Depth.ask()};
+renderDepth();
+function renderClock(){$('btnClock').textContent='持ち時間：'+(SETTINGS.clock?'あり':'なし')}
+$('btnClock').onclick=()=>{SETTINGS.clock=!SETTINGS.clock;saveSettings();renderClock();if(!SETTINGS.clock)Clock.stop();else if(S&&S.players&&S.toAct===0&&!S.handOver&&bigSpotForMe())Clock.start(S.myTurnKey)};
+renderClock();
+function renderPeek(){$('btnPeek').textContent='手札：'+(SETTINGS.peek?'めくって見る':'いつも表')}
+$('btnPeek').onclick=()=>{SETTINGS.peek=!SETTINGS.peek;saveSettings();renderPeek();if(S&&S.players)render()};
+renderPeek();
+$('btnFold').onclick=()=>{raiseOpen=false;act(0,'fold')};
+$('btnCall').onclick=()=>{raiseOpen=false;act(0,'call')};
+$('btnRaise').onclick=()=>{
+  if(!raiseOpen){raiseOpen=true;renderControls();return}
+  raiseOpen=false;act(0,'raise',+$('raiseRange').value);
+};
+$('raiseRange').oninput=updateRaiseLabel;
+const nudge=d=>{const r=$('raiseRange');r.value=Math.max(+r.min,Math.min(+r.max,+r.value+d*BB()));updateRaiseLabel()};
+$('btnMinus').onclick=()=>nudge(-1);
+$('btnPlus').onclick=()=>nudge(1);
+document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{
+  const me=S.players[0];
+  $('raiseRange').value=presetValues(potTotal(),S.currentBet-me.bet)[b.dataset.q];updateRaiseLabel();
+});
+$('btnIgnore').onclick=()=>{S.taunt=-1;jinNote('それでいい',0);render()};
+$('btnNice').onclick=()=>{const p=S.players[S.taunt];S.taunt=-1;if(p){p.say={seq:(S.saySeq=(S.saySeq||0)+1)+3000,act:'',line:lineFor(p.name,'nice')}}
+  log('あなた：「ナイスハンド」');if(bumpNice()>=3)grantTitle('gentle');render()};
+$('btnNext').onclick=()=>{
+  if(S.result==='win'&&CFG.ch){
+    const ch=CFG.ch;saveCleared(ch.no);
+    showInterstitial(()=>playScene(ch,ch.outro,showChapters));
+  }else if(S.result==='win')startFree();
+  else if(S.result==='lose')CFG.ch?startChapter(CFG.ch,true):startFree();
+  else startHand();
+};
+$('btnAlt').onclick=()=>{S.handOver=true;CFG.ch?showChapters():show('title')};
+$('btnQuit').onclick=()=>{$('vs').hidden=true;S.handOver=true;S.toAct=-1;CFG.ch?showChapters():show('title')};
+$('btnStory').onclick=showChapters;
+$('hero').insertAdjacentHTML('afterbegin',avatar('ジン'));
+$('senseiAva').innerHTML=avatar('ジン');
+$('btnFree').onclick=startFree;
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('title'));
+</script>
