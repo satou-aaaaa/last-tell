@@ -2,7 +2,7 @@
 // ゲーム本体（index.html）はネット優先：つながるときは常に最新版、つながらないときは保存した版で起動する。
 // アイコンとフォントは保存した版を優先する。
 // VERSION は tools/build_index.py が公開のたびに書き換える。
-const VERSION = 'lt-20261009183053';
+const VERSION = 'lt-20261009183929';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
@@ -37,9 +37,10 @@ self.addEventListener('fetch', e => {
   // ページ本体：ネット優先、だめなら保存した版
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(res => {
-      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); }
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
       return res;
-    }).catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));
+    }).catch(() => caches.match(req, { ignoreSearch: true })
+      .then(r => r || caches.match('./index.html'))));
     return;
   }
 
