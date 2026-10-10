@@ -33,5 +33,15 @@
   "第1章_自分の番|文字切れ|#btnFold",
   "第6章_自分の番|文字切れ|#btnFold",
   "英語_フリー6人_自分の番|文字切れ|#btnRaise"
- ]
+ ],
+ "uiux": {
+  "offFirstView": 9,
+  "smallTargets": 104,
+  "tinyText": 570,
+  "lowContrast": 0,
+  "unlabeled": 0,
+  "screens": 1.91,
+  "buttons": 14,
+  "bubbles": 0
+ }
 }

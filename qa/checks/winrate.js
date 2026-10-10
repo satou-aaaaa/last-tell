@@ -1,33 +1,41 @@
 // 勝率：第1〜4章を「ゲームのCPUと同じ考え方」で打って、前の版の基準と比べる
+// 長い版（--full）では第5〜7章と第二部（第11〜15章）も記録する。こちらは変わっても ⚠️ だけ（レビューの仕組み 案1、2026-10-10）
+// 乱数は回ごとに固定する（CIの見直し 案3）：i 回目はいつも同じ配り方なので、同じ版なら何度回しても同じ勝率。基準と違えば本当に変わった
+// --ch 1,2 で章を選べる（GitHub では章ごとに別の組で同時に回す）
 'use strict';
 const H = require('../lib/harness');
 const os = require('os');
 
-async function playOnce(browser, file, ch, maxHands) {
-  const { ctx, page } = await H.openGame(browser, file, { fast: 60 });
+async function playOnce(browser, file, ch, maxHands, seed) {
+  const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: ch > 10 ? H.UNLOCKED : null, seed });
   try {
-    await page.evaluate(n => startChapter(CHAPTERS[n - 1], true), ch);
+    await page.evaluate(n => n > 10 ? startP2(PART2[n - 11], true) : startChapter(CHAPTERS[n - 1], true), ch);
     await H.startBot(page, { policy: 'cpu', maxHands });
-    const r = await H.runUntilDone(page, { timeoutMs: 240000, stallMs: 20000 });
+    // 上限は手数に合わせる（1ハンド約4秒、ブラウザがコアを分け合うと遅くなるので2倍見る）。本当に止まったのは stallMs で分かる
+    const r = await H.runUntilDone(page, { timeoutMs: maxHands * 8000, stallMs: 20000 });
     const b = await H.botState(page);
-    return r.status === 'done' ? b.result : 'error';
+    // 手は進んでいるのに時間切れ → 80ハンドで決着しない回と同じく「決着なし」（負け扱い）。止まった（stalled）ときだけエラー
+    return r.status === 'done' ? b.result : r.status === 'timeout' ? 'nodecision' : 'error';
   } catch (e) { return 'error' } finally { await ctx.close() }
 }
 
 // 同時に開く数はCPUの数に合わせる（GitHubの実行機は2〜4コアで、6つ同時だと遅すぎて止まった扱いになる）
-async function run({ browser, file, quick, baseline, parallel = Math.max(1, Math.min(6, os.cpus().length - 1)) }) {
+async function run({ browser, file, quick, baseline, chapters, parallel = Math.max(1, Math.min(6, os.cpus().length - 1)) }) {
   const N = quick ? 8 : 24, maxHands = 80, items = [], out = {};
-  for (const ch of [1, 2, 3, 4]) {
-    const jobs = Array.from({ length: N }, () => () => playOnce(browser, file, ch, maxHands));
+  const all = quick ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15];
+  for (const ch of chapters ? all.filter(c => chapters.includes(c)) : all) {
+    const jobs = Array.from({ length: N }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1));
     const res = [];
     for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
     // 途中で止まった回は1度だけ1つずつやり直す（実行機が混んでいただけのことがある）
-    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands);
+    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1);
     const ok = res.filter(r => r !== 'error'), w = ok.filter(r => r === 'win').length;
     const rate = ok.length ? w / ok.length : 0;
     out['ch' + ch] = { rate, n: ok.length };
     const base = baseline && baseline.winrate && baseline.winrate['ch' + ch];
     let status = 'ok', detail = `勝率 ${Math.round(rate * 100)}%（${w}/${ok.length}、80ハンドで決着しない回は負け扱い）`;
+    const nd = res.filter(r => r === 'nodecision').length;
+    if (nd) detail += `。${nd}回は時間内に決着せず（負け扱い）`;
     if (res.length - ok.length) { status = 'fail'; detail += `。${res.length - ok.length}回は途中で止まった` }
     if (base) {
       // 回数が少ないので、ぶれの幅（標準誤差の2.5倍、最低15ポイント）を超えたときだけ「変わった」とする
@@ -37,7 +45,7 @@ async function run({ browser, file, quick, baseline, parallel = Math.max(1, Math
       if (Math.abs(rate - base.rate) > tol && ch <= 3) status = 'fail';
       else if (Math.abs(rate - base.rate) > tol) status = 'warn';
     } else detail += '、基準なし（今回の値を基準にする）';
-    items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail });
+    items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail, games: res.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
   }
   return { name: '勝率', items, baselineOut: { winrate: out } };
 }
