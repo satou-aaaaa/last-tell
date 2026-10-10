@@ -102,7 +102,7 @@ const BOT = `(() => {
         const s = sum();
         S.players.forEach(p => { if (p.chips < 0 || !Number.isFinite(p.chips) || p.chips !== Math.round(p.chips)) B.negErr.push({ hand: S.handNo, name: p.name, chips: p.chips }) });
         // 台本で全員のチップを配り直したとき（第13章の最初のハンドなど）は数えない
-        const reset = S.players.every(p => p.chips === p.start);
+        const reset = S.players.every(p => p.chips === p.start) || S.chipsReset === S.handNo; // 決まった札のラッシュのあとなど、ゲームが予定どおりチップを戻したハンド（v65 から S.chipsReset）
         if (B.lastSum !== null && names === B.lastNames && s !== B.expect && !reset) B.chipErr.push({ hand: S.handNo, before: B.expect, after: s, diff: s - B.expect, log: [...document.querySelectorAll('#log > *')].slice(-12).map(x => x.textContent) });
         B.lastSum = s; B.lastNames = names;
         // 次のハンドで補充される分

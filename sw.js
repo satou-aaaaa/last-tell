@@ -2,7 +2,7 @@
 // ゲーム本体（index.html）はネット優先：つながるときは常に最新版、つながらないときは保存した版で起動する。
 // アイコンとフォントは保存した版を優先する。
 // VERSION は tools/build_index.py が公開のたびに書き換える。
-const VERSION = 'lt-20261010192013';
+const VERSION = 'lt-20261010221638';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 

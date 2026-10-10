@@ -100,10 +100,14 @@ const PROBE = `(() => {
       // 1. 一番強い手の人は、何かしら受け取る
       const best = cont.reduce((a, b) => __cmp(sc.get(a), sc.get(b)) >= 0 ? a : b);
       if (!(best.won > 0)) P.sdBad.push('ハンド' + S.handNo + ' 一番強い ' + best.name + '（' + sc.get(best).join(',') + '）が0');
-      // 2. 自分より強い手で、自分以上に出した人がいるなら、受け取れない
-      cont.forEach(p => { if (p.won > 0 && cont.some(q => q !== p && __cmp(sc.get(q), sc.get(p)) > 0 && q.total >= p.total)) P.sdBad.push('ハンド' + S.handNo + ' ' + p.name + ' が ' + p.won + ' 受け取ったが、もっと強く・同じ以上出した人がいる') });
-      // 3. 同じ強さで同じだけ出した人どうしは、ほぼ同じ額（端数100まで）
-      cont.forEach(p => cont.forEach(q => { if (p !== q && __cmp(sc.get(p), sc.get(q)) === 0 && p.total === q.total && Math.abs(p.won - q.won) > 100) P.sdBad.push('ハンド' + S.handNo + ' 引き分けの ' + p.name + ' ' + p.won + ' と ' + q.name + ' ' + q.won) }));
+      // 賭けた額はゲームと同じく total からアンティ（BBアンティは死に金）を引いたもので比べる
+      const bet = p => (p.total || 0) - (p.ante || 0);
+      const levels = [...new Set(S.players.map(bet).filter(v => v > 0))];
+      const info = () => ' [' + S.players.map(p => p.name + ':total' + p.total + '/ante' + (p.ante || 0) + '/won' + (p.won || 0) + (inHand(p) ? '' : '/降り')).join(' ') + ' board ' + JSON.stringify(S.board) + ']';
+      // 2. 自分より強い手で、自分以上に賭けた人がいるなら、受け取れない
+      cont.forEach(p => { if (p.won > 0 && cont.some(q => q !== p && __cmp(sc.get(q), sc.get(p)) > 0 && bet(q) >= bet(p))) P.sdBad.push('ハンド' + S.handNo + ' ' + p.name + ' が ' + p.won + ' 受け取ったが、もっと強く・同じ以上賭けた人がいる' + info()) });
+      // 3. 同じ強さで同じだけ賭けた人どうしは、ほぼ同じ額（端数は段ごとに100、ボタンの左の人へ行くので 100×段の数まで）
+      cont.forEach(p => cont.forEach(q => { if (p !== q && __cmp(sc.get(p), sc.get(q)) === 0 && bet(p) === bet(q) && Math.abs(p.won - q.won) > 100 * levels.filter(v => v <= bet(p)).length) P.sdBad.push('ハンド' + S.handNo + ' 引き分けの ' + p.name + ' ' + p.won + ' と ' + q.name + ' ' + q.won + info()) }));
     } catch (e) { P.errs.push('showdown: ' + e.message) }
     return r;
   };
