@@ -1,0 +1,58 @@
+# ゲーム（index.html）が変わるたびに検査（qa/）を回す。
+# テスト公開はプルリクエストで出して、✅ を見てからマージする。
+name: QA
+
+on:
+  pull_request:
+    paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
+  push:
+    branches: [main]
+    paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
+  workflow_dispatch:
+    inputs:
+      full:
+        description: '長い版で回す（公開・ストア提出の前）'
+        type: boolean
+        default: false
+
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # 時間のかかる検査を分けて、同時に回す
+        check: ['text,ftue,ui', 'fuzz', 'rules', 'winrate']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright と日本語の字体を入れる
+        run: |
+          # 基準（qa/baseline.json）を作った環境と同じ字体にする。字の幅が変わると画面の判定がずれるため
+          sudo apt-get update -q && sudo apt-get install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
+          cd qa
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: 検査を回す
+        run: node qa/run_all.js index.html --only ${{ matrix.check }} --out qa-report ${{ inputs.full && '--full' || '' }}
+      - name: 結果をまとめに出す
+        if: always()
+        run: test -f qa-report/report.md && cat qa-report/report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: 報告の名前を決める
+        if: always()
+        id: n
+        run: echo "name=qa-report-$(echo '${{ matrix.check }}' | tr ',' '-')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ steps.n.outputs.name }}
+          path: qa-report
+          retention-days: 30

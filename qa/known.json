@@ -1,0 +1,10 @@
+{
+ "rule:S1-ante": "プロポーカー目線 S1（research/プロポーカープレイヤー目線_実装仕様.md §1）",
+ "rule:A2-twice": "プロポーカー目線 A2（同 §4）",
+ "rule:A2-bomb": "プロポーカー目線 A2（同 §4）",
+ "rule:A1-limp": "プロポーカー目線 A1（同 §3）",
+ "rule:S2-overbet": "プロポーカー目線 S2（同 §2）",
+ "ftue:taps": "クリエイター目線 S1（research/プロ目線の改善_実装仕様.md）",
+ "ftue:resume": "クリエイター目線 S3（同）",
+ "rule:A1-faceopen": "プロポーカー目線 A1（同 §3、3BBのオープンに強キャラが9割降りる件）"
+}
