@@ -108,7 +108,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     // 基準と比べる鍵は、部品の名前だけにする（「」の中の文字や数字はチップの額などで毎回変わるため）
     const bare = d => String(d || '').replace(/「.*$/, '').replace(/\d+/g, '');
     // 何に隠れたか（by）も、配られた札やチップの額で変わるので鍵に入れない
-    const keys = r.issues.map(x => `${r.scene}|${r.vp}|${x.kind}|${bare(x.el)}`);
+    // 画面の大きさも鍵に入れない（同じ問題が、環境の字の幅しだいで縦かPCのどちらかに出るため）
+    const keys = r.issues.map(x => `${r.scene}|${x.kind}|${bare(x.el)}`);
     all.push(...keys);
     const fresh = r.issues.filter((x, i) => !known.has(keys[i]));
     const old = r.issues.length - fresh.length;
@@ -119,6 +120,6 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
       shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues });
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
-  return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 4).concat(all))] } };
+  return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))] } };
 }
 module.exports = { run, VIEWPORTS, SCENES };
