@@ -3,5 +3,5 @@
   "private": true,
   "description": "LAST TELL 変更後の検査",
   "scripts": { "qa": "node run_all.js", "qa:full": "node run_all.js --full" },
-  "dependencies": { "playwright": "1.56.1" }
+  "dependencies": { "playwright": "1.63.0" }
 }
