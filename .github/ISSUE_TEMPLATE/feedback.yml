@@ -1,0 +1,45 @@
+name: 感想・要望 / Feedback
+description: おもしろかった所、わかりにくかった所、こうしてほしい所 / What you liked, what was confusing, ideas
+title: "[感想] "
+labels: ["感想", "テスターから"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ここに書いた内容は誰でも見られます。ストーリーの先の話に触れるときは、最初に「ネタバレあり」と書いてください。
+        Issues are public. If you mention story events, please start with "Spoilers".
+  - type: dropdown
+    id: where
+    attributes:
+      label: どこについてですか / About
+      options:
+        - ストーリー / Story
+        - キャラクター / Characters
+        - ポーカーの手ごたえ・強さ / Poker feel and difficulty
+        - 画面・操作 / Screen and controls
+        - 英語の文 / English text
+        - その他 / Other
+    validations:
+      required: true
+  - type: dropdown
+    id: progress
+    attributes:
+      label: どこまで遊びましたか / How far did you play
+      options:
+        - 少しだけ / Just a little
+        - 第一部の途中 / Part 1, partway
+        - 第一部の最後まで / Finished part 1
+        - 第二部の途中 / Part 2, partway
+        - 第二部の最後まで / Finished part 2
+  - type: textarea
+    id: good
+    attributes:
+      label: よかった所 / What you liked
+  - type: textarea
+    id: bad
+    attributes:
+      label: わかりにくかった所・やめたくなった所 / What was confusing or made you want to stop
+  - type: textarea
+    id: idea
+    attributes:
+      label: こうしてほしい / Ideas

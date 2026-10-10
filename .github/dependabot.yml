@@ -1,0 +1,11 @@
+# GitHub Actions の部品（actions/checkout など）を月に1回まとめて新しくするプルリクエストを出す。
+# 検査（qa/）が入ったら npm（directory: /qa）も足す。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

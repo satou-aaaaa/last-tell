@@ -1,0 +1,64 @@
+# テスト公開を Actions から出す。公開するのは遊ぶ人に必要なファイルだけ（tools/ や qa/ や .github/ は出さない）。
+# Settings → Pages → Source を「GitHub Actions」にするまでは、何もせずに終わる（今まで通り main から公開される）。
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.src.outputs.enabled }}
+    steps:
+      - name: Pages の公開元が「GitHub Actions」になっているか見る
+        id: src
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo none)
+          echo "公開元: $t"
+          if [ "$t" = workflow ]; then echo enabled=true >> "$GITHUB_OUTPUT"; else echo enabled=false >> "$GITHUB_OUTPUT"; fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 公開するファイルだけを集める
+        run: |
+          # 開発用のもの（tools/ qa/ .github/ README など）以外を全部出す。新しく足したページやフォントも自動で入る
+          mkdir _site
+          rsync -a --exclude='.git*' --exclude='.github' --exclude='_site' --exclude='tools' --exclude='qa' \
+            --exclude='README.md' --exclude='*.py' --exclude='node_modules' ./ _site/
+          # 足りないファイルがあれば止める（ゲームの「その他」から開くページなど）
+          for f in index.html sw.js manifest.webmanifest privacy.html terms.html support.html; do
+            test -s "_site/$f" || { echo "$f がありません"; exit 1; }
+          done
+          ls -la _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
