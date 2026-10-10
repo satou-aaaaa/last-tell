@@ -1,5 +1,5 @@
 # GitHub Actions の部品（actions/checkout など）を月に1回まとめて新しくするプルリクエストを出す。
-# 検査（qa/）が入ったら npm（directory: /qa）も足す。
+# 検査（qa/）の npm の部品（Playwright など）も月1回。QA が通れば自動でマージされる。
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -8,4 +8,11 @@ updates:
       interval: monthly
     groups:
       actions:
+        patterns: ['*']
+  - package-ecosystem: npm
+    directory: /qa
+    schedule:
+      interval: monthly
+    groups:
+      qa:
         patterns: ['*']
