@@ -24,6 +24,14 @@ const SCENES = [
   { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
   { key: '英語_フリー6人_自分の番', prep: `($('freeSize').value='6',startFree())`, myTurn: true, lang: 'en' },
+  // 主人公の画面と回想（クリエイター目線レビュー v62 の直し5）。waitFor は会話や相手紹介を先へ送りながら待つ
+  { key: '名乗る', prep: `startChapter(CHAPTERS[0])`, fresh: true,
+    waitFor: `(()=>{const a=$('askGo');if(a&&a.offsetParent)return true;if(!$('scene').hidden)advance();return false})()` },
+  { key: '身なり', prep: `lookOpen()`, waitFor: `!$('lookDlg').hidden` },
+  { key: '回想の判断', prep: `startFlashback(()=>{},'seki')`, settle: 2500,
+    waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
+  { key: '回想の結果', prep: `startFlashback(()=>{},'reika')`, settle: 2500,
+    waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.handOver&&S.result==='flash'&&!$('btnNext').hidden)})()` },
 ];
 
 // ページの中で、見えている大事な部品を調べる
@@ -67,6 +75,23 @@ const INSPECT = `(() => {
     const w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
     if (w > 0 && h > 0 && w * h > 0.15 * Math.min(a.width * a.height, b.width * b.height)) out.push({ kind: '重なり', el: desc(btn[i]), by: desc(btn[j]) });
   }
+  // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）
+  {const tb = document.getElementById('table'), tr = tb && vis(tb) ? tb.getBoundingClientRect() : { left: 0, right: W, top: 0, bottom: Hh };
+    const L = Math.max(0, tr.left), R = Math.min(W, tr.right);
+    for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded) .card, #plates .plate .tag')].filter(e => shown(e) && vis(e))) {
+      const r = el.getBoundingClientRect();
+      if (r.left < L - 2 || r.right > R + 2) out.push({ kind: 'はみ出し', el: desc(el.closest('.spot, .plate') || el) + ' ' + desc(el), rect: [r.left, r.top, r.width, r.height].map(Math.round) });
+      if (el.classList.contains('tag')) { const pl = el.parentElement.getBoundingClientRect(); if (r.left < pl.left - 2 || r.right > pl.right + 2) out.push({ kind: 'はみ出し', el: '名札の外 ' + desc(el) }) }
+    }}
+  // 相手の名札が顔（口より上）にかかっていないか（2026-10-10 satou「顔にチップの表示がかぶっている」）
+  // 卓の顔は .bust の高さに対して 目 37%・口 57%・あご 68%（.av.real、translate -6% 込み）。顔の幅は真ん中 40%
+  if (!modal) for (const b of document.querySelectorAll('#busts .bust:not(.out)')) {
+    if (!b.querySelector('.av.real') || !vis(b)) continue;
+    const pl = document.getElementById('plate' + b.id.slice(4)); if (!pl || !shown(pl) || !vis(pl)) continue;
+    const br = b.getBoundingClientRect(), r = pl.getBoundingClientRect(), mouth = br.top + br.height * .57;
+    const hov = Math.min(r.right, br.right - br.width * .3) - Math.max(r.left, br.left + br.width * .3);
+    if (hov > 0 && r.top < mouth - 1) out.push({ kind: '顔隠れ', el: desc(pl), by: '口より ' + Math.round(mouth - r.top) + 'px 上まで' });
+  }
   // 横スクロールが出ていないか
   if (document.scrollingElement.scrollWidth > W + 2) out.push({ kind: '横スクロール', el: 'ページ全体 ' + document.scrollingElement.scrollWidth + 'px' });
   return out;
@@ -85,10 +110,16 @@ async function shoot(browser, file, scene, vp, dir) {
       while (!(await page.evaluate(() => __bot.done)) && Date.now() - t0 < 60000) await page.waitForTimeout(150);
       await page.evaluate(() => clearInterval(__bot.timer));
     } else {
-      while (!(await page.evaluate(scene.waitFor)) && Date.now() - t0 < 20000) await page.waitForTimeout(100);
+      while (!(await page.evaluate(scene.waitFor)) && Date.now() - t0 < 40000) await page.waitForTimeout(100);
     }
     if (scene.after) { await page.evaluate(scene.after); }
-    await page.waitForTimeout(900);
+    // 回想は配り終えたあと卓が上へ寄るので、落ち着くまで長めに待つ
+    await page.waitForTimeout(scene.settle || 900);
+    // 番が来た直後にページが自動でスクロールすることがある（170pxほど）。スクロールが落ち着く（0.3秒動かない）まで待つ。最大3秒
+    for (let last = -1, same = 0, t1 = Date.now(); same < 3 && Date.now() - t1 < 3000; await page.waitForTimeout(100)) {
+      const y = await page.evaluate(() => Math.round(scrollY));
+      same = y === last ? same + 1 : 0; last = y;
+    }
     const issues = await page.evaluate(INSPECT);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
