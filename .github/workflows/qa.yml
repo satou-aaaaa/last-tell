@@ -15,20 +15,68 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 concurrency:
   group: qa-${{ github.ref }}
   cancel-in-progress: true
 
+# 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）
+# 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
+env:
+  QA_GROUPS: >-
+    [
+      {"name": "text,script,ftue,a11y,perf,save", "only": "text,script,ftue,a11y,perf,save", "ch": ""},
+      {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
+      {"name": "fuzz", "only": "fuzz", "ch": ""},
+      {"name": "rules,basics", "only": "rules,basics", "ch": ""},
+      {"name": "winrate 第1章", "only": "winrate", "ch": "1"},
+      {"name": "winrate 第2章", "only": "winrate", "ch": "2"},
+      {"name": "winrate 第3章", "only": "winrate", "ch": "3"},
+      {"name": "winrate 第4章", "only": "winrate", "ch": "4"},
+      {"name": "winrate 第5章から", "only": "winrate", "ch": "5,6,7,11,12,13,14,15", "full": true}
+    ]
+
 jobs:
+  groups:
+    name: 検査の一覧
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: どの組にも入っていない検査がないか見る
+        id: m
+        env:
+          FULL: ${{ inputs.full && 'true' || 'false' }}
+        run: |
+          if ! grep -q -- "'--list'" qa/run_all.js; then
+            echo "::error title=qa/ が古い::qa/run_all.js が --list に対応していません。共有フォルダの qa/ を写してください（tools/build_index.py が写します）"
+            exit 1
+          fi
+          missing=$(node qa/run_all.js --list | while read k; do
+            jq -e --arg k "$k" 'map(.only | split(",")) | flatten | index($k)' <<<"$QA_GROUPS" >/dev/null || echo "$k"; done)
+          if [ -n "$missing" ]; then
+            for k in $missing; do echo "::error title=検査の入れ忘れ::$k が qa.yml のどの組にも入っていません"; done
+            exit 1
+          fi
+          echo "matrix=$(jq -c --argjson full "$FULL" 'map(select(.full != true or $full))' <<<"$QA_GROUPS")" >> "$GITHUB_OUTPUT"
+
   qa:
-    name: ${{ matrix.check }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    name: ${{ matrix.name }}
+    needs: groups
+    # 実行機の版を固定する（ubuntu-latest は 2026-10-19 から Ubuntu 26 になり、字体が変わって画面の判定がずれるため）
+    runs-on: ubuntu-24.04
+    # 勝率は1回の上限が「手数×8秒」（80ハンドで約11分）なので、余裕を見て40分
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        # 時間のかかる検査を分けて、同時に回す
-        check: ['text,ftue,ui', 'fuzz', 'rules', 'winrate']
+        include: ${{ fromJSON(needs.groups.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -42,14 +90,14 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: 検査を回す
-        run: node qa/run_all.js index.html --only ${{ matrix.check }} --out qa-report ${{ inputs.full && '--full' || '' }}
+        run: node qa/run_all.js index.html --only ${{ matrix.only }} ${{ matrix.ch && format('--ch {0}', matrix.ch) || '' }} --out qa-report ${{ inputs.full && '--full' || '' }}
       - name: 結果をまとめに出す
         if: always()
         run: test -f qa-report/report.md && cat qa-report/report.md >> "$GITHUB_STEP_SUMMARY" || true
       - name: 報告の名前を決める
         if: always()
         id: n
-        run: echo "name=qa-report-$(echo '${{ matrix.check }}' | tr ',' '-')" >> "$GITHUB_OUTPUT"
+        run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}' | tr ', ' '--')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
