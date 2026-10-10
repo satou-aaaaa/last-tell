@@ -1,6 +1,7 @@
 // 勝率：第1〜4章を「ゲームのCPUと同じ考え方」で打って、前の版の基準と比べる
 'use strict';
 const H = require('../lib/harness');
+const os = require('os');
 
 async function playOnce(browser, file, ch, maxHands) {
   const { ctx, page } = await H.openGame(browser, file, { fast: 60 });
@@ -13,12 +14,15 @@ async function playOnce(browser, file, ch, maxHands) {
   } catch (e) { return 'error' } finally { await ctx.close() }
 }
 
-async function run({ browser, file, quick, baseline, parallel = 6 }) {
+// 同時に開く数はCPUの数に合わせる（GitHubの実行機は2〜4コアで、6つ同時だと遅すぎて止まった扱いになる）
+async function run({ browser, file, quick, baseline, parallel = Math.max(1, Math.min(6, os.cpus().length - 1)) }) {
   const N = quick ? 8 : 24, maxHands = 80, items = [], out = {};
   for (const ch of [1, 2, 3, 4]) {
     const jobs = Array.from({ length: N }, () => () => playOnce(browser, file, ch, maxHands));
     const res = [];
     for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
+    // 途中で止まった回は1度だけ1つずつやり直す（実行機が混んでいただけのことがある）
+    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands);
     const ok = res.filter(r => r !== 'error'), w = ok.filter(r => r === 'win').length;
     const rate = ok.length ? w / ok.length : 0;
     out['ch' + ch] = { rate, n: ok.length };
