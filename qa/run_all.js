@@ -72,5 +72,7 @@ const CHECKS = [
   if (flag('--update-baseline') || !baseline) { fs.writeFileSync(basePath, JSON.stringify({ madeFrom: ver, madeAt: new Date().toISOString(), ...newBase }, null, 1)); console.log('基準（baseline.json）を書き直した') }
   console.log(`\n${cnt('fail') ? '不合格' : '合格'}  ok ${cnt('ok')} / fail ${cnt('fail')} / warn ${cnt('warn')} / known ${cnt('known')}\n報告: ${path.join(outDir, 'report.md')}`);
   for (const i of fails) console.log('  ❌ ' + i.title + '：' + i.detail);
+  // GitHub の自動実行では、不合格を注釈として出す（ログを開かなくても見える）
+  if (process.env.GITHUB_ACTIONS) for (const i of fails) console.log(`::error title=${i.title.replace(/[\r\n:,]/g, ' ')}::${String(i.detail).replace(/\r?\n/g, ' ').slice(0, 900)}`);
   process.exit(cnt('fail') ? 1 : 0);
 })();
