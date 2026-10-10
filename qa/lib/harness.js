@@ -8,8 +8,10 @@ try { pw = require('playwright'); } catch (e) { pw = require(path.join(require('
 const FAST = 25; // 待ち時間を 1/25 にする
 
 // ページが読み込まれる前に入れる：時間の早回し、エラーの記録、設定
-function initScript({ fast = FAST, lang = 'ja', settings = {} } = {}) {
+function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {}) {
   return `(() => {
+    // seed を決めたときは、配られる札などを毎回同じにする（画面チェック用）
+    if (${seed === null ? 'false' : 'true'}) { let a = ${Number(seed) >>> 0 || 1}; Math.random = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
     window.__qa = { errors: [], logs: [] };
     window.addEventListener('error', e => window.__qa.errors.push(String(e.message) + ' @' + (e.lineno||'')));
     window.addEventListener('unhandledrejection', e => window.__qa.errors.push('promise: ' + String(e.reason && e.reason.message || e.reason)));
@@ -33,12 +35,12 @@ async function launch() {
 
 // ゲームを開く。fonts.googleapis は止める（読み込みが止まるため）
 // lite:true のときは動き（アニメーション）を止めて速く回す。画面チェックでは lite:false
-async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true } = {}) {
+async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true, seed = null } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile, hasTouch, serviceWorkers: 'block', reducedMotion: lite ? 'reduce' : 'no-preference' });
   if (lite) await ctx.addInitScript(`document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition-duration:0s!important;transition-delay:0s!important}';document.head.appendChild(st)})`);
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   await ctx.route(/^https?:\/\/(?!localhost)/, r => r.abort()); // 外への通信はしない
-  await ctx.addInitScript(initScript({ fast, lang, settings }));
+  await ctx.addInitScript(initScript({ fast, lang, settings, seed }));
   if (storage) await ctx.addInitScript(`(()=>{try{const s=${JSON.stringify(storage)};for(const k in s)localStorage.setItem(k,s[k])}catch(e){}})()`);
   const page = await ctx.newPage();
   page.on('pageerror', e => page.__errs = (page.__errs || []).concat(String(e.message)));
@@ -54,7 +56,7 @@ const BOT = `(() => {
   const $ = id => document.getElementById(id);
   const vis = el => !!el && !el.hidden && el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
   // 押してよいボタン（上から順に）。「やめる」「設定」などは押さない
-  const CLICK = ['vsGo','twN','btnShowNo','btnIgnore','qtNo','rvOk','tourSkip','btnNoticeClose','btnAdv','btnNext','btnHelpClose','btnDailyClose','btnShareClose','btnZoomClose','btnSetClose'];
+  const CLICK = ['vsGo','twN','btnShowNo','btnIgnore','qtNo','rvOk','tourSkip','btnNoticeClose','btnAdv','btnNext','btnHelpClose','btnDailyClose','btnShareClose','btnZoomClose','btnSetClose','askGo','lkOk'];
   const B = window.__bot = { policy: 'random', hands: 0, decisions: 0, clicks: {}, chipErr: [], negErr: [], lastSum: null, lastNames: '', done: false, result: null, stuckAt: Date.now(), lastHand: -1, maxHands: 60, events: [], twiceSeen: [] };
   function sum() { return S.players.reduce((a, p) => a + p.chips, 0) }
   function decide() {
