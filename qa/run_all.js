@@ -9,12 +9,19 @@ const H = require('./lib/harness');
 const args = process.argv.slice(2);
 const flag = n => args.includes(n);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null };
-const file = path.resolve(args.find(a => !a.startsWith('--') && a !== opt('--only') && a !== opt('--out')) || path.join(__dirname, '../story/shisho.html'));
+const file = path.resolve(args.find(a => !a.startsWith('--') && ![opt('--only'), opt('--out'), opt('--changed'), opt('--src')].includes(a)) || path.join(__dirname, '../story/shisho.html'));
 const quick = !flag('--full');
-const only = opt('--only') ? opt('--only').split(',') : null;
+let only = opt('--only') ? opt('--only').split(',') : null;
+// --changed vNN：控え vNN から変わった src のファイルに関係する検査だけ（作業の途中用。公開の前は付けずに全部）
+const changed = opt('--changed') ? require('./lib/changed').pick(opt('--changed'), path.resolve(opt('--src') || path.join(__dirname, '../src'))) : null;
+if (changed) {
+  console.log(`${opt('--changed')} から変わったファイル：\n` + changed.changed.map(f => `  ${f} → ${changed.why[f] || ''}`).join('\n'));
+  if (changed.checks) only = only ? only.filter(k => changed.checks.includes(k)) : changed.checks;
+  console.log(`回す検査：${only ? only.join(', ') : '全部'}\n`);
+}
 const src = fs.readFileSync(file, 'utf8');
 const ver = (src.match(/APP_VERSION='([^']+)'/) || [])[1] || 'unknown';
-const label = 'v' + ver.split('.').slice(1, 2).join('') + (quick ? '' : '_full');
+const label = 'v' + ver.split('.').slice(1, 2).join('') + (quick ? '' : '_full') + (changed ? '_changed' : '');
 const outDir = path.resolve(opt('--out') || path.join(__dirname, 'reports', label));
 fs.mkdirSync(outDir, { recursive: true });
 const basePath = path.join(__dirname, 'baseline.json');
@@ -22,7 +29,7 @@ const baseline = fs.existsSync(basePath) ? JSON.parse(fs.readFileSync(basePath, 
 const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'utf8'));
 
 const CHECKS = [
-  ['text', './checks/text'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['winrate', './checks/winrate'], ['ui', './checks/ui'],
+  ['text', './checks/text'], ['script', './checks/script'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'],
 ];
 
 (async () => {
@@ -55,7 +62,7 @@ const CHECKS = [
   const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
   const mins = Math.round((Date.now() - t0) / 6000) / 10;
   let md = `# 検査の結果 ${label}（${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC）\n\n`;
-  md += `対象: ${path.basename(file)}（APP_VERSION ${ver}）、${quick ? '短い版（毎回）' : '長い版（公開前）'}、${mins}分\n\n`;
+  md += `対象: ${path.basename(file)}（APP_VERSION ${ver}）、${quick ? '短い版（毎回）' : '長い版（公開前）'}${changed ? `、変えた所だけ（${only ? only.join(',') : '全部'}）` : ''}、${mins}分\n\n`;
   md += `**${cnt('fail') ? '❌ 不合格' : '✅ 合格'}**　✅ ${cnt('ok')}　❌ ${cnt('fail')}　⚠️ ${cnt('warn')}　🟡 修正待ち・前からある ${cnt('known')}\n\n`;
   const fails = all.filter(i => i.status === 'fail');
   if (fails.length) { md += `## 直すもの\n\n` + fails.map(i => `- ${i.title}：${i.detail}${i.shot ? `（[画像](${i.shot})）` : ''}`).join('\n') + '\n\n' }
@@ -69,7 +76,7 @@ const CHECKS = [
   md += `- 目で見て判断することは別：大きな変更のときは、変わった所だけテスター・プロ・クリエイター目線で見る（qa/README.md）\n`;
   fs.writeFileSync(path.join(outDir, 'report.md'), md);
   fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify({ label, ver, quick, groups }, null, 1));
-  if (flag('--update-baseline') || !baseline) { fs.writeFileSync(basePath, JSON.stringify({ madeFrom: ver, madeAt: new Date().toISOString(), ...newBase }, null, 1)); console.log('基準（baseline.json）を書き直した') }
+  if (!changed && (flag('--update-baseline') || !baseline)) { fs.writeFileSync(basePath, JSON.stringify({ madeFrom: ver, madeAt: new Date().toISOString(), ...newBase }, null, 1)); console.log('基準（baseline.json）を書き直した') }
   console.log(`\n${cnt('fail') ? '不合格' : '合格'}  ok ${cnt('ok')} / fail ${cnt('fail')} / warn ${cnt('warn')} / known ${cnt('known')}\n報告: ${path.join(outDir, 'report.md')}`);
   for (const i of fails) console.log('  ❌ ' + i.title + '：' + i.detail);
   // GitHub の自動実行では、不合格を注釈として出す（ログを開かなくても見える）
