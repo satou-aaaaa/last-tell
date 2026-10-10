@@ -30,8 +30,8 @@ jobs:
         # 時間のかかる検査を分けて、同時に回す
         check: ['text,ftue,ui', 'fuzz', 'rules', 'winrate']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Playwright と日本語の字体を入れる
@@ -50,7 +50,7 @@ jobs:
         if: always()
         id: n
         run: echo "name=qa-report-$(echo '${{ matrix.check }}' | tr ',' '-')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ${{ steps.n.outputs.name }}
