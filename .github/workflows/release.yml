@@ -1,0 +1,35 @@
+# main の index.html が新しい版になったら、その版の印（タグ v0.60.0 など）とリリースを自動で作る。
+# あとから「v0.60 のときはどうだったか」を一覧から開けるようにするため。
+name: Release tag
+
+on:
+  push:
+    branches: [main]
+    paths: ['index.html']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 版を読んで、まだ無ければタグとリリースを作る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(grep -o "const APP_VERSION='[0-9][0-9.]*'" index.html | head -1 | grep -o "[0-9][0-9.]*")
+          if [ -z "$ver" ]; then echo "index.html に APP_VERSION がありません"; exit 1; fi
+          tag="v$ver"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "$tag はもうあります。作りません"; exit 0
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "LAST TELL $tag" \
+            --notes "テスト公開 $tag（https://satou-aaaaa.github.io/last-tell/）。変更の中身はこの版までのプルリクエストを見てください。" \
+            --generate-notes

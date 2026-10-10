@@ -1,0 +1,59 @@
+# 検査（QA）がプルリクエストで全部 ✅ になったら、そのプルリクエストを自動でマージする。
+# - 対象は、このリポジトリの中のブランチから出したプルリクエストだけ（よその人のフォークからのものは手でマージ）
+# - 下書きのもの、ラベル「自動マージしない」が付いたものはマージしない
+# - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
+# GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、公開とタグをここから起こす。
+name: Auto merge
+
+on:
+  workflow_run:
+    workflows: [QA]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: 検査の通ったプルリクエストをマージする
+        id: merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          pr=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$BRANCH" --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then echo "開いているプルリクエストがありません"; exit 0; fi
+          info=$(gh api "repos/$REPO/pulls/$pr")
+          if [ "$(jq -r .draft <<<"$info")" = true ]; then echo "#$pr は下書きなのでマージしません"; exit 0; fi
+          if jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then echo "#$pr は「自動マージしない」"; exit 0; fi
+          if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
+          gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+      - name: 公開とタグを起こす
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run pages.yml -R "$GITHUB_REPOSITORY" --ref main
+          gh workflow run release.yml -R "$GITHUB_REPOSITORY" --ref main
+      - name: 使い終わったブランチを消す
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" || true

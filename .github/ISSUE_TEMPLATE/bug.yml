@@ -1,0 +1,60 @@
+name: 不具合の報告 / Bug report
+description: 動かない・表示がおかしい・ルールが変 / Something broken, wrong display or wrong poker rules
+title: "[不具合] "
+labels: ["bug", "テスターから"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        遊んでくださってありがとうございます。ここに書いた内容は誰でも見られます。名前やメールなど個人の情報は書かないでください。
+        Thank you for playing. Issues are public, so please don't include personal information.
+  - type: dropdown
+    id: where
+    attributes:
+      label: どこで起きましたか / Where
+      options:
+        - ストーリー（第一部） / Story part 1
+        - ストーリー（第二部） / Story part 2
+        - フリー対戦 / Free play
+        - タイトル・設定・その他 / Title, settings, other
+    validations:
+      required: true
+  - type: input
+    id: chapter
+    attributes:
+      label: 章や場面（わかれば） / Chapter or scene (if known)
+      placeholder: 例：第3章の2戦目 / e.g. chapter 3, 2nd match
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きましたか / What happened
+      description: どう操作したら、どうなったか。本当はどうなるはずだと思ったか。 / What you did, what happened, what you expected.
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: 端末 / Device
+      options:
+        - スマホ（縦） / Phone (portrait)
+        - スマホ（横） / Phone (landscape)
+        - タブレット / Tablet
+        - パソコン / PC
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 機種とブラウザ / Model and browser
+      placeholder: 例：iPhone 15・Safari、Windows・Chrome
+  - type: input
+    id: version
+    attributes:
+      label: ゲームの版 / Game version
+      description: 「その他」画面のいちばん下に出ています（わからなければ空でかまいません） / Shown at the bottom of the "Other" screen (optional)
+      placeholder: 例：v0.60
+  - type: textarea
+    id: shot
+    attributes:
+      label: 画面の画像（あれば） / Screenshot (optional)
+      description: 画像をここに貼り付けられます。 / You can paste an image here.
