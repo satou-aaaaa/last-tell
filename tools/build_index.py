@@ -5,8 +5,9 @@
 - v56 からゲーム本体に doctype・viewport・manifest・アイコン・SW登録が入ったので、そのままコピーする。
 - PWA の行が無い古い shisho.html は受け付けない（頭を二重に足さないため）。
 - 公開のたびに sw.js の VERSION を書き換えて、古い保存版を入れ替えさせる。
+- 共有フォルダの qa/（変更後の検査）があれば、リポジトリの qa/ にも写す。GitHub の自動実行（.github/workflows/qa.yml）がそれを回す。
 """
-import re, sys, datetime, pathlib
+import re, sys, datetime, pathlib, shutil
 
 root = pathlib.Path(__file__).resolve().parent.parent
 src = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
@@ -19,3 +20,8 @@ sw = root / 'sw.js'
 stamp = datetime.datetime.now(datetime.timezone.utc).strftime('lt-%Y%m%d%H%M%S')
 sw.write_text(re.sub(r"const VERSION = '[^']*';", f"const VERSION = '{stamp}';", sw.read_text(encoding='utf-8')), encoding='utf-8')
 print('index.html written,', len(src), 'chars; sw VERSION =', stamp)
+
+qa_src = pathlib.Path(sys.argv[1]).resolve().parent.parent / 'qa'
+if qa_src.is_dir():
+    shutil.copytree(qa_src, root / 'qa', dirs_exist_ok=True, ignore=shutil.ignore_patterns('reports', 'node_modules'))
+    print('qa/ copied from', qa_src)

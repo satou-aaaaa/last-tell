@@ -1,0 +1,35 @@
+{
+ "madeFrom": "0.60.0",
+ "madeAt": "2026-10-10T06:58:01.212Z",
+ "moneyLines": [
+  "負けを取り返すんだよ"
+ ],
+ "enJapanese": [
+  "Jin: “3x目か. 顔に出てるぞ.... I see it ものを信じろ. The Last Tell は, お前の"
+ ],
+ "winrate": {
+  "ch1": {
+   "rate": 0.9,
+   "n": 10
+  },
+  "ch2": {
+   "rate": 0.1,
+   "n": 10
+  },
+  "ch3": {
+   "rate": 0.5,
+   "n": 10
+  },
+  "ch4": {
+   "rate": 0.1,
+   "n": 10
+  }
+ },
+ "uiIssues": [
+  "フリー6人_レイズを開く|縦_390x844|隠れ|div.card.back|#raisePanel「− いくらにする？（ポット 」",
+  "フリー6人_レイズを開く|縦_390x844|隠れ|#btnNeedle「💬 揺さぶる」|#raisePanel「− いくらにする？（ポット 」",
+  "フリー6人_レイズを開く|縦_390x844|重なり|#btnNeedle「💬 揺さぶる」|#btnPlus「＋」",
+  "フリー6人_レイズを開く|PC_1280x800|隠れ|div.card.back|#raiseSub「出すチップ 4,000 ／ 」",
+  "英語_フリー6人_自分の番|横_844x390|文字切れ|#btnRaise「RaiseChoose am」"
+ ]
+}
