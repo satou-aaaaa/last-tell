@@ -115,6 +115,11 @@ async function shoot(browser, file, scene, vp, dir) {
     if (scene.after) { await page.evaluate(scene.after); }
     // 回想は配り終えたあと卓が上へ寄るので、落ち着くまで長めに待つ
     await page.waitForTimeout(scene.settle || 900);
+    // 番が来た直後にページが自動でスクロールすることがある（170pxほど）。スクロールが落ち着く（0.3秒動かない）まで待つ。最大3秒
+    for (let last = -1, same = 0, t1 = Date.now(); same < 3 && Date.now() - t1 < 3000; await page.waitForTimeout(100)) {
+      const y = await page.evaluate(() => Math.round(scrollY));
+      same = y === last ? same + 1 : 0; last = y;
+    }
     const issues = await page.evaluate(INSPECT);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
