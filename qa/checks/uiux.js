@@ -82,6 +82,11 @@ async function measure(browser, file, scene, vp) {
     }
     if (scene.after) await page.evaluate(scene.after);
     await page.waitForTimeout(500);
+    // 番が来た直後の自動スクロールが落ち着くまで待つ（ui.js と同じ。最大3秒）
+    for (let last = -1, same = 0, t1 = Date.now(); same < 3 && Date.now() - t1 < 3000; await page.waitForTimeout(100)) {
+      const y = await page.evaluate(() => Math.round(scrollY));
+      same = y === last ? same + 1 : 0; last = y;
+    }
     return { scene: scene.key, vp: vp.key, m: await page.evaluate(MEASURE) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, err: String(e.message).slice(0, 80) };

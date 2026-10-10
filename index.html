@@ -1688,7 +1688,7 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.64.0';
+const APP_VERSION='0.64.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -9116,7 +9116,7 @@ const ST_JA={'?':'まだ確かめていない',ok:'確かめた ✓',ng:'外れ'
 // ----- 案2：卓に着く前に、誰に聞くか選ぶ -----
 // 「次へ」の場所は「聞かずに進む／もう聞かない」になる。何も聞かずに進んだら、1人分だけ聞こえたことにする（今のスキップと同じ）
 rumorScene=function(ch,go){
-  const A=PRE_ASK[ch.no];if(!A||ch.no<4||CFG.ura||CFG.run)return go();
+  const A=PRE_ASK[ch.no];if(!A||ch.no<4)return go();
   const n=2+(regLevel(ch.no)>=1?1:0);
   const lines=[{hear:A,ch,left:n,used:[],said:null},['ジン',PRE_ASK_JIN.ja]];
   playScene(ch,lines,()=>{const h=lines[0];if(!h.used.length){const k=Math.floor(Math.random()*A.people.length);hearPre(h,k,true)}go()})};
