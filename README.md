@@ -13,8 +13,9 @@ LAST TELL（最後のテル）のテスト公開用サイト。https://satou-aaa
    python3 tools/build_index.py /mnt/project-files/story/shisho.html
    git add -A && git commit -m "テスト公開を v0.61 にする" && git push -u origin v0.61
    ```
-2. プルリクエストを出す（ひな形の「確かめたこと」を埋める）。検査（QA）が ✅ になったらマージする
-3. マージすると自動で次のことが起きる
+2. プルリクエストを出す（ひな形の「確かめたこと」を埋める）
+3. 検査（QA）が全部 ✅ になると、自動でマージされる（Auto merge）。止めたいときは下書きにするか、ラベル「自動マージしない」を付ける
+4. マージされると自動で次のことが起きる
    - テスト公開が更新される（Pages）
    - 版の印（タグ `v0.61.0`）とリリースが作られる（Release tag）。過去の版はリリースの一覧から取り出せる
 
@@ -30,5 +31,6 @@ Issues は誰でも見られるので、個人的な連絡はサポートペー�
 - `.github/ISSUE_TEMPLATE/`：テスター向けの報告フォーム
 - `.github/workflows/pages.yml`：テスト公開（Settings → Pages の公開元が「GitHub Actions」のときだけ動く。遊ぶ人に要るファイルだけを出す）
 - `.github/workflows/release.yml`：版が上がったらタグとリリースを作る
+- `.github/workflows/automerge.yml`：QA が全部 ✅ になったプルリクエストをマージし、公開とタグを起こす。QA は index.html か qa/ が変わるときだけ回るので、それ以外のプルリクエストは手でマージする
 - `.github/dependabot.yml`：Actions の部品を月1回新しくする
 - `.gitattributes`：index.html の差分をプルリクエストで畳む
