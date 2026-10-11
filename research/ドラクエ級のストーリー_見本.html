@@ -1,0 +1,269 @@
+<title>港町の物語 見本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 一つの暗い港町の世界に固定（ゲーム本体と同じ見た目）。左に説明、右にスマホ型の見本 */
+:root{
+  --bg:#0c1118; --panel:#141b26; --line:#263244; --fg:#e8e4da; --mute:#8f9aab;
+  --brass:#e2b65b; --sea:#0f2a3d; --lamp:#ffb15a; --red:#c85a5a;
+  --disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.75;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,5vw,38px);letter-spacing:.06em;margin:0;text-wrap:balance}
+header p{color:var(--mute);margin:.4em 0 0;max-width:62ch}
+.rec{display:inline-block;margin-top:12px;border:1px solid var(--brass);color:var(--brass);padding:4px 12px;border-radius:2px;font-size:13px;letter-spacing:.08em}
+nav{display:flex;flex-wrap:wrap;gap:8px}
+nav button{font:inherit;font-size:14px;background:transparent;color:var(--mute);border:1px solid var(--line);padding:8px 14px;border-radius:2px;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--bg);background:var(--brass);border-color:var(--brass);font-weight:700}
+nav button:focus-visible,.place:focus-visible,.who:focus-visible,.ep:focus-visible,.choice button:focus-visible,.screen:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+nav .star{font-size:11px;margin-left:4px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:32px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:minmax(0,1fr)}}
+.desc h2{font-family:var(--disp);font-size:24px;margin:0 0 6px;letter-spacing:.04em}
+.desc .src{color:var(--brass);font-size:13px;letter-spacing:.06em}
+.desc p,.desc li{max-width:60ch}
+.desc ul{padding-left:1.2em;margin:.4em 0}
+.desc .how{color:var(--mute);font-size:13px;border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+/* スマホ型 */
+.phone{width:100%;max-width:380px;margin:0 auto;border:1px solid var(--line);border-radius:22px;background:#06090e;padding:10px}
+.screen{position:relative;aspect-ratio:9/16;max-width:100%;border-radius:14px;overflow:hidden;background:var(--panel)}
+.bar{position:absolute;inset:0 0 auto 0;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:12px;color:var(--mute);z-index:3;background:linear-gradient(#06090ecc,transparent)}
+.bar b{color:var(--brass);font-family:var(--disp);font-size:14px;letter-spacing:.08em}
+/* 地図 */
+.map{position:absolute;inset:0;background:
+  radial-gradient(120% 60% at 50% 110%,#123a52 0,var(--sea) 45%,transparent 46%),
+  repeating-linear-gradient(0deg,transparent 0 14px,#ffffff06 14px 15px),
+  linear-gradient(#18202c,#10161f 60%,#0d1c28)}
+.map .shore{position:absolute;left:0;right:0;top:62%;height:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);opacity:.35}
+.place{position:absolute;transform:translate(-50%,-50%);font:inherit;font-size:12px;color:var(--fg);background:#0b1017e6;border:1px solid var(--line);padding:5px 9px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.place::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lamp);margin-right:6px;box-shadow:0 0 8px var(--lamp);vertical-align:1px}
+.place[disabled]{opacity:.28;cursor:default}
+.place[disabled]::before{background:var(--mute);box-shadow:none}
+.place .bang{position:absolute;top:-10px;right:-8px;background:var(--brass);color:var(--bg);font-weight:700;font-size:11px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;animation:bob 1.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.slider{position:absolute;left:12px;right:12px;bottom:12px;z-index:3;background:#0b1017e6;border:1px solid var(--line);padding:8px 10px;border-radius:2px;font-size:12px;color:var(--mute)}
+.slider input{width:100%;accent-color:var(--brass)}
+.slider b{color:var(--fg)}
+/* 店の中 */
+.inside{position:absolute;inset:0;z-index:4;background:linear-gradient(#1a1410ee,#0d0f14f5);display:flex;flex-direction:column;padding:48px 14px 14px;gap:10px}
+.inside h3{font-family:var(--disp);margin:0;font-size:20px;color:var(--lamp);letter-spacing:.06em}
+.inside .back{align-self:flex-start;font:inherit;font-size:12px;color:var(--mute);background:none;border:1px solid var(--line);padding:3px 10px;border-radius:2px;cursor:pointer}
+.people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.who{font:inherit;font-size:13px;color:var(--fg);background:#ffffff08;border:1px solid var(--line);border-radius:2px;padding:10px 4px 8px;cursor:pointer;display:grid;justify-items:center;gap:4px}
+.who .face{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:18px;color:var(--bg)}
+.who small{color:var(--mute);font-size:10px;line-height:1.3;text-align:center}
+/* 会話の窓 */
+.talk{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;background:#07090dee;border:1px solid var(--brass);border-radius:3px;padding:12px 14px 22px;min-height:118px;cursor:pointer}
+.talk .nm{position:absolute;top:-12px;left:12px;background:var(--brass);color:var(--bg);font-weight:700;font-size:12px;padding:1px 10px;border-radius:2px}
+.talk .tx{font-size:14px;line-height:1.7}
+.talk .tx.narr{color:#c9c3b6;font-family:var(--disp)}
+.talk .nx{position:absolute;right:10px;bottom:4px;font-size:10px;color:var(--mute)}
+/* 小さな物語 */
+.eps{position:absolute;inset:44px 10px 10px;display:grid;gap:6px;align-content:start;overflow:auto}
+.ep{font:inherit;text-align:left;color:var(--fg);background:#ffffff07;border:1px solid var(--line);border-radius:2px;padding:7px 10px;cursor:pointer;display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:center}
+.ep .n{font-family:var(--disp);color:var(--brass);font-size:18px;text-align:center}
+.ep b{font-size:13px;display:block}
+.ep small{color:var(--mute);font-size:11px;display:block;line-height:1.4}
+.ep.done{border-color:#e2b65b66}
+.ep.done .n::after{content:"✓";font-size:11px;margin-left:2px}
+.wall{position:absolute;inset:44px 10px auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ph{aspect-ratio:3/4;border:1px dashed var(--line);border-radius:2px;display:grid;place-items:center;font-size:9px;color:var(--mute);text-align:center;padding:2px;line-height:1.3}
+.ph.on{border:3px solid #e8e4da;background:linear-gradient(160deg,#5a4a38,#2b2119);color:#f3e6cc;animation:pin .7s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pin{from{transform:translateY(-40px) rotate(-12deg) scale(1.4);opacity:0}}
+.scene{position:absolute;inset:0;z-index:5;background:linear-gradient(#0d1520,#090c11)}
+.scene .place-name{position:absolute;top:46px;left:0;right:0;text-align:center;font-family:var(--disp);color:var(--lamp);letter-spacing:.2em;font-size:13px}
+.scene .big{position:absolute;top:34%;left:0;right:0;text-align:center;font-family:var(--disp);font-size:22px;font-weight:800;letter-spacing:.1em;padding:0 16px}
+.scene .big small{display:block;font-size:12px;color:var(--mute);font-weight:600;letter-spacing:.2em;margin-bottom:6px}
+/* 選択 */
+.choice{position:absolute;left:10px;right:10px;bottom:150px;z-index:7;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice button{font:inherit;font-weight:700;background:#07090dee;color:var(--fg);border:1px solid var(--brass);padding:10px;border-radius:2px;cursor:pointer}
+/* 看板の灯り */
+.sign{position:absolute;top:22%;left:50%;transform:translateX(-50%);font-family:var(--disp);font-weight:800;font-size:34px;letter-spacing:.3em;color:#ff5fa2;text-shadow:0 0 14px #ff5fa2,0 0 30px #ff5fa2aa;transition:color 1.2s,text-shadow 1.2s}
+.sign.off{color:#3a2a33;text-shadow:none;animation:flick 1.4s}
+@keyframes flick{0%,20%,40%{color:#ff5fa2;text-shadow:0 0 14px #ff5fa2}10%,30%{color:#3a2a33;text-shadow:none}}
+.replay{display:block;margin:10px auto 2px;font:inherit;font-size:11px;color:var(--mute);background:#0b1017cc;border:1px solid var(--line);padding:2px 8px;border-radius:2px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+table{border-collapse:collapse;font-size:13px;width:100%}
+td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:400}
+.tbl{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>港町の物語　見本</h1>
+    <p>LAST TELL をドラクエ級の物語にする5つの案を、スマホの画面で触って比べられます。右の画面を押すと会話が進みます。</p>
+    <span class="rec">おすすめ　案1＋案2</span>
+  </header>
+  <nav role="tablist" id="tabs"></nav>
+  <section class="stage">
+    <div class="desc" id="desc"></div>
+    <div class="phone"><div class="screen" id="screen" tabindex="0" aria-live="polite"></div><button class="replay" id="replay">最初から見る</button></div>
+  </section>
+</div>
+
+<script>
+const COL={'ジン':'#e2b65b','ゲン':'#4f8fe0','マリア':'#c0763a','アデ':'#7fd1ff','ロク':'#e0344a','ハンナ':'#9fb8a0','ハル':'#ff9fbe','セキ':'#7fc8ff','ミナ':'#8d6be0','ウォルター':'#d9c08a','スミン':'#6fd6c0','レイカ':'#e2b65b','ソウ':'#b49cff','アイシャ':'#7fe0a8','テツ':'#a8b878','ベン':'#c9a27a','クロダ':'#9fd8ff','ソフィア':'#e3d4ff','店主':'#ff9c7a','ハヤト':'#e9e6df','クロウ':'#c9d3e0'};
+const BIO={'ジン':'師匠','ゲン':'港の酔客','マリア':'通訳・フィリピン','アデ':'機関士・ナイジェリア','ロク':'銀の扉の主','ハンナ':'家具職人・ドイツ','ハル':'大学生','セキ':'月影の老紳士','ミナ':'月影の歌手','ウォルター':'写真家・アメリカ','スミン':'音響係・韓国','レイカ':'天空のディーラー','ソウ':'見習い','アイシャ':'研究者・マレーシア','テツ':'地下の常連','ベン':'元船大工・イギリス','クロダ':'王冠のフロア','ソフィア':'旅の打ち手'};
+const $=s=>document.querySelector(s);
+const scr=$('#screen');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- 会話の窓（押すと進む） ---- */
+let talkQ=[],talkDone=null,typing=null;
+function talk(lines,done){talkQ=lines.slice();talkDone=done||null;next()}
+function next(){
+  const old=scr.querySelector('.talk');
+  if(typing){clearInterval(typing);typing=null;const tx=old&&old.querySelector('.tx');if(tx){tx.textContent=tx.dataset.full;return}}
+  if(!talkQ.length){if(old)old.remove();const d=talkDone;talkDone=null;if(d)d();return}
+  const [nm,t]=talkQ.shift();
+  const box=old||Object.assign(document.createElement('div'),{className:'talk'});
+  box.innerHTML=(nm?`<span class="nm">${esc(nm)}</span>`:'')+`<div class="tx${nm?'':' narr'}"></div><span class="nx">押して進む ▼</span>`;
+  if(!old)scr.appendChild(box);
+  const tx=box.querySelector('.tx');tx.dataset.full=t;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){tx.textContent=t;return}
+  let i=0;typing=setInterval(()=>{tx.textContent=t.slice(0,++i);if(i>=t.length){clearInterval(typing);typing=null}},34);
+}
+scr.addEventListener('click',e=>{if(e.target.closest('.talk'))next()});
+scr.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&scr.querySelector('.talk')){e.preventDefault();next()}});
+function bar(left,right){return `<div class="bar"><b>${left}</b><span>${right||''}</span></div>`}
+function face(n){return `<span class="face" style="background:${COL[n]||'#888'}">${esc(n[0])}</span>`}
+
+/* ================= 案1 港町を歩く ================= */
+const PLACES=[
+ {id:'ikari',name:'錨亭',x:30,y:52,from:1,ppl:{
+   'ジン':{1:'……ゲンの顔、見たか。あいつは隠せん。だから憎めん',2:'ロクは数える男だ。……数えずに言えることもある、とは知らん',3:'セキは降りすぎた、と言っていたな。……俺は、降りなさすぎた',4:'レイカの顔、見たか。あいつは昔から顔に出ない。出さないんだ',5:'……少し、黙って飲ませろ',6:'あと一つだ。……水は、まだいい',7:'座れ。カードを配るぞ'},
+   'ゲン':{1:'その錨、大事にしろよ。……いや、別に惜しくなんかねえよ',3:'月影？ 俺は一回行って、曲が終わる前に全部取られた！',5:'ジンさんが黙ってると、店が広く見えるな',7:'水でいいや。……いや、今日は一杯だけ'},
+   'マリア':{1:'ジンさんが人に教えてる。二十五年見てきて、初めてよ',4:'ジンさんの若いころ？ 言葉より、手を見ればわかるわ',6:'店主のカレー、食べたことある？ わたしは二十五年、まだ無いの'}}},
+ {id:'pier',name:'港の桟橋',x:70,y:74,from:1,bang:1,ppl:{
+   'アデ':{1:'次の入港が、この船の最後の航海だ。……今日は、最後まで座ってみたい',4:'船乗りの間で噂がある。海の向こうに、看板持ちだけが座る卓があるって',7:'波の紋の封筒？ ……外海の印だ。見たのは二度目だよ'}}},
+ {id:'silver',name:'銀の扉',x:22,y:24,from:2,bang:2,ppl:{
+   'ロク':{2:'……次の店で崩れたら、ここへ戻れ。数え直してやる',5:'ハヤトに会ったか。……そうか',7:'弟子よ。……いや、もう弟子ではないか'},
+   'ハンナ':{2:'あなたの賭け方、メモした。同じ手は二度通じない',3:'月影のセキさんが、ブラフで負けたって？ メモしておく',6:'このメモ、もうページが残ってない'},
+   'ハル':{2:'この席、勝てる気がする！',4:'天空って、窓際が勝てる席らしいよ',6:'王冠の席占い、全部外れた……'}}},
+ {id:'moon',name:'月影',x:52,y:36,from:3,bang:3,ppl:{
+   'セキ':{3:'君の師匠に、もう一度会えるとはね',6:'降りなかったね。……少し、うらやましい'},
+   'ミナ':{3:'次の曲、リクエストして。勝てる曲にするから',5:'客船の歌手に誘われてるの。……まだ、誰にも言ってない'},
+   'ウォルター':{3:'セキなら、ここで降りるだろうね。私は見たいけど',7:'錨亭の裏返しの写真。あれを撮ったのは、私だよ'}}},
+ {id:'sky',name:'天空',x:78,y:18,from:4,bang:4,ppl:{
+   'レイカ':{4:'ジンさんの指、見てなさい。わたしが言えるのはそれだけ',6:'ソウが王冠の誘いを断ったの。……誰に似たのかしら'},
+   'ソウ':{4:'ぼ、僕、今度初めて一人で卓を配ります！',6:'王冠で配ったんです。手、震えませんでした'},
+   'アイシャ':{4:'今日の潮は、ゆっくり引いてる。勝負は次の満ち潮ね'}}},
+ {id:'under',name:'地下の賭場跡',x:40,y:66,from:5,bang:5,ppl:{
+   'テツ':{5:'ハヤト、あれから一度も卓に座ってねえ'},
+   'ベン':{5:'この倉庫、取り壊すことになった。……最後に一度、卓を囲もう'}}},
+ {id:'crown',name:'王冠',x:58,y:12,from:6,bang:6,ppl:{
+   'クロダ':{6:'主は今日、一度も手袋を直していません。……珍しいことです'},
+   'ソフィア':{6:'どの港にも、卓がある。……あなたの港は、いい港ね'}}},
+];
+let mapCh=1;
+function pick(lines,ch){let best=null;for(const k in lines){if(+k<=ch)best=lines[k]}return best}
+function drawMap(){
+  scr.innerHTML=bar('港町',`第${mapCh}章のあと`)+`<div class="map"><div class="shore"></div>`+
+   PLACES.map(p=>`<button class="place" data-id="${p.id}" style="left:${p.x}%;top:${p.y}%" ${p.from>mapCh?'disabled':''}>${p.from>mapCh?'？？？':p.name}${p.bang===mapCh&&p.from<=mapCh?'<span class="bang">！</span>':''}</button>`).join('')+
+   `</div><label class="slider" for="ch">物語の進み：<b>第${mapCh}章のあと</b><input id="ch" type="range" min="1" max="7" value="${mapCh}"></label>`;
+  scr.querySelector('#ch').oninput=e=>{mapCh=+e.target.value;drawMap()};
+  scr.querySelectorAll('.place:not([disabled])').forEach(b=>b.onclick=()=>enter(PLACES.find(p=>p.id===b.dataset.id)));
+}
+function enter(p){
+  const ppl=Object.keys(p.ppl).filter(n=>pick(p.ppl[n],mapCh));
+  const box=document.createElement('div');box.className='inside';
+  box.innerHTML=`<button class="back">← 地図へ</button><h3>${p.name}</h3><div class="people">${ppl.map(n=>`<button class="who" data-n="${n}">${face(n)}${n}<small>${BIO[n]||''}</small></button>`).join('')}</div>
+   <p style="font-size:12px;color:var(--mute);margin:0">人を押すと話します。章が進むと、言うことが変わります。</p>`;
+  scr.appendChild(box);
+  box.querySelector('.back').onclick=e=>{e.stopPropagation();talkQ=[];scr.querySelector('.talk')?.remove();box.remove()};
+  box.querySelectorAll('.who').forEach(b=>b.onclick=e=>{e.stopPropagation();talk([[b.dataset.n,pick(p.ppl[b.dataset.n],mapCh)]])});
+}
+
+/* ================= 案2 店ごとの小さな物語 ================= */
+const EPS=[
+ {t:'出航の二時間前',who:'アデ',at:'港の桟橋',ans:'決めた時間に降りる',photo:'桟橋のアデ',lines:[
+  ['','桟橋の灯りの下。アデが、いつもより早く錨亭に来ていた。'],['アデ','この船、次で最後の航海なんだ。だから今日は、最後まで座りたい'],['ジン','……座れるなら、座ればいい'],['','時計が、出航の二時間前を指した。アデの手には、いいカードが来ていた。'],['アデ','……船は待ってくれない。降りるよ'],['アデ','でも、また来る。次の船でね']]},
+ {t:'最後のページ',who:'ハンナ',at:'銀の扉',ans:'言えるうちに言う',photo:'ハンナとロク',lines:[
+  ['','ハンナのメモは、十五冊目になっていた。'],['ハンナ','同じ手は、二度通じない。あなたの賭け方は、全部ここにある'],['','メモに無い大きさで賭けた。ハンナのペンが止まった。'],['ハンナ','……記録できない。久しぶり'],['','ハンナは最後のページを破って、ロクの前に置いた。「段差、ありがとう」とだけ書いてある。'],['ロク','……数えなくても、わかる']]},
+ {t:'最後の曲',who:'ミナとスミン',at:'月影',ans:'好きな場所から、次へ行く',photo:'ステージのミナ',lines:[
+  ['ミナ','客船の歌手に誘われてるの。港を全部回る船'],['ミナ','この曲が終わるまでに勝ったら、行く。負けたら、残る'],['','スミンは何も言わずに、音を少しだけ上げた。'],['','曲の最後の音で、ミナのカードが伏せられた。'],['ミナ','……決まり、だね'],['','スミンが一度だけ、照明をいちばん明るい色にした。']]},
+ {t:'初めての卓',who:'ソウ',at:'天空',ans:'半人前でも、座っていい',photo:'配るソウ',lines:[
+  ['ソウ','き、今日は僕が一人で配ります！'],['','カードが一枚、卓から落ちた。誰も笑わなかった。'],['','レイカは奥の席で、最後まで一度も口を出さなかった。'],['ソウ','すみません、僕、まだ半人前で……'],['レイカ','座ってる人は、みんな一人前よ。配る人もね'],['','ソウの手の震えが、止まっていた。']]},
+ {t:'倉庫の最後の一晩',who:'ベンとテツ',at:'地下の賭場跡',ans:'場所から降りる',photo:'倉庫の卓',lines:[
+  ['ベン','この倉庫、来月には無くなる'],['テツ','ベンさんが、ここを貸してたのかよ'],['ベン','船を作る場所だった。……卓を置いたのは、ハヤトの頼みだ'],['','最後のハンドが終わった。ベンは卓の脚を一本、黙って外した。'],['ベン','小さく、ゆっくり。……全部は持っていかない']]},
+ {t:'見届け人',who:'ソフィア',at:'王冠',ans:'勝っても、降りられる人を選ぶ',photo:'ソフィアの背中',lines:[
+  ['ソフィア','どの港にも、卓がある。わたしは、それを見て回ってるの'],['ソフィア','勝った人を見に来たんじゃない。降りられる人を、探してる'],['','最後のハンド。こちらが降りると、ソフィアは小さく笑った。'],['ソフィア','招待状は、勝った人ではなく、降りられる人に届くの'],['','ソフィアの襟元で、波の紋のブローチが光った。']]},
+ {t:'もう一枚のネガ',who:'ウォルターとマリア',at:'錨亭',ans:'過去から降りる',photo:'笑うジンとハヤト',lines:[
+  ['ウォルター','壁の裏返しの写真。あれを撮ったのは、私だよ'],['ウォルター','同じ日に、もう一枚撮った。現像したのは、今日が初めてだ'],['','写真の中で、若いジンと若いハヤトが笑っていた。'],['マリア','……ジンさん、こんな顔で笑うのね'],['ウォルター','これは君が持っていてくれ。どうするかは、君が決めなさい']]},
+];
+const done=new Set();
+function drawEps(){
+  scr.innerHTML=bar('錨亭の壁',`写真 ${done.size}/7`)+`<div class="wall">${EPS.map((e,i)=>`<div class="ph${done.has(i)?' on':''}">${done.has(i)?esc(e.photo):'？'}</div>`).join('')}</div>
+   <div class="eps" style="top:auto;bottom:10px;max-height:56%">${EPS.map((e,i)=>`<button class="ep${done.has(i)?' done':''}" data-i="${i}"><span class="n">${i+1}</span><span><b>${esc(e.t)}</b><small>${esc(e.at)}・${esc(e.who)}／${esc(e.ans)}</small></span></button>`).join('')}</div>`;
+  scr.querySelectorAll('.ep').forEach(b=>b.onclick=()=>playEp(+b.dataset.i));
+}
+function playEp(i){
+  const e=EPS[i];const sc=document.createElement('div');sc.className='scene';
+  sc.innerHTML=`<div class="place-name">${esc(e.at)}</div><div class="big"><small>小さな物語　${i+1}</small>${esc(e.t)}</div>`;
+  scr.appendChild(sc);
+  setTimeout(()=>talk(e.lines,()=>{done.add(i);sc.remove();drawEps()}),700);
+}
+
+/* ================= 案3 はい／いいえ ================= */
+function drawChoice(){
+  scr.innerHTML=bar('錨亭','第7章のあと')+`<div class="scene"><div class="place-name">錨亭、閉店後</div><div class="big"><small>小さな物語　7</small>もう一枚のネガ</div></div>`;
+  talk([['','写真の中で、若いジンと若いハヤトが笑っていた。'],['ウォルター','どうするかは、君が決めなさい']],()=>{
+    const c=document.createElement('div');c.className='choice';
+    c.innerHTML=`<p style="grid-column:1/-1;margin:0;text-align:center;font-family:var(--disp);font-size:16px">この写真を、ハヤトに渡しますか</p><button data-a="1">はい</button><button data-a="0">いいえ</button>`;
+    scr.appendChild(c);
+    c.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();c.remove();echo(b.dataset.a==='1')});
+  });
+}
+function echo(yes){
+  const sc=scr.querySelector('.scene');
+  sc.innerHTML=`<div class="place-name">半年後</div><div class="big"><small>第二部　師匠</small>${yes?'ハヤトの店':'錨亭の壁'}</div>`;
+  const L=yes?[['','地下の賭場跡が無くなったあと、ハヤトが開いた小さな店。'],['','カウンターの奥の壁に、あの写真が一枚だけ貼ってあった。'],['ハヤト','……捨てられなかった。それだけだ']]
+   :[['','錨亭の壁。ジンが、自分の写真を外して裏を見た。'],['','もう一枚、写真が挟まっていた。'],['ジン','……余計なことを'],['','ジンは写真を戻さなかった。胸のポケットに、しまった。']];
+  setTimeout(()=>talk(L,()=>{sc.innerHTML+=`<p style="position:absolute;bottom:24px;left:16px;right:16px;text-align:center;color:var(--mute);font-size:12px">どちらを選んでも正解。選んだことが、あとの章で返ってくる。</p>`}),600);
+}
+
+/* ================= 案4 笑いと日常 ================= */
+function drawLaugh(){
+  scr.innerHTML=bar('地下の賭場跡 → 錨亭','第5章のあと')+`<div class="scene"><div class="place-name" id="pn">地下の賭場跡</div><div class="big" id="bg"><small>重い場面</small>あの日の話</div></div>`;
+  talk([['ハヤト','師匠のクセをクロウに売ったのは、俺です'],['ジン','知っていた。十五年前から']],()=>{
+    $('#pn').textContent='錨亭';$('#bg').innerHTML='<small>そのすぐあと</small>一息';
+    setTimeout(()=>talk([['ゲン','おう、帰ったか！ 店主、カレー！'],['店主','あんたには出さないよ'],['ゲン','十五年頼んでるんだぞ！'],['店主','十五年断ってるんだよ'],['','ジンが、少しだけ笑った気がした。']]),500);
+  });
+}
+
+/* ================= 案5 別れを一つ ================= */
+function drawFarewell(){
+  scr.innerHTML=bar('月影','第二部の途中')+`<div class="scene"><div class="place-name">月影、最後の営業</div><div class="sign" id="sg">月影</div></div>`;
+  talk([['セキ','私は、降りてばかりの人生だった'],['セキ','最後くらいは、降りずにいこう'],['','セキはチップを全部、前に押し出した。生まれて初めての、大きなブラフだった。'],['ウォルター','……いい賭けだ。私は、見たかった']],()=>{
+    $('#sg').classList.add('off');
+    setTimeout(()=>talk([['','月影の看板の灯りが、最後に一度だけまたたいて、消えた。'],['','翌朝、その看板は錨亭の壁に掛けられた。']]),1500);
+  });
+}
+
+/* ================= タブ ================= */
+const TABS=[
+ {k:'案1',t:'港町を歩く',rec:1,draw:drawMap,src:'ドラクエの「町の人に全員話しかける」',body:`<p>章と章のあいだに港町の地図を置きます。場所を押すと人が並び、押すと話します。<b>章が進むたびに、全員の言うことが変わります。</b>錨亭ではジンに話しかけられます（ドラクエの「はなす」）。</p><ul><li>量のめやす：350〜450行（いまの第一部は約190行）</li><li>新しい立ち絵は要りません。いる常連24人とボスたちで回せます</li><li>操作は、章を選ぶ画面に「街を歩く」を1つ足すだけ。卓の画面は変えません</li></ul><p class="how">見本の操作：下の帯で「第何章のあと」を動かすと、行ける場所と、みんなのセリフが変わります。「！」は案2の小さな物語がある場所です。</p>`},
+ {k:'案2',t:'店ごとの小さな物語',rec:1,draw:drawEps,src:'ドラクエ7の「島ごとの一話完結」',body:`<p>店ごとに、常連が主役の一話完結の物語を一つずつ。主人公は勝負でその人の困りごとに決着をつけます。<b>7話それぞれが「いつ降りるか」の別の答え</b>になり、第7章のジンの答えがより重くなります。</p><ul><li>1話：会話20〜30行と、短い勝負1回（寄り道。本編の難しさは変えません）</li><li>ごほうびは錨亭の壁に貼る写真。全部そろうと壁が物語のアルバムになります</li><li>アデ、ハンナ、スミン、ベン、ソフィア、ウォルター、マリアなど、いろいろな国の人が主役になります</li></ul><p class="how">見本の操作：話を押すと、その話の山場が流れ、終わると写真が壁に貼られます。</p>`},
+ {k:'案3',t:'あとで返ってくる はい／いいえ',draw:drawChoice,src:'ドラクエ5の花嫁選び',body:`<p>どちらを選んでも正解だけど、重い選択を第一部に3か所だけ。結果はあとの章と第二部の始まりで返ってきます。</p><div class="tbl"><table><tr><th>場所</th><th>問い</th></tr><tr><td>第5章のあと</td><td>ハヤトの最後のチップを受け取るか</td></tr><tr><td>小さな物語3</td><td>ミナに「行け」と言うか</td></tr><tr><td>小さな物語7</td><td>笑っている写真をハヤトに渡すか</td></tr></table></div><p class="how">見本の操作：会話のあとに「はい／いいえ」が出ます。選ぶと、半年後（第二部）の場面に飛びます。</p>`},
+ {k:'案4',t:'笑いと日常',draw:drawLaugh,src:'堀井さん「どれか一つは笑ってもらえるように」',body:`<p>重い場面のすぐあとに、必ず一息。店主のカレー、ゲンの「水でいいや」、ハルの席占いを、章をまたぐ連続ネタにします。</p><ul><li>量のめやす：章ごとに2〜4行</li></ul><p class="how">見本の操作：第5章の告白のすぐあとに、錨亭の一場面が続きます。</p>`},
+ {k:'案5',t:'別れを一つ',draw:drawFarewell,src:'ドラクエの苦さ（救えない話）',body:`<p>第二部の途中で、月影が閉店します。人が死ぬ話にはしません。セキは最後に、生まれて初めて大きなブラフを打ち、街を出ます。月影の看板は錨亭の壁へ移ります。</p><p class="how">見本の操作：会話の最後に、看板の灯りが消えます。</p>`},
+];
+let cur=0;
+function show(i){
+  cur=i;talkQ=[];talkDone=null;if(typing){clearInterval(typing);typing=null}
+  document.querySelectorAll('#tabs button').forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  const T=TABS[i];
+  $('#desc').innerHTML=`<span class="src">${esc(T.src)}</span><h2>${T.k}　${T.t}</h2>${T.body}`;
+  T.draw();
+}
+$('#tabs').innerHTML=TABS.map((T,i)=>`<button role="tab" aria-selected="false">${T.k}　${T.t}${T.rec?'<span class="star">★おすすめ</span>':''}</button>`).join('');
+document.querySelectorAll('#tabs button').forEach((b,i)=>b.onclick=()=>show(i));
+$('#replay').onclick=()=>show(cur);
+show(0);
+</script>

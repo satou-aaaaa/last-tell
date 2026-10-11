@@ -1,0 +1,217 @@
+<title>LAST TELL ポット演出見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* 1列のカード。各カードに小さな卓を置き、同じ金額の流れで現状と案を見比べる */
+:root{
+  --bg:#0b0c11;--panel:#14151d;--line:#2a2b36;--ink:#ece6d6;--mute:#9a96a6;
+  --gold:#e2b65b;--crimson:#c8283c;--felt:#0f4a35;--felt2:#0a3326;
+  --num:"Oswald","Arial Narrow",sans-serif;--body:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:22px}
+h1{font-family:var(--num);letter-spacing:.14em;font-size:1.6rem;margin:0;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);letter-spacing:.05em;font-size:.9rem;color:var(--mute);font-weight:500}
+.lead{margin:0;color:var(--mute);max-width:62ch}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line)}
+button{font:700 .9rem var(--body);color:var(--bg);background:var(--gold);border:0;padding:9px 16px;cursor:pointer;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+button.ghost{background:transparent;color:var(--gold);outline:1px solid var(--gold);clip-path:none}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.step{font-family:var(--num);color:var(--gold);letter-spacing:.1em;font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0}
+.card.rec{border-color:var(--gold)}
+@media (max-width:680px){.card{grid-template-columns:1fr}}
+.txt{padding:16px 18px;display:grid;align-content:start;gap:6px;min-width:0}
+.tag{font-family:var(--num);letter-spacing:.2em;font-size:.8rem;color:var(--mute)}
+.card.rec .tag{color:var(--gold)}
+.txt h2{margin:0;font-size:1.15rem;text-wrap:balance}
+.txt p{margin:0;font-size:.92rem;color:#cfc8b6}
+.txt ul{margin:0;padding-left:1.1em;font-size:.88rem;color:var(--mute)}
+/* 小さな卓 */
+.table{position:relative;height:250px;overflow:hidden;background:radial-gradient(ellipse 75% 70% at 50% 50%,var(--felt),var(--felt2) 75%,#06100c);border-left:1px solid var(--line)}
+@media (max-width:680px){.table{border-left:0;border-top:1px solid var(--line)}}
+.seat{position:absolute;width:34px;height:34px;border-radius:50%;background:#1c1d26;border:1.5px solid var(--gold);display:grid;place-items:center;font-size:.7rem;color:var(--mute);transform:translate(-50%,-50%)}
+.ring{position:absolute;left:50%;top:52%;width:220px;height:92px;transform:translate(-50%,-50%);border-radius:50%;border:2px dashed rgba(226,182,91,.5);transition:box-shadow .6s,border-color .6s}
+.pile{position:absolute;left:50%;top:52%;transform:translate(-50%,-62%);display:flex;align-items:flex-end;gap:3px}
+.pile.off{left:24%}
+.sign{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);background:linear-gradient(#17121c,#07080b);border:1.5px solid var(--gold);padding:3px 14px 4px;text-align:center;line-height:1.05;white-space:nowrap}
+.sign .pl{font-size:.62rem;letter-spacing:.3em;color:var(--gold);font-weight:700;display:block}
+.sign .pv{font-family:var(--num);font-size:1.5rem;color:#fff;font-variant-numeric:tabular-nums}
+.sign.slim{top:auto;bottom:22px;padding:2px 10px;display:flex;gap:8px;align-items:baseline}
+.sign.slim .pv{font-size:1.05rem}
+.light{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 30% 26% at 50% 48%,rgba(255,226,160,.0),transparent 70%);transition:background .7s}
+/* チップ（ゲーム本体と同じ描き方） */
+.col{position:relative;width:26px}
+.chip{position:absolute;left:0;width:26px;height:11px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--c) 55%,#fff) 0 27%,rgba(255,255,255,.9) 29% 32%,transparent 34%),repeating-conic-gradient(from 8deg,var(--c) 0 30deg,#f6f2e8 30deg 45deg);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 3.5px 0 var(--d),0 4px 3px rgba(0,0,0,.45)}
+.c1{--c:#3c7bd6;--d:#24528f}.c2{--c:#2c9a5e;--d:#1b6640}.c3{--c:#d7263d;--d:#8f1626}.c4{--c:#26272f;--d:#0d0e12}.c5{--c:#e2b65b;--d:#9c7a2e}.c6{--c:#8b4fd6;--d:#5a2f94}
+.pile.mess{display:block;width:190px;height:78px;transform:translate(-50%,-50%)}
+.pile.mess .col{position:absolute}
+.fly{position:absolute;z-index:5;pointer-events:none;display:flex;align-items:flex-end;gap:2px}
+.note{font-size:.85rem;color:var(--mute);margin:0}
+.verdict{border-left:3px solid var(--gold);padding:10px 14px;background:var(--panel)}
+.verdict p{margin:0}
+@media (prefers-reduced-motion:reduce){.ring,.light{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>POT — チップが集まる見せ方<small>LAST TELL ポット演出の見本</small></h1>
+  <p class="lead">6つの卓は同じ流れで動きます。ポットが 3,000 → 12,000 → 40,000 → 150,000 と育つあいだに、チップの山がどう見えるかを比べてください。最後に勝った人（右下の席）へ配ります。</p>
+
+  <div class="ctrl">
+    <button id="next" type="button">次のストリートへ</button>
+    <button id="auto" type="button" class="ghost">自動で流す</button>
+    <span class="step" id="step">プリフロップ　ポット 3,000</span>
+  </div>
+
+  <section class="card" data-mode="now">
+    <div class="txt">
+      <span class="tag">いま</span>
+      <h2>金額札が主役で、チップは脇に少し</h2>
+      <p>チップは大きい額のチップから順に積むので、150,000 のポットが紫2枚、40,000 が黒4枚になります。ポットが大きくなるほど山が小さく見えることがあります。</p>
+      <ul><li>山は札の左はしに寄っていて、札の方が目に入る</li><li>集める動きは途中で薄くなって消え、着地しない</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <section class="card rec" data-mode="E">
+    <div class="txt">
+      <span class="tag">案E　おすすめ（いただいた意見から）</span>
+      <h2>ごちゃっと積み重なる</h2>
+      <p>店の卓と同じように、賭けたチップを輪の中へ無造作に放り込みます。ストリートごとに、前のチップの上や横へ足されていき、低い山や1枚だけのチップが散らばったまま育ちます。配当のときに、山をまとめて勝った人へ押し出します。</p>
+      <ul><li>チップの量はポットの大きさ（ビッグブラインド何回分か）で決めるので、大きいポットほど散らばりが広く、厚くなる</li><li>置く場所は毎回少しずつ変わるので、同じ形にならない</li><li>金額札は細くして輪の下へ。山を隠さない</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <section class="card" data-mode="A">
+    <div class="txt">
+      <span class="tag">案A</span>
+      <h2>チップの山を主役にする</h2>
+      <p>山の大きさをポットの大きさ（ビッグブラインド何回分か）に合わせて増やし、輪の真ん中に何本かの塔として置きます。金額札は細くして輪の下へ。</p>
+      <ul><li>小さいチップを多めに使い、塔の数と高さで量を見せる</li><li>どの店・どの章でも同じ見え方になる</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <section class="card" data-mode="B">
+    <div class="txt">
+      <span class="tag">案B</span>
+      <h2>寄せて、着地させる</h2>
+      <p>各ストリートの終わりに、全員の賭けチップが山へすべり込み、ぶつかって小さく弾みます。その瞬間に札の数字が数え上がります。</p>
+      <ul><li>いまは途中で消えている動きを、山に着くまで見せる</li><li>案Aと組み合わせると効果が大きい</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <section class="card" data-mode="C">
+    <div class="txt">
+      <span class="tag">案C</span>
+      <h2>大きいポットほど光が寄る</h2>
+      <p>持ち点に対してポットが大きくなるほど、輪のふちが金色に光り、卓の照明が真ん中へ絞られます。勝負どころが暗い店の中で浮き上がります。</p>
+      <ul><li>店ごとの照明色（いまの設定）をそのまま使える</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <section class="card" data-mode="D">
+    <div class="txt">
+      <span class="tag">案D</span>
+      <h2>山ごと勝者へ流す</h2>
+      <p>配るときに、輪の中の塔が1本ずつ勝った人の前へすべっていき、札の数字が0まで減ります。いまは小さな山が1つ飛んで消えるだけです。</p>
+      <ul><li>勝ったときの気持ちよさが一番伝わる</li></ul>
+    </div>
+    <div class="table"></div>
+  </section>
+
+  <div class="verdict"><p><b>おすすめは案Eです。</b>ポットの大きさでチップの量を決める点は案Aと同じで、並べ方を「整った塔」から「無造作な山」に変えたものです。寄せたチップが山に着地する動き（案B）と、山ごと勝者へ押し出す動き（案D）も、案Eに入れてあります。</p></div>
+  <p class="note">これは見本です。ゲーム本体（story/shisho.html）はまだ変えていません。</p>
+</div>
+
+<script>
+const BB=2000, STACK=100000;
+const STEPS=[{n:'プリフロップ',pot:3000,bets:[1000,2000,0,0]},{n:'フロップ',pot:12000,bets:[3000,3000,3000,0]},{n:'ターン',pot:40000,bets:[9500,9500,9000,0]},{n:'リバー',pot:150000,bets:[36000,37000,37000,0]},{n:'配当',pot:0,pay:true}];
+const SEATS=[[12,30],[50,12],[88,30],[80,86]]; // 右下が勝つ席
+const DEN=[[100000,'c6'],[50000,'c5'],[10000,'c4'],[5000,'c3'],[2500,'c2'],[1000,'c1']];
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=n=>n.toLocaleString('en-US');
+// いまのやり方：大きい額から貪欲に
+function greedy(a){let r=a,c=[];for(const[v,k]of DEN)while(r>=v&&c.length<40){c.push(k);r-=v}const cols=[];for(let i=0;i<c.length;i+=8)cols.push(c.slice(i,i+8));return cols.slice(0,5)}
+// 案A：ビッグブラインド何回分かで枚数を決め、塔に分ける
+function byBB(a){if(!a)return[];const bb=a/BB;const n=Math.min(48,Math.round(5*Math.log2(bb+1)));
+  const mix=bb<8?['c1','c2','c1','c3']:bb<30?['c3','c4','c2','c4','c3']:['c4','c5','c4','c6','c3','c4'];
+  const per=7,towers=Math.min(7,Math.ceil(n/per)),cols=[];for(let t=0;t<towers;t++){const h=Math.max(2,Math.round(n/towers)-(t%2));cols.push(Array.from({length:h},(_,k)=>mix[(k+t*2)%mix.length]))}return cols}
+function colHTML(col){return`<span class="col" style="height:${11+4*(col.length-1)+4}px">${col.map((c,k)=>`<span class="chip ${c}" style="bottom:${k*4+4}px;left:${((k*7+col.length*3)%5-2)*.5}px"></span>`).join('')}</span>`}
+function pileHTML(cols){return cols.map(colHTML).join('')}
+const tables=[...document.querySelectorAll('.card')].map(card=>{
+  const mode=card.dataset.mode,t=card.querySelector('.table');
+  t.innerHTML=(mode==='C'?'<div class="light"></div>':'')+'<div class="ring"></div>'+SEATS.map((s,i)=>`<div class="seat" style="left:${s[0]}%;top:${s[1]}%">${i===3?'勝者':''}</div>`).join('')+`<div class="pile${mode==='now'?' off':''}"></div><div class="sign${mode==='now'?'':' slim'}"><span class="pl">ポット</span><span class="pv">0</span></div>`;
+  if(mode==='E')t.querySelector('.pile').classList.add('mess');
+  return{mode,t,pile:t.querySelector('.pile'),pv:t.querySelector('.pv'),sign:t.querySelector('.sign'),ring:t.querySelector('.ring'),light:t.querySelector('.light'),shown:0};
+});
+function stackFor(mode,a){return mode==='now'?greedy(a):byBB(a)}
+function countTo(tb,to,ms){if(reduced||!ms){tb.pv.textContent=fmt(to);tb.shown=to;return}const from=tb.shown,t0=performance.now();
+  const f=now=>{const k=Math.min(1,(now-t0)/ms);tb.pv.textContent=fmt(Math.round(from+(to-from)*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(f);else tb.shown=to};requestAnimationFrame(f)}
+function flyFrom(tb,seat,amount,land){const r=tb.t.getBoundingClientRect(),p=tb.pile.getBoundingClientRect();
+  const el=document.createElement('div');el.className='fly';el.innerHTML=pileHTML(greedy(amount).slice(0,1));
+  const sx=r.width*SEATS[seat][0]/100,sy=r.height*SEATS[seat][1]/100;el.style.left=sx+'px';el.style.top=sy+'px';tb.t.appendChild(el);
+  const tx=p.left-r.left+p.width/2-sx,ty=p.top-r.top+p.height/2-sy;
+  const kf=land?[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px))`,offset:.85},{transform:`translate(calc(-50% + ${tx}px),calc(-50% + ${ty-5}px))`,offset:.93},{transform:`translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px))`}]
+    :[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px)) scale(.8)`,opacity:.3}];
+  return el.animate(kf,{duration:land?620:450,easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).finished.then(()=>el.remove())}
+function bump(tb){if(!reduced)tb.pile.animate([{transform:'translate(-50%,-62%) scale(1)'},{transform:'translate(-50%,-62%) scale(1.06,.94)'},{transform:'translate(-50%,-62%) scale(1)'}],{duration:260})}
+function glow(tb,pot){if(!tb.light)return;const k=Math.min(1,pot/(STACK*1.2));
+  tb.ring.style.borderColor=`rgba(226,182,91,${.45+.55*k})`;tb.ring.style.boxShadow=`0 0 ${8+40*k}px rgba(226,182,91,${.15+.55*k}),inset 0 0 ${20*k}px rgba(226,182,91,${.35*k})`;
+  tb.light.style.background=`radial-gradient(ellipse ${46-18*k}% ${40-16*k}% at 50% 50%,rgba(255,226,160,${.05+.22*k}),rgba(0,0,0,${.55*k}) 100%)`}
+async function payout(tb){const r=tb.t.getBoundingClientRect(),cols=[...tb.pile.children];
+  if(tb.mode==='E'){const p=tb.pile.getBoundingClientRect();const dx=r.width*SEATS[3][0]/100-(p.left-r.left+p.width/2),dy=r.height*SEATS[3][1]/100-(p.top-r.top+p.height/2);
+    countTo(tb,0,500);
+    if(!reduced)await tb.pile.animate([{transform:'translate(-50%,-50%)'},{transform:'translate(calc(-50% - 6px),calc(-50% - 3px))',offset:.18},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.55)`,opacity:.1}],{duration:750,easing:'cubic-bezier(.6,0,.3,1)'}).finished;
+    tb.pile.innerHTML='';tb.chips=0;return}
+  const wx=r.width*SEATS[3][0]/100,wy=r.height*SEATS[3][1]/100;
+  if(tb.mode==='D'&&!reduced){const total=tb.shown;
+    for(let i=cols.length-1;i>=0;i--){const c=cols[i],b=c.getBoundingClientRect();const el=document.createElement('div');el.className='fly';el.appendChild(c);
+      el.style.left=(b.left-r.left+b.width/2)+'px';el.style.top=(b.top-r.top+b.height/2)+'px';tb.t.appendChild(el);
+      el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${wx-(b.left-r.left+b.width/2)}px),calc(-50% + ${wy-(b.top-r.top+b.height/2)-14}px))`}],{duration:420,easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).finished.then(()=>el.remove());
+      countTo(tb,Math.round(total*i/cols.length),150);await new Promise(s=>setTimeout(s,130))}
+    return}
+  // いまの動き：小さな山が1つ飛んで薄くなる
+  const p=tb.pile.getBoundingClientRect();const el=document.createElement('div');el.className='fly';el.innerHTML=tb.pile.innerHTML;tb.pile.innerHTML='';
+  const sx=p.left-r.left+p.width/2,sy=p.top-r.top+p.height/2;el.style.left=sx+'px';el.style.top=sy+'px';tb.t.appendChild(el);
+  if(!reduced)await el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${wx-sx}px),calc(-50% + ${wy-sy}px)) scale(.7)`,opacity:.2}],{duration:700,easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).finished;
+  el.remove();countTo(tb,0,0)}
+// 案E：輪の中に低い山や1枚のチップを無造作に足していく
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646};
+function messCount(a){return a?Math.min(60,Math.round(5.5*Math.log2(a/BB+1))):0}
+function messGrow(tb,pot){const want=messCount(pot);let have=tb.chips||0;const big=pot/BB;
+  const mix=big<8?['c1','c1','c2','c3']:big<30?['c1','c3','c4','c2','c4']:['c4','c5','c3','c4','c6','c1','c4'];
+  const W=190,H=78,news=[];
+  while(have<want){const h=Math.min(want-have,1+Math.floor(rnd()*(big<8?2:4)));
+    let x,y;do{x=rnd()*2-1;y=rnd()*2-1}while(x*x+y*y>1);
+    const spread=Math.min(1,.45+big/60);const px=W/2+x*W*.42*spread,py=H/2+y*H*.36*spread;
+    const col=Array.from({length:h},()=>mix[Math.floor(rnd()*mix.length)]);
+    const el=document.createElement('span');el.className='col';el.style.height=(11+4*(h-1)+4)+'px';
+    el.innerHTML=col.map((c,k)=>`<span class="chip ${c}" style="bottom:${k*4+4}px;left:${(rnd()*3-1.5).toFixed(1)}px"></span>`).join('');
+    el.style.left=(px-13)+'px';el.style.top=(py-(11+4*h))+'px';el.style.zIndex=Math.round(py);
+    if(h===1&&rnd()<.35)el.style.transform=`rotate(${(rnd()*30-15).toFixed(0)}deg)`;
+    tb.pile.appendChild(el);news.push(el);have+=h}
+  tb.chips=have;
+  if(!reduced)news.forEach((el,i)=>el.animate([{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260,delay:i*25,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
+let idx=0,busy=false;
+function reset(){idx=0;seed=7;tables.forEach(tb=>{tb.pile.innerHTML='';tb.chips=0;tb.shown=0;tb.pv.textContent='0';glow(tb,0)});}
+async function play(){if(busy)return;busy=true;const s=STEPS[idx];
+  document.getElementById('step').textContent=s.pay?'配当　右下の席が勝ち':`${s.n}　ポット ${fmt(s.pot)}`;
+  await Promise.all(tables.map(async tb=>{
+    if(s.pay){await payout(tb);glow(tb,0);return}
+    const land=tb.mode!=='now';
+    await Promise.all(s.bets.map((b,i)=>b&&!reduced?flyFrom(tb,i,b,land):null));
+    if(tb.mode==='E')messGrow(tb,s.pot);else{tb.pile.innerHTML=pileHTML(stackFor(tb.mode,s.pot));if(land)bump(tb)}
+    countTo(tb,s.pot,'BDE'.includes(tb.mode)?520:0);glow(tb,s.pot);
+  }));
+  idx++;if(idx>=STEPS.length){await new Promise(r=>setTimeout(r,900));reset()}busy=false}
+document.getElementById('next').addEventListener('click',play);
+let timer=0;const autoBtn=document.getElementById('auto');
+autoBtn.addEventListener('click',()=>{if(timer){clearInterval(timer);timer=0;autoBtn.textContent='自動で流す'}else{play();timer=setInterval(play,1800);autoBtn.textContent='止める'}});
+// 最初の画面：ターン（40,000）の状態をすぐ見せる
+(function(){const s=STEPS[2];tables.forEach(tb=>{if(tb.mode==='E'){[3000,12000,40000].forEach(v=>messGrow(tb,v))}else tb.pile.innerHTML=pileHTML(stackFor(tb.mode,s.pot));countTo(tb,s.pot,0);glow(tb,s.pot)});idx=3;document.getElementById('step').textContent='ターン　ポット 40,000（「次」でリバーへ）'})();
+</script>

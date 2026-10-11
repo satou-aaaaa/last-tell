@@ -1,0 +1,20 @@
+:root{--bg:#0d0e13;--panel:#161821;--ink:#f1ede4;--muted:#9a9cab;--gold:#e2b65b;--crimson:#d7263d;--line:#2c2f3d}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.85 "Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:24px}
+.brand{font:700 20px/1 Oswald,"Zen Kaku Gothic New",sans-serif;letter-spacing:.12em;color:var(--gold);text-decoration:none}
+.lang{color:var(--muted);font-size:14px}
+h1{font-size:26px;line-height:1.4;margin:0 0 8px}
+h2{font-size:19px;margin:36px 0 8px;padding-left:10px;border-left:3px solid var(--crimson)}
+h3{font-size:16px;margin:20px 0 4px}
+p,li{color:#e4e0d6}
+.muted{color:var(--muted);font-size:14px}
+a{color:var(--gold)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.note{background:var(--panel);border:1px solid var(--line);padding:12px 14px;margin:16px 0}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:12px;font-size:14px;color:var(--muted)}
+footer a{margin-right:14px}

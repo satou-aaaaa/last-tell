@@ -1,0 +1,214 @@
+<title>話しかける要素の見本</title>
+<style>
+/* layout: 上に端末切り替え、下に案ごとのカード。各カードの中で、卓のミニ画面が台本どおりに動く */
+:root{--bg:#0d0e13;--panel:#16171e;--ink:#ece6d6;--sub:#9a968c;--gold:#e2b65b;--crimson:#b0213a;--felt:#1f5a3f;--felt2:#123827;--line:#262833;--ok:#6fcf97;--ng:#ff8a9a;
+  --disp:"Shippori Mincho","Hiragino Mincho ProN",serif;--body:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 40px}
+h1{font-family:var(--disp);font-size:1.4rem;margin:0 0 4px;letter-spacing:.08em;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--sub);font-size:.88rem;max-width:68ch}
+.now{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--sub);margin-bottom:14px}
+.now b{color:var(--ink)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar span{font-size:.8rem;color:var(--sub)}
+.bar button,.rp{background:#1f2029;color:var(--ink);border:1px solid #333645;border-radius:4px;padding:5px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){body:not(.m-land) .grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card.rec{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.hd{display:flex;align-items:baseline;gap:8px;padding:10px 12px 2px;flex-wrap:wrap}
+.hd b{font-size:1rem}
+.tag{font-size:.72rem;padding:1px 7px;border-radius:3px;background:#262833;color:var(--sub)}
+.tag.r{background:var(--gold);color:#1a1408;font-weight:700}
+.desc{padding:0 12px 8px;font-size:.84rem;color:var(--sub)}
+.stage{display:flex;justify-content:center;padding:0 10px}
+/* ミニ画面 */
+.scr{position:relative;width:100%;aspect-ratio:1280/800;background:#0a0b0f;border:1px solid #2b2d38;border-radius:8px;overflow:hidden;font-size:11px;max-width:100%}
+body.m-port .scr{aspect-ratio:390/844;max-width:300px}
+body.m-land .scr{aspect-ratio:844/390;max-width:760px}
+.felt{position:absolute;left:6%;right:6%;top:9%;bottom:24%;border-radius:50%/50%;
+  background:radial-gradient(ellipse at 50% 40%,#2a7351 0,var(--felt) 45%,var(--felt2) 100%);box-shadow:inset 0 0 0 5px #3a2618,inset 0 0 0 6px #5b3a22,inset 0 10px 30px rgba(0,0,0,.6)}
+body.m-port .felt{left:8%;right:8%;top:8%;bottom:26%;border-radius:45%/30%}
+.board{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:flex;gap:3px}
+.cd{width:2.2em;height:3.1em;border-radius:3px;background:#f3efe4;color:#111;font-weight:700;display:grid;place-items:center;font-size:1em;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.cd.r{color:#b0213a}
+.pl{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5}
+.face{width:3.4em;height:3.4em;border-radius:50%;margin:0 auto 2px;background:radial-gradient(circle at 50% 38%,#c9a98c 0 30%,transparent 31%),radial-gradient(circle at 50% 95%,var(--cl,#2b2d38) 0 45%,transparent 46%),#1b1c24;border:1px solid #333645}
+.nm{background:rgba(10,10,14,.85);border:1px solid #333645;border-radius:3px;padding:0 6px;white-space:nowrap;font-size:.95em}
+.pl.hl .nm{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.pick{position:absolute;left:50%;top:-1.6em;transform:translateX(-50%);background:var(--gold);color:#1a1408;border-radius:9px;padding:0 7px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s}
+.scr.picking .pick{opacity:1}
+.pl.tap .pick{box-shadow:0 0 0 3px rgba(226,182,91,.45);transform:translateX(-50%) scale(1.12)}
+.bub{position:absolute;max-width:62%;background:#f3efe4;color:#16171e;border-radius:8px;padding:4px 8px;font-size:1.02em;line-height:1.45;z-index:20;opacity:0;transition:opacity .25s;pointer-events:none}
+.bub.on{opacity:1}
+.bub small{display:block;color:#6a645a;font-size:.85em}
+.me{position:absolute;left:50%;bottom:13%;transform:translateX(-50%);display:flex;gap:3px;z-index:4}
+.bot{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;gap:6px;align-items:center;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:0 6px;z-index:6}
+body.m-port .bot{height:10%}
+.bt{background:#22232d;border:1px solid #3a3d4c;color:var(--ink);border-radius:4px;padding:3px 9px;white-space:nowrap;font-size:1em}
+.bt.main{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+.bt.hl{box-shadow:0 0 0 2px var(--gold),0 0 12px rgba(226,182,91,.6)}
+.row{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);display:flex;gap:5px;flex-wrap:wrap;justify-content:center;width:94%;z-index:15;opacity:0;transition:opacity .25s}
+body.m-port .row{bottom:21%;flex-direction:column;align-items:center}
+.row.on{opacity:1}
+.row .bt{background:rgba(22,23,30,.95);border-color:var(--gold)}
+.row .bt.q{border-color:#3a3d4c;color:var(--sub)}
+.row .bt.hl{background:var(--gold);color:#1a1408}
+.memo{position:absolute;left:2%;bottom:14%;width:40%;background:rgba(14,15,20,.95);border:1px solid #3a3d4c;border-radius:6px;padding:5px 7px;z-index:25;opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s}
+body.m-port .memo{width:90%;left:5%;bottom:auto;top:60%}
+.memo.on{opacity:1;transform:none}
+.memo h5{margin:0 0 3px;font-size:.92em;color:var(--gold);font-weight:700;letter-spacing:.06em}
+.memo li{list-style:none;margin:0;padding:2px 0;border-top:1px solid #262833;display:flex;gap:6px;justify-content:space-between;align-items:baseline}
+.memo ul{margin:0;padding:0}
+.st{font-size:.85em;color:var(--sub);white-space:nowrap;padding:0 4px;border-radius:2px}
+.st.ok{color:#0d0e13;background:var(--ok);font-weight:700}
+.st.ng{color:#0d0e13;background:var(--ng);font-weight:700}
+.st.pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1.8)}100%{transform:scale(1)}}
+.dealer{position:absolute;left:50%;top:3%;transform:translateX(-50%);text-align:center;z-index:5}
+.dealer .face{--cl:#111;background:radial-gradient(circle at 50% 38%,#b89275 0 30%,transparent 31%),radial-gradient(circle at 50% 95%,#e8e4da 0 45%,transparent 46%),#1b1c24}
+/* 店に入る前の場面 */
+.scene{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0,rgba(255,217,138,.18),transparent 60%),#0c0d12;z-index:30;display:flex;flex-direction:column;padding:6% 5%;gap:6px;opacity:0;pointer-events:none;transition:opacity .3s}
+.scene.on{opacity:1}
+.scene .ttl{font-family:var(--disp);color:var(--gold);font-size:1.15em;letter-spacing:.08em}
+.scene .lst{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+body.m-port .scene .lst{grid-template-columns:1fr}
+.who{border:1px solid #333645;border-radius:5px;padding:4px 7px;background:#16171e}
+.who b{display:block}
+.who span{color:var(--sub);font-size:.9em}
+.who.hl{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.who.used{opacity:.4}
+.line{background:#16171e;border-left:2px solid var(--gold);padding:4px 8px;opacity:0;transition:opacity .3s}
+.line.on{opacity:1}
+.cap{margin:8px 12px 4px;font-size:.84rem;min-height:2.9em;color:var(--ink);border-left:2px solid var(--gold);padding-left:8px}
+.ft{display:flex;justify-content:space-between;align-items:center;padding:4px 12px 12px;gap:8px;flex-wrap:wrap;margin-top:auto}
+.dots{display:flex;gap:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:#333645}
+.dots i.on{background:var(--gold)}
+.meta{padding:0 12px 10px;font-size:.78rem;color:var(--sub)}
+.meta b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600&display=swap">
+
+<div class="wrap">
+<h1>話しかける要素の見本</h1>
+<p class="lead">卓の上で、その場で人に聞いて情報を集める仕組みを5案、動きつきで並べています。どれも第4章「ホテルのラウンジ『天空』」の卓を例にしています。聞いた話は「噂」と同じで、本当・古い・わざと流された話が混ざり、最後は自分の目で確かめます。</p>
+<div class="now"><b>いまあるもの：</b>章の前に勝手に聞こえる噂（1〜2個）、ハンドの間の「💬 話す」（相手の調子だけ分かる）、相手からの質問に答える、「何持ってた？」、揺さぶる、隣の卓の声。<b>足りないもの：</b>「誰に・何を聞くか」を自分で選ぶこと。</div>
+<div class="bar" role="group" aria-label="画面の大きさ"><span>画面：</span>
+  <button id="mPort" data-m="port" aria-pressed="true">スマホ縦</button>
+  <button id="mLand" data-m="land" aria-pressed="false">スマホ横</button>
+  <button id="mPc" data-m="pc" aria-pressed="false">PC</button>
+</div>
+<div class="grid" id="grid"></div>
+</div>
+
+<script>
+const OPP=[{n:'レイカ',cl:'#6a1f2e'},{n:'シオン',cl:'#2f4f6a'},{n:'アキラ',cl:'#4a4a2a'},{n:'アイシャ',cl:'#3a2a5a'}];
+const POS={pc:[[50,13],[16,36],[84,36],[30,64],[70,64]],land:[[50,14],[14,38],[86,38],[28,66],[72,66]],port:[[50,12],[20,28],[80,28],[18,52],[82,52]]};
+// 席0=レイカ(上), 1=シオン, 2=アキラ, 3=アイシャ ... 4つ目の位置は空ける
+const SEAT=[0,1,2,4];
+let mode='port';
+try{const s=localStorage.getItem('lt-talk-mode');if(s&&POS[s])mode=s}catch(e){}
+
+const OPTS=[
+ {k:'1',rec:true,t:'案1　話す相手と話題を選ぶ',tag:'1.0',d:'今の「💬 話す」を押したあと、話題を3つから選べるようにします。ほかの人のことを聞くと、その人の噂が1つ聞けて、相手メモに「聞いた話」として残ります。手が見えたら自動で「確かめた／外れ」の印がつきます。ボタンは増えません。',
+  meta:'<b>効く柱：</b>テルを読む・ライブの空気　<b>最初の5分：</b>影響なし（第4章から）　<b>時期：</b>1.0',
+  steps:[
+   ['ハンドが終わると、いつもの「💬 話す」が出ます。',s=>{s.bot(['次のハンドへ','💬 話す'],1)}],
+   ['押すと、相手のプレートの上に「話す」が出ます。アイシャを選びます。',s=>{s.bot(['次のハンドへ','💬 話す']);s.picking(true);s.tap(3)}],
+   ['話題を3つから選びます。今回は「レイカさんのこと、知ってる？」。',s=>{s.picking(false);s.hl(3);s.row(['調子どう？','レイカさんのこと、知ってる？','ここ、長いの？'],1)}],
+   ['アイシャが知っていることを話します。本当とは限りません。',s=>{s.hl(3);s.bub(3,'レイカさん？ 勝負のときほど、よくしゃべるのよ。……ほんとかは知らないけど')}],
+   ['相手メモの「聞いた話」に入ります。まだ確かめていない状態です。',s=>{s.memo('相手メモ・聞いた話',[['アイシャ：レイカは勝負手ほどよくしゃべる','まだ確かめていない','']])}],
+   ['何ハンドか後、レイカがしゃべりながら大きく賭けて、強い手を見せました。',s=>{s.board(['A♠','K♥','K♦','7♣','2♥']);s.bub(0,'早く降りなよ。勝負になると思う？',1);s.memo('相手メモ・聞いた話',[['アイシャ：レイカは勝負手ほどよくしゃべる','まだ確かめていない','']])}],
+   ['手が見えたので、自動で答え合わせの印がつきます。1テーブルで話せるのは3回までです。',s=>{s.board(['A♠','K♥','K♦','7♣','2♥']);s.memo('相手メモ・聞いた話',[['アイシャ：レイカは勝負手ほどよくしゃべる','確かめた ✓','ok']],1)}]
+ ]},
+ {k:'2',rec:true,t:'案2　卓に着く前に、誰に聞くか選ぶ',tag:'1.0',d:'今は章の前に噂が勝手に1〜2個聞こえます。これを、店にいる人から2人を選んで聞く形にします。人ごとに「当たりやすさ」のクセがあり（後輩は正しいが自信なさげ、常連は話を盛る）、誰に聞くかも読み合いになります。',
+  meta:'<b>効く柱：</b>テルを読む・師弟の物語　<b>最初の5分：</b>影響なし（第4章から）　<b>時期：</b>1.0（今の噂のデータを使う）',
+  steps:[
+   ['店に入ると、話が聞けそうな人が並びます。聞けるのは2人だけです。',s=>{s.scene('ホテルのラウンジ「天空」　あと2人に聞ける',-1,[])}],
+   ['レイカの後輩、ソウに聞きます。',s=>{s.scene('ホテルのラウンジ「天空」　あと1人',0,[['ソウ','レイカさん、強いときは自分のチップをちらっと見るんです。……たぶん']])}],
+   ['次に、店の常連に聞きます。常連の話は、古いことがあります。',s=>{s.scene('ホテルのラウンジ「天空」　もう聞けない',2,[['ソウ','レイカさん、強いときは自分のチップをちらっと見るんです。……たぶん'],['常連','レイカは汗をかいたら勝負手だってさ']],[0])}],
+   ['最後にジンが一言。聞いた話は相手メモに入り、卓で確かめます。',s=>{s.scene('',-1,[['ソウ','レイカさん、強いときは自分のチップをちらっと見るんです。……たぶん'],['常連','レイカは汗をかいたら勝負手だってさ'],['ジン','噂は噂だ。誰から聞いたかも、覚えておけ']],[0,2])}],
+   ['卓で答え合わせ。常連の話は古かったと分かり、「常連の話は外れやすい」と人の欄にも残ります。',s=>{s.memo('相手メモ・聞いた話',[['ソウ：強いときチップを見る','確かめた ✓','ok'],['常連：汗をかいたら勝負手','外れ（古い話）','ng']],1)}]
+ ]},
+ {k:'3',t:'案3　ディーラーに聞く',tag:'公開後',d:'「💬 話す」の相手にディーラーが入ります。ディーラーは手のことは決して答えませんが、卓のことは教えてくれます（いつから座っているか、もうすぐ帰るか、初めての客か）。ライブの店らしい聞き方です。',
+  meta:'<b>効く柱：</b>ライブの空気　<b>最初の5分：</b>影響なし　<b>時期：</b>公開後',
+  steps:[
+   ['「💬 話す」を押すと、ディーラーにも「話す」が出ます。',s=>{s.dealer();s.picking(true);s.tap(-1)}],
+   ['手のことを聞いても、答えてくれません。',s=>{s.dealer();s.row(['レイカさんの手、見えた？','アキラさん、いつから？'],0);s.dbub('手のことは、お答えできません')}],
+   ['卓のことなら教えてくれます。アキラはもうすぐ帰りそうです。',s=>{s.dealer();s.row(['レイカさんの手、見えた？','アキラさん、いつから？'],1);s.dbub('開店からずっとですよ。そろそろ帰るって、さっき言ってました')}],
+   ['「早く帰りたい人」は大きく賭けるか降りるかが増えます（今の雑談の仕組みと同じ）。',s=>{s.dealer();s.memo('相手メモ・聞いた話',[['ディーラー：アキラはもうすぐ帰る','まだ確かめていない','']])}]
+ ]},
+ {k:'4',t:'案4　聞いた話をぶつけて揺さぶる',tag:'公開後',d:'集めた噂を「揺さぶる」の中から相手にぶつけられます。当たっている噂だと相手は一瞬固まり、そのハンドはクセが出やすくなります。ただ、強い相手はそのテーブルではそのクセを隠すようになります。情報を「使う」か「黙っておく」かの選択です。',
+  meta:'<b>効く柱：</b>テルを読む　<b>最初の5分：</b>影響なし　<b>時期：</b>公開後',
+  steps:[
+   ['レイカが大きく賭けてきました。「💬 揺さぶる」を開きます。',s=>{s.board(['A♠','K♥','9♦','7♣']);s.bub(0,'ベット',1);s.bot(['降りる','コール','レイズ','💬 揺さぶる'],3)}],
+   ['揺さぶりの中に、聞いた話が並びます。',s=>{s.board(['A♠','K♥','9♦','7♣']);s.row(['ずいぶん考えるね','聞いた話：勝負のときほど、しゃべるんだって？'],1)}],
+   ['当たっていたので、レイカが一瞬固まります。',s=>{s.board(['A♠','K♥','9♦','7♣']);s.hl(0);s.bub(0,'……誰に聞いたの',1)}],
+   ['このハンドはクセが出やすくなる代わりに、このテーブルではもうしゃべらなくなります。',s=>{s.board(['A♠','K♥','9♦','7♣']);s.memo('相手メモ・聞いた話',[['レイカは勝負手ほどしゃべる','使った（この卓では封じられた）','ng']],1)}]
+ ]},
+ {k:'5',t:'案5　話を交換する',tag:'公開後',d:'常連の中には、ただでは教えてくれない人がいます。「代わりに何か教えて」と言われ、自分が見抜いたクセを1つ渡すと噂がもらえます。渡したクセの持ち主には、あとで気づかれ、そのテーブルではクセが変わることがあります。',
+  meta:'<b>効く柱：</b>テルを読む・ライブの空気　<b>最初の5分：</b>影響なし　<b>時期：</b>公開後',
+  steps:[
+   ['シオンに「レイカさんのこと、知ってる？」と聞くと、交換を持ちかけられます。',s=>{s.hl(1);s.bub(1,'教えてもいい。代わりに、アキラのクセ、何か見つけた？',1)}],
+   ['渡すか、やめるかを選びます。',s=>{s.hl(1);s.row(['やめとく','教える：アキラは強いと動かなくなる'],1)}],
+   ['シオンから噂がもらえます。',s=>{s.hl(1);s.bub(1,'レイカは、強がるときが本物だよ。弱そうに言うときが危ない',1);s.memo('相手メモ・聞いた話',[['シオン：レイカは強がるときが本物','まだ確かめていない','']])}],
+   ['しばらくすると、アキラに気づかれます。この卓では、アキラのクセが変わります。',s=>{s.hl(2);s.bub(2,'……俺のこと、誰かに話したろ',1);s.memo('相手メモ・聞いた話',[['シオン：レイカは強がるときが本物','まだ確かめていない',''],['アキラのクセ','この卓では変わった','ng']])}]
+ ]}
+];
+
+const grid=document.getElementById('grid');
+const players=[];
+OPTS.forEach(o=>{
+  const c=document.createElement('article');c.className='card'+(o.rec?' rec':'');
+  c.innerHTML=`<div class="hd"><b>${o.t}</b>${o.rec?'<span class="tag r">おすすめ</span>':''}<span class="tag">${o.tag}</span></div>
+  <p class="desc">${o.d}</p><div class="stage"><div class="scr" aria-hidden="true"></div></div>
+  <p class="cap" aria-live="polite"></p><p class="meta">${o.meta}</p>
+  <div class="ft"><div class="dots">${o.steps.map(()=>'<i></i>').join('')}</div><button class="rp" type="button" id="rp${o.k}">最初から</button></div>`;
+  grid.appendChild(c);
+  const P={o,scr:c.querySelector('.scr'),cap:c.querySelector('.cap'),dots:[...c.querySelectorAll('.dots i')],i:0,t:null};
+  c.querySelector('.rp').onclick=()=>{P.i=0;play(P)};
+  players.push(P);
+});
+
+function base(P){
+  const p=POS[mode],scr=P.scr;
+  scr.className='scr';
+  scr.innerHTML=`<div class="felt"></div><div class="board"></div>`+
+   OPP.map((q,k)=>`<div class="pl" data-s="${k}" style="left:${p[SEAT[k]][0]}%;top:${p[SEAT[k]][1]}%;--cl:${q.cl}"><span class="pick">話す</span><div class="face"></div><div class="nm">${q.n}</div></div>`).join('')+
+   `<div class="me"><div class="cd">Q</div><div class="cd r">J</div></div><div class="bub"></div><div class="row"></div><div class="memo"></div><div class="bot"></div><div class="scene"></div>`;
+  const $=s=>scr.querySelector(s);
+  const api={
+    bot(b,h){$('.bot').innerHTML=b.map((x,i)=>`<span class="bt${i===0&&b.length===2?' main':''}${i===h?' hl':''}">${x}</span>`).join('')},
+    picking(on){scr.classList.toggle('picking',on)},
+    tap(k){if(k<0){const d=$('.dealer');if(d)d.classList.add('tap');return}scr.querySelector(`.pl[data-s="${k}"]`).classList.add('tap','hl')},
+    hl(k){scr.querySelector(`.pl[data-s="${k}"]`).classList.add('hl')},
+    row(b,h){const r=$('.row');r.innerHTML=b.map((x,i)=>`<span class="bt${i===h?' hl':''}">${x}</span>`).join('');r.classList.add('on')},
+    bub(k,t,short){const pl=scr.querySelector(`.pl[data-s="${k}"]`),b=$('.bub');b.innerHTML=`<small>${OPP[k].n}</small>${t}`;
+      const x=parseFloat(pl.style.left),y=parseFloat(pl.style.top);
+      b.style.left=Math.min(Math.max(x,30),70)+'%';const low=y>45;b.style.top=low?(y-(mode==='port'?5:9))+'%':(y+(mode==='port'?6:11))+'%';b.style.transform=low?'translate(-50%,-100%)':'translateX(-50%)';b.classList.add('on')},
+    dbub(t){const b=$('.bub');b.innerHTML=`<small>ディーラー</small>${t}`;b.style.left='50%';b.style.top=(mode==='port'?'11%':'20%');b.style.transform='translateX(-50%)';b.classList.add('on')},
+    memo(h,rows,pop){const m=$('.memo');m.innerHTML=`<h5>${h}</h5><ul>${rows.map(r=>`<li><span>${r[0]}</span><span class="st ${r[2]}${pop&&r[2]?' pop':''}">${r[1]}</span></li>`).join('')}</ul>`;m.classList.add('on')},
+    board(cs){$('.board').innerHTML=cs.map(c=>`<div class="cd${/[♥♦]/.test(c)?' r':''}">${c}</div>`).join('')},
+    dealer(){if(!$('.dealer')){const d=document.createElement('div');d.className='pl dealer';d.innerHTML='<span class="pick">話す</span><div class="face"></div><div class="nm">ディーラー</div>';scr.appendChild(d);
+      scr.querySelector('.pl[data-s="0"]').style.top=(mode==='port'?24:30)+'%'}},
+    scene(ttl,hi,lines,used){const s=$('.scene');s.classList.add('on');
+      const W=[['ソウ','レイカの後輩。正しいが自信なさげ'],['バーテンダー','店のことに詳しい'],['常連','話を盛る。古い話も混ざる'],['アキラ','今日の卓の客']];
+      s.innerHTML=(ttl?`<div class="ttl">${ttl}</div><div class="lst">${W.map((w,i)=>`<div class="who${i===hi?' hl':''}${(used||[]).includes(i)?' used':''}"><b>${w[0]}</b><span>${w[1]}</span></div>`).join('')}</div>`:'<div class="ttl">聞いた話</div>')+
+        lines.map(l=>`<div class="line on"><b>${l[0]}</b>「${l[1]}」</div>`).join('')}
+  };
+  return api;
+}
+function play(P){clearTimeout(P.t);const st=P.o.steps[P.i];const api=base(P);st[1](api);P.cap.textContent=st[0];
+  P.dots.forEach((d,i)=>d.classList.toggle('on',i===P.i));
+  const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  P.t=setTimeout(()=>{P.i=(P.i+1)%P.o.steps.length;play(P)},rm?6000:3400)}
+function setMode(m){mode=m;document.body.className='m-'+m;document.querySelectorAll('.bar button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===m)));
+  try{localStorage.setItem('lt-talk-mode',m)}catch(e){}players.forEach(P=>play(P))}
+document.querySelectorAll('.bar button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+setMode(mode);
+</script>

@@ -1,0 +1,676 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>キャラ絵リアル化 見本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* レイアウト：ゲームと同じ暗い卓の色。案ごとに1枚のパネル、中に同じ4人を並べて見比べる */
+:root{
+  --bg:#0f1116; --panel:#171a22; --tile:#1d2029; --line:#2a2e3a;
+  --fg:#e8e4da; --mute:#9a9caa; --gold:#e2b65b; --felt:#1f6a46;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:22px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(24px,4vw,34px);margin:0;letter-spacing:.04em;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--mute);letter-spacing:.02em;margin-top:4px}
+.lead{max-width:68ch;color:var(--mute);margin:0}
+.lead b{color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
+.card.rec{grid-column:1/-1;border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.card h2{font-family:var(--display);font-size:19px;margin:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-family:var(--body);font-size:11px;letter-spacing:.08em;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+.rec .tag{color:var(--bg);background:var(--gold);border-color:var(--gold)}
+.card p{margin:0;font-size:13px;color:var(--mute)}
+.card p b{color:var(--fg);font-weight:700}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.av-tile{background:radial-gradient(120% 90% at 50% 110%,#1e3a2c 0%,var(--tile) 55%);border-radius:6px;aspect-ratio:1;max-width:100%;overflow:hidden;position:relative}
+.av-tile svg{width:100%;height:100%;display:block}
+.av-tile span{position:absolute;left:5px;top:3px;font-size:10px;color:var(--mute)}
+.seats{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--mute);flex-wrap:wrap}
+.seat{width:46px;height:46px;border-radius:50%;overflow:hidden;background:var(--tile);border:2px solid #3a3f4e;flex:none}
+.seat svg{width:100%;height:100%;display:block}
+.sub{font-family:var(--display);font-size:15px;margin:6px 0 0}
+.rec .row{grid-template-columns:repeat(4,minmax(0,200px))}
+.redo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ages{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(30%,120px),1fr));gap:6px}
+.fig{display:grid;gap:4px;align-content:start}
+.cap{font-size:11px;color:var(--mute);text-align:center;line-height:1.4}
+.cap b{display:block;color:var(--fg);font-size:12px}
+.handcmp{display:grid;grid-template-columns:repeat(3,minmax(0,220px));gap:6px}
+.cost{font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:8px}
+.moods{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.moods .av-tile span{font-size:10px}
+section.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+section.panel h2{font-family:var(--display);font-size:19px;margin:0}
+.note{font-size:13px;color:var(--mute);margin:0;max-width:72ch}
+/* 案4：生きている動き（まばたき・呼吸・首のわずかな揺れ）。目線は動かさない（テルと混ざるため） */
+.alive .av{animation:breathe 4.2s ease-in-out infinite;animation-delay:var(--d,0s)}
+.alive .av .head{transform-box:view-box;transform-origin:50% 80%;animation:sway 7.5s ease-in-out infinite;animation-delay:var(--d,0s)}
+.alive .av .eyes{transform-box:fill-box;transform-origin:50% 60%;animation:blink 4.6s infinite;animation-delay:var(--d,0s)}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.2%)}}
+@keyframes sway{0%,100%{transform:rotate(0)}30%{transform:rotate(.9deg)}70%{transform:rotate(-.7deg)}}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}93%{transform:scaleY(.08)}96%{transform:scaleY(1)}}
+@media (prefers-reduced-motion:reduce){.alive .av,.alive .av .head,.alive .av .eyes,.av .t-hand{animation:none!important}}
+@media (max-width:420px){.moods{grid-template-columns:repeat(3,1fr)}}
+</style>
+<style>/* chars.js 用の追加 CSS（shisho.html の <style> の末尾に足す） */
+.av .t-sweat{opacity:0;transition:opacity .3s}
+.bust.cue-sweat .av .t-sweat{opacity:1;animation:tSweat 1.2s ease-in 2}
+@keyframes tSweat{from{transform:translateY(-2px)}to{transform:translateY(3px)}}
+.av .pupils{transform-box:fill-box;transform-origin:center}
+.bust.cue-glance .av .pupils{animation:tGlance 1.6s ease-in-out}
+@keyframes tGlance{0%,100%{transform:none}25%,70%{transform:translate(-1.5px,2.5px)}}
+.bust.cue-stare .av .pupils{transform:scale(1.25)}
+.av .t-hand{transform-box:fill-box;transform-origin:80% 100%}
+.av .t-hand{animation:tHand 3.4s ease-in-out infinite}
+@keyframes tHand{0%,100%{transform:none}50%{transform:translate(-.6px,.8px)}}
+@media (prefers-reduced-motion:reduce){.av .t-sweat,.av .pupils,.av .t-hand{animation:none}}
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>キャラ絵を本物っぽくする 5つの案<small>2026-10-09 更新：ジンの手（握った指の背でなでる形）、老若男女の顔ぶれ、おちゃめ案 ／ LAST TELL ／ 見本は ジン（★5）・レイカ（★4）・ミナ（★2）・ゲン（★1）</small></h1>
+    <p class="lead">いまの絵が作り物っぽく見える原因は3つです。<b>①色がベタ塗りで光の向きがない</b>、<b>②太い黒い輪郭線と、目が顔の1/4もある記号的な顔</b>、<b>③止まっていて、まばたきもしない</b>。下の案はどれもコードで描くので、外注もお金もかかりません。動く案は、この画面の上で実際に動いています。</p>
+  </header>
+  <article class="card rec" id="ages">
+    <h2>老若男女の顔ぶれ<span class="tag">新しく追加</span></h2>
+    <p>年齢の設定どおりに並べました。20歳前後のキャラは、目を大きく低めに、鼻を小さく、しわと影を減らして<b>若く見える描き方</b>にしています。賭けの場なので、いちばん若いのは18〜19歳のソウです。</p>
+    <div class="ages" id="agesGrid"></div>
+    <h3 class="sub">ジンの手を描き直し</h3>
+    <p>指を1本だけ伸ばした手は、コードではどうしても不自然になりました。そこで、<b>軽く握った手の、人差し指の背（第二関節）で顎の傷をなでる</b>形に変えました。考えごとをするときによく見るしぐさです。強い手のときは、今までどおり手を出しません。<b>A</b> は手にも光が当たる形、<b>B</b> は手を暗がりに沈めて縁だけ光らせる形です。</p>
+    <div class="handcmp" id="hand"></div>
+  </article>
+  <article class="card rec" id="redo">
+    <h2>ミナとゲンの描き直し<span class="tag">3案ずつ</span></h2>
+    <p>設定資料（ミナ：20代半ばの歌手、★2 ややかわいい／ゲン：50代の元漁師、赤ら顔で「がっはっは」、★1 かわいい）に寄せて描き直しました。<b>A はかわいい寄り</b>、<b>B は大人寄り</b>、<b>C はおちゃめ</b>（ウインクといたずらっぽい口）です。どちらもおすすめの光と動きを重ねています。</p>
+    <div class="redo-grid" id="redoGrid"></div>
+    <h3 class="sub">表情6種</h3>
+    <div class="moods" id="redoMoods"></div>
+  </article>
+  <div class="grid" id="cards"></div>
+</div>
+<script>const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));</script>
+<script>/* LAST TELL キャラ立ち絵（SVG）v2  2026-10-08
+   shisho.html の CHARS / avatar / cuteAvatar / coolAvatar をこのファイルの中身で置き換えれば動く。
+   - avatar(name, mood, opts) は今と同じく SVG 文字列を返す。opts は省略可。
+   - mood: normal / think / confident / worried / win / lose
+     （仕様書の ID thinking / troubled も受け付ける）
+   - opts.tell: キャラ固有のテル
+       ジン   'bluff'＝顎の傷に触る（ふだんの姿） / 'strong'＝触らない
+       ハヤト 'strong'＝ジンと同じ静かな姿勢になる
+       クロウ 'hidden'＝白い手袋の指先を直す（隠しテル）
+   - 共通のテル（glance/sweat など）は今の CSS（.bust.cue-*）がそのまま効く。
+     加えて .pupils（目線）と .t-sweat（汗）を置いたので、chars.css を足すと絵の中でも動く。
+   - 依存：esc()（shisho.html にある）。defs は SVG ごとに持つので外の shadeHead/shadeBody は不要。 */
+
+const CHARS={
+  /* rank 1〜2：かわいい */
+  'ゲン':{rank:1,hair:'#4a3020',style:'buzz',cloth:'#4f8fe0',band:'#ff6b8b',blush:1,mouth:'open',eyes:'grin',anchor:1},
+  'ハル':{rank:1,hair:'#ff9fbe',style:'bob',cloth:'#ffd166',mouth:'smile',iris:'#d94f78',clip:'#ffffff'},
+  '店主':{rank:1,hair:'#7a4330',style:'bun',cloth:'#ffffff',apron:1,mouth:'smile',iris:'#7a4330'},
+  'タロウ':{rank:1,hair:'#4a3b2b',style:'buzz',cloth:'#ffc93c',mouth:'open',brow:'worry'},
+  'ミナ':{rank:2,hair:'#8d6be0',style:'long',cloth:'#38305c',mouth:'smile',iris:'#8d6be0',star:1,lash:1},
+  'ケンジ':{rank:2,hair:'#2b2d4a',style:'short',cloth:'#ff6b8b',mouth:'smile',tie:'#2b2d4a'},
+  'ミサキ':{rank:2,hair:'#c0763a',style:'long',cloth:'#7fd1ff',mouth:'smile',iris:'#a35a24',lash:1},
+  'ソウ':{rank:2,hair:'#5b4a8a',style:'short',cloth:'#7a2234',mouth:'smile',iris:'#5b4a8a',vest:1},
+  'あなた':{rank:2,hair:'#ff9c5b',style:'spiky',cloth:'#2fb39a',mouth:'smile',iris:'#c2621f'},
+  /* rank 3以上：かっこいい */
+  'ロク':{rank:3,cool:'slick',hair:'#14151c',cloth:'#2a2c38',glow:'#e0344a',skin:'#e9cdb6',mustache:1,tie:'#7a1a26'},
+  'セキ':{rank:4,cool:'gent',hair:'#b9bfd0',cloth:'#1b1d27',glow:'#7fc8ff',skin:'#ecd3c0',monocle:1,bow:'#3a4a6a'},
+  'レイカ':{rank:4,cool:'lady',hair:'#1a1420',cloth:'#5a1830',glow:'#e2b65b',skin:'#f0d6c4',feather:1},
+  'ハヤト':{rank:4,cool:'rebel',hair:'#101118',cloth:'#e9e6df',glow:'#a3243a',skin:'#e6c8b0',openShirt:1},
+  'クロウ':{rank:5,cool:'crow',hair:'#0e0f14',cloth:'#121318',glow:'#c9d3e0',skin:'#ead2c2',gloves:1,tie:'#0b0c10',vest:'#1c1d24'},
+  'ジン':{rank:5,cool:'master',hair:'#e9e6df',cloth:'#2b2119',glow:'#e2b65b',skin:'#e4c3a6',beard:1,scar:1},
+};
+CHARS['老人']=CHARS['ジン'];
+const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const rankOf=name=>(CHARS[name]||{}).rank||2;
+const MOOD_ALIAS={thinking:'think',troubled:'worried'};
+function avatar(name,mood,opts){
+  const c=CHARS[name]||CHARS['ケンジ'];mood=MOOD_ALIAS[mood]||mood||'normal';opts=opts||{};
+  return c.cool?coolAvatar(name,c,mood,opts):cuteAvatar(name,c,mood,opts);
+}
+const _uid=()=>'c'+Math.random().toString(36).slice(2,8);
+const SWEAT=(x,y,cls)=>`<path class="${cls||''}" d="M${x} ${y} q-4 7 0 9 q4 -2 0 -9Z" fill="#9fd8ff" stroke="#2b2d4a" stroke-width="1.2"/>`;
+const _defs=id=>`<defs>
+  <radialGradient id="${id}h" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
+  <linearGradient id="${id}b" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+  <linearGradient id="${id}s" x1="0" x2="1"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+  <linearGradient id="${id}v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+  <filter id="${id}g" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>`;
+/* 同じ形に陰影を重ねる */
+const _shade=(svg,url,op)=>svg?svg.replace(/fill="[^"]*"/,`fill="url(#${url})"${op?` opacity="${op}"`:''}`).replace(/ stroke="[^"]*"| stroke-width="[^"]*"| stroke-linejoin="[^"]*"| stroke-linecap="[^"]*"/g,''):'';
+
+/* ===== かわいい：rank 1 は頭が大きいちびキャラ、rank 2 は少し大人びる ===== */
+function cuteAvatar(name,c,mood,opts){
+  const id=_uid(),L='#2b2d4a',SK='#ffe2cc',r2=c.rank>=2;
+  const sw=`stroke="${L}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`;
+  let back='',eyes='',ex='',mouth='',fx='';
+  if(c.style==='long')back=`<path d="M20 50 Q18 16 50 14 Q82 16 80 50 L84 92 Q50 98 16 92Z" fill="${c.hair}" ${sw}/>`;
+  if(c.style==='bob')back=`<path d="M20 50 Q18 16 50 14 Q82 16 80 50 L81 70 Q70 74 64 68 L36 68 Q30 74 19 70Z" fill="${c.hair}" ${sw}/>`;
+  if(c.style==='bun')back=`<circle cx="50" cy="10" r="9" fill="${c.hair}" ${sw}/>`;
+  const fringe={
+    short:`<path d="M21 48 Q19 13 50 12 Q81 13 79 48 Q72 30 60 31 Q55 24 46 31 Q32 29 21 48Z" fill="${c.hair}" ${sw}/>`,
+    long:`<path d="M21 50 Q20 14 50 13 Q80 14 79 50 Q68 32 50 28 Q38 38 21 50Z" fill="${c.hair}" ${sw}/>`,
+    bob:`<path d="M21 50 Q20 14 50 13 Q80 14 79 50 Q64 38 48 30 Q36 40 21 50Z" fill="${c.hair}" ${sw}/>`,
+    bun:`<path d="M21 46 Q21 15 50 15 Q79 15 79 46 Q66 28 50 27 Q34 28 21 46Z" fill="${c.hair}" ${sw}/>`,
+    buzz:`<path d="M22 40 Q24 15 50 15 Q76 15 78 40 Q50 28 22 40Z" fill="${c.hair}" ${sw}/>`,
+    spiky:`<path d="M20 48 L17 26 L30 30 L32 12 L44 25 L54 8 L59 25 L72 12 L70 30 L83 27 L79 48 Q64 32 50 34 Q36 32 20 48Z" fill="${c.hair}" ${sw}/>`,
+  }[c.style];
+  const iris=c.iris||L,ry=r2?6.4:7.4,iy=r2?5.2:6.2;
+  const bigEyes=(dx,dy)=>`<g class="eyes"><ellipse cx="39" cy="54" rx="5.6" ry="${ry}" fill="#fff" stroke="${L}" stroke-width="1.8"/><ellipse cx="61" cy="54" rx="5.6" ry="${ry}" fill="#fff" stroke="${L}" stroke-width="1.8"/>
+    <g class="pupils"><ellipse cx="${39+dx}" cy="${54+dy}" rx="4.6" ry="${iy}" fill="${iris}"/><ellipse cx="${61+dx}" cy="${54+dy}" rx="4.6" ry="${iy}" fill="${iris}"/>
+    <circle cx="${41+dx}" cy="${51+dy}" r="2.2" fill="#fff"/><circle cx="${63+dx}" cy="${51+dy}" r="2.2" fill="#fff"/></g>
+    ${c.lash?`<path d="M32.5 49 L35 46.5 M67.5 49 L65 46.5" ${sw} stroke-width="1.8"/>`:''}</g>`;
+  const blushO=c.blush||mood==='win'?.95:.6;
+  const browN=c.brow==='worry'?`<path d="M32 45 L45 42 M68 45 L55 42" ${sw} stroke-width="2"/>`:'';
+  if(mood==='think'){eyes=bigEyes(1.6,-2);mouth=`<ellipse cx="52" cy="66" rx="2.6" ry="2" fill="#ff7a8a" ${sw}/>`;
+    fx=`<text x="80" y="22" font-size="16" font-weight="900" fill="#e2b65b" stroke="${L}" stroke-width=".8">?</text>`}
+  else if(mood==='confident'){eyes=bigEyes(0,0)+`<path d="M31 41 L46 46 M69 41 L54 46" ${sw} stroke-width="3"/>`;
+    mouth=`<path d="M42 63 Q50 72 58 63Z" fill="#ff7a8a" ${sw}/>`;fx=`<path d="M82 30 l6 -6 M84 38 l8 -2 M80 22 l2 -8" stroke="#ff5f86" stroke-width="2.4" stroke-linecap="round"/>`}
+  else if(mood==='worried'){eyes=bigEyes(0,1)+`<path d="M31 46 L45 41 M69 46 L55 41" ${sw}/>`;
+    mouth=`<path d="M43 67 q3.5 -4 7 0 q3.5 4 7 0" fill="none" ${sw}/>`;fx=SWEAT(78,30)}
+  else if(mood==='win'){eyes=`<g class="eyes"><path d="M32 56 Q39 46 46 56 M54 56 Q61 46 68 56" fill="none" ${sw} stroke-width="3"/></g>`;
+    mouth=`<path d="M41 62 Q50 75 59 62Z" fill="#ff7a8a" ${sw}/>`;
+    fx=`<path d="M12 22 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2Z M86 14 l1.6 4.4 l4.4 1.6 l-4.4 1.6 l-1.6 4.4 l-1.6 -4.4 l-4.4 -1.6 l4.4 -1.6Z" fill="#ffd34d" stroke="${L}" stroke-width="1"/>`}
+  else if(mood==='lose'){eyes=`<g class="eyes"><path d="M33 52 Q39 58 45 52 M55 52 Q61 58 67 52" fill="none" ${sw} stroke-width="2.6"/></g>`;
+    mouth=`<path d="M44 68 Q50 63 56 68" fill="none" ${sw}/>`;
+    fx=`<path d="M37 58 q-3 8 0 12 q3 -4 0 -12Z M63 58 q-3 8 0 12 q3 -4 0 -12Z" fill="#9fd8ff" stroke="${L}" stroke-width="1"/>`}
+  else{
+    if(c.eyes==='grin')eyes=`<g class="eyes"><path d="M34 54 Q40 46 46 54 M54 54 Q60 46 66 54" fill="none" ${sw}/></g>`;
+    else eyes=bigEyes(0,0)+browN;
+    mouth={smile:`<path d="M46 66 Q50 69 54 66" fill="none" ${sw}/>`,open:`<path d="M44 64 Q50 73 56 64Z" fill="#ff7a8a" ${sw}/>`}[c.mouth];
+  }
+  ex+=`<ellipse cx="31" cy="63" rx="5" ry="2.8" fill="#ff9fb3" opacity="${blushO}"/><ellipse cx="69" cy="63" rx="5" ry="2.8" fill="#ff9fb3" opacity="${blushO}"/>`;
+  if(c.band)ex+=`<path d="M21 38 Q50 27 79 38 L79 44 Q50 33 21 44Z" fill="${c.band}" ${sw}/>`;
+  if(c.clip)ex+=`<path d="M64 26 L74 30" stroke="${c.clip}" stroke-width="3" stroke-linecap="round"/><path d="M64 26 L74 30" stroke="${L}" stroke-width="1" stroke-linecap="round" opacity=".4"/>`;
+  if(c.star)ex+=`<path d="M70 24 l1.8 4 l4.3 .5 l-3.2 3 l.9 4.3 l-3.8 -2.2 l-3.8 2.2 l.9 -4.3 l-3.2 -3 l4.3 -.5Z" fill="#ffd34d" stroke="${L}" stroke-width="1"/>`;
+  let body=`<path d="M24 100 Q26 82 50 81 Q74 82 76 100Z" fill="${c.cloth}" ${sw}/>`,deco='';
+  if(c.apron)deco+=`<path d="M38 100 L39 87 Q50 90 61 87 L62 100Z" fill="#ffb3c6" ${sw}/>`;
+  if(c.vest)deco+=`<path d="M44 82 L50 92 L56 82 L58 100 L42 100Z" fill="#f4f1ea" ${sw} stroke-width="1.6"/><path d="M45 85 L50 88 L55 85 L55 89 L50 87.5 L45 89Z" fill="#111" />`;
+  if(c.tie)deco+=`<path d="M47 82 L53 82 L52.5 86 L55 97 L50 100 L45 97 L47.5 86Z" fill="${c.tie}" ${sw} stroke-width="1.4" transform="rotate(8 50 86)"/>`;
+  if(c.anchor)deco+=`<g transform="translate(62 89)" stroke="#e2b65b" stroke-width="1.6" fill="none" stroke-linecap="round"><circle cx="0" cy="-3.5" r="1.4"/><path d="M0 -2 V5 M-3 0 H3 M-4 3 Q0 7 4 3"/></g>`;
+  return`<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${esc(name)}">${_defs(id)}${back}${_shade(back,id+'h')}${body}${_shade(body,id+'b')}${deco}
+    <g class="head"><ellipse cx="18" cy="55" rx="4" ry="6" fill="${SK}" ${sw}/><ellipse cx="82" cy="55" rx="4" ry="6" fill="${SK}" ${sw}/>
+    <ellipse cx="50" cy="50" rx="${r2?30:31}" ry="${r2?30.5:30}" fill="${SK}" ${sw}/><ellipse cx="50" cy="50" rx="${r2?30:31}" ry="${r2?30.5:30}" fill="url(#${id}h)"/>${fringe}${_shade(fringe,id+'h')}${eyes}${mouth}${ex}${fx}
+    ${SWEAT(76,34,'t-sweat')}</g></svg>`;
+}
+
+/* ===== かっこいい：細い顔、鋭い目、強い陰影、縁の光。表情は静か。rank が上がるほど影が深い ===== */
+function coolAvatar(name,c,mood,opts){
+  const id=_uid(),D='#0b0c10',G=c.glow,SK=c.skin,deep=c.rank>=5?1:c.rank>=4?.8:.6;
+  const ln=`stroke="${D}" stroke-width="1.5" stroke-linejoin="round"`;
+  const tell=opts.tell||'';
+  // ハヤトの「強い手」：ジンと同じ静かな顔に戻る
+  const calm=name==='ハヤト'&&tell==='strong';
+  let hairBack='',hair='',ex='',front='',body='',tilt='';
+  const FACE='M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z';
+  const SUIT='M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z';
+  body=`<path d="${SUIT}" fill="${c.cloth}" ${ln}/><path d="${SUIT}" fill="url(#${id}b)" opacity="${.7+deep*.3}"/>`;
+  switch(c.cool){
+  case 'master': // ジン：銀髪、あごひげ、顎の傷、古いジャケット
+    hairBack=`<path d="M27 40 Q24 14 52 12 Q78 14 76 38 L80 60 L72 52 L74 70 L66 58 Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M28 38 Q30 16 54 15 Q74 17 74 34 Q64 24 50 26 L56 22 Q42 22 34 32 L38 26 Q30 30 28 38Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<path d="M37 63 Q39 78 51 84 Q63 78 65 63 Q59 69 51 68 Q43 69 37 63Z" fill="${c.hair}" ${ln}/><path d="M37 63 Q39 78 51 84 Q63 78 65 63 Q59 69 51 68 Q43 69 37 63Z" fill="url(#${id}v)" opacity=".5"/>`;
+    body+=`<path d="M30 74 L42 100 L50 86 L58 100 L70 74 L60 73 L50 84 L40 73Z" fill="#d8cfbf" ${ln}/><path d="M30 74 L40 73 L38 100 L26 100Z M70 74 L60 73 L62 100 L74 100Z" fill="#3a2d22" ${ln}/>`;
+    break;
+  case 'rebel': // ハヤト：黒髪、白シャツ、ジンの配色を反転
+    hairBack=`<path d="M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z" fill="${c.hair}" ${ln}/>`;
+    body=`<path d="${SUIT}" fill="${c.cloth}" ${ln}/><path d="${SUIT}" fill="url(#${id}b)"/>
+      <path d="M36 73 L44 88 L50 80 L56 88 L64 73" fill="none" stroke="${D}" stroke-width="1.4"/>
+      <path d="M44 73 L50 82 L56 73 L56 76 L50 86 L44 76Z" fill="${SK}"/><path d="M44 73 L50 82 L56 73" fill="none" stroke="${G}" stroke-width="1"/>`;
+    if(!calm)tilt='rotate(-4 51 60)';
+    break;
+  case 'crow': // クロウ：黒髪＋銀の髪留め、スリーピース、白手袋、カラスの羽のタイピン
+    hairBack=`<path d="M28 40 Q26 14 52 13 Q78 14 74 40 L74 50 L70 40Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M29 38 Q30 15 53 15 Q74 16 73 36 Q66 22 54 21 Q42 21 34 29 Q31 33 29 38Z" fill="${c.hair}" ${ln}/>
+      <path d="M40 22 Q54 18 68 26" fill="none" stroke="#c9d3e0" stroke-width="1.1" opacity=".7"/>
+      <rect x="64" y="25" width="9" height="2.6" rx="1" fill="#c9d3e0" transform="rotate(28 68 26)" ${ln} stroke-width=".6"/>`;
+    body+=`<path d="M32 74 L50 100 L68 74 L58 73 L50 84 L42 73Z" fill="${c.vest}" ${ln}/>
+      <path d="M42 73 L50 84 L58 73 L55 76 L50 80 L45 76Z" fill="#f2f0ea"/>
+      <path d="M48.5 79 L51.5 79 L52.5 98 L50 100 L47.5 98Z" fill="${c.tie}" stroke="#2a2c38" stroke-width=".6"/>
+      <path d="M45 88 Q50 86 56 88 Q52 89 50 91Z" fill="#c9d3e0"/>
+      <path d="M32 74 L42 73 L36 100 L24 100Z M68 74 L58 73 L64 100 L76 100Z" fill="#0a0b0f" ${ln}/>`;
+    break;
+  case 'lady': // レイカ：黒髪、羽の髪飾り、ディーラー服
+    hairBack=`<path d="M26 42 Q22 12 52 12 Q80 13 76 44 L82 92 L60 80 L40 80 L20 92Z" fill="${c.hair}" ${ln}/>`;
+    hair=`<path d="M29 44 Q28 16 52 15 Q75 16 73 40 Q66 24 50 24 Q40 30 36 50 Q32 46 29 44Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<circle cx="31" cy="60" r="2" fill="${G}"/><path d="M46.5 64.5 Q51 66.5 55 64.5" fill="none" stroke="#b0203a" stroke-width="2.2" stroke-linecap="round"/>`;
+    ex+=`<g transform="translate(70 24) rotate(35)"><path d="M0 0 Q4 -9 1 -18 Q-4 -9 0 0Z" fill="${G}" stroke="${D}" stroke-width=".7"/><path d="M0 0 L.6 -16" stroke="${D}" stroke-width=".6"/></g>`;
+    body+=`<path d="M38 73 L50 90 L62 73 L58 72 L50 82 L42 72Z" fill="#f2f0ea" ${ln}/><path d="M46 76 L50 78 L54 76 L54 80 L50 78.5 L46 80Z" fill="${D}"/>`;
+    break;
+  case 'gent': // セキ：銀髪、片眼鏡、蝶ネクタイ
+    hair=`<path d="M29 40 Q28 16 52 15 Q74 16 73 38 Q70 26 60 24 Q46 22 38 28 Q34 32 29 40Z" fill="${c.hair}" ${ln}/><path d="M60 24 Q66 22 70 30" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.2"/>`;
+    ex+=`<path d="M42 62 Q46 59 50 61 Q54 59 58 62 Q54 64 50 62.5 Q46 64 42 62Z" fill="${c.hair}" ${ln}/>`;
+    ex+=`<circle cx="58" cy="48" r="6.5" fill="${G}" fill-opacity=".18" stroke="#d9dde8" stroke-width="1.6"/><path d="M64.5 49 Q67 62 63 76" fill="none" stroke="#d9dde8" stroke-width="1"/>`;
+    body+=`<path d="M40 73 L50 84 L60 73 L56 72 L50 78 L44 72Z" fill="#f2f0ea" ${ln}/><path d="M43 76 L50 79 L57 76 L57 82 L50 79.5 L43 82Z" fill="${c.bow}" ${ln} stroke-width="1"/>`;
+    break;
+  default: // ロク：なでつけた黒髪、口ひげ
+    hair=`<path d="M28 42 Q24 14 54 14 Q76 16 74 40 Q72 28 62 25 L44 26 Q34 30 28 42Z" fill="${c.hair}" ${ln}/><path d="M44 26 Q36 34 34 46 L30 40Z" fill="${c.hair}"/>`;
+    ex+=`<path d="M41 62 L50 59.5 L59 62 L56 63.5 L50 61.5 L44 63.5Z" fill="${c.hair}"/>`;
+    body+=`<path d="M40 73 L50 86 L60 73 L56 72 L50 79 L44 72Z" fill="#e8e4da" ${ln}/><path d="M48.6 78 L51.4 78 L52.4 97 L50 100 L47.6 97Z" fill="${c.tie}"/>`;
+  }
+  const m=calm?'normal':mood;
+  const glowOp={think:.45,confident:1,win:1,worried:.7,lose:.25}[m]??.9;
+  let brows={normal:'M33 42 L47 43.5 M67 42 L53 43.5',think:'M34 44 L47 45 M66 42.5 L53 45',confident:'M33 41 L47 44.5 M67 41 L53 44.5',
+    worried:'M33 44 L47 41.5 M67 44 L53 41.5',win:'M33 42 L47 43.5 M67 42 L53 43.5',lose:'M34 45 L47 44 M66 45 L53 44'}[m]||'M33 42 L47 43.5 M67 42 L53 43.5';
+  // ハヤトはふだん片眉を上げて見下ろす
+  if(name==='ハヤト'&&!calm&&(m==='normal'||m==='confident'))brows='M33 40 L47 43.5 M67 43 L53 44.5';
+  let eyes;
+  if(m==='lose')eyes=`<g class="eyes"><path d="M36 48.5 L46 48 M54 48 L64 48.5" stroke="${D}" stroke-width="2"/></g>`;
+  else eyes=`<g class="eyes"><path d="M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z" fill="${D}"/>
+    <g class="pupils"><path d="M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z" fill="${G}" opacity="${glowOp}" ${m==='confident'||m==='win'?`filter="url(#${id}g)"`:''}/></g></g>`;
+  eyes+=`<path d="${brows}" stroke="${D}" stroke-width="${c.rank>=5?2.8:2.5}" stroke-linecap="round"/>`;
+  let mouth={confident:'M45 65 Q51 66.5 57 62.5',win:'M45 64.5 Q51 67 57 62',worried:'M47 64.5 Q51 66.5 55 64.5',lose:'M46 66 Q51 64 56 66'}[m]||'M46 64.5 L55 64';
+  if(name==='ハヤト'&&!calm&&m!=='lose'&&m!=='worried')mouth='M45 64.5 Q50 65.5 57 61.5'; // 片方だけ上がる皮肉な口
+  if(c.scar)ex+=`<path d="M54 66 L59 72.5" stroke="#b5463a" stroke-width="2.3" stroke-linecap="round"/><path d="M55 70 L57.5 68.2 M56.6 72 L59.2 70.2" stroke="#9a4a40" stroke-width=".9" opacity=".8"/>`;
+  let fx='';
+  if(m==='worried')fx=SWEAT(72,34);
+  if(m==='win')fx=`<path d="M68 40 l1.4 3.6 l3.6 1.4 l-3.6 1.4 l-1.4 3.6 l-1.4 -3.6 l-3.6 -1.4 l3.6 -1.4Z" fill="${G}"/>`;
+
+  /* キャラ固有のテル（手） */
+  if(c.cool==='master'&&tell!=='strong'){ // ジン：ふだんは顎の傷を人差し指でなぞる。強い手のときだけ触らない
+    front+=`<g class="t-hand"><g transform="translate(57.6 68.8) scale(1.45) translate(-57.6 -68.8)">
+      <path d="M60 100 L82 100 L74 84 L64 86Z" fill="#3a2d22" ${ln}/>
+      <path d="M64 86 Q60 82 61 78 L56.8 71 Q56 69.2 57.6 68.8 Q59.2 68.6 60.4 70.6 L63.6 75.4 Q65 73.2 68 74.4 Q72 76 74 84Z" fill="${SK}" ${ln} stroke-width="1.2"/>
+      <path d="M64 86 Q60 82 61 78 L56.8 71 Q56 69.2 57.6 68.8 Q59.2 68.6 60.4 70.6 L63.6 75.4 Q65 73.2 68 74.4 Q72 76 74 84Z" fill="url(#${id}s)"/>
+      <path d="M63.5 79 Q66 78.5 68 80 M65 82 Q67.5 81.5 69.6 83" fill="none" stroke="${D}" stroke-width=".8" opacity=".6"/></g></g>`;
+  }
+  if(c.gloves){ // クロウ：白い手袋。隠しテルでは指先を直す
+    const hidden=tell==='hidden';
+    front+=`<g class="t-glove"><g transform="translate(20 100) scale(1.4) translate(-20 -100)">
+      <path d="M8 100 L16 86 L30 88 L28 100Z" fill="#0a0b0f" ${ln}/>
+      <path d="M16 86 Q14 80 18 77 L30 74 Q34 74 34 77 L33 80 Q36 81 35 84 L30 88Z" fill="#f4f2ee" ${ln} stroke-width="1.1"/>
+      <path d="M20 79 L31 76.5 M21 82 L32 80" stroke="#b9bcc6" stroke-width=".7"/>
+      ${hidden?`<path d="M36 100 L44 90 L38 84 L30 92Z" fill="#0a0b0f" ${ln}/>
+      <path d="M38 84 Q36 80 33.5 79.5 L33 77 Q32.4 75.4 34 75.2 L36 76 Q40 77 42 82 L44 90Z" fill="#f4f2ee" ${ln} stroke-width="1.1"/>
+      <circle cx="33.6" cy="77" r="2.4" fill="none" stroke="${G}" stroke-width=".9" opacity=".9" filter="url(#${id}g)"/>`:''}</g></g>`;
+  }
+  /* 縁の光（リムライト）：あごの線と髪の外側。rank が高いほど強い */
+  const rim=`<path d="M71 40 L69 54 Q65 67 51 73" fill="none" stroke="${G}" stroke-width="${1+deep*.6}" stroke-opacity="${.6+deep*.35}"/>`;
+  const rimBody=`<path d="M90 83 L96 100" fill="none" stroke="${G}" stroke-width="1.4" stroke-opacity="${.4+deep*.4}"/>`;
+  return`<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${esc(name)}">${_defs(id)}
+    ${hairBack}${_shade(hairBack,id+'h')}
+    ${body}${rimBody}
+    <path d="M44 62 L44 75 L50 80 L56 75 L56 62Z" fill="${SK}" ${ln}/><path d="M44 62 L44 75 L50 80 L56 75 L56 62Z" fill="url(#${id}v)"/>
+    <g class="head"${tilt?` transform="${tilt}"`:''}>
+    <path d="${FACE}" fill="${SK}" ${ln}/>
+    <path d="${FACE}" fill="url(#${id}s)" opacity="${deep}"/>
+    <path d="${FACE}" fill="url(#${id}h)" opacity=".8"/>
+    <path d="M51 49 L49 58 L52 58.5" fill="none" stroke="${D}" stroke-width="1.2" stroke-opacity=".6"/>
+    <path d="${mouth}" fill="none" stroke="${D}" stroke-width="1.6" stroke-linecap="round"/>
+    ${eyes}${hair}${_shade(hair,id+'h')}${ex}${fx}${rim}
+    ${SWEAT(72,32,'t-sweat')}</g>${front}
+  </svg>`;
+}
+</script>
+<script>/* ジンの手（描き直し3回目）：軽く握った手の、人差し指の背（第二関節）で顎の傷をなでる。
+   ローカル座標：拳の左上が (0,0)。幅14、高さ15。左が顔側、右下が手首。 */
+function jinHand(c,id,dark){
+  const SK=c.skin,SH=c.shade;
+  const fist='M1.2 2.4 Q1.4 0 4.2 0 L10.6 .6 Q13.6 1 14 4 L14.2 10.6 Q14 14.4 10.4 15 L5 15 Q2 14.6 1.4 12 Q.2 11 .6 9.2 Q-.2 7.8 .6 6 Q-.2 4.2 1.2 2.4Z';
+  // 指4本（上から人差し指・中指・薬指・小指）の第二〜第三関節の帯
+  const bands=[[0,3.4],[3.4,6.9],[6.9,10.3],[10.3,13.4]];
+  let f='';
+  bands.forEach(([a,b],i)=>{
+    const mid=(a+b)/2;
+    f+=`<path d="M${1.2-(i===0?0:.3)} ${a+.5} Q${.2} ${mid} ${1.2} ${b-.3} L4.4 ${b-.4} Q3.6 ${mid} 4.4 ${a+.6}Z" fill="${SK}"/>`; // 折りたたんだ指先側（顔側）
+    f+=`<path d="M${1.6} ${b} Q${5} ${b+.6} ${9.6} ${b-.2}" fill="none" stroke="${SH}" stroke-width=".45" opacity="${i<3?.55:0}"/>`; // 指の間のすき間
+    f+=`<path d="M4.4 ${a+.6} Q3.6 ${mid} 4.4 ${b-.4}" fill="none" stroke="${SH}" stroke-width=".4" opacity=".45"/>`; // 第二関節のしわ
+    f+=`<ellipse cx="${10.6+i*.25}" cy="${mid}" rx="1.3" ry="1.1" fill="#fff" opacity=".1"/>`; // 指の付け根の関節
+  });
+  const thumb='M13.6 11.4 Q10.6 10.2 7 11.6 Q5.4 12.4 5.6 13.6 Q6.2 14.6 8 14.2 Q11 13.6 14 14Z';
+  const wrist='M6.4 14.4 Q5 19 4.4 24 L17.4 23 Q15.6 17 14.4 11.6Z';
+  return `<g class="t-hand"><g transform="translate(53.6 67.4) rotate(-18) scale(1.02)">
+    <path d="${wrist}" fill="${SK}"/><path d="${wrist}" fill="url(#${id}hs)"/>
+    <path d="M2.6 23 L19.2 21.6 L23 40 L-1 40Z" fill="#3a2d22"/><path d="M3 22.4 L19 21 L19.3 23 L2.8 24.4Z" fill="${c.shirt}"/>
+    <path d="${fist}" fill="${SK}"/>
+    ${f}
+    <path d="${fist}" fill="url(#${id}hf)"/>
+    <path d="${thumb}" fill="${SK}"/><path d="${thumb}" fill="url(#${id}hf)" opacity=".6"/>
+    <path d="M6.2 13 Q6.6 12.2 7.6 12.2 L7.6 13.6 Q6.6 13.8 6.2 13Z" fill="#f2d6c4" opacity=".8"/>
+    <path d="M1.4 2.2 Q1.6 .4 4.2 .3" fill="none" stroke="#fff" stroke-width=".5" opacity=".35"/>
+    ${dark?`<path d="${fist}" fill="#0b0708" opacity=".55"/><path d="${wrist}" fill="#0b0708" opacity=".6"/><path d="${thumb}" fill="#0b0708" opacity=".5"/>
+      <path d="M1.2 2.4 Q1.4 0 4.2 0 L10.6 .6 Q13.6 1 14 4" fill="none" stroke="#e2b65b" stroke-width=".6" opacity=".8"/>`:''}
+  </g></g>`;
+}
+</script>
+<script>/* 案2：顔のつくりを大人の比率にした描き方（見本用。ジン・レイカ・ミナ・ゲン） */
+const REAL={
+  'ジン':{rank:5,sex:'m',age:2,skin:'#d9b294',shade:'#7a4a3a',hair:'#d9d5cc',hairD:'#8c877e',brow:'#b8b2a6',iris:'#4a3a2a',lip:'#a8705e',
+    cloth:'#2b2119',clothD:'#140f0b',shirt:'#d8cfbf',beard:1,scar:1,face:'m'},
+  'レイカ':{rank:4,sex:'f',age:0,skin:'#ecd0bd',shade:'#8a5060',hair:'#17121c',hairD:'#050407',brow:'#231a24',iris:'#3a2418',lip:'#a3203a',
+    cloth:'#5a1830',clothD:'#2a0a16',shirt:'#f2efe8',face:'f',feather:'#e2b65b'},
+  'ミナ':{rank:2,sex:'f',age:0,skin:'#f2d8c6',shade:'#946070',hair:'#5a4a86',hairD:'#2c2148',brow:'#4a3c6a',iris:'#6a54a8',lip:'#c46a7a',
+    cloth:'#2c2848',clothD:'#15132a',face:'r',cute:1},
+  'ゲン':{rank:1,sex:'m',age:1,skin:'#e3b08c',shade:'#8a4a32',hair:'#3a2a1c',hairD:'#1c140c',brow:'#3a2a1c',iris:'#3a2a1c',lip:'#b0705a',
+    cloth:'#3f6fae',clothD:'#1f3a62',face:'r',cute:1,grin:1,band:'#b8434f'},
+  /* 描き直し（2026-10-09）ミナ：20代半ばの歌手、ややかわいい */
+  'ミナA':{rank:2,sex:'f',age:0,skin:'#f5ddcc',shade:'#9a6476',hair:'#7a62c8',hairD:'#3e2f72',brow:'#5a4890',iris:'#7458c0',lip:'#d0707e',
+    cloth:'#3e3878',clothD:'#211c4c',face:'o',cute:1,v:'A',ew:6.4,eh:4.9,ir:3.9,tilt:4,noWing:1,blush:.34,cy:47,cx:58.6},
+  'ミナB':{rank:2,sex:'f',age:0,skin:'#f3dac8',shade:'#94607a',hair:'#8d6be0',hairD:'#45338a',brow:'#5a4890',iris:'#6e52b8',lip:'#c8667a',
+    cloth:'#463c78',clothD:'#241e48',face:'s',cute:1,v:'B',ew:5.2,eh:3.3,ir:2.7,tilt:2,blush:.2},
+  /* ゲン：50代の元漁師、赤ら顔、がっはっは */
+  'ゲンA':{rank:1,sex:'m',age:1,skin:'#d99a72',shade:'#7a3a26',hair:'#4a3020',hairD:'#241810',brow:'#3a2618',iris:'#2e2016',lip:'#a85a48',
+    cloth:'#4f8fe0',clothD:'#2a5590',face:'O',cute:1,grin:1,laugh:1,band:'#e8607e',neck:10,ruddy:.6,grey:1,v:'A',ew:6,eh:4.6,ir:3.6,blush:.7,cx:59.4,cy:47,chins:1},
+  'ゲンB':{rank:1,sex:'m',age:1,skin:'#d6976e',shade:'#7a3a26',hair:'#4a3020',hairD:'#241810',brow:'#3a2618',iris:'#2e2016',lip:'#a85a48',
+    cloth:'#4f8fe0',clothD:'#2a5590',face:'w',cute:1,laugh:1,band:'#e8607e',neck:9.4,ruddy:.45,mustache:1,stubble:1,grey:1,v:'B',ew:4.4,eh:2.6,ir:2.3,blush:.42},
+  /* おちゃめ（ウインク＋いたずらっぽい口） */
+  'ミナC':{rank:2,sex:'f',age:0,skin:'#f6dfce',shade:'#9a6476',hair:'#8a6ee0',hairD:'#45338a',brow:'#5a4890',iris:'#7458c0',lip:'#d6707e',
+    cloth:'#3e3878',clothD:'#211c4c',face:'yf',cute:1,young:1,v:'A',ew:6.2,eh:4.7,ir:3.7,tilt:3,noWing:1,blush:.36,cy:46.6,cx:58.4,wink:1,tongue:1},
+  'ゲンC':{rank:1,sex:'m',age:1,skin:'#dc9c72',shade:'#7a3a26',hair:'#4a3020',hairD:'#241810',brow:'#3a2618',iris:'#2e2016',lip:'#a85a48',
+    cloth:'#4f8fe0',clothD:'#2a5590',face:'O',cute:1,laugh:1,band:'#ff6b8b',neck:10,ruddy:.6,grey:1,v:'A',ew:6,eh:4.6,ir:3.6,blush:.7,cx:59.4,cy:47,chins:1,wink:1,browUp:1},
+  /* 老若男女の顔ぶれ */
+  'ソウ':{rank:2,sex:'m',age:0,skin:'#f0d4c0',shade:'#8a5a5a',hair:'#5b4a8a',hairD:'#2e2448',brow:'#3e3260',iris:'#4a3a6a',lip:'#c07a72',
+    cloth:'#7a2234',clothD:'#3e0f1a',shirt:'#f2efe8',face:'ym',cute:1,young:1,ew:5.4,eh:3.9,ir:3.1,cy:46.6,neck:5.4,blush:.25,nervous:1},
+  'ハル':{rank:1,sex:'f',age:0,skin:'#f8e2d2',shade:'#a0647a',hair:'#ff9fbe',hairD:'#c8608a',brow:'#c86a8a',iris:'#d94f78',lip:'#e07a8a',
+    cloth:'#ffd166',clothD:'#c8962e',face:'yf',cute:1,young:1,ew:6.4,eh:5,ir:3.9,cy:47,cx:58.6,neck:5,noWing:1,blush:.4},
+  'ミサキ':{rank:2,sex:'f',age:0,skin:'#f3d8c4',shade:'#946068',hair:'#c0763a',hairD:'#7a4420',brow:'#8a5430',iris:'#a35a24',lip:'#cc6a6e',
+    cloth:'#7fd1ff',clothD:'#3e8ab8',face:'yf',cute:1,young:1,ew:5.6,eh:3.9,ir:3.1,cy:46.4,neck:5.2,blush:.24,tilt:-2},
+  'ケンジ':{rank:2,sex:'m',age:0,skin:'#ecc9b0',shade:'#7a4a46',hair:'#2b2d4a',hairD:'#15162a',brow:'#22243c',iris:'#2b2d4a',lip:'#b0726a',
+    cloth:'#ff6b8b',clothD:'#b83a5a',tie:'#2b2d4a',face:'ym',cute:1,young:1,ew:5,eh:3.4,ir:2.8,cy:46.2,neck:6,blush:.15},
+  '店主':{rank:1,sex:'f',age:2,skin:'#ecc8ae',shade:'#8a5048',hair:'#7a4330',hairD:'#4a2a1e',brow:'#6a3c2a',iris:'#7a4330',lip:'#c06a62',
+    cloth:'#ffffff',clothD:'#c8c4bc',face:'s',cute:1,ew:5.2,eh:3.4,ir:2.8,neck:6,blush:.3,grey:1,warm:1},
+};
+const RFACE={
+  yf:'M34.6 42 Q34.6 19.4 50 19 Q65.4 19.4 65.4 42 Q65.4 53 62 60.6 Q57 68.8 50 70 Q43 68.8 38 60.6 Q34.6 53 34.6 42Z',
+  ym:'M34.2 41 Q34.2 19 50 18.6 Q65.8 19 65.8 41 Q65.8 52 63 59.6 Q58.6 68.4 50 70.4 Q41.4 68.4 37 59.6 Q34.2 52 34.2 41Z',
+  m:'M34 40 Q34 18 50 17.5 Q66 18 66 40 Q66.5 50 64 58 Q61 67.5 54 72.6 Q50 74.8 46 72.6 Q39 67.5 36 58 Q33.5 50 34 40Z',
+  f:'M34.6 40 Q34.6 18.5 50 18 Q65.4 18.5 65.4 40 Q65.4 51 62.4 59 Q57.6 68.6 50 73 Q42.4 68.6 37.6 59 Q34.6 51 34.6 40Z',
+  s:'M33.8 41 Q33.8 18.6 50 18.2 Q66.2 18.6 66.2 41 Q66.2 53 62.6 61.4 Q57.8 70.4 50 72 Q42.2 70.4 37.4 61.4 Q33.8 53 33.8 41Z',
+  w:'M31 42 Q31 18.4 50 17.8 Q69 18.4 69 42 Q69.8 54 67 62 Q62 71.4 50 72.4 Q38 71.4 33 62 Q30.2 54 31 42Z',
+  O:'M28 46 Q28 21 50 20.4 Q72 21 72 46 Q72.6 59 67 66 Q60 72.6 50 72.8 Q40 72.6 33 66 Q27.4 59 28 46Z',
+  o:'M31.4 44 Q31.4 20 50 19.4 Q68.6 20 68.6 44 Q69 57.6 63.6 65.6 Q57.8 72.4 50 72.8 Q42.2 72.4 36.4 65.6 Q31 57.6 31.4 44Z',
+  r:'M33.2 42 Q33.2 19 50 18.5 Q66.8 19 66.8 42 Q66.8 55 62.4 63.4 Q57.4 71.6 50 72.6 Q42.6 71.6 37.6 63.4 Q33.2 55 33.2 42Z',
+};
+function realAvatar(name,mood,opts){
+  const c=REAL[name];mood=mood||'normal';opts=opts||{};
+  const id='r'+Math.random().toString(36).slice(2,8),F=RFACE[c.face],D='#120d10',SH=c.shade;
+  const m=mood, cute=!!c.cute;
+  /* ---- 目 ---- 右目を描いて左は鏡写し */
+  const ew=c.ew??(cute?5.2:4.4), eh=c.eh??(cute?3.4:(c.sex==='f'?2.6:2.2)), ir=c.ir??(cute?2.7:2.05), cx=c.cx??58, cy=c.cy??45.4;
+  const open={think:.85,worried:1.05,lose:.15,win:cute?.15:.8,confident:.8}[m]??1;
+  const top=`M${cx-ew} ${cy+.2} Q${cx-.6} ${cy-eh*open*1.25} ${cx+ew} ${cy-.2}`;
+  const bot=`Q${cx+.4} ${cy+eh*.8} ${cx-ew} ${cy+.2}`;
+  let eye;
+  if(open<.3||(c.grin&&m!=='worried'&&m!=='think')){
+    // 笑って細くなった目
+    eye=`<path d="M${cx-ew} ${cy+.6} Q${cx} ${cy-2.4} ${cx+ew} ${cy+.6}" fill="none" stroke="${D}" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M${cx+ew+.4} ${cy+.4} l2 -.8 M${cx+ew+.4} ${cy+1.4} l2 .4" stroke="${SH}" stroke-width=".45" opacity=".6"/>`;
+  }else{
+    const gx=opts.gaze||0;
+    eye=`<clipPath id="${id}e"><path d="${top} ${bot}Z"/></clipPath>
+      <path d="${top} ${bot}Z" fill="#ece5dc"/>
+      <g clip-path="url(#${id}e)"><g class="pupils">
+        <circle cx="${cx+.2+gx}" cy="${cy-.1}" r="${ir}" fill="${c.iris}"/>
+        <circle cx="${cx+.2+gx}" cy="${cy-.1}" r="${ir}" fill="url(#${id}ir)"/>
+        <circle cx="${cx+.2+gx}" cy="${cy-.1}" r="${ir*.45}" fill="${D}"/>
+        <circle cx="${cx+.9+gx}" cy="${cy-.9}" r="${cute?.9:.55}" fill="#fff" opacity=".95"/>
+        ${cute?`<circle cx="${cx-.6+gx}" cy="${cy+.9}" r=".45" fill="#fff" opacity=".7"/>`:''}
+      </g><path d="${top}" fill="none" stroke="${D}" stroke-opacity=".35" stroke-width="2.4"/></g>
+      <path d="${top}" fill="none" stroke="${D}" stroke-width="${c.sex==='f'?1.3:1}" stroke-linecap="round"/>
+      ${c.sex==='f'&&!c.noWing?`<path d="M${cx+ew-.4} ${cy-.4} l2.2 -1.4" stroke="${D}" stroke-width="1" stroke-linecap="round"/>`:''}
+      <path d="M${cx-ew+.6} ${cy+.9} ${bot.replace('Q','Q')}" fill="none" stroke="${SH}" stroke-width=".45" opacity=".5"/>
+      <path d="M${cx-ew+.6} ${cy-eh*open*.9-.9} Q${cx} ${cy-eh*open*1.6-1.4} ${cx+ew-.2} ${cy-eh*open*.8-.9}" fill="none" stroke="${SH}" stroke-width=".55" opacity="${eh>4||c.young?0:.55}"/>`;
+  }
+  /* ---- 眉 ---- */
+  let bd0={normal:[0,0],think:[.8,-.8],confident:[.9,1],worried:[-1,-1.6],win:[-.4,0],lose:[.6,-1.2]}[m]||[0,0];
+  const bd=(c.nervous&&m==='normal')?[-.8,-1.2]:bd0;
+  const bth=c.sex==='f'?(cute?1:.8):(c.rank>=5?1.6:1.3), bo=Math.max(0,(eh-2.4)*1.3);
+  const bw=Math.max(5,ew);const brow=`<path transform="translate(0 ${-bo})" d="M${cx-bw+.4} ${40.6+bd[0]} Q${cx} ${38.4-bd[1]*.4} ${cx+bw+.4} ${40.2+bd[1]} L${cx+bw+.2} ${40.2+bd[1]+bth*.5} Q${cx} ${38.8+bth-bd[1]*.4} ${cx-bw+.4} ${40.6+bd[0]+bth}Z" fill="${c.brow}"/>`;
+  const side=`<g transform="rotate(${c.tilt||0} ${cx} ${cy})">${eye}</g>${brow}`;
+  const winkSide=`<path d="M${cx-ew} ${cy+.4} Q${cx} ${cy-2.8} ${cx+ew} ${cy+.4}" fill="none" stroke="${D}" stroke-width="1.3" stroke-linecap="round"/><path d="M${cx+ew} ${cy+.4} l1.6 -1.2 M${cx+ew-.6} ${cy+1.2} l1.8 .2" stroke="${D}" stroke-width=".7" stroke-linecap="round"/><g transform="translate(0 1.2)">${brow}</g>`;
+  const doWink=c.wink&&m==='normal';
+  const eyes=`<g class="eyes">${c.browUp&&m==='normal'?side.replace(brow,`<g transform="translate(0 -1.6) rotate(-4 ${cx} 40)">${brow}</g>`):side}<g transform="translate(100 0) scale(-1 1)">${doWink?winkSide:side.replace(/id="${id}e"/,`id="${id}e2"`).replace(/url\(#${id}e\)/,`url(#${id}e2)`)}</g></g>`;
+  /* ---- 口 ---- */
+  const my=c.young?62.4:(c.sex==='f'?64.2:64.4);
+  const mouthLine={normal:`M45.4 ${my} Q50 ${my+.6} 54.6 ${my}`,think:`M46.4 ${my+.3} Q50 ${my+.2} 53.8 ${my-.3}`,confident:`M45.4 ${my+.2} Q50 ${my+.8} 55 ${my-1}`,
+    worried:`M46 ${my+.6} Q50 ${my-.2} 54 ${my+.6}`,win:`M44.6 ${my-.6} Q50 ${my+1.8} 55.4 ${my-.6}`,lose:`M46 ${my+.9} Q50 ${my-.1} 54 ${my+.9}`}[m];
+  let mouth=`<path d="M45.6 ${my} Q47.6 ${my-1.5} 50 ${my-.8} Q52.4 ${my-1.5} 54.4 ${my} Q50 ${my+.3} 45.6 ${my}Z" fill="${c.lip}" opacity="${c.sex==='f'?1:.55}"/>
+    <path d="M46.2 ${my+.3} Q50 ${my+3.2} 53.8 ${my+.3} Q50 ${my+1} 46.2 ${my+.3}Z" fill="${c.lip}" opacity="${c.sex==='f'?.85:.4}"/>
+    ${c.sex==='f'?`<ellipse cx="50.8" cy="${my+1.5}" rx="1.4" ry=".45" fill="#fff" opacity=".35"/>`:''}
+    <path d="${mouthLine}" fill="none" stroke="${D}" stroke-width=".8" stroke-linecap="round" opacity=".85"/>`;
+  if(c.grin&&(m==='normal'||m==='win'||m==='confident'))mouth=`<path d="M44.4 ${my-1} Q50 ${my+5.4} 55.6 ${my-1} Q50 ${my+.4} 44.4 ${my-1}Z" fill="#5a2620"/><path d="M45.4 ${my-.6} Q50 ${my+.5} 54.6 ${my-.6} L54 ${my+.8} Q50 ${my+1.4} 46 ${my+.8}Z" fill="#f2ede4"/>`;
+  if(c.laugh&&(m==='normal'||m==='win'||m==='confident'))mouth=`<path d="M42.6 ${my-1.6} Q50 ${my+8.4} 57.4 ${my-1.6} Q50 ${my-.2} 42.6 ${my-1.6}Z" fill="#4a1c18"/>
+    <path d="M43.8 ${my-1.2} Q50 ${my+.2} 56.2 ${my-1.2} L55.4 ${my+.9} Q50 ${my+1.8} 44.6 ${my+.9}Z" fill="#f2ede4"/>
+    <path d="M45.6 ${my+4} Q50 ${my+2.2} 54.4 ${my+4} Q50 ${my+6.6} 45.6 ${my+4}Z" fill="#c25a5a"/>
+    <path d="M42.6 ${my-1.6} Q50 ${my-.2} 57.4 ${my-1.6}" fill="none" stroke="${D}" stroke-width=".7" opacity=".7"/>`;
+  if(c.tongue&&m==='normal')mouth=`<path d="M46 ${my-.4} Q50.4 ${my+3.2} 54.6 ${my-.8} Q50.4 ${my+.8} 46 ${my-.4}Z" fill="#6a2a2a"/>
+    <path d="M50.6 ${my+.9} Q51.8 ${my+3.6} 53.6 ${my+2.6} Q54.2 ${my+.8} 53.4 ${my+.2}Z" fill="#e0707a"/>
+    <path d="M46 ${my-.4} Q50.4 ${my+1.2} 54.6 ${my-.8}" fill="none" stroke="${D}" stroke-width=".7" opacity=".7"/>`;
+  /* ---- 鼻 ---- */
+  const nose=`<path d="M51.2 44.5 Q52.4 51 53.6 55.6 L51.6 56.4 Q51 50.6 50.2 44.6Z" fill="${SH}" opacity=".22"/>
+    <path d="M47 57.6 Q50 ${cute?59:59.6} 53.2 57.6" fill="none" stroke="${SH}" stroke-width=".7" opacity=".6"/>
+    <ellipse cx="48.2" cy="57.7" rx=".9" ry=".45" fill="${D}" opacity=".45"/><ellipse cx="51.9" cy="57.7" rx=".9" ry=".45" fill="${D}" opacity=".45"/>
+    <circle cx="49.6" cy="55.8" r="1" fill="#fff" opacity=".28"/>
+    ${c.ruddy?`<ellipse cx="50" cy="56.4" rx="3" ry="2.2" fill="#d8404a" opacity="${c.ruddy}" filter="url(#${id}bl)"/>`:''}`;
+  /* ---- しわ（年齢） ---- */
+  let lines='';
+  if(c.age>=1)lines+=`<path d="M45.8 58.6 Q43.4 61.6 44 66 M54.2 58.6 Q56.6 61.6 56 66" fill="none" stroke="${SH}" stroke-width=".6" opacity="${c.age>=2?.55:.35}"/>`;
+  if(c.age>=2)lines+=`<path d="M41 28.6 Q50 27.4 59 28.6 M42.4 31.4 Q50 30.4 57.6 31.4" fill="none" stroke="${SH}" stroke-width=".5" opacity=".4"/>
+    <path d="M38.4 48.4 Q42 50 45.6 48.4 M54.4 48.4 Q58 50 61.6 48.4" fill="none" stroke="${SH}" stroke-width=".5" opacity=".45"/>`;
+  /* ---- 髪・服・飾り ---- */
+  let hairBack='',hair='',body='',ex='',front='';
+  const SUIT='M4 100 L10 84 Q26 74 50 73 Q74 74 90 84 L96 100Z';
+  if(name==='ジン'){
+    hairBack=`<path d="M33 44 Q30.5 16 50 14 Q69.5 16 67 44 L67.4 54 Q65.6 48 65.8 41 Q65 23 50 22 Q35 23 34.2 41 Q34.4 48 32.6 54Z" fill="${c.hairD}"/>`;
+    hair=`<path d="M33.8 38 Q32.6 15 50 13.2 Q67.4 15 66.2 38 Q64 25 57 23 Q50 21.2 43 23 Q36 25 33.8 38Z" fill="${c.hair}"/>`;
+    ex+=`<path d="M36.8 57 Q37.8 68 45.6 73.6 Q50 76 54.4 73.6 Q62.2 68 63.2 57 Q61.2 62.4 57.4 64.2 Q54 66.6 50 66.4 Q46 66.6 42.6 64.2 Q38.8 62.4 36.8 57Z" fill="${c.hair}" opacity=".92"/>
+      <path d="M44.4 62.6 Q50 60.6 55.6 62.6 Q53 63.6 50 63 Q47 63.6 44.4 62.6Z" fill="${c.hair}"/>
+      <path d="M36.8 57 Q37.8 68 45.6 73.6 Q50 76 54.4 73.6 Q62.2 68 63.2 57 Q61.2 62.4 57.4 64.2 Q54 66.6 50 66.4 Q46 66.6 42.6 64.2 Q38.8 62.4 36.8 57Z" fill="url(#${id}sd)" opacity=".7"/>`;
+    body=`<path d="${SUIT}" fill="${c.cloth}"/><path d="M30 75 L42 100 L50 87 L58 100 L70 75 L60 74 L50 85 L40 74Z" fill="${c.shirt}"/>
+      <path d="M30 75 L40 74 L38 100 L26 100Z M70 75 L60 74 L62 100 L74 100Z" fill="#3a2d22"/>`;
+  }else if(name==='レイカ'){
+    hairBack=`<path d="M32 42 Q29.6 13 50 12.4 Q70.4 13 68 42 L71.6 92 Q63 97 58.6 86 L41.4 86 Q37 97 28.4 92Z" fill="${c.hairD}"/>`;
+    hair=`<path d="M33.6 46 Q31.6 15 50 14.4 Q68.4 15 66.6 42 Q63 26 54 23.6 Q47 30 41.4 37 Q37.6 43 33.6 46Z" fill="${c.hair}"/>
+      <path d="M66.6 42 Q67.6 60 66 72 L63.4 70 Q65 58 64.2 44Z" fill="${c.hair}"/>`;
+    ex+=`<circle cx="33.6" cy="56.4" r="1.3" fill="${c.feather}"/><circle cx="33.2" cy="56" r=".5" fill="#fff" opacity=".6"/>
+      <g transform="translate(64 23) rotate(38)"><path d="M0 0 Q3.6 -8 .8 -16 Q-3.4 -8 0 0Z" fill="${c.feather}"/><path d="M0 0 L.6 -14.4" stroke="${D}" stroke-width=".4"/></g>`;
+    body=`<path d="${SUIT}" fill="${c.cloth}"/><path d="M38 74 L50 91 L62 74 L58 73 L50 83 L42 73Z" fill="${c.shirt}"/><path d="M46 77 L50 79 L54 77 L54 81 L50 79.5 L46 81Z" fill="${D}"/>`;
+  }else if(name==='ミナ'){
+    hairBack=`<path d="M32.4 44 Q29.6 13.6 50 13 Q70.4 13.6 67.6 44 Q70 56 68.4 66 Q71 74 66 80 Q60 82 58 76 L42 76 Q40 82 34 80 Q29 74 31.6 66 Q30 56 32.4 44Z" fill="${c.hairD}"/>`;
+    hair=`<path d="M33.4 44 Q31.4 15.4 50 14.6 Q68.6 15.4 66.6 44 Q64.6 34 60 30 Q58 34 54 34.6 Q55.6 30 54.4 27 Q49 33 41 34.4 Q43.4 31 44 28 Q37 33 33.4 44Z" fill="${c.hair}"/>`;
+    ex+=`<path d="M60.6 22.2 l.9 2 l2.1 .3 l-1.6 1.4 l.4 2.1 l-1.8 -1.1 l-1.8 1.1 l.4 -2.1 l-1.6 -1.4 l2.1 -.3Z" fill="#cfd4e0"/>`;
+    body=`<path d="${SUIT}" fill="${c.cloth}"/><path d="M40 74 Q50 80 60 74 L60 77 Q50 83 40 77Z" fill="${c.clothD}"/>`;
+  }else if(name==='ゲン'){
+    hairBack='';
+    hair=`<path d="M33.8 40 Q33.6 18 50 17 Q66.4 18 66.2 40 Q63 30 50 29 Q37 30 33.8 40Z" fill="${c.hair}"/>
+      <path d="M33.8 40 Q33.6 18 50 17 Q66.4 18 66.2 40 Q63 30 50 29 Q37 30 33.8 40Z" fill="url(#${id}buzz)" opacity=".22"/>`;
+    ex+=`<path d="M33.2 35.4 Q50 26.4 66.8 35.4 L66.8 40.4 Q50 31.4 33.2 40.4Z" fill="${c.band}"/><path d="M33.2 37.6 Q50 28.8 66.8 37.6" fill="none" stroke="#000" stroke-opacity=".18" stroke-width=".5"/>
+      <path d="M33.6 37 Q28.6 36 27.4 40.6 Q31 39.6 33.4 40Z" fill="${c.band}"/>`;
+    body=`<path d="M10 100 Q14 82 50 80 Q86 82 90 100Z" fill="${c.cloth}"/><path d="M42 80.6 L50 90 L58 80.6" fill="none" stroke="${c.clothD}" stroke-width="1.2"/>
+      <g transform="translate(64 91)" stroke="#d2a94e" stroke-width="1.2" fill="none" stroke-linecap="round"><circle cx="0" cy="-3" r="1.1"/><path d="M0 -1.8 V4 M-2.4 0 H2.4 M-3.2 2.4 Q0 5.6 3.2 2.4"/></g>`;
+  }
+  if(name.startsWith('ミナ')&&c.v){
+    if(c.v==='A'){ // ゆるいウェーブのロング、ふんわり前髪、ステージの濃紺ドレス（ハイネック＋小さなきらめき）
+      hairBack=`<path d="M32 44 Q29 13.4 50 12.8 Q71 13.4 68 44 Q72 52 69.4 60 Q73.6 68 70 76 Q73 84 66 90 Q60 92 58 84 L42 84 Q40 92 34 90 Q27 84 30 76 Q26.4 68 30.6 60 Q28 52 32 44Z" fill="${c.hairD}"/>`;
+      hair=`<path d="M33 46 Q31 15 50 14.4 Q69 15 67 46 Q65.6 36 62 31 Q60 35.4 56.4 34.6 Q57.2 31.4 55.6 29.4 Q52 34 47 34.2 Q47.6 31.6 46.6 29.6 Q42 34.6 38.6 34 Q39.6 31 39.4 29.8 Q34.6 36 33 46Z" fill="${c.hair}"/>
+        <path d="M33 46 Q32 56 34.6 64 Q31.6 58 31.4 50Z M67 46 Q68 56 65.4 64 Q68.4 58 68.6 50Z" fill="${c.hair}"/>`;
+      ex+=`<circle cx="32.4" cy="57" r="1.1" fill="#d9dcf0"/><circle cx="67.6" cy="57" r="1.1" fill="#d9dcf0"/>`;
+      body=`<path d="M8 100 L12 86 Q28 76 50 75 Q72 76 88 86 L92 100Z" fill="${c.cloth}"/><path d="M42 75.6 Q50 79 58 75.6 L58 79 Q50 82.6 42 79Z" fill="${c.clothD}"/>
+        <g fill="#cfd4ff" opacity=".7"><circle cx="30" cy="90" r=".5"/><circle cx="38" cy="94" r=".4"/><circle cx="62" cy="91" r=".5"/><circle cx="70" cy="95" r=".4"/><circle cx="50" cy="96" r=".45"/><circle cx="22" cy="96" r=".35"/><circle cx="78" cy="92" r=".35"/></g>`;
+    }else{ // 長いストレートを片側に流す、斜め前髪、小さな星の髪留め
+      hairBack=`<path d="M32.4 44 Q29.6 13 50 12.6 Q70.4 13 67.6 44 L70 88 Q60 94 56 84 L44 84 Q40 92 31 86 L32.4 60Z" fill="${c.hairD}"/>`;
+      hair=`<path d="M33.4 48 Q31.4 15 50 14.4 Q68.6 15 66.6 42 Q64 30 56 26 Q50 33 43 37 Q37 41 33.4 48Z" fill="${c.hair}"/>
+        <path d="M33.4 48 Q30.6 64 33 80 L36.6 78 Q34.6 64 36 50Z" fill="${c.hair}"/>`;
+      ex+=`<path d="M60.6 22.2 l.9 2 l2.1 .3 l-1.6 1.4 l.4 2.1 l-1.8 -1.1 l-1.8 1.1 l.4 -2.1 l-1.6 -1.4 l2.1 -.3Z" fill="#e2c26b"/>`;
+      body=`<path d="M8 100 L12 86 Q28 76 50 75 Q72 76 88 86 L92 100Z" fill="${c.cloth}"/><path d="M40 75.4 L50 84 L60 75.4" fill="none" stroke="#8d6be0" stroke-width=".9" opacity=".7"/>`;
+    }
+  }
+  if(name.startsWith('ゲン')&&c.v){
+    // 短く刈った髪（白髪まじり）、ピンクの鉢巻き（横で結ぶ）、太い首、がっしりした肩、青いシャツ
+    hair=`<path d="M31.6 40 Q31.4 17.6 50 16.6 Q68.6 17.6 68.4 40 Q65 29.4 50 28.4 Q35 29.4 31.6 40Z" fill="${c.hair}"/>
+      <path d="M31.6 40 Q31.4 17.6 50 16.6 Q68.6 17.6 68.4 40 Q65 29.4 50 28.4 Q35 29.4 31.6 40Z" fill="url(#${id}grey)" opacity=".1"/>`;
+    ex+=`<path d="M31 35.6 Q50 25.6 69 35.6 L69 41.4 Q50 31.4 31 41.4Z" fill="${c.band}"/><path d="M31 38.2 Q50 28.4 69 38.2" fill="none" stroke="#000" stroke-opacity=".18" stroke-width=".5"/>
+      <path d="M68.6 36 Q73 33 76.4 35 Q74 37.6 69 39.6Z M69 38.4 Q74 40 75.6 44.6 Q71.6 43.6 68.8 41Z" fill="${c.band}"/><circle cx="69.6" cy="37.8" r="1.6" fill="${c.band}"/>`;
+    if(c.face==='O'){hair+=`<path d="${hair.match(/d="([^"]*)"/)[1]}" fill="url(#${id}hr)"/>`;const W=t=>`<g transform="translate(50 0) scale(1.16 1) translate(-50 2.6)">${t}</g>`;hair=W(hair);ex=W(ex);}
+    if(c.chins)ex+=`<path d="M41 75.6 Q50 79 59 75.6" fill="none" stroke="${SH}" stroke-width=".6" opacity=".5"/>`;
+    if(c.stubble)ex+=`<path d="M36 58 Q38 70 50 73.6 Q62 70 64 58 Q60 66 50 67 Q40 66 36 58Z" fill="url(#${id}stub)" opacity=".5"/>`;
+    if(c.mustache)ex+=`<path d="M43.6 61.8 Q50 59.6 56.4 61.8 Q54 63.2 50 62.4 Q46 63.2 43.6 61.8Z" fill="${c.hairD}" opacity=".85"/>`;
+    body=`<path d="M2 100 Q6 80 50 78 Q94 80 98 100Z" fill="${c.cloth}"/><path d="M40 79 L50 90 L60 79" fill="none" stroke="${c.clothD}" stroke-width="1.4"/>
+      <path d="M40 79 L50 90 L60 79 L58 78.4 L50 86.6 L42 78.4Z" fill="${c.skin}"/>
+      <g transform="translate(66 91)" stroke="#d2a94e" stroke-width="1.2" fill="none" stroke-linecap="round"><circle cx="0" cy="-3" r="1.1"/><path d="M0 -1.8 V4 M-2.4 0 H2.4 M-3.2 2.4 Q0 5.6 3.2 2.4"/></g>`;
+  }
+  if(name==='ソウ'){ // 紫がかった短髪、少し跳ねた前髪、赤いディーラーベスト＋白シャツ＋蝶ネクタイ
+    hair=`<path d="M33.4 42 Q32 16.6 50 15.8 Q68 16.6 66.6 42 Q65 32 61 28.6 L60 33 Q57 29 55.4 27.4 L54 32.4 Q50.6 28.2 48 27.6 L46.4 32.8 Q43.6 29 41 29 L40.4 34 Q36 35.6 33.4 42Z" fill="${c.hair}"/>`;
+    body=`<path d="M10 100 L14 85 Q28 77 50 76 Q72 77 86 85 L90 100Z" fill="${c.shirt}"/><path d="M14 85 Q28 77 40 76.6 L46 100 L10 100Z M86 85 Q72 77 60 76.6 L54 100 L90 100Z" fill="${c.cloth}"/>
+      <path d="M44 78.6 L50 81 L56 78.6 L56 83 L50 81.4 L44 83Z" fill="#111"/>`;
+  }
+  if(name==='ハル'){ // ピンクのボブ、ぱっつん前髪、白い髪留め、黄色の服
+    hairBack=`<path d="M32.6 44 Q30.4 15 50 14.4 Q69.6 15 67.4 44 L68.6 64 Q66 68 60.6 66 L39.4 66 Q34 68 31.4 64Z" fill="${c.hairD}"/>`;
+    hair=`<path d="M33.6 46 Q32 16.4 50 15.6 Q68 16.4 66.4 46 Q66 36 64.6 33.6 L35.4 33.6 Q34 36 33.6 46Z" fill="${c.hair}"/>
+      <path d="M33.6 46 Q32.4 56 33.4 64 L37 64 Q35.6 54 36.4 44Z M66.4 46 Q67.6 56 66.6 64 L63 64 Q64.4 54 63.6 44Z" fill="${c.hair}"/>`;
+    ex+=`<path d="M57 25 L65 28" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`;
+    body=`<path d="M12 100 Q16 82 50 79 Q84 82 88 100Z" fill="${c.cloth}"/><path d="M43 79.6 Q50 84 57 79.6" fill="none" stroke="${c.clothD}" stroke-width="1"/>`;
+  }
+  if(name==='ミサキ'){ // 栗色のロング、横分け、水色の服
+    hairBack=`<path d="M32.4 44 Q29.6 13.4 50 12.8 Q70.4 13.4 67.6 44 L70.4 90 Q60 95 56 86 L44 86 Q40 95 29.6 90Z" fill="${c.hairD}"/>`;
+    hair=`<path d="M33.4 46 Q31.6 15.4 50 14.6 Q68.4 15.4 66.6 44 Q64 26 44 24.6 Q38 30 36 40 Q34.6 42 33.4 46Z" fill="${c.hair}"/>
+      <path d="M66.6 44 Q68 62 65 80 L62.6 78 Q65 62 63.8 46Z" fill="${c.hair}"/>`;
+    body=`<path d="M10 100 Q14 82 50 79 Q86 82 90 100Z" fill="${c.cloth}"/><path d="M42 79.6 Q50 85 58 79.6" fill="none" stroke="${c.clothD}" stroke-width="1"/>`;
+  }
+  if(name==='ケンジ'){ // 紺の短髪、ピンクのシャツ、ゆるめたネクタイ
+    hair=`<path d="M33.6 42 Q32.4 16.4 50 15.6 Q67.6 16.4 66.4 42 Q64 30 56 27.4 Q48 30.6 40 29.6 Q35.4 34 33.6 42Z" fill="${c.hair}"/>`;
+    body=`<path d="M8 100 L12 85 Q28 77 50 76 Q72 77 88 85 L92 100Z" fill="${c.cloth}"/><path d="M41 76.6 L47 84 L50 80 L53 84 L59 76.6" fill="none" stroke="${c.clothD}" stroke-width="1.1"/>
+      <path d="M49 82.4 L52 82.4 L53.6 96 L50.6 99 L48 96Z" fill="${c.tie}" transform="rotate(7 50 84)"/>`;
+  }
+  if(name==='店主'){ // 白髪まじりの茶色のおだんご、白いシャツにエプロン
+    hair=`<path d="M33.8 42 Q32.6 16.4 50 15.6 Q67.4 16.4 66.2 42 Q64 30 54 27 Q50 26.4 46 27 Q36 30 33.8 42Z" fill="${c.hair}"/>
+      <path d="M33.8 42 Q32.6 16.4 50 15.6 Q67.4 16.4 66.2 42 Q64 30 54 27 Q50 26.4 46 27 Q36 30 33.8 42Z" fill="url(#${id}grey)" opacity=".18"/>`;
+    hairBack=`<circle cx="50" cy="14" r="5.6" fill="${c.hair}"/><circle cx="50" cy="14" r="5.6" fill="url(#${id}grey)" opacity=".15"/>`;
+    body=`<path d="M8 100 L12 85 Q28 77 50 76 Q72 77 88 85 L92 100Z" fill="${c.cloth}"/><path d="M34 100 L36 86 Q50 89 64 86 L66 100Z" fill="#e88aa0"/>
+      <path d="M42 77 L50 84 L58 77" fill="none" stroke="${c.clothD}" stroke-width="1"/>`;
+  }
+  if(c.scar)ex+=`<path d="M54.4 66.6 L58.6 72.2" stroke="#a5463a" stroke-width="1.5" stroke-linecap="round"/><path d="M55.2 69.6 L57.2 68.2 M56.4 71.4 L58.4 70" stroke="#8a3f36" stroke-width=".55" opacity=".8"/>`;
+  if(c.grin||c.laugh||c.blush||m==='win')ex+=`<ellipse cx="39.4" cy="55.4" rx="${c.laugh?5:4}" ry="${c.laugh?3:2.2}" fill="#e0607a" opacity="${c.blush??(c.laugh?.5:cute?.35:.15)}" filter="url(#${id}bl)"/><ellipse cx="60.6" cy="55.4" rx="${c.laugh?5:4}" ry="${c.laugh?3:2.2}" fill="#e0607a" opacity="${c.blush??(c.laugh?.5:cute?.35:.15)}" filter="url(#${id}bl)"/>`;
+  if(m==='worried')ex+=`<path class="" d="M64 34 q-2.4 4.2 0 5.4 q2.4 -1.2 0 -5.4Z" fill="#cfe8f5" opacity=".85"/>`;
+  if(name==='ジン'&&opts.tell!=='strong')front+=jinHand(c,id,opts.handDark);
+  const ears=c.face==='O'?`<path d="M29 45 Q24.6 43.6 24.6 50 Q25 57 29.4 58Z M71 45 Q75.4 43.6 75.4 50 Q75 57 70.6 58Z" fill="${c.skin}"/>`:(c.face==='w'||c.face==='o')?`<path d="M32 43 Q27.6 41.6 27.6 48 Q28 55 32.4 56Z M68 43 Q72.4 41.6 72.4 48 Q72 55 67.6 56Z" fill="${c.skin}"/>`:`<path d="M35 44 Q31.2 42.6 31 48 Q31.4 54 35.4 55.4Z M65 44 Q68.8 42.6 69 48 Q68.6 54 64.6 55.4Z" fill="${c.skin}"/>
+    <path d="M34 46 Q32.6 47.6 33.6 51 M66 46 Q67.4 47.6 66.4 51" fill="none" stroke="${SH}" stroke-width=".6" opacity=".5"/>`;
+  return `<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${name}"><defs>
+    <clipPath id="${id}f"><path d="${F}"/></clipPath>
+    <radialGradient id="${id}ir" cx=".5" cy=".5" r=".5"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
+    <linearGradient id="${id}sd" x1="0" x2="1"><stop offset=".45" stop-color="${SH}" stop-opacity="0"/><stop offset="1" stop-color="${SH}" stop-opacity=".75"/></linearGradient>
+    <linearGradient id="${id}hs" x1="0" x2="1"><stop offset=".3" stop-color="${SH}" stop-opacity="0"/><stop offset="1" stop-color="${SH}" stop-opacity=".6"/></linearGradient>
+    <linearGradient id="${id}hf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".5" stop-color="${SH}" stop-opacity=".05"/><stop offset="1" stop-color="${SH}" stop-opacity=".55"/></linearGradient>
+    <linearGradient id="${id}nk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SH}" stop-opacity=".75"/><stop offset=".6" stop-color="${SH}" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="${id}fh" cx=".38" cy=".22" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${id}bd" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset=".5" stop-color="#000" stop-opacity=".15"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient>
+    <linearGradient id="${id}hr" x1=".2" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>
+    <pattern id="${id}buzz" width="1" height="1" patternUnits="userSpaceOnUse"><circle cx=".5" cy=".5" r=".22" fill="#000"/></pattern>
+    <pattern id="${id}grey" width="1.3" height="1.3" patternUnits="userSpaceOnUse"><circle cx=".4" cy=".4" r=".3" fill="#d8d4cc"/></pattern>
+    <pattern id="${id}stub" width="1.1" height="1.1" patternUnits="userSpaceOnUse"><circle cx=".5" cy=".5" r=".22" fill="#2a1a12"/></pattern>
+    <filter id="${id}bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter>
+    <filter id="${id}bl2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.8"/></filter>
+  </defs>
+  <g transform="translate(50 53.5) scale(1.16) translate(-50 -56)">
+  ${hairBack}${hairBack?hairBack.replace(/fill="[^"]*"/,`fill="url(#${id}hr)"`):''}
+  ${body}<path d="${body.match(/d="([^"]*)"/)[1]}" fill="url(#${id}bd)"/>
+  ${(()=>{const w=c.neck||6.6,d=`M${50-w} 64 L${50-w} 80 Q50 84.6 ${50+w} 80 L${50+w} 64Z`;return `<path d="${d}" fill="${c.skin}"/><path d="${d}" fill="url(#${id}nk)"/>`})()}
+  <g class="head">
+    ${ears}
+    <path d="${F}" fill="${c.skin}"/>
+    <g clip-path="url(#${id}f)">
+      <path d="${F}" fill="url(#${id}sd)"/>
+      <rect x="0" y="0" width="100" height="100" fill="url(#${id}fh)"/>
+      <ellipse cx="42" cy="44.6" rx="6.4" ry="3.4" fill="${SH}" opacity="${c.young?.1:.22}" filter="url(#${id}bl)"/>
+      <ellipse cx="58" cy="44.6" rx="6.4" ry="3.4" fill="${SH}" opacity="${c.young?.12:.28}" filter="url(#${id}bl)"/>
+      <ellipse cx="40" cy="55" rx="5" ry="3.4" fill="#e8806a" opacity="${cute?.22:.12}" filter="url(#${id}bl2)"/>
+      <ellipse cx="60" cy="55" rx="5" ry="3.4" fill="#e8806a" opacity="${cute?.2:.1}" filter="url(#${id}bl2)"/>
+      <ellipse cx="50" cy="${c.face==='r'?24:22}" rx="18" ry="6" fill="${SH}" opacity=".35" filter="url(#${id}bl2)"/>
+    </g>
+    ${c.young?`<g transform="translate(50 56) scale(.86) translate(-50 -57)" opacity=".85">${nose}</g>`:nose}${lines}${eyes}${mouth}${hair}${hair&&!hair.startsWith('<g')?`<path d="${hair.match(/d="([^"]*)"/)[1]}" fill="url(#${id}hr)"/>`:''}${ex}
+  </g>${front}</g></svg>`;
+}
+</script>
+<script>/* 案1・3・5：今の絵（chars.js）に後から重ねる効果。案4：CSS で動かす */
+const _inner=s=>{const a=s.indexOf('>')+1;return [s.slice(0,a),s.slice(a,s.lastIndexOf('</svg>'))]};
+const _fid=()=>'x'+Math.random().toString(36).slice(2,8);
+const _maskDefs=id=>`<filter id="${id}w"><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter>
+    <mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><use href="#${id}a" filter="url(#${id}w)"/></mask>`;
+/* 案1 光と影：上のランプ（暖色）＋光の反対側の影＋下からフェルトの緑の照り返し＋体は暗がりへ
+   どれも「暗くする」重ね方なので、黒い髪や服が白っぽく浮かない。step=true で影を段で区切る（案5） */
+function fxLight(svg,k,step){
+  k=k??1;const [open,inner]=_inner(svg),id=_fid();
+  const st=step?` filter="url(#${id}q)"`:'';
+  return `${open}<defs>${_maskDefs(id)}
+    <filter id="${id}q"><feComponentTransfer><feFuncA type="discrete" tableValues="0 0 .6 .6 .85"/></feComponentTransfer></filter>
+    <radialGradient id="${id}s" cx=".26" cy=".45" r=".9" gradientTransform="translate(.26 .45) scale(1 2.2) translate(-.26 -.45)"><stop offset="${step?.44:.36}" stop-color="#160c1a" stop-opacity="0"/><stop offset="${step?.46:.66}" stop-color="#160c1a" stop-opacity="${.62*k}"/></radialGradient>
+    <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#ffe9cc" stop-opacity="0"/><stop offset=".55" stop-color="#ffe2bf" stop-opacity="${.9*k}"/><stop offset="1" stop-color="#d8b8a0" stop-opacity="${k}"/></linearGradient>
+    <radialGradient id="${id}k" cx=".38" cy=".2" r=".3"><stop offset="0" stop-color="#fff2dc" stop-opacity="${.22*k}"/><stop offset="1" stop-color="#fff2dc" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${id}g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2f9a62" stop-opacity="${.16*k}"/><stop offset=".3" stop-color="#2f9a62" stop-opacity="0"/></linearGradient>
+    <linearGradient id="${id}d" x1="0" y1="0" x2="0" y2="1"><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${.65*k}"/></linearGradient>
+  </defs><g id="${id}a">${inner}</g>
+  <g pointer-events="none">
+    <rect width="100" height="100" mask="url(#${id}m)" fill="url(#${id}t)" style="mix-blend-mode:multiply"/>
+    <rect width="100" height="100" mask="url(#${id}m)" fill="url(#${id}s)"${st} style="mix-blend-mode:multiply"/>
+    ${step?'':`<rect width="100" height="100" mask="url(#${id}m)" fill="url(#${id}k)" style="mix-blend-mode:screen"/>`}
+    <rect width="100" height="100" mask="url(#${id}m)" fill="url(#${id}g)" style="mix-blend-mode:screen"/>
+    <rect width="100" height="100" mask="url(#${id}m)" fill="url(#${id}d)" style="mix-blend-mode:multiply"/>
+  </g></svg>`;
+}
+/* 案3 質感：髪の毛束（髪の形の中だけ）＋肌と服の細かい粒子 */
+function fxTexture(svg,hairColors){
+  const [open,inner0]=_inner(svg),id=_fid();let n=0,seed=7;
+  const r=()=>(seed=(seed*9301+49297)%233280)/233280;
+  const strandsIn=(d)=>{const cid=`${id}c${n++}`;let s='';
+    for(let i=0;i<46;i++){const x0=38+r()*24,y0=8+r()*10,x1=16+r()*68,y1=30+r()*66,cxp=(x0+x1)/2+(r()-.5)*16,cyp=(y0+y1)/2-6;
+      s+=`<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} Q${cxp.toFixed(1)} ${cyp.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${i%3?'#000':'#fff'}" stroke-opacity="${i%3?.22:.2}" stroke-width="${(.22+r()*.3).toFixed(2)}" fill="none"/>`;}
+    return `<clipPath id="${cid}"><path d="${d}"/></clipPath><g clip-path="url(#${cid})">${s}</g>`;};
+  let inner=inner0;
+  (hairColors||[]).forEach(hc=>{inner=inner.replace(new RegExp(`(<path d="([^"]+)" fill="${hc}"[^>]*/>)`,'g'),(all,tag,d)=>tag+strandsIn(d));});
+  return `${open}<defs>${_maskDefs(id)}
+    <filter id="${id}n" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 0 0 0 1.25"/></filter>
+    <filter id="${id}n2" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".12 .8" numOctaves="2" seed="5"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 0 0 0 1.4"/></filter>
+  </defs><g id="${id}a">${inner}</g>
+  <g pointer-events="none">
+    <rect width="100" height="100" mask="url(#${id}m)" filter="url(#${id}n)" opacity=".1"/>
+  </g></svg>`;
+}
+/* 案5 階調塗り：太い輪郭線をやめて、光と影を段で区切った面で塗る */
+function fxTone(svg){
+  const s=svg.replace(/<(path|ellipse|circle|rect)\b([^>]*)>/g,(all,tag,attrs)=>{
+    const f=(attrs.match(/fill="([^"]*)"/)||[])[1];
+    if(!f||f==='none')return all;
+    return `<${tag}${attrs.replace(/ stroke="[^"]*"| stroke-width="[^"]*"/g,'')}>`;
+  });
+  return fxLight(s,1.4,true);
+}
+</script>
+<script>
+const NAMES=['ジン','レイカ','ミナ','ゲン'];
+const hairOf=n=>[CHARS[n].hair];
+const realHair=n=>[REAL[n].hair,REAL[n].hairD];
+const PLANS=[
+  {t:'いま',tag:'比較用',d:'ベタ塗り、太い輪郭線、記号的な顔。小さいアイコンでは見やすい。',f:n=>avatar(n,'normal'),cost:''},
+  {t:'案1 光と影',tag:'手軽',d:'<b>卓の上のランプ1つ</b>から光が当たる前提で、反対側に影、体は暗がりに沈め、下からフェルトの<b>緑の照り返し</b>を少し入れる。形はそのまま。',f:n=>fxLight(avatar(n,'normal')),cost:'手間：小（今の絵に重ねるだけ）'},
+  {t:'案2 顔のつくりを大人に',tag:'効果大',d:'目を小さく横長にして顔の真ん中に置き、<b>鼻筋・唇・耳・しわ</b>を描く。年齢が顔で分かる。弱いキャラは丸顔と大きめの瞳でかわいさを残す。',f:n=>realAvatar(n,'normal'),cost:'手間：大（全キャラの顔を描き直す）'},
+  {t:'案3 質感',tag:'手軽',d:'髪に<b>細い毛束の線</b>、肌と服に<b>ごく細かい粒子</b>を足して、のっぺりした面をなくす。',f:n=>fxTexture(avatar(n,'normal'),hairOf(n)),cost:'手間：小（今の絵に重ねるだけ）'},
+  {t:'案4 生きている動き',tag:'手軽',d:'<b>まばたき・呼吸・首のわずかな揺れ</b>。目線は動かさないので、テルの「目線が泳ぐ」とは混ざらない。',f:n=>avatar(n,'normal'),alive:1,cost:'手間：小（CSS だけ）'},
+  {t:'案5 劇画の塗り',tag:'雰囲気重視',d:'輪郭線をやめ、<b>光と影をくっきり2段</b>に塗り分ける。ノワール映画のような顔の半分の影。',f:n=>fxTone(avatar(n,'normal')),cost:'手間：中（線の扱いを全キャラで調整）'},
+  {t:'おすすめ 案2＋案1＋案4',tag:'おすすめ',rec:1,d:'大人の顔のつくりに、ランプの光と影、まばたきと呼吸を重ねる。<b>いちばん「人がそこに座っている」感じ</b>が出る。',f:n=>fxLight(realAvatar(n,'normal')),alive:1,cost:'手間：大（顔の描き直し）＋小（光と動き）。案1・案4から先に入れて、顔は★の高いキャラから順に差し替えられる。'},
+];
+let h='';
+[PLANS[6],...PLANS.slice(0,6)].forEach((p,i)=>{
+  const tiles=NAMES.map((n,j)=>`<div class="av-tile${p.alive?' alive':''}" style="--d:${-(i*.7+j*1.3)}s">${p.f(n)}<span>${n}</span></div>`).join('');
+  const seats=NAMES.map((n,j)=>`<div class="seat${p.alive?' alive':''}" style="--d:${-(j*1.1)}s">${p.f(n)}</div>`).join('');
+  h+=`<article class="card${p.rec?' rec':''}"><h2>${p.t}<span class="tag">${p.tag}</span></h2><p>${p.d}</p>
+    <div class="row">${tiles}</div><div class="seats">${seats}<span>卓のアイコン（実寸46px）</span></div>${p.rec?`<h3 class="sub">表情6種もこのとおり</h3><p>本物っぽくしても、表情の描き分けとジンの「顎の傷に触る」テルは残ります。弱いキャラ（ゲン）は丸い顔・赤い頬・笑い目で、かわいさを残しています。</p><div class="moods" id="moods"></div>`:''}${p.cost?`<div class="cost">${p.cost}</div>`:''}</article>`;
+});
+document.getElementById('cards').innerHTML=h;
+const ML={normal:'通常',think:'考え中',confident:'強気',worried:'困り',win:'勝ち',lose:'負け'};
+let mh='';
+['ジン','ゲン'].forEach((n,j)=>Object.keys(ML).forEach((m,k)=>{mh+=`<div class="av-tile alive" style="--d:${-(j*2+k*.9)}s">${fxLight(realAvatar(n,m))}<span>${n}・${ML[m]}</span></div>`}));
+document.getElementById('moods').innerHTML=mh;
+{const L={'ミナ':'ミナ・前回','ミナA':'ミナ A かわいい','ミナB':'ミナ B 大人','ミナC':'ミナ C おちゃめ','ゲン':'ゲン・前回','ゲンA':'ゲン A かわいい','ゲンB':'ゲン B 大人','ゲンC':'ゲン C おちゃめ'};
+let r='';Object.keys(L).forEach((n,j)=>{r+=`<div style="display:grid;gap:6px;align-content:start"><div class="av-tile alive" style="--d:${-j*1.1}s">${fxLight(realAvatar(n,'normal'))}</div><div class="cap">${L[n]}</div><div class="seat" style="justify-self:center">${fxLight(realAvatar(n,'normal'))}</div></div>`});
+document.getElementById('redoGrid').innerHTML=r;
+let q='';['ミナA','ミナB','ゲンA','ゲンB'].forEach((n,j)=>Object.keys(ML).forEach((m,k)=>{q+=`<div class="av-tile alive" style="--d:${-(j*1.7+k*.9)}s">${fxLight(realAvatar(n,m))}<span>${n.replace(/(.)$/,' $1')}・${ML[m]}</span></div>`}));
+document.getElementById('redoMoods').innerHTML=q;}
+{const A=[['ソウ','18〜19・男'],['ハル','20前後・女'],['ミナC','20代半ば・女'],['ミサキ','20代半ば・女'],['ケンジ','20代後半・男'],['レイカ','30代半ば・女'],['ゲンC','50代・男'],['店主','60前後・女'],['ジン','60代半ば・男']];
+document.getElementById('agesGrid').innerHTML=A.map(([n,a],j)=>`<div class="fig"><div class="av-tile alive" style="--d:${-j*1.3}s">${fxLight(realAvatar(n,'normal'))}</div><div class="cap"><b>${n.replace(/[A-C]$/,'')}</b>${a}</div></div>`).join('');
+document.getElementById('hand').innerHTML=`<div class="fig"><div class="av-tile alive">${fxLight(realAvatar('ジン','normal'))}</div><div class="cap"><b>A 光が当たる（おすすめ）</b>ふだん＝傷をなでる</div></div><div class="fig"><div class="av-tile alive">${fxLight(realAvatar('ジン','normal',{handDark:1}))}</div><div class="cap"><b>B 暗がりに沈める</b>縁だけ光る</div></div><div class="fig"><div class="av-tile alive">${fxLight(realAvatar('ジン','normal',{tell:'strong'}))}</div><div class="cap"><b>強い手のとき</b>傷に触らない</div></div>`;}
+</script>

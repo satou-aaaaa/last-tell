@@ -1,0 +1,112 @@
+<title>主人公アオ 見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: 上にアオの人物カード（おすすめの形）、下に5案のカードを2列（スマホ1列）。各カードの場面はくり返し流れる */
+:root{
+  --bg:#0f1116; --felt:#16231f; --panel:#181b23; --line:#2a2f3b;
+  --fg:#e9e6df; --mute:#9a9fab; --gold:#e2b65b; --ao:#6fa8dc;
+  --disp:"Shippori Mincho","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:24px}
+h1{font-family:var(--disp);font-weight:800;font-size:1.9rem;margin:0;letter-spacing:.04em}
+.lead{color:var(--mute);margin:0;max-width:62ch}
+.profile{display:grid;grid-template-columns:140px 1fr;gap:18px;background:var(--panel);border:1px solid var(--ao);border-radius:10px;padding:18px}
+.profile dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.92rem;min-width:0}
+.profile dt{color:var(--ao);font-weight:700;white-space:nowrap}
+.profile dd{margin:0}
+.profile h2{font-family:var(--disp);margin:0 0 6px;font-size:1.4rem;grid-column:1/-1}
+@media (max-width:520px){.profile{grid-template-columns:1fr}.profile svg{max-width:140px;margin:0 auto}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.card.rec{border-color:var(--gold)}
+.tag{font-size:.75rem;letter-spacing:.12em;color:var(--mute)}
+.card.rec .tag{color:var(--gold)}
+.card h2{font-family:var(--disp);font-size:1.2rem;margin:0}
+.card p{margin:0;color:var(--mute);font-size:.9rem}
+.stage{background:radial-gradient(ellipse at 50% 120%,#21352e 0%,var(--felt) 60%,#0d1512 100%);border-radius:8px;min-height:250px;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
+.ln{background:#0b0d12dd;border:1px solid #ffffff1a;border-radius:6px;padding:6px 10px;font-size:.92rem;animation:in .35s ease both}
+.ln b{color:var(--gold);margin-right:.5em}
+.ln.nar{background:transparent;border:none;color:#cfd3cc;font-size:.86rem}
+.ln.ao b{color:var(--ao)}
+.chips{display:flex;gap:4px;justify-content:center;animation:in .3s ease both}
+.chips i{width:22px;height:22px;border-radius:50%;background:#b8463f;border:3px dashed #f1e7d6;display:block;animation:tap .5s ease both}
+.chips i:nth-child(2){animation-delay:.25s}.chips i:nth-child(3){animation-delay:.5s}.chips i:nth-child(4){animation-delay:.75s}
+.coin{width:64px;height:64px;border-radius:50%;margin:0 auto;background:radial-gradient(circle,#2b3a4a 55%,#c9b27a 56% 62%,#2b3a4a 63%);display:grid;place-items:center;animation:spin 2.4s ease-in-out infinite}
+.looks{display:flex;gap:18px;justify-content:center;align-items:end}
+.looks figure{margin:0;text-align:center;font-size:.78rem;color:#cfd3cc}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes tap{0%{transform:translateY(-6px);opacity:.3}100%{transform:none;opacity:1}}
+@keyframes spin{0%,100%{transform:rotateY(0)}50%{transform:rotateY(180deg)}}
+@media (prefers-reduced-motion:reduce){.ln,.chips,.chips i,.coin{animation:none}}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>主人公アオ</h1>
+    <p class="lead">第一部の「空っぽの主人公」と、第二部で話しはじめる師匠のあいだをつなぐ人物像の案です。上がおすすめの形（案1＋案3＋案5）、下が5つの案です。</p>
+  </header>
+
+  <section class="profile">
+    <svg viewBox="0 0 100 110" width="140" aria-label="新しい見た目のアオ" id="pNew"></svg>
+    <dl>
+      <h2>アオ</h2>
+      <dt>年</dt><dd>20代前半</dd>
+      <dt>仕事</dt><dd>港の倉庫の検数員。積み荷の数を数えて合わせる</dd>
+      <dt>芯</dt><dd>数は読めるが、人は読めない。負けず嫌いで、引きぎわが下手</dd>
+      <dt>口ぐせ</dt><dd>「あとワンハンドだけ」（今のまま）</dd>
+      <dt>クセ</dt><dd>迷うと指でチップを数える（地の文だけ）</dd>
+      <dt>欲しいもの</dt><dd>ここにいていい場所。答えは錨亭の壁の写真</dd>
+      <dt>第二部</dt><dd>一人称「俺」。短く言い切る。ジンと違い、言いすぎたら謝る</dd>
+    </dl>
+  </section>
+
+  <div class="grid">
+    <section class="card rec"><div class="tag">案1 ★おすすめ</div><h2>芯と背景を決める</h2><div class="stage" id="s1"></div>
+      <p>検数員。数は読めるが人は読めない。地の文を各章1〜2行足す。</p></section>
+    <section class="card"><div class="tag">案2</div><h2>第一部でも少し話す</h2><div class="stage" id="s2"></div>
+      <p>短い返事だけ話す。第二部につながるが、プレイヤーが入りこむ余地は減る。</p></section>
+    <section class="card rec"><div class="tag">案3 ★おすすめ</div><h2>アオのクセ</h2><div class="stage" id="s3"></div>
+      <p>迷うとチップを数える。第7章で、数えずに降りる。勝ち負けには使わない。</p></section>
+    <section class="card"><div class="tag">案4</div><h2>形見のチップ</h2><div class="stage" id="s4"></div>
+      <p>祖父の古いチップの裏に波の紋。答えは第三部。第三部を書くときに決めるのがおすすめ。</p></section>
+    <section class="card rec"><div class="tag">案5 ★おすすめ</div><h2>見た目をアオらしく</h2>
+      <div class="stage"><div class="looks">
+        <figure><svg viewBox="0 0 100 110" width="110" id="pOld" aria-label="今の見た目"></svg><figcaption>今：オレンジの髪、緑の上着</figcaption></figure>
+        <figure><svg viewBox="0 0 100 110" width="110" id="pNew2" aria-label="新しい見た目"></svg><figcaption>案：紺の髪、紺の作業ジャケット</figcaption></figure>
+      </div></div>
+      <p>「強いキャラほどかっこよく」の方針に合わせる。ストア画像の撮り直しが要る。</p></section>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const L=(who,t,c)=>`<div class="ln${who?'':' nar'}${c?' '+c:''}">${who?`<b>${who}</b>`:''}${t}</div>`;
+// 簡単な見本の顔（ゲーム本体の絵ではない）
+function face(o){return `<rect x="0" y="0" width="100" height="110" fill="#1b2730"/>
+ <path d="M14 110 Q18 86 50 82 Q82 86 86 110Z" fill="${o.cloth}"/>
+ <path d="M42 82 L50 96 L58 82Z" fill="#eeeae2"/>
+ ${o.pen?'<rect x="64" y="90" width="3" height="14" fill="#6fa8dc"/>':''}
+ <rect x="44" y="68" width="12" height="14" fill="#e8c6ad"/>
+ <ellipse cx="50" cy="52" rx="17" ry="21" fill="#f0cfb6"/>
+ ${o.spiky?`<path d="M32 50 Q30 22 50 22 Q70 22 68 50 L64 36 L60 42 L57 30 L52 38 L48 28 L44 38 L40 31 L37 42Z" fill="${o.hair}"/>`
+          :`<path d="M32 52 Q30 26 50 25 Q70 26 68 52 Q66 38 58 35 Q48 40 38 36 Q34 42 32 52Z" fill="${o.hair}"/>`}
+ <ellipse cx="43" cy="54" rx="2" ry="2.4" fill="#2a2a2a"/><ellipse cx="57" cy="54" rx="2" ry="2.4" fill="#2a2a2a"/>
+ <path d="M45 64 Q50 66 55 64" stroke="#a8665a" stroke-width="1.4" fill="none"/>`}
+$('pOld').innerHTML=face({cloth:'#2fb39a',hair:'#ff9c5b',spiky:1});
+const nw=face({cloth:'#24344a',hair:'#1c2533',pen:1});$('pNew2').innerHTML=nw;$('pNew').innerHTML=nw;
+
+const SCENES={
+  s1:[L('','倉庫で一日、積み荷の数を数えてきた。数なら、間違えない。'),L('','……なのに、今日も勝てない。'),L('ジン','カードばかり見てるな'),L('','数は合っている。合っていないのは、たぶん人のほうだ。')],
+  s2:[L('ジン','いいか。降りるのも勝負のうちだ'),L('アオ','……はい','ao'),L('ゲン','おう新入り、もう一勝負だ！'),L('アオ','もう一回','ao')],
+  s3:['<div class="chips"><i></i><i></i><i></i><i></i></div>',L('','指が、チップの枚数を数えている。'),L('ジン','……数えるな。顔を見ろ'),L('','（第7章）チップを数えずに、カードを返した。')],
+  s4:['<div class="coin" aria-hidden="true">≈</div>',L('','上着のポケットに、祖父の古いチップが一枚。裏に、波の紋。'),L('','（第7章）ジンが、そのチップを見て黙った。'),L('ジン','……どこで、それを')],
+};
+const T={};
+function play(id){clearTimeout(T[id]);const st=$(id),ls=SCENES[id];st.innerHTML='';
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){st.innerHTML=ls.join('');return}
+  let i=0;const step=()=>{if(i<ls.length){st.insertAdjacentHTML('beforeend',ls[i++]);T[id]=setTimeout(step,1400)}else T[id]=setTimeout(()=>play(id),3200)};step()}
+Object.keys(SCENES).forEach(play);
+</script>

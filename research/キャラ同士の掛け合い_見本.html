@@ -1,0 +1,111 @@
+<title>LAST TELL 掛け合い見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+/* layout: 5つの小さな卓を並べ、全部が同時に掛け合いを再生する。下に台本 */
+:root{
+  --bg:#0d1114; --felt:#123a33; --felt-edge:#0a2621; --rail:#2a1d14;
+  --ink:#e8e4da; --mute:#9aa39f; --accent:#d6a85a; --bubble:#f3efe6; --bubble-ink:#16191b;
+  --card:#151b1f; --line:#26302f;
+  --f-display:"Shippori Mincho",serif; --f-body:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+h1{font-family:var(--f-display);font-size:1.7rem;letter-spacing:.06em;margin:0;text-wrap:balance}
+.lead{color:var(--mute);margin:.4rem 0 1.4rem;max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:20px}
+.case{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.case.rec{border-color:var(--accent)}
+.case h2{font-size:1.02rem;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.case h2 .no{font-family:var(--f-display);color:var(--accent);letter-spacing:.08em}
+.badge{font-size:.72rem;color:var(--bg);background:var(--accent);padding:1px 8px;border-radius:99px;font-weight:700}
+.case p.sum{margin:0;color:var(--mute);font-size:.86rem}
+.table{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:50%/48%;background:radial-gradient(ellipse at 50% 40%,#1b5246,var(--felt) 60%,var(--felt-edge));box-shadow:inset 0 0 0 8px var(--rail),inset 0 0 0 9px #000a}
+.trig{position:absolute;left:50%;top:80%;transform:translate(-50%,-50%);font-size:.72rem;color:#cfe3d9;background:#0008;padding:2px 10px;border-radius:99px;white-space:nowrap;max-width:80%;overflow:hidden;text-overflow:ellipsis}
+.store{position:absolute;left:50%;top:66%;transform:translateX(-50%);font-family:var(--f-display);font-size:.78rem;color:#cfe3d9aa;letter-spacing:.2em;white-space:nowrap}
+.seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:#2b3436;color:var(--ink);border:2px solid #0006;transition:box-shadow .2s}
+.seat.talk .av{box-shadow:0 0 0 2px var(--accent)}
+.nm{font-size:.66rem;color:#d9e6e0;background:#0009;padding:0 6px;border-radius:4px;white-space:nowrap}
+.say{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--bubble);color:var(--bubble-ink);font-size:.74rem;line-height:1.4;padding:5px 9px;border-radius:8px;width:max-content;max-width:150px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:2}
+.say.memo{background:#fff8d6;font-family:var(--f-body);border:1px dashed #a89a5c}
+.say.go{opacity:1;transform:translateX(-50%) translateY(0)}
+.seat.low .say{bottom:auto;top:calc(100% + 4px)}
+.choice{position:absolute;left:50%;bottom:40%;transform:translateX(-50%);display:flex;gap:6px;opacity:0;transition:opacity .3s}
+.choice.go{opacity:1}
+.choice span{font-size:.7rem;background:#0b0f10;border:1px solid var(--accent);color:var(--ink);padding:2px 8px;border-radius:6px;white-space:nowrap}
+.choice span.pick{background:var(--accent);color:var(--bg)}
+.script{font-size:.82rem;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.script li{border-top:1px solid var(--line);padding-top:6px}
+.script b{color:var(--accent);font-weight:700}
+.script .t{display:block;color:var(--mute);font-size:.72rem}
+.script li.now{color:#fff}
+.foot{color:var(--mute);font-size:.8rem;margin-top:22px;max-width:70ch}
+@media (prefers-reduced-motion:reduce){.say,.choice{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>キャラ同士の掛け合い　5つの案</h1>
+  <p class="lead">5つの卓で、それぞれの案の掛け合いを同時に流しています。下の台本は再生中の場面が明るくなります。台詞はすべて見本です。</p>
+  <div class="grid" id="grid"></div>
+  <p class="foot">守ること：掛け合いは手の強さのヒントにならない／第7章には出さない／お金の話は入れない／1卓で同じ組は1回まで。</p>
+</div>
+
+<script>
+const CASES=[
+ {no:'案1',title:'卓の全員に掛け合いを持たせる',sum:'新しい常連・船の客にも、関係のある相手との3〜4行の掛け合いを足す。',scenes:[
+   {store:'錨亭',trig:'ハンドの合間',seats:['ゲン','アデ','マリア','ケンジ','ミサキ'],lines:[['アデ','ゲン、その錨、まだ外さないのか'],['ゲン','外したら札が来なくなるだろ！'],['アデ','つけていても、選べるわけじゃない'],['ゲン','……うるせえ。配られた札は全部勝負だ！']]},
+   {store:'月影',trig:'ハンドの合間',seats:['セキ','ウォルター','ミナ','スミン','ケンジ'],lines:[['スミン','サビの前、半音上げたでしょ'],['ミナ','気づいた？ 今日は攻めたい気分なの'],['スミン','……卓でも？'],['ミナ','卓でも']]},
+   {store:'錨亭',trig:'船の客がいるとき',seats:['ゲン','クワメ','マリア','タロウ','ミサキ'],lines:[['クワメ','……（英語で、短く何か言った）'],['マリア','『この街の卓は、港でいちばん静かだ』って。褒めてるのよ'],['ゲン','静かだあ？ 俺がいるのにか！']]},
+   {store:'王冠',trig:'ハンドの合間',seats:['クロウ','ゴウ','タケル','カオル','ソフィア'],lines:[['ゴウ','おい、さっきから何見てんだよ'],['タケル','（メモ）あなたの手。さっきも同じ動き',1],['ゴウ','……読むなよ']]}]},
+ {no:'案2',title:'卓で起きたことに反応する',rec:1,sum:'直前のハンドで見えたこと（ブラフ、飛び、スロウロール、降り続け）に合わせて出す。',scenes:[
+   {store:'天空',trig:'ショーダウンでブラフが見えた',seats:['レイカ','ソウ','シオン','アキラ','アイシャ'],lines:[['ソウ','レイカさん、今の……何も無かったんですか'],['レイカ','教えたら勉強にならないって、言ったでしょ']]},
+   {store:'地下の賭場跡',trig:'スロウロールのあと',seats:['ハヤト','テツ','ベン','ミン','ドク'],lines:[['テツ','ハヤト、それやめろって'],['ハヤト','勝ちは勝ちだ'],['ベン','……若いな']]},
+   {store:'王冠',trig:'ゴウが飛んだ',seats:['クロウ','ゴウ','カオル','レン','ソフィア'],lines:[['カオル','お疲れさま、ゴウさん'],['ゴウ','……次は覚えてろよ'],['クロウ','お待ちしています']]},
+   {store:'錨亭',trig:'あなたが5回続けて降りた',seats:['ゲン','アデ','マリア','ケンジ','ミサキ'],lines:[['ゲン','おい新入り、寝てんのか？'],['アデ','待てるやつは強い。船乗りの常識だ']]}]},
+ {no:'案3',title:'物語が進むと変わる',sum:'同じ二人の会話が、クリアした章で変わる。また店に来る理由になる。',scenes:[
+   {store:'銀の扉',trig:'第2章クリア前',seats:['ロク','ハル','リン','ヨシオ','ラジ'],lines:[['ロク','ハル、手札ばかり見るな'],['ハル','す、すみません']]},
+   {store:'銀の扉',trig:'第7章クリア後',seats:['ロク','ハル','リン','ヨシオ','ラジ'],lines:[['ハル','ロクおじさん、ジンさんに会いに行った？'],['ロク','……ああ。数えずに行った']]},
+   {store:'地下の賭場跡',trig:'第5章クリア後',seats:['ハヤト','テツ','ベン','ミン','ドク'],lines:[['テツ','錨亭、行ったのか'],['ハヤト','……まだ、だ']]},
+   {store:'地下の賭場跡',trig:'第7章クリア後',seats:['ハヤト','テツ','ベン','ミン','ドク'],lines:[['テツ','錨亭、行ったのか'],['ハヤト','……行った。カレーは、まずくなかった']]}]},
+ {no:'案4',title:'主人公も巻き込まれる',sum:'二人の言い合いの最後に、あなたへ振られる。2択＋黙る。勝ち負けには関係しない。',scenes:[
+   {store:'月影',trig:'第4章から',seats:['セキ','ミナ','ウォルター','スミン','ケンジ'],lines:[['ミナ','セキさん、さっきのは絶対ブラフだった'],['セキ','さあ、どうだったかな'],['ミナ','ねえ、あなたはどう思う？']],choice:['ブラフ','本物','黙る'],after:[['ミナ','ほらね！'],['セキ','……君たちは、手厳しいね']]}]},
+ {no:'案5',title:'卓の外の短い会話場面',sum:'店に入ったときや章のクリア後に、主人公のいない3〜5行の場面を見せる。',scenes:[
+   {store:'錨亭、閉店後',trig:'そのころ',seats:['店主','マリア'],lines:[['マリア','ジンさん、昔はよく笑う人だったのよ'],['店主','知ってるよ。あたしは、その顔を15年待ってる'],['マリア','……カレー、もう一杯もらえる？'],['店主','腹が減ってちゃ、待てないからね']]}]}
+];
+const POS5=[[50,13],[86,32],[86,70],[14,70],[14,32]],POS2=[[30,45],[70,45]];
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const grid=document.getElementById('grid');
+CASES.forEach((c,ci)=>{
+  const el=document.createElement('section');el.className='case'+(c.rec?' rec':'');
+  el.innerHTML=`<h2><span class="no">${c.no}</span>${esc(c.title)}${c.rec?'<span class="badge">おすすめ</span>':''}</h2><p class="sum">${esc(c.sum)}</p><div class="table" aria-hidden="true"></div><ul class="script"></ul>`;
+  grid.appendChild(el);
+  const ul=el.querySelector('.script');
+  c.scenes.forEach((s,k)=>{const li=document.createElement('li');
+    const all=s.lines.concat(s.choice?[['あなた','［'+s.choice.join('］［')+'］']]:[],s.after||[]);
+    li.innerHTML=`<span class="t">${esc(s.store)}・${esc(s.trig)}</span>`+all.map(([n,t])=>`<b>${esc(n)}</b>「${esc(t)}」`).join('<br>');ul.appendChild(li)});
+  play(c,el,0);
+});
+function draw(el,s){
+  const tb=el.querySelector('.table'),P=s.seats.length===2?POS2:POS5;
+  tb.innerHTML=`<div class="store">${esc(s.store)}</div><div class="trig">${esc(s.trig)}</div>`+
+    s.seats.map((n,i)=>`<div class="seat${P[i][1]<20?' low':''}" style="left:${P[i][0]}%;top:${P[i][1]}%" data-n="${esc(n)}"><div class="say"></div><div class="av">${esc(n[0])}</div><div class="nm">${esc(n)}</div></div>`).join('')+
+    (s.choice?`<div class="choice">${s.choice.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:'');
+  return tb}
+function play(c,el,k){
+  const s=c.scenes[k%c.scenes.length],tb=draw(el,s);
+  el.querySelectorAll('.script li').forEach((li,i)=>li.classList.toggle('now',i===k%c.scenes.length));
+  const steps=[];s.lines.forEach(l=>steps.push(['say',l]));
+  if(s.choice){steps.push(['choice']);steps.push(['pick']);(s.after||[]).forEach(l=>steps.push(['say',l]))}
+  const gap=reduce?2600:1900;let t=900;
+  steps.forEach(st=>{setTimeout(()=>{
+    if(st[0]==='say'){tb.querySelectorAll('.say.go').forEach(b=>b.classList.remove('go'));tb.querySelectorAll('.seat.talk').forEach(b=>b.classList.remove('talk'));
+      const seat=[...tb.querySelectorAll('.seat')].find(x=>x.dataset.n===st[1][0]);if(!seat)return;
+      const b=seat.querySelector('.say');b.textContent=st[1][1];b.classList.toggle('memo',!!st[1][2]);b.classList.add('go');seat.classList.add('talk')}
+    else if(st[0]==='choice')tb.querySelector('.choice').classList.add('go');
+    else{tb.querySelector('.choice span').classList.add('pick');setTimeout(()=>tb.querySelector('.choice').classList.remove('go'),700)}
+  },t);t+=gap});
+  setTimeout(()=>play(c,el,k+1),t+1400);
+}
+</script>

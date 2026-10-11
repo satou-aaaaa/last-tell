@@ -1,0 +1,31 @@
+{
+	"appId": "com.satou.lasttell",
+	"appName": "LAST TELL",
+	"webDir": "www",
+	"backgroundColor": "#0d0e13",
+	"android": {
+		"allowMixedContent": false
+	},
+	"ios": {
+		"contentInset": "never"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 800,
+			"backgroundColor": "#0d0e13",
+			"showSpinner": false
+		}
+	},
+	"packageClassList": [
+		"AdMobPlugin",
+		"FirebaseAnalyticsPlugin",
+		"FirebaseCrashlyticsPlugin",
+		"FirebaseRemoteConfigPlugin",
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"FilesystemPlugin",
+		"PreferencesPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin"
+	]
+}

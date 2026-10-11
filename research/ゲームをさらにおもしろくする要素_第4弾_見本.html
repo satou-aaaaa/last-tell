@@ -1,0 +1,196 @@
+<title>LAST TELL 新要素 第4弾</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a dark card-room; one felt-lit panel per proposal, stacked, recommended ones marked with a brass tag */
+:root{
+  --bg:#0d1214; --panel:#151d20; --felt:#123a33; --line:#2a3a3d;
+  --fg:#e6ece9; --mute:#93a5a2; --brass:#c9a45c; --red:#c2554b;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:960px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;letter-spacing:.04em;text-wrap:balance}
+header p{color:var(--mute);margin:.4em 0 0;max-width:62ch}
+.gap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px}
+.gap div{border-top:1px solid var(--brass);padding-top:8px;font-size:.92rem}
+.gap b{display:block;color:var(--brass);font-size:.75rem;letter-spacing:.12em}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);overflow:hidden}
+@media (max-width:720px){.card{grid-template-columns:1fr}}
+.txt{padding:20px 22px;display:grid;gap:8px;align-content:start;min-width:0}
+.no{font-family:var(--mono);color:var(--mute);font-size:.8rem;letter-spacing:.1em}
+.txt h2{font-family:var(--display);font-size:1.35rem;margin:0;text-wrap:balance}
+.tag{display:inline-block;font-size:.72rem;letter-spacing:.1em;color:var(--bg);background:var(--brass);padding:1px 8px;border-radius:2px;margin-left:6px;vertical-align:middle;font-family:var(--body)}
+.txt p{margin:0;color:var(--mute);font-size:.93rem}
+.txt ul{margin:0;padding-left:1.1em;font-size:.9rem}
+.stage{background:radial-gradient(120% 90% at 50% 30%,#1a4a41 0%,var(--felt) 45%,#0a1f1b 100%);min-height:280px;position:relative;padding:20px;display:grid;place-items:center;min-width:0}
+.mono{font-family:var(--mono)}
+/* 1 karte */
+.karte{width:100%;max-width:340px;background:rgba(0,0,0,.35);border:1px solid rgba(201,164,92,.4);padding:16px;border-radius:4px}
+.ktype{font-family:var(--display);font-size:1.15rem;color:var(--brass)}
+.bar{display:grid;grid-template-columns:4.5em 1fr 4.5em;gap:6px;align-items:center;font-size:.75rem;color:var(--mute);margin-top:8px}
+.bar span:last-child{text-align:right}
+.trk{height:4px;background:#2c3f3b;position:relative;border-radius:2px}
+.trk i{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--fg);transform:translate(-50%,-50%);left:var(--a);animation:slide 6s ease-in-out infinite alternate}
+@keyframes slide{0%,20%{left:var(--a)}80%,100%{left:var(--b)}}
+.spark{margin-top:10px;width:100%;height:46px}
+.jin{font-size:.85rem;margin-top:6px}
+/* 2 shadow */
+.code{font-family:var(--mono);font-size:1.3rem;letter-spacing:.15em;background:rgba(0,0,0,.4);padding:8px 14px;border:1px dashed var(--brass);color:var(--brass)}
+.seats{display:flex;gap:18px;margin-top:18px;justify-content:center;flex-wrap:wrap}
+.seat{width:76px;text-align:center;font-size:.75rem;color:var(--mute)}
+.seat .face{width:56px;height:56px;border-radius:50%;margin:0 auto 4px;background:#2b3533;border:1px solid #445}
+.seat.shadow .face{background:radial-gradient(circle at 50% 40%,#556 0,#111 70%);animation:flick 3s ease-in-out infinite;border-color:var(--brass)}
+.seat.shadow{color:var(--fg)}
+@keyframes flick{50%{opacity:.55;filter:blur(1px)}}
+.res{margin-top:14px;font-size:.85rem;color:var(--fg);text-align:center}
+/* 3 board */
+.board{background:#3b2c22;padding:14px;border:6px solid #2a1f18;width:100%;max-width:320px;box-shadow:inset 0 0 20px rgba(0,0,0,.6)}
+.paper{background:#e8e0cf;color:#2a2420;padding:14px 16px;transform:rotate(-1.5deg);font-size:.85rem;animation:sway 5s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(-.5deg)}}
+.paper h3{font-family:var(--display);margin:0 0 6px;font-size:1.1rem}
+.paper li{list-style:none;margin-left:-1em}
+.paper li::before{content:"□ ";}
+.paper li.done::before{content:"■ ";color:#8a2f28}
+/* 4 rail */
+.tbl{width:min(300px,100%);aspect-ratio:2/1.15;border-radius:50%/60%;background:#0f2e28;border:8px solid #3a2a1e;position:relative}
+.p{position:absolute;font-size:.72rem;text-align:center;width:60px}
+.p .face{width:34px;height:34px;border-radius:50%;background:#3d4846;margin:0 auto 2px;border:1px solid #556}
+.p.on .face{border-color:var(--brass);box-shadow:0 0 10px var(--brass)}
+.whisper{position:absolute;left:50%;bottom:-62px;transform:translateX(-50%);background:rgba(0,0,0,.6);border-left:2px solid var(--brass);padding:6px 10px;font-size:.8rem;width:min(280px,90vw)}
+.ask{display:flex;gap:6px;justify-content:center;margin-top:76px}
+.ask span{border:1px solid var(--line);padding:3px 10px;font-size:.78rem;background:rgba(0,0,0,.3)}
+.ask span.hit{border-color:var(--brass);color:var(--brass)}
+/* 5 dealer */
+.piles{display:flex;gap:14px;align-items:flex-end;justify-content:center}
+.pile{display:flex;flex-direction:column-reverse}
+.chip{width:34px;height:7px;border-radius:50%/100%;margin-top:-2px;border:1px solid rgba(0,0,0,.4)}
+.c1{background:#e8e3d8}.c5{background:#b8423a}.c25{background:#2f7a4c}.c100{background:#1b1b1b}
+.q{text-align:center;margin-top:14px;font-size:.9rem}
+.opts{display:flex;gap:8px;justify-content:center;margin-top:8px;font-family:var(--mono)}
+.opts span{padding:3px 10px;border:1px solid var(--line);background:rgba(0,0,0,.3)}
+.opts span.ok{border-color:var(--brass);color:var(--brass)}
+.timer{height:3px;background:var(--brass);margin-top:10px;animation:t 4s linear infinite;transform-origin:left}
+@keyframes t{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+footer{color:var(--mute);font-size:.85rem;border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>LAST TELL 新要素 第4弾</h1>
+  <p>卓の上の遊びと物語はもう厚いので、まだ無い3つの穴を埋める案を5つ並べました。画面は動きのイメージで、実際の絵柄はゲームに合わせます。</p>
+  <div class="gap">
+    <div><b>足りないもの 1</b>自分の成長が目に見えない</div>
+    <div><b>足りないもの 2</b>友だちと競う仕組みが無い</div>
+    <div><b>足りないもの 3</b>卓に戻る理由が週ごとに変わらない</div>
+  </div>
+</header>
+
+<section class="card">
+  <div class="txt">
+    <span class="no">案1</span>
+    <h2>打ち方カルテ<span class="tag">おすすめ</span></h2>
+    <p>卓の終わりとジンのノートに、自分の打ち方を4本の目盛りで出します。型の名前は常連から借り、章ごとの変化を線で見せます。</p>
+    <ul><li>記録は既にあるので作る量は小さい</li><li>テーマ「いつ降りるか」がそのまま目盛りになる</li><li>勝ち負けには影響しない。第二部の準備にもなる</li></ul>
+  </div>
+  <div class="stage">
+    <div class="karte">
+      <div class="ktype">セキ型　最後に降りる</div>
+      <div class="bar"><span>かたい</span><div class="trk"><i style="--a:70%;--b:38%"></i></div><span>ゆるい</span></div>
+      <div class="bar"><span>受ける</span><div class="trk"><i style="--a:30%;--b:62%"></i></div><span>押す</span></div>
+      <div class="bar"><span>早い</span><div class="trk"><i style="--a:85%;--b:55%"></i></div><span>最後まで</span></div>
+      <div class="bar"><span>隠す</span><div class="trk"><i style="--a:60%;--b:28%"></i></div><span>見せる</span></div>
+      <svg class="spark" viewBox="0 0 300 46" preserveAspectRatio="none" aria-label="降りどころの章ごとの変化">
+        <polyline points="10,10 55,14 100,22 145,20 190,30 235,34 280,38" fill="none" stroke="#c9a45c" stroke-width="2"/>
+        <circle cx="280" cy="38" r="4" fill="#c9a45c"/>
+        <text x="10" y="44" fill="#93a5a2" font-size="9">第1章</text><text x="250" y="28" fill="#93a5a2" font-size="9">いま</text>
+      </svg>
+      <div class="jin">ジン「降りるのが早くなったな。悪くない」</div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="txt">
+    <span class="no">案2</span>
+    <h2>影と打つ<span class="tag">次におすすめ</span></h2>
+    <p>カルテを12文字ほどのコードにして友だちへ送ると、相手のフリー対戦にあなたの「影」が座ります。サーバーは使いません。</p>
+    <ul><li>影はあなたの目盛りどおりに打つCPU</li><li>勝つと結果コードを送り返せる</li><li>第二部の「第一部の自分の影」と同じ部品</li></ul>
+  </div>
+  <div class="stage">
+    <div style="text-align:center">
+      <div class="code">LT7Q-4KM2-RA9X</div>
+      <div class="seats">
+        <div class="seat"><div class="face"></div>ゲン</div>
+        <div class="seat shadow"><div class="face"></div>影：さとう</div>
+        <div class="seat"><div class="face"></div>あなた</div>
+      </div>
+      <div class="res">影を越えた　―　結果コード <span class="mono">W3-LT7Q</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="txt">
+    <span class="no">案3</span>
+    <h2>週替わりの卓</h2>
+    <p>錨亭の掲示板に毎週ひとつ特別な卓が貼られます。端末の日付で決まり、8種類を順に回します。ご褒美は裏柄など見た目だけです。</p>
+  </div>
+  <div class="stage">
+    <div class="board"><div class="paper">
+      <h3>今週の卓　全員ストラドル</h3>
+      <ul><li class="done">一度もポットを諦めずに卓を終える</li><li class="done">ストラドルに3回レイズで返す</li><li>最後まで残る</li></ul>
+    </div></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="txt">
+    <span class="no">案4</span>
+    <h2>後ろから見る</h2>
+    <p>第2章のあと、常連どうしの1ハンドをジンと卓の後ろから観戦します。途中で「次どうする？」と聞かれ、当たると相手メモに残ります。</p>
+  </div>
+  <div class="stage">
+    <div>
+      <div class="tbl">
+        <div class="p on" style="left:8%;top:28%"><div class="face"></div>ハル</div>
+        <div class="p" style="left:40%;top:-14%"><div class="face"></div>ゲン</div>
+        <div class="p" style="right:8%;top:28%"><div class="face"></div>ミナ</div>
+        <div class="whisper" id="wh">ジン「ハルが迷ってる。押されると弱いぞ」</div>
+      </div>
+      <div class="ask"><span>降りる</span><span class="hit">コール</span><span>レイズ</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="txt">
+    <span class="no">案5</span>
+    <h2>ディーラー見習い</h2>
+    <p>章の合間に店主の手伝いで、30秒ほどの短い遊びをします。ポットを数える、勝った人を当てる、サイドポットを分ける、の3種類です。</p>
+  </div>
+  <div class="stage">
+    <div style="width:100%;max-width:300px">
+      <div class="piles">
+        <div class="pile"><i class="chip c100"></i><i class="chip c100"></i><i class="chip c100"></i></div>
+        <div class="pile"><i class="chip c25"></i><i class="chip c25"></i><i class="chip c25"></i><i class="chip c25"></i></div>
+        <div class="pile"><i class="chip c5"></i><i class="chip c5"></i><i class="chip c5"></i><i class="chip c5"></i><i class="chip c5"></i><i class="chip c5"></i></div>
+        <div class="pile"><i class="chip c1"></i><i class="chip c1"></i></div>
+      </div>
+      <div class="q">店主「ポットはいくつだ？」</div>
+      <div class="opts"><span>412</span><span class="ok">432</span><span>437</span></div>
+      <div class="timer"></div>
+    </div>
+  </div>
+</section>
+
+<footer>入れないもの：ネットのランキングと対人戦（サーバーが要る）、1台を回して打つ遊び、ガチャとチップ販売、気持ちの目盛り。どの案も第1〜3章の難しさと第7章のジンのテルには触れません。</footer>
+</div>
+<script>
+const lines=["ジン「ハルが迷ってる。押されると弱いぞ」","ジン「ゲンの額を見ろ。引きを待ってる額だ」","ジン「さて、ハルは次どうする？」"];
+let k=0;const wh=document.getElementById('wh');
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(()=>{k=(k+1)%lines.length;wh.textContent=lines[k]},2600);
+</script>

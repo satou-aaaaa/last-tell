@@ -1,0 +1,6 @@
+{
+  "name": "last-tell-lint",
+  "private": true,
+  "description": "組み立てたゲームの文法・書き方チェック（開発と設計のベストプラクティス 案2）",
+  "devDependencies": { "eslint": "9.39.5", "globals": "17.13.0" }
+}

@@ -1,0 +1,220 @@
+<title>LAST TELL フォールドの見せ方</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 暗い店内に緑のラシャ。案ごとに小さな卓を並べ、同じ流れ（レイカのレイズ→ゲン・ミナ・あなたが降りる）を同時に動かす */
+:root{
+  --bg:#0d0f12; --panel:#15181d; --line:#2a2f37; --fg:#e9e4d8; --muted:#9a968c;
+  --gold:#c9a45c; --felt:#1f4a3c; --felt2:#163a2f; --crimson:#a3283a; --teal:#2f6f5f;
+  --skin:#d9a98a; --skin2:#b07f62; --back1:#5b1622; --back2:#7a2131;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 40px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,3.5vw,1.9rem);letter-spacing:.06em;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 14px;max-width:62ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+button{font:inherit;cursor:pointer}
+.bar button{background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:6px 14px;border-radius:4px}
+.bar button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.bar button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mel{font-size:.72rem;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.card header{padding:10px 12px 6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h2{font-family:var(--display);font-size:1.05rem;margin:0;letter-spacing:.04em}
+.no{color:var(--gold);font-family:var(--display);font-weight:800}
+.rec{font-size:.72rem;background:var(--gold);color:#111;padding:0 6px;font-weight:700;letter-spacing:.05em}
+.post{font-size:.72rem;border:1px solid var(--line);color:var(--muted);padding:0 6px}
+.card p{margin:0;padding:0 12px 10px;color:var(--muted);font-size:.85rem}
+/* 卓 */
+.tbl{position:relative;aspect-ratio:16/10;margin:auto 10px 10px;overflow:hidden;touch-action:pan-y;
+  background:radial-gradient(ellipse 70% 60% at 50% 55%,var(--felt),var(--felt2) 70%,#0c1814);
+  border-radius:48% 48% 40% 40%/30% 30% 24% 24%;box-shadow:inset 0 0 0 6px #2b1d12,inset 0 0 0 8px #4a3220,inset 0 0 40px #0008}
+.seat{position:absolute;top:5%;width:22%;display:flex;flex-direction:column;align-items:center;gap:2px}
+.seat.s0{left:6%}.seat.s1{left:39%;top:3%}.seat.s2{right:6%}
+.av{width:40%;aspect-ratio:1;border-radius:50%;background:linear-gradient(160deg,#444b55,#22262c);border:2px solid #5a5f68;
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:clamp(.8rem,2.4vw,1.05rem);color:#ddd;transition:filter .3s,box-shadow .2s}
+.seat.boss .av{border-color:var(--gold)}
+.seat.turn .av{box-shadow:0 0 0 3px #c9a45c88}
+.seat.out .av{filter:brightness(.45) saturate(.5)}
+.nm{font-size:.7rem;background:#000a;padding:0 6px;white-space:nowrap}
+.tag{font-size:.68rem;min-height:1.35em;padding:0 6px;color:transparent;white-space:nowrap}
+.tag.on{background:#3a3f47;color:#fff;font-weight:700}
+.tag.raise{background:var(--crimson);color:#fff;font-weight:700}
+.bk,.cd{position:absolute;width:clamp(14px,3.6vw,22px);aspect-ratio:5/7;border-radius:2px;box-shadow:0 1px 2px #000a;transform:translate(-50%,-50%)}
+.bk{background:repeating-linear-gradient(45deg,var(--back1) 0 3px,var(--back2) 3px 6px);border:1.5px solid #e9e4d8}
+.cd{background:#f4f1ea;color:#111;font-size:clamp(.55rem,1.6vw,.72rem);font-weight:700;display:grid;place-items:center}
+.cd.r{color:var(--crimson)}
+.cd.big{width:clamp(20px,5vw,30px);transition:opacity .3s,filter .3s}
+.cd.grey{opacity:.35;filter:grayscale(1)}
+.deck{position:absolute;left:74%;top:65%;transform:translate(-50%,-50%)}
+.deck i{position:absolute;left:0;top:0;width:clamp(14px,3.6vw,22px);aspect-ratio:5/7;background:repeating-linear-gradient(45deg,var(--back1) 0 3px,var(--back2) 3px 6px);border:1.5px solid #e9e4d8;border-radius:2px;transform:translate(-50%,-50%)}
+.dlab{position:absolute;left:74%;top:74%;transform:translateX(-50%);font-size:.56rem;color:#fff8;letter-spacing:.1em;white-space:nowrap}
+.pot{position:absolute;left:42%;top:52%;transform:translate(-50%,-50%);display:flex;gap:2px}
+.pot b{width:clamp(9px,2.2vw,14px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#c33 40%,#fff 42% 52%,#c33 54%);box-shadow:0 1px 1px #000a}
+.dcall{position:absolute;left:50%;top:40%;transform:translateX(-50%);font-family:var(--display);font-size:clamp(.62rem,1.9vw,.8rem);color:var(--gold);letter-spacing:.06em;opacity:0;transition:opacity .2s;white-space:nowrap;text-shadow:0 1px 3px #000}
+.dcall.on{opacity:1}
+.street{position:absolute;left:5%;top:56%;font-size:.62rem;color:#fff9;letter-spacing:.2em}
+.me{position:absolute;left:0;right:0;bottom:3%;display:flex;justify-content:center;align-items:center;gap:8px}
+.melab{font-size:.66rem;color:var(--muted)}
+.melab.turn{color:var(--gold)}
+.hbtn{background:#3a3f47;color:#fff;border:0;padding:2px 14px;font-weight:700;font-size:.74rem;border-radius:3px;transition:transform .1s,filter .1s}
+.hbtn.press{transform:scale(.92);filter:brightness(1.5)}
+.gone{position:absolute;left:40%;top:76%;transform:translate(-50%,-50%);font-size:.6rem;color:#fff8;white-space:nowrap;opacity:0;transition:opacity .4s}
+.gone.on{opacity:1}
+.hint{position:absolute;left:25%;top:84%;transform:translateX(-50%);font-size:.58rem;color:#fffb;background:#0008;padding:0 6px;white-space:nowrap}
+.hand{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-30%)}
+.trail{position:absolute;width:3px;border-radius:2px;background:linear-gradient(#fff0,#fffa);transform:translateX(-50%);opacity:0;pointer-events:none}
+section.notes{margin-top:22px;display:grid;gap:10px;max-width:72ch}
+section.notes h3{font-family:var(--display);margin:0;font-size:1rem;color:var(--gold)}
+section.notes li{color:var(--muted);font-size:.88rem}
+section.notes ul{margin:0;padding-left:1.2em}
+</style>
+
+<div class="wrap">
+  <h1>フォールドの見せ方</h1>
+  <p class="lead">どの卓も同じ流れです。レイカがレイズし、ゲン、ミナ、あなたの順に降ります。案0が今のゲームです。</p>
+  <div class="bar">
+    <button id="snd" aria-pressed="false">音を出す</button>
+    <button id="pause" aria-pressed="false">止める</button>
+    <span class="mel">案4の卓は、あなたの札を上へはらうと降りられます。</span>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <section class="notes">
+    <h3>テルにならないための決まり（全案共通）</h3>
+    <ul>
+      <li>捨て方はキャラごとに1つに決めて、手の強さやブラフで変えない。</li>
+      <li>動きは降りると決まった瞬間に始める。考える時間は今のまま変えない。</li>
+      <li>自分の番より前に札を持ち上げて待つ「降りる準備」は入れない（本物のテルになるため）。</li>
+      <li>札と手は卓の上だけを動く。顔や、ジンのあごの傷のあたりには重ねない。</li>
+      <li>第1〜3章は見た目だけが変わり、CPUの判断と時間は同じ。</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const OPTS=[
+ {n:0,t:'今のまま',d:'相手の札は下へ落ちて消え、名前の下に「フォールド」と出る。あなたの札はその場で灰色になる。'},
+ {n:1,t:'伏せて前へ滑らせる',d:'降りた人は、2枚を伏せたままラシャの上で前へ滑らせ、ディーラーの横の捨て札の山へ。あなたの札も裏返って前へ。捨てた手は小さな文字で残る。'},
+ {n:2,t:'キャラごとの捨て方',d:'1と同じ仕組みで、捨て方を人ごとに決める。ゲンは指で弾いて札が回る、ミナは揃えてそっと置く、レイカは指2本で低く速く滑らせる。',rec:1},
+ {n:3,t:'ディーラーが集める',d:'降りた人は札を少し前へ出すだけ。ディーラーが手のひらで捨て札の山へ引き寄せ、ハンドが終わると山ごと山札の下へ戻す。',rec:1},
+ {n:4,t:'自分の札をはらって降りる',d:'設定で選ぶと、自分の札を上へはらって降りられる。ボタンはそのまま残す。誤操作を防ぐため最初はオフ。',post:1},
+ {n:5,t:'フォールドにまつわる出来事',d:'第4章以降でたまに起きる。番の前に降りてディーラーに注意される、捨てるときに1枚が表になって全員に見せられる、など。',post:1},
+];
+// 捨て方 k: slide=指2本で低く速く／place=揃えてそっと置く／flick=指で弾く（回る）
+const CAST={
+ std:[{nm:'ゲン',ini:'ゲ',k:'slide'},{nm:'ミナ',ini:'ミ',k:'slide'},{nm:'レイカ',ini:'レ',k:'slide',boss:1}],
+ two:[{nm:'ゲン',ini:'ゲ',k:'flick',say:'降り！'},{nm:'ミナ',ini:'ミ',k:'place'},{nm:'レイカ',ini:'レ',k:'slide',boss:1}],
+};
+const SPOTS=[[17,37],[50,34],[83,37]],MUCK=[62,64],DECK=[74,65],HERO=[[47,76],[53,76]];
+// 捨て札の山で札が重なる角度（毎回同じ並び。乱数は使わない）
+const MESS=[[-1.2,-.8,-14],[1,.6,22],[-.4,1.2,6],[1.4,-1,-30],[-1.6,.9,38],[.6,-1.4,-4],[.2,.3,15],[-.9,-.2,-24]];
+let sound=false,paused=false,AC=null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function swish(hard){if(!sound)return;AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,len=hard?.18:.26;
+  const b=AC.createBuffer(1,AC.sampleRate*len,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++){const x=i/d.length;d[i]=(Math.random()*2-1)*Math.sin(Math.PI*x)**2}
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();f.type='bandpass';f.frequency.setValueAtTime(hard?2600:1800,t);f.frequency.linearRampToValueAtTime(hard?1200:900,t+len);f.Q.value=.8;
+  g.gain.value=hard?.35:.18;s.buffer=b;s.connect(f).connect(g).connect(AC.destination);s.start(t)}
+function handSVG(k){
+  const sk='var(--skin)',sk2='var(--skin2)',sl='#1b1d22';
+  if(k==='palm')return `<svg viewBox="0 0 60 80" width="100%"><rect x="20" y="52" width="20" height="28" fill="${sl}"/><path d="M8 30 Q6 10 14 8 L46 8 Q54 10 52 30 L44 54 L16 54 Z" fill="${sk}"/><path d="M14 10 V26 M24 6 V24 M34 6 V24 M44 10 V26" stroke="${sk2}" stroke-width="1.5"/></svg>`;
+  // 指2本（slide/place/flick）
+  return `<svg viewBox="0 0 44 80" width="100%"><rect x="13" y="44" width="18" height="36" fill="${sl}"/><path d="M10 48 Q8 34 14 32 L30 32 Q36 34 34 48 Z" fill="${sk2}"/><rect x="14" y="4" width="7" height="32" rx="3.5" fill="${sk}"/><rect x="23" y="6" width="7" height="30" rx="3.5" fill="${sk}"/></svg>`;
+}
+const at=(el,x,y)=>{el.style.left=x+'%';el.style.top=y+'%'};
+function el(T,cls,x,y,html){const e=document.createElement('div');e.className=cls;if(html!=null)e.innerHTML=html;at(e,x,y);T.appendChild(e);return e}
+function makeTable(o){
+  const cast=o.n===2?CAST.two:CAST.std;
+  const c=document.createElement('article');c.className='card';
+  c.innerHTML=`<header><span class="no">案${o.n}</span><h2>${o.t}</h2>${o.rec?'<span class="rec">おすすめ</span>':''}${o.post?'<span class="post">公開後</span>':''}</header><p>${o.d}</p>
+  <div class="tbl">${cast.map((p,i)=>`<div class="seat s${i}${p.boss?' boss':''}"><div class="av">${p.ini}</div><div class="nm">${p.nm}</div><div class="tag"></div></div>`).join('')}
+   <div class="street">PREFLOP</div><div class="dcall"></div>
+   <div class="deck">${'<i></i>'.repeat(4)}</div><div class="dlab">ディーラー</div>
+   <div class="gone"></div>
+   ${o.n===4?'<div class="hint">札を上へはらう</div>':''}
+   <div class="me"><span class="melab">あなた</span><button class="hbtn" tabindex="-1">フォールド</button></div></div>`;
+  const T=c.querySelector('.tbl');T._o=o;T._cast=cast;
+  c.querySelectorAll('.deck i').forEach((d,k)=>{d.style.left=(-k*.6)+'px';d.style.top=(-k*.6)+'px'});
+  if(o.n===4){let y0=null;T.addEventListener('pointerdown',e=>{const r=T.getBoundingClientRect();if((e.clientY-r.top)/r.height>.6)y0=e.clientY});
+    T.addEventListener('pointerup',e=>{if(y0!=null&&y0-e.clientY>20&&T._hero&&!T._meDone)meFold(T,true);y0=null})}
+  return c;
+}
+function setTurn(T,i){T.querySelectorAll('.seat').forEach((s,k)=>s.classList.toggle('turn',k===i));T.querySelector('.melab').classList.toggle('turn',i===3)}
+function say(T,text,ms){const d=T.querySelector('.dcall');d.textContent=text;d.classList.add('on');clearTimeout(d._t);d._t=setTimeout(()=>d.classList.remove('on'),ms||1500)}
+function anim(e,frames,dur,ease){if(reduce){Object.assign(e.style,frames[frames.length-1]);return Promise.resolve()}
+  const a=e.animate(frames,{duration:dur,easing:ease||'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});return a.finished.then(()=>{try{a.commitStyles()}catch(_){}a.cancel()})}
+// 札を捨て札の山へ。k=捨て方
+function toMuck(T,cards,k,from){
+  k=k||'slide';
+  const dur=k==='place'?820:k==='flick'?460:380;
+  cards.forEach((c,j)=>{const m=MESS[(T._mc++)%MESS.length];
+    const x=MUCK[0]+(k==='place'?j*.5-.25:m[0]),y=MUCK[1]+(k==='place'?0:m[1]),r=k==='place'?(j?4:-4):m[2];
+    const r0=parseFloat(c.dataset.r||0);
+    const mid=k==='flick'?[{left:(x+1.8)+'%',top:(y-.6)+'%',transform:`translate(-50%,-50%) rotate(${r+260}deg)`,offset:.75}]:[];
+    anim(c,[{left:c.style.left,top:c.style.top,transform:`translate(-50%,-50%) rotate(${r0}deg)`},...mid,{left:x+'%',top:y+'%',transform:`translate(-50%,-50%) rotate(${r+(k==='flick'?360:0)}deg)`}],dur+j*40,k==='flick'?'cubic-bezier(.1,.8,.3,1)':undefined)
+      .then(()=>{c.dataset.r=r});c.style.zIndex=T._mc;T._muck.push(c)});
+  swish(k==='flick');
+  if(from&&(T._o.n===2)){const h=el(T,'hand',from[0],from[1]+4,handSVG(k));h.style.width='6%';
+    anim(h,[{opacity:0,transform:'translate(-50%,-30%)'},{opacity:1,offset:.25},{opacity:1,left:(from[0]+(MUCK[0]-from[0])*(k==='flick'?.15:.55))+'%',top:(from[1]+4+(MUCK[1]-from[1])*(k==='flick'?.15:.55))+'%',offset:.7},{opacity:0,left:(from[0]+(MUCK[0]-from[0])*(k==='flick'?.18:.6))+'%',top:(from[1]+4+(MUCK[1]-from[1])*(k==='flick'?.18:.6))+'%'}],dur+160,'ease-out').then(()=>h.remove())}
+}
+// 案3：少し前へ出す → ディーラーが手のひらで引き寄せる
+function pushForward(T,cards,from){cards.forEach(c=>{const x=parseFloat(c.style.left),y=parseFloat(c.style.top);const nx=x+(MUCK[0]-x)*.3,ny=y+(MUCK[1]-y)*.3;
+  anim(c,[{left:c.style.left,top:c.style.top},{left:nx+'%',top:ny+'%'}],320)});swish(false);
+  setTimeout(()=>dealerSweep(T,cards),650)}
+function dealerSweep(T,cards){const c0=cards[0],x=parseFloat(c0.style.left),y=parseFloat(c0.style.top);
+  const h=el(T,'hand',DECK[0]-2,DECK[1]+4,handSVG('palm'));h.style.width='7%';
+  anim(h,[{opacity:0,left:(DECK[0]-2)+'%',top:(DECK[1]+4)+'%',transform:'translate(-50%,-30%) rotate(-70deg)'},{opacity:1,left:(x+2)+'%',top:(y+3)+'%',transform:'translate(-50%,-30%) rotate(-70deg)',offset:.45},{opacity:1,left:(MUCK[0]+3)+'%',top:(MUCK[1]+3)+'%',transform:'translate(-50%,-30%) rotate(-70deg)',offset:.85},{opacity:0,left:(MUCK[0]+5)+'%',top:(MUCK[1]+3)+'%',transform:'translate(-50%,-30%) rotate(-70deg)'}],700,'ease-in-out').then(()=>h.remove());
+  setTimeout(()=>toMuck(T,cards,'slide'),330)}
+// ハンドの終わり：捨て札の山を山札の下へ
+function gather(T){if(T._o.n!==3)return;const h=el(T,'hand',MUCK[0],MUCK[1]+4,handSVG('palm'));h.style.width='7%';
+  anim(h,[{opacity:0,transform:'translate(-50%,-30%) rotate(-70deg)'},{opacity:1,offset:.3},{opacity:1,left:DECK[0]+'%',offset:.8},{opacity:0,left:DECK[0]+'%'}],800,'ease-in-out').then(()=>h.remove());
+  setTimeout(()=>T._muck.forEach(c=>anim(c,[{left:c.style.left,top:c.style.top,opacity:1},{left:DECK[0]+'%',top:DECK[1]+'%',transform:'translate(-50%,-50%) rotate(0deg)',opacity:0}],380)),260)}
+function oppFold(T,i,ev){
+  const o=T._o,p=T._cast[i],seat=T.querySelectorAll('.seat')[i],tag=seat.querySelector('.tag');
+  tag.textContent=(o.n===2&&p.say)?p.say:'フォールド';tag.className='tag on';seat.classList.add('out');
+  const cards=T._opp[i],sp=SPOTS[i];
+  if(o.n===0){cards.forEach(c=>anim(c,[{transform:'translate(-50%,-50%)',opacity:1},{transform:'translate(-50%,-50%) translateY(70%) rotate(12deg) scale(.7)',opacity:0}],600,'ease-in'));return}
+  if(o.n===3){pushForward(T,cards,sp);return}
+  toMuck(T,cards,o.n===2?p.k:'slide',sp);
+  if(ev==='expose'){setTimeout(()=>{const c=cards[1];c.className='cd r';c.textContent='Q♥';c.style.zIndex=999;say(T,'見えた札は、皆さんに見せます',1800)},560)}
+}
+function meFold(T,swipe){
+  const o=T._o;if(T._meDone)return;T._meDone=1;setTurn(T,-1);
+  if(!(o.n===4&&swipe)){const b=T.querySelector('.hbtn');b.classList.add('press');setTimeout(()=>b.classList.remove('press'),180)}
+  const H=T._hero;
+  if(o.n===0){H.forEach(c=>c.classList.add('grey'));return}
+  if(o.n===4){const tr=el(T,'trail',50,62);tr.style.height='16%';anim(tr,[{opacity:0,transform:'translateX(-50%) translateY(40%)'},{opacity:1,offset:.4},{opacity:0,transform:'translateX(-50%) translateY(-20%)'}],420)}
+  // 裏返してから前へ
+  H.forEach(c=>{c.className='bk';c.textContent=''});
+  const g=T.querySelector('.gone');g.textContent='捨てた手　K♣ 7♦';setTimeout(()=>g.classList.add('on'),500);
+  if(o.n===3){pushForward(T,H,[50,76]);return}
+  setTimeout(()=>toMuck(T,H,o.n===2?'slide':'slide'),120);
+}
+function reset(T){
+  T.querySelectorAll('.bk,.cd,.pot,.hand,.trail').forEach(e=>e.remove());
+  T.querySelectorAll('.seat').forEach(s=>s.classList.remove('out','turn'));
+  T.querySelectorAll('.tag').forEach(t=>{t.className='tag';t.textContent=''});
+  const rt=T.querySelectorAll('.tag')[2];rt.className='tag raise';rt.textContent='レイズ';
+  T.querySelector('.gone').classList.remove('on');T._mc=0;T._muck=[];T._meDone=0;
+  T._opp=SPOTS.map(([x,y],i)=>[0,1].map(j=>{const c=el(T,'bk',x-1.4+j*2.8,y+9);const r=j?6:-6;c.dataset.r=r;c.style.transform=`translate(-50%,-50%) rotate(${r}deg)`;return c}));
+  T._hero=HERO.map(([x,y],j)=>{const c=el(T,'cd big'+(j?' r':''),x,y,j?'7♦':'K♣');return c});
+  const pot=el(T,'pot',42,52,'<b></b><b></b><b></b>');setTurn(T,0);
+}
+function potToWinner(T){const pot=T.querySelector('.pot');if(!pot)return;anim(pot,[{left:'42%',top:'52%',opacity:1},{left:'83%',top:'40%',opacity:0}],700,'ease-in-out')}
+const grid=document.getElementById('grid');const tables=OPTS.map(o=>{const c=makeTable(o);grid.appendChild(c);return c.querySelector('.tbl')});
+// 流れ：0.6s ゲン → 1.9s ミナ → 3.2s あなた → 4.8s ポットがレイカへ → 5.8s（案3）山札へ戻す → 8.4s 最初から
+// 案5だけ：0.6s ゲンの番なのにミナが先に降りる（注意）→ 1.9s ゲンが降りるとき1枚が表になる
+const STEPS=[
+ [600,T=>{if(T._o.n===5){oppFold(T,1);say(T,'まだ番ではありません。降りは有効です',1700);return}oppFold(T,0);setTurn(T,1)}],
+ [1900,T=>{if(T._o.n===5){oppFold(T,0,'expose');setTurn(T,3);return}oppFold(T,1);setTurn(T,3)}],
+ [3200,T=>meFold(T,T._o.n===4)],
+ [4800,potToWinner],[5800,gather],[8400,null]];
+function loop(){if(paused){setTimeout(loop,300);return}tables.forEach(reset);STEPS.forEach(([t,f])=>setTimeout(()=>{if(f)tables.forEach(T=>f(T));else loop()},t))}
+loop();
+document.getElementById('snd').onclick=e=>{sound=!sound;e.target.setAttribute('aria-pressed',sound);e.target.textContent=sound?'音を消す':'音を出す';if(sound){AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume()}};
+document.getElementById('pause').onclick=e=>{paused=!paused;e.target.setAttribute('aria-pressed',paused);e.target.textContent=paused?'動かす':'止める'};
+</script>

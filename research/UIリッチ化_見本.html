@@ -1,0 +1,402 @@
+<title>LAST TELL UIリッチ化見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Oswald:wght@500;700&display=swap">
+<style>
+/* layout: 1列の読み物。各案は「いま」と「案」の卓を左右（スマホ縦は上下）に並べて比べる。ゲームと同じ夜のノワール1色で固定。 */
+:root{
+  --bg:#0b0c11; --panel:#14161e; --line:#2a2d3a; --ink:#f1ede4; --muted:#a3a5b4; --gold:#e2b65b; --crimson:#d7263d;
+  --felt:#11362f; --felt-hi:#1a5146;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --num:"Oswald","Zen Kaku Gothic New",sans-serif;
+  --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  --weave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M0 0h3v3H0zM3 3h3v3H3z' fill='%23ffffff' fill-opacity='.035'/%3E%3C/svg%3E");
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:500;font-size:15px;line-height:1.75;
+  background-image:radial-gradient(ellipse 80% 40% at 50% 0,rgba(215,38,61,.10),transparent 70%)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:grid;gap:56px}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+.eyebrow{font-family:var(--num);letter-spacing:.24em;font-size:.75rem;color:var(--crimson);text-transform:uppercase}
+header.top{display:grid;gap:14px;max-width:70ch}
+header.top h1{font-family:var(--display);font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.2}
+header.top h1 em{font-style:normal;color:var(--gold)}
+.lead{color:var(--muted)}
+.idx{display:grid;gap:6px;margin:6px 0 0;padding:0;list-style:none}
+.idx li{display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:8px;align-items:baseline}
+.idx b{font-family:var(--num);color:var(--gold);font-weight:500}
+.idx .rec{color:var(--crimson);font-weight:900;font-size:.8rem;margin-left:6px;white-space:nowrap}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ctrl button{font:inherit;font-weight:900;border:0;padding:8px 18px;background:#1f2230;color:var(--ink);cursor:pointer;
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.ctrl button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+section.pr{display:grid;gap:16px}
+section.pr>header{display:grid;gap:6px;max-width:72ch}
+section.pr h2{font-family:var(--display);font-size:clamp(1.3rem,3.4vw,1.8rem);line-height:1.3}
+section.pr h2 small{font-family:var(--num);font-size:.9rem;color:var(--gold);letter-spacing:.12em;display:block;font-weight:500}
+.pts{margin:0;padding-left:1.2em;color:var(--muted);display:grid;gap:2px}
+.pts li::marker{color:var(--crimson)}
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px) and (orientation:portrait){.cmp{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:grid;gap:6px;min-width:0}
+figcaption{font-weight:900;font-size:.85rem;letter-spacing:.1em;display:flex;gap:8px;align-items:center}
+figcaption .tag{font-family:var(--num);font-weight:500;padding:0 8px;background:#262936;color:var(--muted)}
+figcaption .tag.new{background:var(--crimson);color:#fff}
+.note{font-size:.85rem;color:var(--muted)}
+.rec-box{border-left:3px solid var(--crimson);padding:10px 14px;background:var(--panel);max-width:72ch}
+.rec-box b{color:var(--gold)}
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;max-width:72ch}
+
+/* ========== 卓の見本（ステージ） ========== */
+.stage{container-type:inline-size;width:100%;max-width:100%}
+.scene{position:relative;aspect-ratio:16/11;overflow:hidden;background:#07080c;isolation:isolate;
+  background-image:radial-gradient(ellipse 70% 50% at 50% 40%,#151a24,#07080c 75%)}
+.felt{position:absolute;left:7%;right:7%;top:21%;bottom:25%;border-radius:50%;z-index:1;
+  background:radial-gradient(ellipse 60% 45% at 50% 38%,var(--felt-hi),var(--felt) 72%);
+  box-shadow:inset 0 0 0 1.6cqw #2a1b12,inset 0 0 0 1.8cqw var(--gold),inset 0 0 0 2cqw #120c08,inset 0 3cqw 6cqw rgba(0,0,0,.4)}
+.felt .bline{position:absolute;inset:16% 12%;border-radius:50%;border:.25cqw dashed rgba(226,182,91,.45)}
+.felt .logo,.rail,.stitch,.lamp,.haze{display:none}
+/* 相手の名札 */
+.opp{position:absolute;top:3%;transform:translateX(-50%);z-index:3;display:grid;justify-items:center;gap:.6cqw}
+.opp .bk{display:flex;gap:.4cqw}
+.opp .bk .cd{--w:3.6cqw}
+.plate{background:rgba(13,14,19,.88);padding:.5cqw 1.4cqw;display:grid;justify-items:center;line-height:1.25;min-width:12cqw;position:relative}
+.plate .nm{font-weight:900;font-size:1.7cqw;letter-spacing:.06em}
+.plate .ch{font-family:var(--num);font-size:1.7cqw;color:var(--gold)}
+.plate.turn{background:rgba(60,46,14,.95);box-shadow:inset 0 0 0 .25cqw var(--gold)}
+/* ボード・ポット */
+.board{position:absolute;left:50%;top:31%;transform:translateX(-50%);display:flex;gap:1cqw;z-index:3}
+.board .cd{--w:7.2cqw}
+.pot{position:absolute;left:50%;top:56%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:1.4cqw}
+.potlabel{font-family:var(--num);background:rgba(0,0,0,.72);color:var(--gold);padding:.2cqw 1.2cqw;font-size:2.4cqw;line-height:1.3;display:flex;align-items:baseline;gap:.8cqw;white-space:nowrap}
+.potlabel small{font-family:var(--body);font-weight:900;font-size:1.3cqw;color:var(--ink);letter-spacing:.1em}
+.potnum{font-variant-numeric:tabular-nums;font-weight:700}
+.pile{position:relative;width:11cqw;height:6cqw}
+/* 自分 */
+.me{position:absolute;left:50%;bottom:16.5%;transform:translateX(-50%);display:flex;align-items:flex-end;gap:2cqw;z-index:4}
+.me .hole{display:flex}
+.me .hole .cd{--w:8.4cqw}
+.me .hole .cd+.cd{margin-left:-2.4cqw;transform:rotate(7deg) translateY(.4cqw)}
+.me .hole .cd:first-child{transform:rotate(-5deg)}
+.me .plate{margin-bottom:.6cqw}
+/* アクションバー */
+.bar{position:absolute;left:0;right:0;bottom:0;height:14.5%;z-index:6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.2cqw;
+  padding:1.2cqw 2cqw;background:rgba(13,14,19,.96);border-top:.3cqw solid var(--crimson)}
+.act{display:grid;place-content:center;justify-items:center;line-height:1.15;font-weight:900;font-size:1.9cqw;letter-spacing:.06em;color:#fff;
+  clip-path:polygon(1.2cqw 0,100% 0,calc(100% - 1.2cqw) 100%,0 100%);position:relative;overflow:hidden}
+.act small{font-family:var(--num);font-weight:500;font-size:1.6cqw;opacity:.9}
+.act.fold{background:#2a2c37;color:#cfd0d8}
+.act.call{background:#2f6f5f}
+.act.raise{background:var(--crimson)}
+
+/* カード（いま） */
+.cd{--w:7cqw;width:var(--w);aspect-ratio:5/7;border-radius:calc(var(--w)*.1);position:relative;flex:none;color:#16171c;
+  background:linear-gradient(160deg,#fffdf7,#efe9dc);
+  box-shadow:0 .1cqw 0 #d8d0bf,0 .25cqw 0 #b3aa95,0 .8cqw 1.4cqw rgba(0,0,0,.55);font-family:var(--num);font-weight:700}
+.cd.r{color:#c8213a}
+.cd .ix{position:absolute;top:6%;left:9%;display:grid;justify-items:center;line-height:1;font-size:calc(var(--w)*.34)}
+.cd .ix i{font-style:normal;font-size:.75em}
+.cd .ix.bt{display:none}
+.cd .pip{position:absolute;inset:0;display:grid;place-items:center;padding:28% 0 0 24%;font-size:calc(var(--w)*.58);line-height:1}
+.cd.back{background:#1b1d26;background-image:linear-gradient(135deg,transparent 44%,var(--crimson) 44% 56%,transparent 56%),
+  repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 2px,transparent 2px 6px);box-shadow:inset 0 0 0 .3cqw #2c2f3d,0 .5cqw 1cqw rgba(0,0,0,.5)}
+.cd.back>*{display:none}
+.cd.slot{background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 .2cqw rgba(226,182,91,.4)}
+.cd.slot>*{display:none}
+
+/* チップ（いま）：平たい楕円を重ねる */
+.chip{position:absolute;width:5cqw;height:2cqw;border-radius:50%;background:var(--c,#2f5fa0);
+  box-shadow:0 .5cqw 0 color-mix(in srgb,var(--c,#2f5fa0) 60%,#000),inset 0 0 0 .5cqw rgba(255,255,255,.25)}
+.chip.k{--c:#24252c}.chip.rd{--c:#b52335}.chip.gr{--c:#2a7b55}.chip.wh{--c:#d9d4c8}
+
+/* ====== 案1：卓の素材と光 ====== */
+.t1 .scene{background-image:
+    radial-gradient(ellipse 55% 60% at 50% -8%,rgba(255,214,150,.18),transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 45%,#141922,#06070a 78%)}
+.t1 .felt{left:8%;right:8%;top:22%;bottom:26%;
+  background:
+    radial-gradient(ellipse 48% 40% at 50% 34%,rgba(255,226,170,.20),transparent 70%),
+    var(--noise),
+    radial-gradient(ellipse 70% 60% at 50% 40%,#1d5a4d,#0f3029 70%,#0a211c 100%);
+  background-size:auto,140px 140px,auto;background-blend-mode:normal,soft-light,normal;
+  box-shadow:inset 0 1.2cqw 3cqw rgba(0,0,0,.55),inset 0 -.6cqw 2cqw rgba(0,0,0,.4)}
+.t1 .rail{display:block;position:absolute;left:4.4%;right:4.4%;top:16.5%;bottom:20.5%;border-radius:50%;z-index:0;
+  background:
+    radial-gradient(ellipse closest-side,transparent 0 88%,#5b3a26 89.5%,#7a5038 91.5%,#3b2417 95%,#1a0f09 98.5%,#c79a4c 99%,#3a2a14 100%),
+    #120b07;
+  box-shadow:0 2cqw 4cqw rgba(0,0,0,.7)}
+.t1 .rail::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--noise);background-size:120px;opacity:.35;mix-blend-mode:overlay;
+  -webkit-mask:radial-gradient(ellipse closest-side,transparent 88%,#000 89%);mask:radial-gradient(ellipse closest-side,transparent 88%,#000 89%)}
+.t1 .stitch{display:block;position:absolute;left:5.7%;right:5.7%;top:18.4%;bottom:22.4%;border-radius:50%;z-index:1;
+  border:.18cqw dashed rgba(226,182,91,.35);pointer-events:none}
+.t1 .felt .bline{inset:15% 11%;border:.2cqw solid rgba(226,182,91,.32);box-shadow:0 0 0 .5cqw rgba(226,182,91,.06)}
+.t1 .felt .logo{display:block;position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);font-family:var(--display);
+  font-size:2.6cqw;letter-spacing:.5em;color:rgba(226,182,91,.16);white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.t1 .lamp{display:block;position:absolute;inset:0;z-index:5;pointer-events:none;mix-blend-mode:soft-light;
+  background:radial-gradient(ellipse 42% 52% at 50% 36%,rgba(255,230,180,.45),transparent 70%)}
+.t1 .haze{display:block;position:absolute;inset:-10%;z-index:5;pointer-events:none;opacity:.5;
+  background:radial-gradient(ellipse 30% 14% at 30% 30%,rgba(210,220,235,.10),transparent 70%),
+             radial-gradient(ellipse 26% 12% at 72% 22%,rgba(210,220,235,.08),transparent 70%);
+  filter:blur(1cqw);animation:haze 14s ease-in-out infinite alternate}
+@keyframes haze{to{transform:translate(4%,-2%) scale(1.08)}}
+
+/* ====== 案2：カードとチップの質感 ====== */
+.t2 .cd:not(.back):not(.slot){background:
+    linear-gradient(125deg,rgba(255,255,255,.7),rgba(255,255,255,0) 40%,rgba(0,0,0,0) 72%,rgba(0,0,0,.07)),
+    var(--grain),linear-gradient(170deg,#fbf8f0,#ece5d5);
+  background-size:auto,90px 90px,auto;
+  box-shadow:inset 0 0 0 .12cqw rgba(0,0,0,.12),0 .1cqw 0 #e2dbcb,0 .2cqw 0 #cfc6b2,0 .3cqw 0 #b9af99,0 1cqw 1.6cqw rgba(0,0,0,.55)}
+.t2 .cd:not(.back):not(.slot)::before{content:"";position:absolute;inset:7%;border-radius:calc(var(--w)*.05);
+  box-shadow:inset 0 0 0 .1cqw currentColor;opacity:.16}
+.t2 .cd .ix{font-family:var(--display);font-weight:800;top:4%;left:6%;font-size:calc(var(--w)*.3)}
+.t2 .cd .ix.bt{display:grid;top:auto;left:auto;bottom:4%;right:6%;transform:rotate(180deg)}
+.t2 .cd .pip{padding:0;font-size:calc(var(--w)*.5);filter:drop-shadow(0 .1cqw 0 rgba(255,255,255,.8)) drop-shadow(0 -.06cqw 0 rgba(0,0,0,.25))}
+.t2 .cd.back{background:
+    linear-gradient(115deg,transparent 30%,rgba(255,236,190,.32) 45%,transparent 60%) no-repeat,
+    radial-gradient(ellipse 32% 22% at 50% 50%,#e2b65b 0 46%,#7a1220 48% 60%,transparent 62%),
+    repeating-linear-gradient(45deg,rgba(226,182,91,.22) 0 .12cqw,transparent .12cqw .9cqw),
+    repeating-linear-gradient(-45deg,rgba(226,182,91,.22) 0 .12cqw,transparent .12cqw .9cqw),
+    linear-gradient(160deg,#8f1426,#5a0c18);
+  background-size:300% 100%,auto,auto,auto,auto;background-position:120% 0,0 0,0 0,0 0,0 0;
+  box-shadow:inset 0 0 0 .35cqw #f3ead7,inset 0 0 0 .5cqw #5a0c18,0 .6cqw 1.2cqw rgba(0,0,0,.6);
+  animation:sheen 5s ease-in-out infinite}
+@keyframes sheen{0%,55%{background-position:120% 0,0 0,0 0,0 0,0 0}85%,100%{background-position:-20% 0,0 0,0 0,0 0,0 0}}
+/* クレイチップ：縁のインサート＋中央の刻印＋側面の縞 */
+.t2 .chip{width:5.4cqw;height:2.3cqw;background:
+    radial-gradient(ellipse 50% 50% at 50% 50%,color-mix(in srgb,var(--c) 85%,#fff) 0 36%,transparent 38%),
+    radial-gradient(ellipse 50% 50% at 50% 50%,transparent 0 44%,rgba(255,255,255,.75) 45% 47%,transparent 48%),
+    repeating-conic-gradient(from 8deg,#f2ede2 0 14deg,var(--c) 14deg 45deg),
+    var(--c);
+  box-shadow:0 .25cqw 0 color-mix(in srgb,var(--c) 70%,#000),0 .5cqw 0 color-mix(in srgb,var(--c) 55%,#000),
+    0 .75cqw .6cqw rgba(0,0,0,.45),inset 0 .15cqw .2cqw rgba(255,255,255,.35)}
+.t2 .chip.wh{--c:#d7d1c3}
+.t2 .chip.wh{background:radial-gradient(ellipse 50% 50% at 50% 50%,#ece7da 0 36%,transparent 38%),
+  repeating-conic-gradient(from 8deg,#2f5fa0 0 14deg,#d7d1c3 14deg 45deg)}
+
+/* ====== 案3：ボタンと名札の質感 ====== */
+.t3 .bar{background:
+    linear-gradient(180deg,rgba(255,255,255,.05),transparent 40%),var(--noise),linear-gradient(180deg,#171922,#0b0c11);
+  background-size:auto,140px,auto;background-blend-mode:normal,soft-light,normal;
+  border-top:0;box-shadow:inset 0 .18cqw 0 rgba(226,182,91,.55),0 -.4cqw 1.6cqw rgba(215,38,61,.25)}
+.t3 .act{text-shadow:0 .15cqw 0 rgba(0,0,0,.45);
+  box-shadow:inset 0 .2cqw 0 rgba(255,255,255,.22),inset 0 -.35cqw 0 rgba(0,0,0,.35)}
+.t3 .act::before{content:"";position:absolute;left:1.6cqw;right:1.6cqw;top:50%;height:1px;background:currentColor;opacity:.18}
+.t3 .act small{color:#ffe1a0;opacity:1;letter-spacing:.04em}
+.t3 .act.fold{background:linear-gradient(180deg,#3a3d4b,#20222c 60%,#191a22);color:#d6d7de}
+.t3 .act.fold small{color:#a9abb8}
+.t3 .act.call{background:linear-gradient(180deg,#3f8b77,#25594c 60%,#1c4a3f)}
+.t3 .act.raise{background:linear-gradient(180deg,#f04a5f,#c01f34 55%,#9b1729)}
+.t3 .act::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);
+  transform:translateX(-120%)}
+.t3 .act.call{animation:press 4s ease-in-out infinite}
+.t3 .act.call::after{animation:sweep 4s ease-in-out infinite}
+@keyframes press{0%,70%,82%,100%{transform:none;filter:none}74%{transform:translateY(.25cqw) scale(.98);filter:brightness(1.15)}}
+@keyframes sweep{0%,72%{transform:translateX(-120%)}86%,100%{transform:translateX(120%)}}
+.t3 .plate{background:linear-gradient(180deg,rgba(32,34,46,.94),rgba(10,11,16,.94));
+  box-shadow:inset 0 0 0 .12cqw rgba(226,182,91,.35),inset 0 .2cqw 0 rgba(255,255,255,.06),0 .6cqw 1.2cqw rgba(0,0,0,.5);
+  clip-path:polygon(.9cqw 0,100% 0,100% calc(100% - .9cqw),calc(100% - .9cqw) 100%,0 100%,0 .9cqw)}
+.t3 .plate .nm{font-family:var(--display);font-weight:800;letter-spacing:.14em}
+.t3 .plate .ch{font-weight:500;letter-spacing:.04em}
+.t3 .plate.turn{background:linear-gradient(180deg,rgba(78,60,20,.96),rgba(30,22,8,.96));box-shadow:inset 0 0 0 .2cqw var(--gold),0 0 1.6cqw rgba(226,182,91,.45)}
+.t3 .potlabel{background:linear-gradient(180deg,rgba(20,20,26,.92),rgba(0,0,0,.85));box-shadow:inset 0 0 0 .12cqw rgba(226,182,91,.45);
+  clip-path:polygon(.8cqw 0,100% 0,calc(100% - .8cqw) 100%,0 100%);padding-inline:1.8cqw}
+
+/* ====== 案4：動きの手ざわり ====== */
+@property --p{syntax:'<number>';inherits:false;initial-value:1}
+.t4 .plate.turn::after{content:"";position:absolute;inset:-.5cqw;pointer-events:none;
+  background:conic-gradient(from 0deg,var(--gold) calc(var(--p)*360deg),rgba(226,182,91,.12) 0);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);padding:.3cqw;animation:timer 8s linear infinite}
+@keyframes timer{from{--p:1}to{--p:0}}
+.t4 .potnum{display:inline-block}
+.t4 .potnum.bump{animation:bump .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes bump{40%{transform:scale(1.18);color:#fff3c8;text-shadow:0 0 1.2cqw rgba(226,182,91,.9)}}
+.t4 .board .cd.win{animation:winlift 8s ease-in-out infinite}
+.t4 .board .cd.win::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,244,210,.85) 48%,transparent 62%) no-repeat;background-size:250% 100%;
+  background-position:150% 0;animation:glint 8s ease-in-out infinite}
+@keyframes winlift{0%,52%,96%,100%{transform:none;box-shadow:0 .25cqw 0 #b3aa95,0 .8cqw 1.4cqw rgba(0,0,0,.55)}
+  58%,90%{transform:translateY(-1cqw);box-shadow:0 0 0 .25cqw var(--gold),0 0 2cqw rgba(226,182,91,.75),0 1.4cqw 2cqw rgba(0,0,0,.5)}}
+@keyframes glint{0%,58%{background-position:150% 0}70%,100%{background-position:-60% 0}}
+.t4 .stamp{position:absolute;left:50%;top:46%;transform:translateX(-50%);z-index:7;font-family:var(--display);font-size:3cqw;letter-spacing:.3em;
+  padding:.2cqw 2.4cqw;white-space:nowrap;color:#1a1206;
+  background:linear-gradient(100deg,#9c7224,#f7dc95 40%,#c69437 60%,#f2d58a);opacity:0;animation:stamp 8s ease-in-out infinite;
+  clip-path:polygon(1cqw 0,100% 0,calc(100% - 1cqw) 100%,0 100%)}
+@keyframes stamp{0%,58%{opacity:0;transform:translateX(-50%) scale(1.5)}62%,90%{opacity:1;transform:translateX(-50%) scale(1)}96%,100%{opacity:0;transform:translateX(-50%) scale(1)}}
+.t4 .wipe{position:absolute;inset:0;z-index:8;pointer-events:none;
+  background:linear-gradient(110deg,transparent 0 30%,var(--crimson) 30% 33%,#07080c 33% 67%,var(--crimson) 67% 70%,transparent 70%);background-size:400% 100%;
+  background-position:0 0;animation:wipe 8s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes wipe{0%,88%{background-position:0 0}100%{background-position:100% 0}}
+.stamp,.wipe{display:none}
+.t4 .stamp,.t4 .wipe{display:block}
+.t4 .act.call .num{font-variant-numeric:tabular-nums}
+
+/* ====== 案5：タイトル画面 ====== */
+.ttl{position:relative;aspect-ratio:16/11;overflow:hidden;container-type:inline-size;isolation:isolate;
+  background:linear-gradient(180deg,#0e1220,#07080c)}
+.ttl .in{position:absolute;inset:0;display:grid;align-content:center;gap:1.6cqw;padding:0 7cqw}
+.ttl .sub{font-family:var(--num);letter-spacing:.3em;color:var(--crimson);font-size:1.6cqw}
+.ttl .logo{font-family:var(--display);font-size:9cqw;line-height:.95;color:#f1ede4}
+.ttl .logo span{color:var(--gold)}
+.ttl .ja{font-family:var(--display);color:var(--gold);letter-spacing:.4em;font-size:2.2cqw}
+.ttl .menu{display:flex;gap:1.6cqw;flex-wrap:wrap;margin-top:1.4cqw}
+.ttl .mb{font-weight:900;font-size:2cqw;padding:1.2cqw 3.4cqw;background:#1f2230;color:#fff;clip-path:polygon(1.2cqw 0,100% 0,calc(100% - 1.2cqw) 100%,0 100%)}
+.ttl .mb.p{background:var(--crimson)}
+.ttl .bokeh{position:absolute;inset:0;z-index:-1;background:
+  radial-gradient(circle at 80% 20%,rgba(215,38,61,.25) 0 2%,transparent 7%),radial-gradient(circle at 15% 70%,rgba(226,182,91,.18) 0 2%,transparent 6%),
+  radial-gradient(circle at 60% 80%,rgba(127,200,255,.12) 0 1.5%,transparent 5%);filter:blur(.3cqw)}
+.ttl .fan,.ttl .shelf,.ttl .glow{display:none}
+.ttl.rich{background:
+   radial-gradient(ellipse 50% 45% at 72% 30%,rgba(255,190,110,.14),transparent 70%),
+   linear-gradient(180deg,#120f12 0%,#0b0a0d 62%,#050507 100%)}
+.ttl.rich .shelf{display:block;position:absolute;left:0;right:0;top:12%;height:30%;z-index:-1;opacity:.55;
+  background:
+   repeating-linear-gradient(90deg,transparent 0 2.2cqw,rgba(255,200,120,.22) 2.2cqw 2.9cqw,transparent 2.9cqw 4.4cqw,rgba(120,170,200,.14) 4.4cqw 4.9cqw,transparent 4.9cqw 6.6cqw) 0 0/100% 70% no-repeat,
+   linear-gradient(transparent 70%,rgba(255,200,120,.35) 70% 72%,transparent 72%);
+  filter:blur(.35cqw);-webkit-mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
+.ttl.rich .glow{display:block;position:absolute;inset:0;z-index:-1;background:var(--noise);background-size:160px;opacity:.18;mix-blend-mode:overlay}
+.ttl.rich .logo{color:#fff4e0;text-shadow:0 0 .4cqw #fff,0 0 1.4cqw rgba(255,214,150,.9),0 0 4cqw rgba(226,182,91,.6)}
+.ttl.rich .logo span{color:#ffd9de;text-shadow:0 0 .4cqw #fff,0 0 1.4cqw rgba(255,80,100,.95),0 0 4cqw rgba(215,38,61,.7)}
+.ttl.rich .logo .fl{animation:flicker 6s steps(1) infinite}
+@keyframes flicker{0%,100%{opacity:1}62%{opacity:.25}63%{opacity:1}65%{opacity:.4}66%{opacity:1}}
+.ttl.rich .mb{background:linear-gradient(180deg,#2c2f3d,#14161e);box-shadow:inset 0 0 0 .15cqw rgba(226,182,91,.45),inset 0 .2cqw 0 rgba(255,255,255,.12);position:relative;overflow:hidden}
+.ttl.rich .mb.p{background:linear-gradient(180deg,#f04a5f,#b41c30);box-shadow:inset 0 .2cqw 0 rgba(255,255,255,.3),0 0 2cqw rgba(215,38,61,.5)}
+.ttl.rich .mb.p::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);animation:sweep 4s ease-in-out infinite;transform:translateX(-120%)}
+.ttl.rich .fan{display:block;position:absolute;right:7cqw;top:50%;width:26cqw;height:26cqw;transform:translateY(-50%);z-index:0}
+.ttl.rich .fan .cd{--w:13cqw;position:absolute;left:50%;bottom:10%;transform-origin:50% 120%}
+.ttl.rich .fan .cd:nth-child(1){transform:translateX(-50%) rotate(-16deg)}
+.ttl.rich .fan .cd:nth-child(2){transform:translateX(-50%) rotate(0deg)}
+.ttl.rich .fan .cd:nth-child(3){transform:translateX(-50%) rotate(16deg);animation:peek 6s ease-in-out infinite}
+@keyframes peek{0%,40%,100%{transform:translateX(-50%) rotate(16deg)}55%,85%{transform:translateX(-38%) rotate(22deg) translateY(-1.5cqw)}}
+.ttl.rich .in{padding-right:38cqw}
+
+/* 動画用 */
+body.video .wrap>*{display:none}
+body.video .wrap>#vgrid{display:grid}
+#vgrid{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#vgrid figcaption{font-size:14px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
+body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused!important}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">LAST TELL · UI proposal</span>
+    <h1>UIを<em>リッチ</em>にする5つの案</h1>
+    <p class="lead">いまの画面は、色や形はそろっていますが、面がどれも平らな塗りです。卓は緑のグラデーション1枚、カードとチップは単色、ボタンも単色の板なので、全体が「画面の上の図形」に見えています。そこで、色や配置は変えずに、素材・光・手ざわりを足す案を5つ用意しました。どれもボタンを増やさず、遊び方や難しさは変わりません。</p>
+    <ol class="idx">
+      <li><b>案1</b><span>卓の素材と光（革のレール、フェルトの毛並み、真上のランプ）<span class="rec">おすすめ</span></span></li>
+      <li><b>案2</b><span>カードとチップの質感（紙の手ざわり、本物のクレイチップ）<span class="rec">おすすめ</span></span></li>
+      <li><b>案3</b><span>ボタンと名札の質感（光沢・押した感触・金の縁）</span></li>
+      <li><b>案4</b><span>動きの手ざわり（持ち時間の光の輪、ポットの数字、勝ち札のきらめき、場面転換）</span></li>
+      <li><b>案5</b><span>タイトル画面（ネオンの看板と、バーの奥の灯り）</span></li>
+    </ol>
+    <div class="ctrl"><button id="btnPause" type="button">動きを止める</button><span class="note">見本の卓はゲームの画面を簡単に再現したものです。キャラの絵は別スレッドで検討中のため、ここでは名札だけにしています。</span></div>
+  </header>
+
+  <section class="pr" id="all">
+    <header><h2><small>ALL</small>いまと、案1〜4を全部入れた場合</h2>
+      <p class="lead">同じ卓、同じ手札、同じ配置です。違いは素材と光と動きだけです。</p></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span>現在の画面</figcaption><div class="stage" data-v=""></div></figure>
+      <figure><figcaption><span class="tag new">案1〜4</span>全部入り</figcaption><div class="stage t1 t2 t3 t4" data-v="all"></div></figure></div>
+  </section>
+
+  <section class="pr" id="p1">
+    <header><h2><small>案1　おすすめ</small>卓の素材と光</h2>
+      <ul class="pts"><li>フェルトに細かい毛並みの質感を入れ、真上のランプで中央だけ明るくします。端に向かって暗く落ちるので、卓に奥行きが出ます。</li>
+      <li>縁を、金の線から革張りのパッド付きレールに変えます。ステッチと木の縁取りも付けます。</li>
+      <li>フェルトに店のロゴを薄く刷り込み、ランプの光の中をタバコの煙のような薄いもやがゆっくり流れます。</li></ul></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span></figcaption><div class="stage"></div></figure>
+      <figure><figcaption><span class="tag new">案1</span>卓の素材と光</figcaption><div class="stage t1"></div></figure></div>
+  </section>
+
+  <section class="pr" id="p2">
+    <header><h2><small>案2　おすすめ</small>カードとチップの質感</h2>
+      <ul class="pts"><li>カードに紙の細かいざらつきと内側の印刷線を入れます。数字は明朝体にして、四隅（左上と右下）に付けます。</li>
+      <li>裏面を、深い赤に金の格子とエンブレムの柄に変えます。ときどき光が斜めに走ります。</li>
+      <li>チップを、縁に白い模様が入った本物のクレイチップにします。中央の刻印と、積んだときの側面の段も付けます。</li></ul></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span></figcaption><div class="stage"></div></figure>
+      <figure><figcaption><span class="tag new">案2</span>カードとチップの質感</figcaption><div class="stage t2"></div></figure></div>
+  </section>
+
+  <section class="pr" id="p3">
+    <header><h2><small>案3</small>ボタンと名札の質感</h2>
+      <ul class="pts"><li>フォールド・コール・レイズのボタンに上からの光沢と下の影を付け、金額は金色にします。押すと少し沈み、光が横に流れます。</li>
+      <li>アクションバーは、赤い線の代わりに金の細い縁と、下からにじむ赤い光にします。</li>
+      <li>名札とポット表示を、角を切った黒い板に金の縁取りにします。名前は明朝体で、手番の人は金色に光ります。</li></ul></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span></figcaption><div class="stage"></div></figure>
+      <figure><figcaption><span class="tag new">案3</span>ボタンと名札の質感</figcaption><div class="stage t3"></div></figure></div>
+  </section>
+
+  <section class="pr" id="p4">
+    <header><h2><small>案4</small>動きの手ざわり</h2>
+      <ul class="pts"><li>手番の人の名札の周りを、残りの持ち時間が光の輪になって減っていきます。</li>
+      <li>ポットの数字は、チップが入ると一瞬ふくらんで光ります。</li>
+      <li>勝った札は少し浮き上がり、表面に光が走ります。そのあと、役の名前が金の札で出ます。</li>
+      <li>ハンドが終わると、赤い斜めの線が画面をぬぐって次へ移ります。</li></ul>
+      <p class="note">チップが飛んで着地する動き（ポット演出の案E）とカメラの動きは、すでに入っているのでここには含めていません。</p></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span></figcaption><div class="stage"></div></figure>
+      <figure><figcaption><span class="tag new">案4</span>動きの手ざわり</figcaption><div class="stage t4"></div></figure></div>
+  </section>
+
+  <section class="pr" id="p5">
+    <header><h2><small>案5</small>タイトル画面</h2>
+      <ul class="pts"><li>「LAST TELL」をネオン管の看板のように光らせます。ときどき一文字だけ明かりがまたたきます。</li>
+      <li>背景をバーの奥の酒棚の灯りにし、右側にカードを扇形に広げて置きます。一番手前の1枚が、ときどき少しだけめくれます。</li>
+      <li>メニューのボタンは案3と同じ質感にします。</li></ul></header>
+    <div class="cmp"><figure><figcaption><span class="tag">いま</span></figcaption><div class="ttl"><div class="bokeh"></div><div class="in"><span class="sub">TEXAS HOLD'EM STORY</span><div class="logo">LAST<br><span>TELL</span></div><span class="ja">最後のテル</span><div class="menu"><span class="mb p">ストーリー</span><span class="mb">フリー対戦</span></div></div></div></figure>
+      <figure><figcaption><span class="tag new">案5</span>タイトル画面</figcaption><div class="ttl rich"><div class="shelf"></div><div class="glow"></div>
+        <div class="fan"></div>
+        <div class="in"><span class="sub">TEXAS HOLD'EM STORY</span><div class="logo">LAS<span class="fl" style="color:inherit;text-shadow:inherit">T</span><br><span>TELL</span></div><span class="ja">最後のテル</span><div class="menu"><span class="mb p">ストーリー</span><span class="mb">フリー対戦</span></div></div></div></figure></div>
+  </section>
+
+  <div class="rec-box"><b>おすすめは案1と案2の組み合わせです。</b>プレイ中にいちばん長く見ているのは卓とカードとチップなので、ここが本物らしくなると画面全体の印象が大きく変わります。どちらも見た目を変えるだけで、ルールや操作には触れません。余力があれば、次に案3（ボタン）を足すとまとまりが出ます。</div>
+
+  <footer>この見本は提案用です。ゲーム本体はまだ変えていません。決まった案は実装の手順書にまとめて、ゲームの担当に渡します。</footer>
+
+  <div id="vgrid">
+    <figure><figcaption><span class="tag">いま</span></figcaption><div class="stage"></div></figure>
+    <figure><figcaption><span class="tag new">案1</span>卓の素材と光</figcaption><div class="stage t1"></div></figure>
+    <figure><figcaption><span class="tag new">案2</span>カードとチップ</figcaption><div class="stage t2"></div></figure>
+    <figure><figcaption><span class="tag new">案3</span>ボタンと名札</figcaption><div class="stage t3"></div></figure>
+    <figure><figcaption><span class="tag new">案4</span>動きの手ざわり</figcaption><div class="stage t4"></div></figure>
+    <figure><figcaption><span class="tag new">案1〜4</span>全部入り</figcaption><div class="stage t1 t2 t3 t4"></div></figure>
+  </div>
+</div>
+
+<script>
+const card=(r,s)=>{const red=s==='♥'||s==='♦';return `<div class="cd${red?' r':''}"><span class="ix"><b>${r}</b><i>${s}</i></span><span class="pip">${s}</span><span class="ix bt"><b>${r}</b><i>${s}</i></span></div>`};
+const back='<div class="cd back"><span></span></div>', slot='<div class="cd slot"><span></span></div>';
+function pile(){const spots=[[0,3.6,'k'],[0,2.9,'k'],[0,2.2,'k'],[4.6,3.8,''],[4.6,3.1,''],[3,1.6,'rd'],[7,2.4,'gr'],[2.2,.6,'wh'],[5.8,.9,'']];
+  return spots.map(([x,y,c])=>`<span class="chip ${c}" style="left:${x}cqw;top:${y}cqw"></span>`).join('')}
+function stage(){return `<div class="scene">
+  <div class="rail"></div><div class="felt"><div class="bline"></div><div class="logo">LAST TELL</div></div><div class="stitch"></div>
+  <div class="opp" style="left:20%">${'<div class="bk">'+back+back+'</div>'}<div class="plate"><span class="nm">ケンジ</span><span class="ch">84,000</span></div></div>
+  <div class="opp" style="left:50%">${'<div class="bk">'+back+back+'</div>'}<div class="plate turn"><span class="nm">ミサキ</span><span class="ch">112,500</span></div></div>
+  <div class="opp" style="left:80%">${'<div class="bk">'+back+back+'</div>'}<div class="plate"><span class="nm">テツ</span><span class="ch">97,000</span></div></div>
+  <div class="board">${card('A','♠')}<div class="cd win r"><span class="ix"><b>Q</b><i>♥</i></span><span class="pip">♥</span><span class="ix bt"><b>Q</b><i>♥</i></span></div>${card('7','♣')}${slot}${slot}</div>
+  <div class="stamp">スリーカード</div>
+  <div class="pot"><div class="pile">${pile()}</div><div class="potlabel"><small>ポット</small><span class="potnum">18,000</span></div></div>
+  <div class="me"><div class="hole">${card('Q','♠')}${card('Q','♦')}</div><div class="plate"><span class="nm">あなた</span><span class="ch">96,000</span></div></div>
+  <div class="lamp"></div><div class="haze"></div><div class="wipe"></div>
+  <div class="bar"><span class="act fold">フォールド<small>降りる</small></span><span class="act call">コール<small class="num">4,000</small></span><span class="act raise">レイズ<small>額を選ぶ</small></span></div>
+ </div>`}
+document.querySelectorAll('.stage').forEach(s=>s.innerHTML=stage());
+document.querySelectorAll('.fan').forEach(f=>f.innerHTML=back+card('A','♠')+'<div class="cd r"><span class="ix"><b>K</b><i>♥</i></span><span class="pip">♥</span><span class="ix bt"><b>K</b><i>♥</i></span></div>');
+document.querySelectorAll('.ttl.rich').forEach(t=>t.classList.add('t2'));
+// 案4：ポットの数字（8秒周期）
+const fmt=n=>n.toLocaleString('en-US');
+let paused=false;
+function potLoop(){if(paused)return;document.querySelectorAll('.t4 .potnum').forEach(el=>{
+  let v=14000;el.textContent=fmt(v);
+  [[900,16000],[2600,18000],[4200,22000]].forEach(([t,to])=>setTimeout(()=>{if(paused)return;el.textContent=fmt(to);el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')},t));
+})}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!reduce){potLoop();setInterval(potLoop,8000)}
+const bp=document.getElementById('btnPause');
+bp.onclick=()=>{paused=!paused;document.body.classList.toggle('paused',paused);bp.textContent=paused?'動きを再生':'動きを止める'};
+if(location.hash==='#video')document.body.classList.add('video');
+</script>

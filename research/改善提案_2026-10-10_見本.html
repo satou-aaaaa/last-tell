@@ -1,0 +1,220 @@
+<title>LAST TELL 改善提案 10/10</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: one column of proposal sections; each shows 今 → 案 as two game-like panels side by side (stacked on phones). Single dark look, same as the game. */
+:root{
+  --bg:#0d0e13; --panel:#16171f; --line:#2a2c38; --fg:#e9e6df; --mute:#9a97a3;
+  --red:#d8283f; --gold:#e3b75a; --felt:#1f4a37;
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:44px}
+h1{font-family:var(--disp);font-size:clamp(26px,5vw,38px);margin:0;letter-spacing:.04em;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);font-size:13px;color:var(--gold);letter-spacing:.2em;font-weight:700}
+.lead{color:var(--mute);max-width:62ch;margin:6px 0 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:400;font-size:12px;letter-spacing:.08em}
+td.n{font-family:var(--disp);color:var(--gold);font-size:18px;width:2em}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.tag.r{border-color:var(--red);color:#ff8a98}
+.tag.g{border-color:var(--gold);color:var(--gold)}
+section{display:grid;gap:14px}
+section h2{font-family:var(--disp);font-size:22px;margin:0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;text-wrap:balance}
+section h2 b{color:var(--gold);font-size:28px}
+.why{color:var(--mute);margin:0;max-width:70ch;font-size:14px}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);padding:14px;display:grid;gap:10px;min-width:0;align-content:start}
+.card>.lab{font-size:12px;letter-spacing:.15em;color:var(--mute)}
+.card.after{border-color:#5a2a33}
+.card.after>.lab{color:#ff8a98}
+.res{background:#101117;border-top:2px solid var(--gold);padding:12px}
+.res h4{margin:0 0 6px;font-family:var(--disp);color:var(--gold);font-size:18px}
+.res ol{margin:0;padding-left:1.3em;font-size:14px}
+.res .who{font-size:12px;color:var(--gold);margin-bottom:4px}
+.bad{background:rgba(216,40,63,.18);outline:1px dashed var(--red)}
+.btn{display:inline-block;font-size:12px;border:1px solid var(--line);padding:4px 10px;color:var(--fg)}
+/* mini table */
+.felt{position:relative;aspect-ratio:390/300;max-width:100%;background:radial-gradient(ellipse at 50% 60%,#2a6048,var(--felt) 60%,#123022);border-radius:14px 14px 0 0;overflow:hidden}
+.seat{position:absolute;font-size:11px;text-align:center;width:17%}
+.seat i{display:block;width:30px;height:30px;border-radius:50%;margin:0 auto 2px;background:#3a3c48}
+.seat.boss i{background:#c9a26a}
+.seat.dim{opacity:.35}
+.cards2{display:flex;gap:2px;justify-content:center}
+.cards2 span{width:14px;height:20px;background:#f3efe6;border-radius:2px}
+.cards2.cut{transform:translateX(-26px)}
+.edge{position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--red)}
+.say{position:absolute;background:#f3efe6;color:#111;font-size:11px;padding:3px 7px;border-radius:3px;max-width:60%}
+.board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:4px}
+.board span{width:22px;height:32px;background:#f3efe6;border-radius:3px}
+.duel{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-size:11px;color:var(--gold);letter-spacing:.2em;white-space:nowrap}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(227,183,90,.25)}}
+/* recap */
+.vs{background:#101117;padding:14px;display:grid;gap:8px;text-align:center}
+.vs .t{font-family:var(--disp);color:var(--red);font-size:30px;letter-spacing:.1em;line-height:1}
+.recap{border-left:3px solid var(--gold);text-align:left;padding:6px 10px;font-size:13px;background:#191a22;animation:fadein .9s ease-out both}
+@keyframes fadein{from{opacity:.2;transform:translateY(4px)}}
+.goal{font-size:12px;color:var(--mute)}
+/* hand */
+.hand{display:flex;gap:6px;justify-content:center;padding:16px 0;position:relative}
+.hc{width:64px;height:90px;border-radius:5px;background:#f3efe6;color:#b41e30;font-family:var(--disp);font-size:24px;display:grid;place-items:center}
+.hc.back{background:repeating-linear-gradient(45deg,#8e1b2b 0 6px,#a5243a 6px 12px);color:transparent}
+.flip .hc.back{animation:flip 3.2s infinite}
+@keyframes flip{0%,45%{transform:rotateY(0)}55%,100%{transform:rotateY(180deg);background:#f3efe6;color:#b41e30}}
+.hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:11px;background:#111;border:1px solid var(--gold);padding:1px 8px;color:var(--gold);white-space:nowrap}
+/* venues */
+.venues{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.venues figure{margin:0;display:grid;gap:4px}
+.venues canvas{width:100%;aspect-ratio:3/4;background:#111;display:block}
+.venues figcaption{font-size:12px;color:var(--mute)}
+.rec{font-size:14px;margin:0}
+.rec b{color:var(--gold)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1><small>v61 を遊んで見つけたこと</small>LAST TELL 改善提案</h1>
+  <p class="lead">第1〜7章をスマホ縦で遊び、自動検証の結果と合わせて見ました。決まっている作業や順番待ちのものは外しています。各案の左が今、右がおすすめの形です。</p>
+</header>
+
+<div class="tbl"><table>
+<tr><th></th><th>中身</th><th>大きさ</th><th>扱い</th></tr>
+<tr><td class="n">1</td><td>ジンの三行の言い回しのずれ</td><td>小</td><td><span class="tag g">すぐ直す</span></td></tr>
+<tr><td class="n">2</td><td>6人卓スマホ縦で左端の席が切れる</td><td>小</td><td><span class="tag g">すぐ直す</span></td></tr>
+<tr><td class="n">3</td><td>決着の一手を相手役と打つ</td><td>中</td><td><span class="tag r">1.0 に推す</span></td></tr>
+<tr><td class="n">4</td><td>負けたときの三行を章の教えにつなげる</td><td>小〜中</td><td><span class="tag r">1.0 に推す</span></td></tr>
+<tr><td class="n">5</td><td>「続きから」で前回までの話</td><td>小</td><td><span class="tag">1.0 候補</span></td></tr>
+<tr><td class="n">6</td><td>第1・2章は手札を最初から表に</td><td>小</td><td><span class="tag">1.0 候補</span></td></tr>
+<tr><td class="n">7</td><td>会話の画面に店ごとの背景</td><td>中</td><td><span class="tag">公開後</span></td></tr>
+</table></div>
+
+<section>
+  <h2><b>1</b>ジンの三行の言い回しのずれ</h2>
+  <p class="why">第1章をクリアした画面で、一言目がけなしになり、1行目と2行目が逆のことを言っています。何も当たらないときの決まり文句が、勝ち負けを見ていないのが原因です。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今（第1章クリア）</span>
+      <div class="res"><h4>目標達成！</h4><div class="who">ジンの三行</div><ol><li class="bad">……今夜は、いいところを探すほうが難しい</li><li class="bad">目立った悪いくせは、ない。……今夜はな</li><li>次は、相手の顔をもっと見ろ</li></ol></div></div>
+    <div class="card after"><span class="lab">直したあと</span>
+      <div class="res"><h4>目標達成！</h4><div class="who">ジンの三行</div><ol><li>ゲンを飛ばした。それで十分だ</li><li>目立った悪いくせは、ない</li><li>次は、相手の顔をもっと見ろ</li></ol></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><b>2</b>6人卓スマホ縦で左端の席が切れる</h2>
+  <p class="why">いちばん左の席の手札と「勝ち +235,000」の札が、画面の左に半分出ています（フリー6人と第5章）。自動の画面チェックは卓の枠の中しか見ていないので、検査も足します。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今</span>
+      <div class="felt"><div class="edge"></div>
+        <div class="seat" style="left:1%;top:14px"><i></i>ミサキ<div class="cards2 cut"><span></span><span></span></div></div>
+        <div class="seat" style="left:19%;top:8px"><i></i>ミン</div><div class="seat" style="left:39%;top:4px"><i></i>クワメ</div><div class="seat" style="left:58%;top:8px"><i></i>ラジ</div><div class="seat" style="left:78%;top:14px"><i></i>ケンジ</div>
+        <div class="board"><span></span><span></span><span></span><span></span><span></span></div></div></div>
+    <div class="card after"><span class="lab">直したあと</span>
+      <div class="felt">
+        <div class="seat" style="left:2%;top:14px"><i></i>ミサキ<div class="cards2"><span></span><span></span></div></div>
+        <div class="seat" style="left:19%;top:8px"><i></i>ミン</div><div class="seat" style="left:39%;top:4px"><i></i>クワメ</div><div class="seat" style="left:58%;top:8px"><i></i>ラジ</div><div class="seat" style="left:78%;top:14px"><i></i>ケンジ</div>
+        <div class="board"><span></span><span></span><span></span><span></span><span></span></div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><b>3</b>決着の一手を相手役と打つ</h2>
+  <p class="why">第5章を自動で打つと、最後のハンドはベンとの勝負で、ハヤトは降りていました。それでも章のあとは「……負けか」とハヤトが話し始めます。第5章は1回倍にすれば終わるので、勝った3回は2・4・6ハンドで終わりました。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今（第5章の最後のハンド）</span>
+      <div class="felt">
+        <div class="seat boss dim" style="left:3%;top:16px"><i></i>ハヤト<br>フォールド</div>
+        <div class="seat" style="left:25%;top:8px"><i></i>テツ</div><div class="seat" style="left:46%;top:4px"><i></i>ベン</div><div class="seat dim" style="left:67%;top:8px"><i></i>ミン</div><div class="seat dim" style="left:86%;top:16px"><i></i>ドク</div>
+        <div class="board"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="say" style="left:12%;bottom:12px">ハヤト「……負けか」</div></div></div>
+    <div class="card after"><span class="lab">案B（おすすめ）</span>
+      <div class="felt">
+        <div class="seat boss pulse" style="left:42%;top:10px"><i></i>ハヤト</div>
+        <div class="seat dim" style="left:2%;top:4px"><i></i>テツ</div><div class="seat dim" style="left:83%;top:4px"><i></i>ベン</div>
+        <div class="say" style="right:6%;top:44%">「座れ。一勝負だけ、と言ったはずだ」</div>
+        <div class="board"><span></span><span></span><span></span></div>
+        <div class="duel">最後の一手　ハヤトとの一騎打ち</div></div></div>
+  </div>
+  <p class="rec">案A：会話の1行目だけ合わせる。<b>案B：第1〜3章は A、第4・5章は目標まであと1つで相手役と一騎打ち（おすすめ）</b>。案C：第3〜5章すべて相手役からだけ数える（第3章が難しくなるので不可）。</p>
+</section>
+
+<section>
+  <h2><b>4</b>負けたときの三行を章の教えにつなげる</h2>
+  <p class="why">いちばん負ける第2章（目標：ブラインドを3回盗む）で負けても、目標にどこまで近づいたか、どのハンドが盗みどころだったかが出ません。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今（第2章で負け）</span>
+      <div class="res"><h4>チップがなくなった</h4><div class="who">ジンの三行</div><ol><li>……今夜は、いいところを探すほうが難しい</li><li>目立った悪いくせは、ない。……今夜はな</li><li>次は、相手の顔をもっと見ろ</li></ol></div></div>
+    <div class="card after"><span class="lab">案A（おすすめ）</span>
+      <div class="res"><h4>チップがなくなった</h4><div class="who">ジンの三行</div><ol><li>盗めたのは1回。あと2回だった</li><li>#4、後ろの席で K9 を様子見したな。あそこが盗みどころだ</li><li>次は、後ろの席でだけ仕掛けてみろ</li></ol><p style="margin:8px 0 0"><span class="btn">#4 を赤ペンで見る</span></p></div></div>
+  </div>
+  <p class="rec"><b>案A：あと何回＋実際の1ハンド（おすすめ）</b>。案B：あと何回だけ。案C：章ごとに決まった1行を足すだけ。</p>
+</section>
+
+<section>
+  <h2><b>5</b>「続きから」で前回までの話</h2>
+  <p class="why">決まっている「続きから」は、会話を流さずにすぐ配ります。数日あけて戻ると、誰と何のために打っているかが分かりません。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今の決まり</span>
+      <div class="vs"><div class="t">VS</div><div class="goal">第5章　地下の賭場跡</div><div class="goal">勝利条件　持ち点を8万に戻す</div></div></div>
+    <div class="card after"><span class="lab">案A（6時間以上あけたときだけ）</span>
+      <div class="vs"><div class="t">VS</div><div class="goal">第5章　地下の賭場跡</div><div class="recap">ジン「ハヤトの賭場だ。AA で負けて、少ないチップからやり直している。……焦るな」</div><div class="goal">勝利条件　持ち点を8万に戻す</div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><b>6</b>第1・2章は手札を最初から表に</h2>
+  <p class="why">手札は毎ハンド「タップしてめくる」です。はじめての人が毎回1回多く押し、めくらずに判断できてしまいます。めくる動きはライブらしさなので、第3章で物語の中で教えます。</p>
+  <div class="pair">
+    <div class="card"><span class="lab">今（第1章から毎ハンド）</span>
+      <div class="hand"><div class="hc back">A</div><div class="hc back">K</div><span class="hint">タップしてめくる</span></div></div>
+    <div class="card after"><span class="lab">案B：第1・2章は表、第3章で覚える</span>
+      <div class="hand"><div class="hc">A</div><div class="hc">K</div></div>
+      <div class="hand flip" style="padding-top:0"><div class="hc back">Q</div><div class="hc back">Q</div></div>
+      <p class="goal" style="margin:0">第3章　ジン「ここの客は、札をそっとめくる。……真似してみろ」</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><b>7</b>会話の画面に店ごとの背景</h2>
+  <p class="why">会話の背景は、どの店も灰色のぼかしだけです。コードで描く暗い背景を店ごとに1枚置くと、物語の場所が見えます。下は雰囲気の試し描きで、実際は立ち絵の後ろにぼかして置きます。</p>
+  <div class="venues" id="venues"></div>
+</section>
+</div>
+
+<script>
+const V=[
+ ['錨亭','港のバー。壁の写真に1枚だけ裏返し',draw=>{draw.counter();draw.bottles();draw.photos()}],
+ ['銀の扉','古いクラブ。重い扉と古い照明',draw=>{draw.door();draw.lamp(.5,.18,'#d8c48a')}],
+ ['月影','ジャズクラブ。小さな舞台とピアノ',draw=>{draw.stage();draw.lamp(.5,.12,'#ff7fb0')}],
+ ['天空','ホテルのラウンジ。窓の外に街の灯り',draw=>{draw.window()}],
+ ['地下の賭場跡','裸電球1つとコンクリート',draw=>{draw.concrete();draw.bulb()}],
+ ['王冠','カードルーム。大きな卓とシャンデリア',draw=>{draw.bigtable();draw.chand()}],
+];
+const box=document.getElementById('venues');
+V.forEach(([n,d,f],i)=>{
+ const fig=document.createElement('figure');const c=document.createElement('canvas');c.width=300;c.height=400;
+ fig.appendChild(c);const cap=document.createElement('figcaption');cap.textContent=n+'：'+d;fig.appendChild(cap);box.appendChild(fig);
+ const x=c.getContext('2d'),W=300,H=400;let s=i*97+11;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+ const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,['#1a1612','#14141c','#1a1018','#0b1020','#141413','#120f1a'][i]);g.addColorStop(1,'#070709');x.fillStyle=g;x.fillRect(0,0,W,H);
+ const D={
+  counter(){x.fillStyle='#2a1c12';x.fillRect(0,290,W,110);x.fillStyle='#4a3020';x.fillRect(0,284,W,8)},
+  bottles(){for(let k=0;k<11;k++){const bx=18+k*25,bh=40+r()*30;x.fillStyle=`hsla(${20+r()*90},45%,${25+r()*15}%,.8)`;x.fillRect(bx,230-bh,14,bh);x.fillRect(bx+4,222-bh,6,10)}x.fillStyle='#3a2616';x.fillRect(10,230,280,5)},
+  photos(){for(let k=0;k<5;k++){const px=40+k*46,py=60+(k%2)*14;x.fillStyle=k===3?'#2b2420':'#b9ab90';x.fillRect(px,py,34,42);if(k!==3){x.fillStyle='#5e5446';x.fillRect(px+4,py+4,26,26)}else{x.strokeStyle='#6a5a48';x.strokeRect(px+.5,py+.5,33,41)}}x.fillStyle='#3a2a1a';x.fillRect(60,24,180,22);x.fillStyle='#6a5236';x.font='12px serif';x.fillText('－　－　－',118,40)},
+  door(){x.fillStyle='#22222c';x.fillRect(90,120,120,280);x.strokeStyle='#8a8aa0';x.lineWidth=2;x.strokeRect(100,130,100,270);x.fillStyle='#c0c0d0';x.beginPath();x.arc(185,270,5,0,7);x.fill()},
+  lamp(px,py,col){const rg=x.createRadialGradient(W*px,H*py,2,W*px,H*py,170);rg.addColorStop(0,col);rg.addColorStop(.08,col+'88');rg.addColorStop(1,'transparent');x.fillStyle=rg;x.fillRect(0,0,W,H)},
+  stage(){x.fillStyle='#2a1520';x.fillRect(0,300,W,100);x.fillStyle='#120a10';x.beginPath();x.moveTo(60,300);x.lineTo(200,300);x.lineTo(210,250);x.quadraticCurveTo(150,215,70,250);x.fill();x.fillRect(80,300,8,40);x.fillRect(190,300,8,40);x.strokeStyle='#5a2a40';x.beginPath();x.moveTo(250,300);x.lineTo(250,190);x.stroke();x.beginPath();x.arc(250,185,6,0,7);x.stroke()},
+  window(){for(let k=0;k<4;k++){x.strokeStyle='#2a3350';x.lineWidth=3;x.strokeRect(10+k*72,40,68,250)}for(let k=0;k<160;k++){const lx=12+r()*276,ly=180+r()*108;x.fillStyle=`rgba(255,${190+r()*60|0},${120+r()*80|0},${.3+r()*.6})`;x.fillRect(lx,ly,2,2)}x.fillStyle='#0a0d18';x.fillRect(0,290,W,110);x.fillStyle='#1c2236';x.fillRect(60,320,180,10)},
+  concrete(){for(let k=0;k<900;k++){x.fillStyle=`rgba(255,255,255,${r()*.04})`;x.fillRect(r()*W,r()*H,2,2)}x.strokeStyle='#26261f';for(let k=1;k<4;k++){x.beginPath();x.moveTo(0,k*100);x.lineTo(W,k*100);x.stroke()}x.fillStyle='#1d3326';x.beginPath();x.ellipse(150,350,120,26,0,0,7);x.fill()},
+  bulb(){x.strokeStyle='#444';x.beginPath();x.moveTo(150,0);x.lineTo(150,90);x.stroke();const rg=x.createRadialGradient(150,100,2,150,100,220);rg.addColorStop(0,'#fff2c0');rg.addColorStop(.05,'#ffd47088');rg.addColorStop(1,'transparent');x.fillStyle=rg;x.fillRect(0,0,W,H);x.fillStyle='#ffe9a8';x.beginPath();x.arc(150,100,7,0,7);x.fill()},
+  bigtable(){x.fillStyle='#3a2a16';x.beginPath();x.ellipse(150,330,150,50,0,0,7);x.fill();x.fillStyle='#24203a';x.beginPath();x.ellipse(150,326,136,42,0,0,7);x.fill()},
+  chand(){x.strokeStyle='#8a7440';x.beginPath();x.moveTo(150,0);x.lineTo(150,60);x.stroke();for(let k=0;k<9;k++){const a=k/9*Math.PI*2,cx=150+Math.cos(a)*50,cy=80+Math.sin(a)*12;x.fillStyle='#ffe2a0';x.beginPath();x.arc(cx,cy,3,0,7);x.fill()}const rg=x.createRadialGradient(150,80,2,150,80,180);rg.addColorStop(0,'#ffd88a55');rg.addColorStop(1,'transparent');x.fillStyle=rg;x.fillRect(0,0,W,H)}
+ };
+ f(D);
+ const vg=x.createRadialGradient(W/2,H/2,80,W/2,H/2,260);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(0,0,0,.7)');x.fillStyle=vg;x.fillRect(0,0,W,H);
+});
+</script>

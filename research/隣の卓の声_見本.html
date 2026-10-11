@@ -1,0 +1,197 @@
+<title>隣の卓の声 見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* 1列のカード。左に説明、右に小さな卓。全案が同じ時間の流れで同じ声を出す */
+:root{
+  --bg:#0b0c11;--panel:#14151d;--line:#2a2b36;--ink:#ece6d6;--mute:#9a96a6;
+  --gold:#e2b65b;--crimson:#c8283c;--felt:#0f4a35;--felt2:#0a3326;--lampc:255,196,120;
+  --num:"Oswald","Arial Narrow",sans-serif;--body:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+.wrap{max-width:880px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:22px}
+h1{font-family:var(--num);letter-spacing:.14em;font-size:1.6rem;margin:0;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);letter-spacing:.05em;font-size:.9rem;color:var(--mute);font-weight:500}
+.lead{margin:0;color:var(--mute);max-width:62ch}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line)}
+button{font:700 .85rem var(--body);color:var(--gold);background:transparent;border:0;outline:1px solid var(--line);padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--gold);color:var(--bg);outline-color:var(--gold)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctrl .sep{flex-basis:100%;height:0}
+.now{font-size:.85rem;color:var(--mute);min-width:0}
+.now b{color:var(--gold);font-family:var(--num);letter-spacing:.12em;margin-right:6px}
+.card{background:var(--panel);border:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.card.rec{border-color:var(--gold)}
+@media (max-width:700px){.card{grid-template-columns:1fr}}
+.txt{padding:16px 18px;display:grid;align-content:start;gap:6px;min-width:0}
+.tag{font-family:var(--num);letter-spacing:.2em;font-size:.8rem;color:var(--mute)}
+.card.rec .tag{color:var(--gold)}
+.txt h2{margin:0;font-size:1.12rem;text-wrap:balance}
+.txt p{margin:0;font-size:.9rem;color:#cfc8b6}
+.txt ul{margin:0;padding-left:1.1em;font-size:.86rem;color:var(--mute)}
+
+/* 小さな卓 */
+.scene{position:relative;height:290px;overflow:hidden;background:#07080b;border-left:1px solid var(--line)}
+@media (max-width:700px){.scene{border-left:0;border-top:1px solid var(--line)}}
+.zoom{position:absolute;inset:0;transition:filter .5s,transform .5s}
+.room{position:absolute;inset:0 0 50% 0;background:
+  radial-gradient(circle at 10% 30%,rgba(226,182,91,.28) 0 5%,transparent 7%),
+  radial-gradient(circle at 34% 12%,rgba(255,255,255,.12) 0 3%,transparent 4.5%),
+  linear-gradient(#11121a,#07080b)}
+/* 隣の卓：人は描かず、灯りとチップの光とカードの白さだけ */
+.next{position:absolute;right:4%;top:2%;width:44%;height:28%;filter:blur(5px);opacity:.75;transition:opacity .5s,filter .5s}
+.next .glow{position:absolute;inset:-20% -10%;background:radial-gradient(ellipse 50% 45% at 50% 40%,rgba(var(--lampc),.38),transparent 70%);transition:opacity .4s}
+.next .felt{position:absolute;left:12%;right:12%;bottom:8%;height:34%;border-radius:50%;background:#0d3a2b}
+.next .gl{position:absolute;width:7px;height:5px;border-radius:50%;background:#f3e2b4;opacity:.7}
+.next .cd{position:absolute;width:9px;height:6px;background:#f7f2e6;opacity:.6}
+.scene.flare .next .glow{animation:flare 1.4s ease-out}
+.scene.cheer .next .glow{animation:cheer 1.6s ease-out}
+@keyframes flare{0%{opacity:1}25%{opacity:1;filter:brightness(1.8)}100%{opacity:1}}
+@keyframes cheer{0%,100%{transform:none}15%{transform:scale(1.18);filter:brightness(2.2)}35%{transform:scale(1.05);filter:brightness(1.6)}60%{transform:scale(1.12);filter:brightness(1.9)}}
+.scene.closed .next{opacity:.08}
+/* 自分の卓 */
+.heads{position:absolute;left:0;right:0;top:31%;display:flex;justify-content:center;gap:28%}
+.head{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c2d39,#17181f);border:1.5px solid #3a3b48}
+.plate{position:absolute;top:calc(31% + 50px);font-size:.66rem;background:rgba(8,9,12,.9);padding:1px 8px;color:var(--ink)}
+.p1{left:calc(50% - 14% - 46px)}.p2{left:calc(50% + 14%)}
+.table{position:absolute;left:-8%;right:-8%;top:49%;bottom:-30%;border-radius:50% 50% 0 0/30% 30% 0 0;background:radial-gradient(ellipse 70% 60% at 50% 40%,var(--felt),var(--felt2) 75%);border-top:4px solid #2b1a10}
+.board{position:absolute;left:50%;top:58%;transform:translateX(-50%);display:flex;gap:4px}
+.board i{width:22px;height:31px;background:#f7f2e6;border-radius:2px;display:block}
+.potsign{position:absolute;left:50%;top:71%;transform:translateX(-50%);font:700 .7rem var(--num);letter-spacing:.1em;border:1px solid var(--gold);background:rgba(6,7,10,.85);padding:1px 8px;white-space:nowrap}
+.potsign b{font-size:.9rem;margin-left:4px}
+.mine{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:3px}
+.mine i{width:30px;height:42px;background:#f7f2e6;border-radius:3px;display:block;rotate:-6deg}.mine i+i{rotate:6deg}
+.phase{position:absolute;left:8px;top:6px;font-size:.62rem;letter-spacing:.2em;background:rgba(6,7,10,.8);padding:1px 8px;color:var(--mute)}
+
+/* 案1：左上の小さな字幕 */
+.sub1{position:absolute;left:8px;top:28px;max-width:48%;font-size:.72rem;line-height:1.45;color:#d8d0bc;opacity:0;transition:opacity .4s;pointer-events:none}
+.sub1 span{display:inline-block;font:500 .58rem var(--num);letter-spacing:.2em;color:var(--gold);border-bottom:1px solid rgba(226,182,91,.5);margin-bottom:2px}
+.sub1.on{opacity:.9}
+/* 案2：映画の字幕 */
+.sub2{position:absolute;left:0;right:0;bottom:0;padding:18px 8% 8px;background:linear-gradient(transparent,rgba(0,0,0,.75) 45%);text-align:center;font-size:.8rem;color:#f2ead6;text-shadow:0 1px 3px #000,0 0 8px #000;opacity:0;transition:opacity .4s}
+.sub2 em{font-style:normal;color:var(--gold);font-size:.68rem;margin-right:6px}
+.sub2.on{opacity:1}
+/* 案3：記録にだけ残る */
+.logbar{position:absolute;left:0;right:0;bottom:0;height:0;overflow:hidden}
+.log3{border-top:1px solid var(--line);padding:8px 12px;font-size:.78rem;color:var(--mute);background:#0f1016;min-height:3.2em}
+.log3 li{list-style:none}.log3 li.new{color:var(--ink)}
+.log3 ul{margin:0;padding:0}
+.snd{position:absolute;right:8px;bottom:58px;font:500 .62rem var(--num);letter-spacing:.2em;color:var(--mute);opacity:0;transition:opacity .4s}
+.snd.on{opacity:.8}
+/* 案4：ピント送り */
+.scene.focus .zoom .heads,.scene.focus .zoom .table,.scene.focus .zoom .plate{filter:blur(3px) brightness(.6);transition:filter .5s}
+.scene .zoom .heads,.scene .zoom .table,.scene .zoom .plate{transition:filter .5s}
+.scene.focus .next{filter:blur(0);opacity:1}
+.scene.focus .zoom{transform:scale(1.04);transform-origin:75% 20%}
+.sub4{position:absolute;right:6%;top:42%;width:48%;text-align:center;font:700 .86rem var(--body);color:#f6ead0;text-shadow:0 1px 4px #000;opacity:0;transition:opacity .4s}
+.sub4 span{display:block;font:500 .6rem var(--num);letter-spacing:.24em;color:var(--gold)}
+.sub4.on{opacity:1}
+.quiet{color:var(--mute);font-size:.82rem}
+.foot{font-size:.85rem;color:var(--mute);margin:0;max-width:62ch}
+@media (prefers-reduced-motion:reduce){.scene.flare .next .glow,.scene.cheer .next .glow{animation:none}.zoom{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>隣の卓の声<small>LAST TELL ／ 見せ方4案の見本</small></h1>
+  <p class="lead">4つの卓は同じ時間の流れで、同じ声を受け取っています。上で店を変えると、聞こえる声も変わります。人の姿は描かず、奥の灯りとチップの光だけで隣の卓を見せています。</p>
+
+  <div class="ctrl" role="group" aria-label="操作">
+    <button id="play" aria-pressed="true">再生中</button>
+    <span class="now" id="now" aria-live="polite"></span>
+    <span class="sep"></span>
+    <div id="stores" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  </div>
+
+  <article class="card rec">
+    <div class="txt"><span class="tag">案1 ★おすすめ（ふだんの見せ方）</span><h2>奥の灯り＋小さな字幕</h2>
+      <p>右上の奥に、ぼけた隣の卓。声が聞こえると灯りがふっと明るくなり、左上に小さな字幕が出て消えます。</p>
+      <ul><li>店の奥行きが出る</li><li>字幕は小さく薄い。自分の番や吹き出しの間は出さない</li></ul></div>
+    <div class="scene" data-v="1"></div>
+  </article>
+
+  <article class="card">
+    <div class="txt"><span class="tag">案2</span><h2>映画の字幕</h2>
+      <p>卓の下のほうに、映画の字幕のように1行出ます。</p>
+      <ul><li>読みやすい</li><li>手札やボタンに近く、目に入りすぎる</li></ul></div>
+    <div class="scene" data-v="2"></div>
+  </article>
+
+  <article class="card">
+    <div class="txt"><span class="tag">案3</span><h2>灯りと音だけ</h2>
+      <p>画面に文字は出さず、奥の灯りが揺れて、ざわめきが聞こえるだけ。文字は「ハンドの記録」に残ります。</p>
+      <ul><li>いちばん静か</li><li>サウンドは最初オフなので、多くの人は気づかない</li></ul></div>
+    <div class="scene" data-v="3"></div>
+  </article>
+
+  <article class="card rec">
+    <div class="txt"><span class="tag">案4 ★まれな大事件だけ</span><h2>ピント送り</h2>
+      <p>大きな出来事のときだけ、自分の卓がぼけてピントが隣の卓へ移ります。今のカメラ演出をそのまま使えます。ふだんの声は案1と同じに出します。</p>
+      <ul><li>映画のような山場</li><li>1卓に多くて1回</li></ul></div>
+    <div class="scene" data-v="4"></div>
+  </article>
+
+  <p class="foot">第7章（錨亭、閉店後）は、隣の卓の声を出さず、奥の灯りも消します。店のボタンで「閉店後」を選ぶと見られます。</p>
+</div>
+
+<script>
+const STORES={
+  1:{name:'錨亭',lines:[['air','マスター、もう一杯'],['cheer','オールイン！ …入ったあ！'],['story','カウンターの写真、一枚だけ裏返しなの、なんでだろうな'],['air','……コール'],['big','フォーカード！']]},
+  3:{name:'月影',lines:[['air','（曲の切れ目に、拍手）'],['story','ミナの歌が止まったら、誰かが大きく勝つんだってさ'],['react','今の、何も無い手で押し切ったのか？'],['cheer','オールイン！ …どよめき'],['big','ストレートフラッシュ！']]},
+  4:{name:'天空',lines:[['rumor','ソウのやつ、強いとき急に口数が減るよな'],['air','ディーラー交代です'],['rumor','レイカは汗をかいたら勝負手だってさ'],['story','ハヤト？ あいつなら今は地下にいるって聞いたぜ'],['big','ロイヤルストレートフラッシュ！']]},
+  5:{name:'地下',lines:[['air','おい、今のイカサマじゃねえのか …フロア！'],['cheer','AAが負けたってよ。かわいそうに'],['rumor','ハヤトは絶対にブラフしないって話だぜ'],['self','あの新顔、強いときは長く考えるよな'],['big','殴り合い寸前！ …フロアが走る']]},
+  6:{name:'王冠',lines:[['air','3卓、ブレイクです'],['cheer','隣の卓で一人飛んだぞ'],['rumor','クロウさん、本当に迷ったときだけ手袋に触るって'],['air','ショーダウンです'],['big','ロイヤルストレートフラッシュ！']]},
+  7:{name:'閉店後',lines:[]}
+};
+const KIND={air:'隣の卓',cheer:'隣の卓',story:'隣の卓',rumor:'隣の卓・噂',react:'隣の客',self:'隣の客',big:'隣の卓'};
+let store=4,idx=0,playing=true,timer=null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function sceneHTML(v){
+  let gl='';[[18,30],[30,22],[55,28],[70,34],[40,40]].forEach(([x,y])=>gl+=`<i class="gl" style="left:${x}%;top:${y+30}%"></i>`);
+  return `<div class="zoom"><div class="room"></div>
+  <div class="next"><div class="glow"></div><div class="felt"></div>${gl}<i class="cd" style="left:42%;top:66%"></i><i class="cd" style="left:52%;top:66%"></i></div>
+  <div class="heads"><div class="head"></div><div class="head"></div></div>
+  <span class="plate p1">レイカ</span><span class="plate p2">ソウ</span>
+  <div class="table"></div><div class="board"><i></i><i></i><i></i></div>
+  <div class="potsign">ポット<b>12,000</b></div><div class="mine"><i></i><i></i></div></div>
+  <span class="phase">フロップ</span>
+  ${v==1||v==4?'<div class="sub1"></div>':''}${v==2?'<div class="sub2"></div>':''}${v==3?'<span class="snd">ざわ…</span>':''}${v==4?'<div class="sub4"></div>':''}`;
+}
+const scenes=[...document.querySelectorAll('.scene')];
+scenes.forEach(s=>{s.innerHTML=sceneHTML(+s.dataset.v);if(s.dataset.v==='3'){const l=document.createElement('div');l.className='log3';l.innerHTML='<ul></ul>';s.after(l);}});
+// 案3 の記録は scene の下に出すので、カードの右列に入れ直す
+scenes.forEach(s=>{if(s.dataset.v==='3'){const box=document.createElement('div');box.style.minWidth='0';s.parentNode.insertBefore(box,s);box.append(s,s.nextSibling);}});
+
+function setStore(n){
+  store=n;idx=0;
+  document.querySelectorAll('#stores button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.s===n)));
+  scenes.forEach(s=>{s.classList.toggle('closed',n===7);s.querySelector('.plate.p1').textContent=n===7?'ジン':'レイカ';s.querySelector('.plate.p2').hidden=n===7;});
+  document.querySelectorAll('.log3 ul').forEach(u=>u.innerHTML='');
+  clearSubs();tick();
+}
+function clearSubs(){scenes.forEach(s=>{s.classList.remove('flare','cheer','focus');s.querySelectorAll('.sub1,.sub2,.sub4,.snd').forEach(e=>e.classList.remove('on'));});}
+function tick(){
+  clearSubs();
+  const st=STORES[store],now=document.getElementById('now');
+  if(!st.lines.length){now.innerHTML='<b>閉店後</b><span class="quiet">隣の卓には誰もいない。声は出ません</span>';return;}
+  const [k,t]=st.lines[idx%st.lines.length];idx++;
+  const big=k==='big';
+  now.innerHTML=`<b>${big?'大事件':KIND[k]}</b>${t}`;
+  requestAnimationFrame(()=>scenes.forEach(s=>{
+    const v=+s.dataset.v;
+    if(!reduce)s.classList.add(k==='cheer'||big?'cheer':'flare');
+    const lab=KIND[k];
+    if(v===1||(v===4&&!big)){const e=s.querySelector('.sub1');e.innerHTML=`<span>${lab}</span><br>${t}`;e.classList.add('on');}
+    if(v===2){const e=s.querySelector('.sub2');e.innerHTML=`<em>${lab}</em>${t}`;e.classList.add('on');}
+    if(v===3){s.querySelector('.snd').classList.add('on');const u=s.parentNode.querySelector('.log3 ul');u.querySelectorAll('li').forEach(li=>li.className='');const li=document.createElement('li');li.className='new';li.textContent=`${lab}：${t}`;u.prepend(li);while(u.children.length>2)u.lastChild.remove();}
+    if(v===4&&big){s.classList.add('focus');const e=s.querySelector('.sub4');e.innerHTML=`<span>NEXT TABLE</span>${t}`;e.classList.add('on');}
+  }));
+  setTimeout(()=>scenes.forEach(s=>s.querySelectorAll('.sub1,.sub2,.sub4,.snd').forEach(e=>e.classList.remove('on'))),3400);
+  setTimeout(()=>scenes.forEach(s=>s.classList.remove('focus')),3000);
+}
+function loop(){clearInterval(timer);if(playing)timer=setInterval(tick,4400);}
+const sb=document.getElementById('stores');
+[1,3,4,5,6,7].forEach(n=>{const b=document.createElement('button');b.dataset.s=n;b.textContent=STORES[n].name;b.onclick=()=>{setStore(n);loop();};sb.append(b);});
+document.getElementById('play').onclick=e=>{playing=!playing;e.currentTarget.setAttribute('aria-pressed',String(playing));e.currentTarget.textContent=playing?'再生中':'止めています';loop();};
+setStore(4);loop();
+window.__demo={setStore,tick};
+</script>

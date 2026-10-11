@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>所持チップの見せ方</title>
+<style>
+:root{--bg:#0d0e13;--panel:#16171e;--ink:#ece6d6;--sub:#9a968c;--gold:#e2b65b;--crimson:#b0213a;--felt:#1f5a3f;--felt2:#123827;--line:rgba(226,182,91,.35)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0d0e13;--panel:#16171e;--ink:#ece6d6;--sub:#9a968c}}
+:root[data-theme="dark"]{--bg:#0d0e13;--panel:#16171e;--ink:#ece6d6;--sub:#9a968c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;line-height:1.6}
+header{padding:20px 16px 8px;max-width:1180px;margin:0 auto}
+h1{font-size:1.25rem;margin:0 0 4px;letter-spacing:.06em}
+header p{margin:0;color:var(--sub);font-size:.88rem}
+.grid{display:grid;grid-template-columns:1fr;gap:16px;padding:12px 16px 32px;max-width:1180px;margin:0 auto}
+@media (min-width:860px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--panel);border:1px solid #262833;border-radius:10px;overflow:hidden}
+.card.rec{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.hd{display:flex;align-items:baseline;gap:8px;padding:10px 12px 4px;flex-wrap:wrap}
+.hd b{font-size:1rem}
+.tag{font-size:.72rem;padding:1px 7px;border-radius:3px;background:#262833;color:var(--sub)}
+.tag.r{background:var(--gold);color:#1a1408;font-weight:700}
+.desc{padding:0 12px 10px;font-size:.84rem;color:var(--sub)}
+.felt{position:relative;height:270px;margin:0 10px 10px;border-radius:120px/60px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 40%,#2a7351 0,var(--felt) 45%,var(--felt2) 100%);
+  box-shadow:inset 0 0 0 6px #3a2618,inset 0 0 0 7px #5b3a22,inset 0 10px 40px rgba(0,0,0,.6)}
+.felt::after{content:"";position:absolute;left:24%;right:24%;top:66%;height:26%;border:1px solid var(--line);border-radius:50%;pointer-events:none}
+.plate{position:absolute;transform:translateX(-50%);background:rgba(10,10,14,.82);border:1px solid #333645;border-radius:4px;padding:1px 8px;font-size:.72rem;text-align:center;white-space:nowrap;z-index:50}
+.plate .n{display:block;font-weight:700}
+.plate .c{color:var(--gold);font-variant-numeric:tabular-nums}
+.plate.ai{border-color:var(--crimson)}
+.plate.ai .c{color:#ff8a9a}
+.who{position:absolute;transform:translate(-50%,-100%);width:34px;height:40px;border-radius:17px 17px 6px 6px;background:linear-gradient(#2b2d38,#191a21);z-index:1;opacity:.9}
+.who.me{background:linear-gradient(#34405a,#1b2232)}
+.box{position:absolute;width:0;height:0}
+.chip{position:absolute;width:22px;height:9px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--c) 55%,#fff) 0 27%,rgba(255,255,255,.9) 29% 32%,transparent 34%),
+  repeating-conic-gradient(from 8deg,var(--c) 0 30deg,#f6f2e8 30deg 45deg);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 2.8px 0 var(--d),0 3.4px 3px rgba(0,0,0,.45)}
+.c1{--c:#3c7bd6;--d:#24528f}.c0{--c:#ece6d6;--d:#a39b86}.c7{--c:#e86fa8;--d:#a3416f}.c2{--c:#2c9a5e;--d:#1b6640}
+.c3{--c:#d7263d;--d:#8f1626}.c4{--c:#26272f;--d:#0d0e12}.c5{--c:#e2b65b;--d:#9c7a2e}.c6{--c:#8b4fd6;--d:#5a2f94}
+.chip.flat{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 1px 0 var(--d),0 2px 2px rgba(0,0,0,.4)}
+.note{margin:-4px 12px 10px;font-size:.74rem;color:#d8d2c2;border-left:2px solid var(--gold);padding-left:8px}
+.pot{position:absolute;left:50%;top:76%;transform:translate(-50%,-50%);font-size:.7rem;color:var(--gold);background:rgba(0,0,0,.55);padding:0 8px;border-radius:3px;z-index:55;white-space:nowrap}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 12px 12px;font-size:.72rem;color:var(--sub)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend i{position:relative;display:inline-block;width:22px;height:9px}
+.legend i .chip{left:0;top:0}
+footer{max-width:1180px;margin:0 auto;padding:0 16px 32px;color:var(--sub);font-size:.8rem}
+@media (max-width:480px){.felt{height:250px;border-radius:90px/50px}.scale{transform:scale(.78)}}
+@media (prefers-reduced-motion:reduce){.chip{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+<h1>所持チップの見せ方（ライブポーカーに近づける）</h1>
+<p>ブラインド 1,000/2,000。アオ 100,000／ミサキ 235,500／ゲン 42,500／クロウ 168,000。顔は省いて、名札とチップだけを描いています。動く案はくり返し再生します。</p>
+</header>
+<div class="grid" id="grid"></div>
+<div class="legend" style="max-width:1180px;margin:0 auto;padding:0 16px 8px" id="legend"></div>
+<footer>見本：research/所持チップの見せ方_見本.html ／ 提案書：research/所持チップの見せ方_提案.md</footer>
+<script>
+const PANELS=[
+ {id:'now',t:'いま',tag:'',d:'1万の黒チップだけを縦に積むので、10万も23万も「黒い棒が1〜2本」に見える。持ち点の差が目でわからない。'},
+ {id:'p1',t:'案1　ブラインドに合わせたチップで積む',tag:'',d:'BB（2,000）の半分の青（1,000）と、その5倍の赤（5,000）が主役。ライブの1/2卓と同じく、100BBで40枚ほどになる。短い人は本当に少なく見える。'},
+ {id:'p2',t:'案2　ライブの並べ方（奥に高い額、手前に小さい額）',tag:'',d:'（案1の枚数で見せています）20枚ずつの塔にして、高い額を奥、小さい額を手前に並べる。端数は横に寝かせる。積み方が少しずれていて、きれいすぎない。'},
+ {id:'p3',t:'案3　勝った分はごちゃっと置いて、あとで積み直す',tag:'',d:'押し出されたポット（案E）が勝った人の前にごちゃっと残る。強いキャラはすぐ積み直し、弱いキャラはしばらく崩れたまま。'},
+ {id:'p4',t:'案4　チップの手癖',tag:'',d:'考えている間、クロウはチップをシャッフル、ゲンは1枚をつまんで落とす。見た目だけでテルには使わない（第7章のジンには付けない）。'},
+ {id:'p5',t:'案5　オールインは塔ごと押し出す',tag:'',d:'オールインのとき、積んである塔をそのまま線の前へ押し出す。賭けチップに両替しない。名札も赤く変わる。'},
+ {id:'rec',t:'おすすめ　案1＋2＋3',tag:'おすすめ',d:'チップの数・並べ方・勝ったあとの崩れ方の3つで、ライブの卓らしさが一番出る。どれも表示だけで、勝ち負けには関係しない。'}
+];
+const SEATS=[
+ {n:'ミサキ',v:235500,x:.2,by:.62,cool:true},
+ {n:'ゲン',v:42500,x:.5,by:.62,cool:false},
+ {n:'クロウ',v:168000,x:.8,by:.62,cool:true},
+ {n:'アオ',v:100000,x:.5,by:.92,me:true}
+];
+const fmt=v=>v.toLocaleString('en-US');
+const approx=v=>{const m=10**Math.floor(Math.log10(v)),r=Math.round(v/m)*m;return r>=10000?(r/10000)+'万':fmt(r)};
+const COLS={100000:'c6',50000:'c5',10000:'c4',5000:'c3',2500:'c2',1000:'c1',500:'c0',100:'c7'};
+const NAMES={c6:'紫 10万',c5:'金 5万',c4:'黒 1万',c3:'赤 5千',c2:'緑 2.5千',c1:'青 1千',c0:'白 500',c7:'桃 100'};
+// いまの割り方（ゲームの stackBreak と同じ）
+function breakNow(a){let rest=a,n={};let k=Math.floor(rest/10000);rest-=k*10000;
+  if(k>20){let ex=Math.floor((k-20)/5)*5;n.c5=ex/5;k-=ex;if(n.c5>6){n.c6=Math.floor((n.c5-4)/2);n.c5-=n.c6*2}}n.c4=k;
+  for(const v of [5000,2500,1000,500,100]){n[COLS[v]]=Math.floor(rest/v);rest-=n[COLS[v]]*v}
+  return [100000,50000,10000,5000,2500,1000,500,100].map(v=>({v,c:COLS[v],n:n[COLS[v]]||0})).filter(d=>d.n)}
+// 案1：BBの半分のチップ（青）を20枚、その5倍（赤）を40枚まで。それより上は大きい額へ
+function breakBB(a,bb){const D=[100,500,1000,2500,5000,10000,50000,100000];
+  const base=D.filter(v=>v<=bb/2).pop()||100,mid=D.filter(v=>v<=base*5).pop(),hi=D.find(v=>v>mid)||mid;
+  const n={};let low=a%base,rest=a-low;
+  for(const v of D.filter(v=>v<base).reverse()){const k=Math.floor(low/v);if(k){n[v]=k;low-=k*v}}
+  let lp=Math.min(rest,20*base+40*mid);lp=rest-Math.floor((rest-lp)/hi)*hi;let up=rest-lp;
+  for(const v of D.filter(v=>v>=hi).reverse()){const k=Math.floor(up/v);if(k){n[v]=k;up-=k*v}}
+  const m=Math.min(40,Math.floor((lp-Math.min(lp,20*base))/mid));n[mid]=m;n[base]=(lp-m*mid)/base;
+  return D.slice().reverse().map(v=>({v,c:COLS[v],n:n[v]||0})).filter(d=>d.n)}
+// 乱数（パネルごとに同じ形）
+function R(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+const STEP=2.6,CW=22;
+// 塔の位置を決める。mode: 'now' 横一列、'live' 奥と手前の2列＋ずれ
+function towers(groups,mode,rnd){const out=[];
+  if(mode==='now'){let x=0;groups.forEach(g=>{for(let i=0;i<g.n;i+=20){const h=Math.min(20,g.n-i);for(let k=0;k<h;k++)out.push({c:g.c,x:x,y:-k*STEP,z:k});x+=CW+2}});
+    const w=x-2;out.forEach(o=>o.x-=w/2);return out}
+  // live：高い額を奥の列、小さい額を手前の列
+  const sorted=groups.slice().sort((a,b)=>b.v-a.v);let back=[],front=[];
+  sorted.forEach((g,i)=>{const arr=(i<Math.ceil(sorted.length/2)&&sorted.length>1)?back:front;
+    let n=g.n,loose=0;if(n>=4&&n%20&&n%20<3){loose=n%20;n-=loose}
+    for(let i=0;i<n;i+=20)arr.push({c:g.c,h:Math.min(20,n-i)});
+    if(loose)arr.push({c:g.c,h:loose,loose:true});if(g.n<4&&g.n<20&&arr[arr.length-1].h!==g.n)arr.push({c:g.c,h:g.n})});
+  const row=(arr,y0,zb)=>{const w=arr.length*(CW+3)-3;arr.forEach((t,i)=>{const bx=i*(CW+3)-w/2+(rnd()*2-1);
+    if(t.loose){for(let k=0;k<t.h;k++)out.push({c:t.c,x:bx+(rnd()*6-3),y:y0+4+k*1.5,z:zb+1,flat:true,rot:rnd()*40-20});return}
+    for(let k=0;k<t.h;k++)out.push({c:t.c,x:bx+(rnd()*1.6-.8),y:y0-k*STEP,z:zb+k})})};
+  row(back,-7,0);row(front,4,40);return out}
+function el(tag,cls,parent){const e=document.createElement(tag);if(cls)e.className=cls;if(parent)parent.appendChild(e);return e}
+function chipEl(o,parent){const c=el('span','chip '+o.c+(o.flat?' flat':''),parent);place(c,o);return c}
+function place(c,o){c.style.left=(o.x-CW/2)+'px';c.style.top=(o.y-4.5)+'px';c.style.zIndex=Math.round(10+(o.zz||0)+o.z);c.style.transform=o.rot?`rotate(${o.rot.toFixed(0)}deg)`:''}
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function buildPanel(P,idx){
+  const card=el('div','card'+(P.id==='rec'?' rec':''),document.getElementById('grid'));
+  const hd=el('div','hd',card);el('b','',hd).textContent=P.t;if(P.tag){const t=el('span','tag r',hd);t.textContent=P.tag}
+  el('div','desc',card).textContent=P.d;
+  const f=el('div','felt',card);
+  const rnd=R(1000+idx*77);
+  const mode=P.id==='now'||P.id==='p1'?'now':'live';
+  const brk=v=>P.id==='now'?breakNow(v):breakBB(v,2000);
+  const seats=SEATS.map(s=>{
+    const who=el('div','who'+(s.me?' me':''),f);
+    const pl=el('div','plate',f);pl.innerHTML=`<span class="n">${s.n}</span><span class="c">${s.me?fmt(s.v):'約'+approx(s.v)}</span>`;
+    const box=el('div','box scale',f);
+    const set=()=>{const W=f.clientWidth,H=f.clientHeight;
+      box.style.left=(s.x*W)+'px';box.style.top=(s.by*H)+'px';
+      if(s.me){pl.style.left=(.5*W+92)+'px';pl.style.top=(.76*H)+'px';who.style.display='none'}
+      else{who.style.left=(s.x*W)+'px';who.style.top=(.2*H)+'px';pl.style.left=(s.x*W)+'px';pl.style.top=(.2*H)+'px'}};
+    set();addEventListener('resize',set);
+    return {s,box,pl,set};
+  });
+  // 自分の札は名札の上に置くので、名札を一番下にする
+  const draw=(seat,v,opts={})=>{seat.box.innerHTML='';const list=towers(brk(v),mode,R(5000+idx*31+seat.s.v%97));
+    seat.chips=list.map(o=>chipEl(o,seat.box));seat.list=list;return list};
+  seats.forEach(st=>draw(st,st.s.v));
+  if(P.id==='p3'||P.id==='rec')loopWin(f,seats,draw,P.id==='rec');
+  if(P.id==='p4')loopFidget(seats);
+  if(P.id==='p5')loopAllin(seats,f);
+  if(P.id==='now'){const n=el('div','note',f.parentNode);n.textContent='10万＝黒10枚の棒1本'}
+  if(P.id==='p1'){const n=el('div','note',f.parentNode);n.textContent='アオ 100,000 ＝ 青20枚＋赤16枚'}
+}
+// 案3：ポットの山 → 勝った人の前にごちゃっと → 積み直し
+function loopWin(f,seats,draw,rec){
+  const mi=seats[0],gen=seats[1];let alt=false;
+  const pot=el('div','pot',f);pot.textContent='ポット 20,000';
+  const run=()=>{alt=!alt;const w=alt?mi:gen;const base=w.s.v;
+    // 勝つ前の山
+    draw(w,base);pot.style.opacity=1;
+    const W=f.clientWidth,H=f.clientHeight,pr=R(alt?11:23);
+    const pile=[];const cols=['c1','c3','c1','c3','c2','c1','c3'];
+    for(let k=0;k<11;k++){let x,y;do{x=pr()*2-1;y=pr()*2-1}while(x*x+y*y>1);
+      const o={c:cols[k%cols.length],x:W/2+x*38,y:H*.8+y*10,z:Math.round(y*12)+20,zz:30};
+      const c=chipEl(o,f);c.style.transition='none';pile.push({c,o})}
+    if(RM){return}
+    const bx=parseFloat(w.box.style.left),by=parseFloat(w.box.style.top);
+    setTimeout(()=>{pot.style.opacity=0;
+      pile.forEach(({c,o},k)=>{const mx=bx+(pr()*70-35),my=by+12+pr()*12;c.style.transition=`left .7s cubic-bezier(.6,0,.3,1) ${k*15}ms,top .7s cubic-bezier(.6,0,.3,1) ${k*15}ms,transform .7s`;
+        c.style.left=(mx-CW/2)+'px';c.style.top=(my-4.5)+'px';c.style.transform=`rotate(${(pr()*50-25).toFixed(0)}deg)`;c.style.zIndex=Math.round(30+my)})},700);
+    w.pl.querySelector('.c').textContent=w.s.me?fmt(base):'約'+approx(base);
+    setTimeout(()=>{w.pl.querySelector('.c').textContent=w.s.me?fmt(base+20000):'約'+approx(base+20000)},1500);
+    // 強いキャラはすぐ積み直す。弱いキャラは崩れたまま
+    const neat=w.s.cool;
+    setTimeout(()=>{if(!neat)return;
+      // 新しい額の塔に合わせて、ごちゃっとしたチップを塔へ吸い込ませる
+      pile.forEach(({c},k)=>{c.style.transition=`left .45s ease ${k*30}ms,top .45s ease ${k*30}ms,opacity .2s ease ${450+k*30}ms,transform .45s`;c.style.left=(bx-CW/2)+'px';c.style.top=(by-20)+'px';c.style.transform='';c.style.opacity=0});
+      setTimeout(()=>draw(w,base+20000),800)},neat?2600:0);
+    setTimeout(()=>{pile.forEach(({c})=>c.remove());draw(w,base)},6200)};
+  run();if(!RM)setInterval(run,6600);
+  const n=el('div','note',f.parentNode);n.textContent=rec?'青と赤で40枚ほど・奥と手前・勝つと崩れる':'ミサキ（強い）はすぐ積み直す／ゲン（弱い）は崩れたまま';
+}
+// 案4：シャッフル（クロウ）と、1枚つまんで落とす（ゲン）
+function loopFidget(seats){if(RM)return;
+  const cr=seats[2],gen=seats[1];
+  setInterval(()=>{ // クロウ：手前の塔の上6枚を左右に割って、交互に重ねる
+    const front=cr.list.map((o,i)=>({o,i})).filter(a=>a.o.z>=40&&!a.o.flat);if(front.length<6)return;
+    const top=front.slice(-6);
+    top.forEach(({o,i},k)=>{const c=cr.chips[i];c.animate([{transform:'none'},{transform:`translate(${k%2?9:-9}px,${2+Math.floor(k/2)*1.2}px)`,offset:.35},{transform:`translate(0,0)`,offset:1}],{duration:900,easing:'ease-in-out',delay:k*40})});
+  },1800);
+  setInterval(()=>{const c=gen.chips[gen.chips.length-1];if(!c)return;
+    c.animate([{transform:'none'},{transform:'translate(4px,-14px) rotate(-14deg)',offset:.4},{transform:'translate(4px,-14px) rotate(-14deg)',offset:.6},{transform:'none'}],{duration:1100,easing:'ease-in-out'})},1500);
+}
+// 案5：オールイン。塔ごと前へ押し出す
+function loopAllin(seats,f){const g=seats[1];
+  const n=el('div','note',f.parentNode);n.textContent='ゲンがオールイン';
+  if(RM)return;
+  const run=()=>{g.pl.classList.add('ai');g.pl.querySelector('.c').textContent='オールイン 42,500';
+    g.chips.forEach((c,k)=>c.animate([{transform:c.style.transform||'none'},{transform:`translate(0,26px) ${c.style.transform||''}`}],{duration:700,easing:'cubic-bezier(.5,0,.2,1)',delay:300,fill:'forwards'}));
+    setTimeout(()=>{g.chips.forEach(c=>c.getAnimations().forEach(a=>a.cancel()));g.pl.classList.remove('ai');g.pl.querySelector('.c').textContent='約'+approx(g.s.v)},3200)};
+  run();setInterval(run,4200)}
+PANELS.forEach(buildPanel);
+// 色の見本
+const lg=document.getElementById('legend');['c1','c3','c2','c4','c5','c6','c0','c7'].forEach(c=>{const s=el('span','',lg);const i=el('i','',s);el('span','chip '+c,i);s.append(NAMES[c])});
+</script>
+</body>
+</html>

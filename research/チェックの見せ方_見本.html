@@ -1,0 +1,189 @@
+<title>LAST TELL チェックの見せ方</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 暗い店内に緑のラシャ。案ごとに小さな卓を並べ、同じ流れ（3人チェック→あなた→次の札）を同時に動かす */
+:root{
+  --bg:#0d0f12; --panel:#15181d; --line:#2a2f37; --fg:#e9e4d8; --muted:#9a968c;
+  --gold:#c9a45c; --felt:#1f4a3c; --felt2:#163a2f; --crimson:#a3283a; --teal:#2f6f5f;
+  --skin:#d9a98a; --skin2:#b07f62;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 40px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,3.5vw,1.9rem);letter-spacing:.06em;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 14px;max-width:62ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+button{font:inherit;cursor:pointer}
+.bar button{background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:6px 14px;border-radius:4px}
+.bar button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.bar button:focus-visible,.hbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.card header{padding:10px 12px 6px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h2{font-family:var(--display);font-size:1.05rem;margin:0;letter-spacing:.04em}
+.no{color:var(--gold);font-family:var(--display);font-weight:800}
+.rec{font-size:.72rem;background:var(--gold);color:#111;padding:0 6px;font-weight:700;letter-spacing:.05em}
+.post{font-size:.72rem;border:1px solid var(--line);color:var(--muted);padding:0 6px}
+.card p{margin:0;padding:0 12px 10px;color:var(--muted);font-size:.85rem}
+/* 卓 */
+.tbl{position:relative;aspect-ratio:16/10;max-width:100%;margin:0 10px 10px;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 55%,var(--felt),var(--felt2) 70%,#0c1814);
+  border-radius:48% 48% 40% 40%/30% 30% 24% 24%;box-shadow:inset 0 0 0 6px #2b1d12,inset 0 0 0 8px #4a3220,inset 0 0 40px #0008}
+.seat{position:absolute;top:6%;width:22%;display:flex;flex-direction:column;align-items:center;gap:2px}
+.seat.s0{left:6%}.seat.s1{left:39%;top:3%}.seat.s2{right:6%}
+.av{width:44%;aspect-ratio:1;border-radius:50%;background:linear-gradient(160deg,#444b55,#22262c);border:2px solid #5a5f68;
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:clamp(.8rem,2.4vw,1.05rem);color:#ddd;transition:transform .2s}
+.seat.boss .av{border-color:var(--gold)}
+.nm{font-size:.7rem;background:#000a;padding:0 6px;white-space:nowrap}
+.tag{font-size:.68rem;min-height:1.35em;padding:0 6px;background:transparent;color:transparent;white-space:nowrap;transition:background .15s}
+.tag small{display:block;font-size:.58rem;font-weight:400;line-height:1.1;opacity:.8}
+.tag.on{background:var(--teal);color:#fff;font-weight:700}
+.spot{position:absolute;width:12%;aspect-ratio:1;transform:translate(-50%,-50%)}
+.say{position:absolute;transform:translate(-50%,-100%);background:#f2eee4;color:#111;font-size:.7rem;padding:1px 7px;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.say.on{opacity:1}
+.board{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);display:flex;gap:4px}
+.cd{width:clamp(18px,4.6vw,30px);aspect-ratio:5/7;background:#f4f1ea;border-radius:3px;color:#111;font-size:clamp(.55rem,1.6vw,.75rem);font-weight:700;display:grid;place-items:center;box-shadow:0 1px 2px #0008}
+.cd.r{color:var(--crimson)}
+.cd.hide{visibility:hidden}
+.dcall{position:absolute;left:50%;top:44%;transform:translateX(-50%);font-family:var(--display);font-size:clamp(.7rem,2vw,.85rem);color:var(--gold);letter-spacing:.1em;opacity:0;transition:opacity .2s;white-space:nowrap;text-shadow:0 1px 3px #000}
+.dcall.on{opacity:1}
+.street{position:absolute;left:5%;top:56%;font-size:.62rem;color:#fff9;letter-spacing:.2em}
+.me{position:absolute;left:0;right:0;bottom:4%;display:flex;justify-content:center;align-items:center;gap:8px}
+.hbtn{background:var(--teal);color:#fff;border:0;padding:3px 16px;font-weight:700;font-size:.78rem;border-radius:3px;transition:transform .1s,filter .1s}
+.hbtn.press{transform:scale(.92);filter:brightness(1.4)}
+.mel{font-size:.66rem;color:var(--muted)}
+.hint{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:.62rem;color:#fffb;background:#0008;padding:0 6px;white-space:nowrap}
+/* 手と波紋 */
+.hand{position:absolute;pointer-events:none;transform-origin:50% 100%;opacity:0}
+.ring{position:absolute;border:2px solid #fff8;border-radius:50%;transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none}
+.knock{position:absolute;font-size:.6rem;color:#fffc;letter-spacing:.1em;transform:translate(-50%,0);opacity:0;pointer-events:none;white-space:nowrap}
+.tap{position:absolute;width:22px;height:22px;border-radius:50%;background:#fff6;transform:translate(-50%,-50%);opacity:0;pointer-events:none}
+section.notes{margin-top:22px;display:grid;gap:10px;max-width:72ch}
+section.notes h3{font-family:var(--display);margin:0;font-size:1rem;color:var(--gold)}
+section.notes p,section.notes li{color:var(--muted);font-size:.88rem}
+section.notes ul{margin:0;padding-left:1.2em}
+@media (prefers-reduced-motion:reduce){.av{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>チェックの見せ方</h1>
+  <p class="lead">どの卓も同じ流れです。フロップで3人がチェックし、あなたもチェックし、ターンが配られます。案0が今のゲームです。</p>
+  <div class="bar">
+    <button id="snd" aria-pressed="false">音を出す</button>
+    <button id="pause" aria-pressed="false">止める</button>
+    <span class="mel">案4の卓は、緑の上をダブルクリック（スマホはダブルタップ）でもチェックできます。</span>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <section class="notes">
+    <h3>テルにならないための決まり（全案共通）</h3>
+    <ul>
+      <li>叩き方はキャラごとに1つに決めて、手の強さで変えない。</li>
+      <li>動きは行動が決まった瞬間に始める。考える時間（「速い」テル）は今のまま変えない。</li>
+      <li>手は卓の上（チップの前）だけに出す。顔や、ジンのあごの傷のあたりには重ねない。</li>
+      <li>第1〜3章は見た目だけが変わり、CPUの判断と時間は同じ。</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const OPTS=[
+ {n:0,t:'今のまま',d:'名前の下に「チェック」と出て、顔が少しだけ動く。音もディーラーの声もない。'},
+ {n:1,t:'手でコン、コン',d:'チェックした人の前のラシャを、指の背で2回叩く。小さな波紋と「コン、コン」の音。あなたがボタンを押したときも、あなたの手が叩く。'},
+ {n:2,t:'キャラごとの叩き方',d:'1と同じ仕組みで、叩き方を人ごとに決める。ゲンは拳で強く2回と声、ミナは指先で軽く1回、レイカは手のひらで静かに1回。',rec:1},
+ {n:3,t:'ディーラーの「チェック・アラウンド」',d:'全員がチェックで回ったら、ディーラーが卓を1回叩いて「チェック、アラウンド」と言い、次の札を配る。',rec:1},
+ {n:4,t:'自分で卓を叩く',d:'設定で選ぶと、スマホは卓のダブルタップ、PCは K キーでチェックできる。ボタンはそのまま残す。',post:1},
+ {n:5,t:'国ごとの言い方',d:'声で言う人は、生まれた国の言い方をする。ソフィアは「パソ」、ルカは「メーザ」。札の下には「チェック」と添える。',post:1},
+];
+// 叩き方：kind=knuckle|fist|finger|palm, n=回数
+const CAST={
+ std:[{nm:'ゲン',ini:'ゲ',k:'knuckle',n:2},{nm:'ミナ',ini:'ミ',k:'knuckle',n:2,boss:0},{nm:'レイカ',ini:'レ',k:'knuckle',n:2,boss:1}],
+ two:[{nm:'ゲン',ini:'ゲ',k:'fist',n:2,say:'チェック！'},{nm:'ミナ',ini:'ミ',k:'finger',n:1},{nm:'レイカ',ini:'レ',k:'palm',n:1,boss:1}],
+ five:[{nm:'ゲン',ini:'ゲ',k:'knuckle',n:2,say:'チェック'},{nm:'ソフィア',ini:'ソ',k:'knuckle',n:2,say:'パソ',boss:1},{nm:'ルカ',ini:'ル',k:'knuckle',n:2,say:'メーザ'}],
+};
+const SPOTS=[[17,37],[50,33],[83,37]];
+let sound=false,paused=false,AC=null;
+function knockSfx(hard){if(!sound)return;AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(hard?150:210,t);o.frequency.exponentialRampToValueAtTime(70,t+.08);
+  g.gain.setValueAtTime(hard?.55:.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+.13);
+  const b=AC.createBuffer(1,AC.sampleRate*.04,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length)**3;
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g2=AC.createGain();f.type='bandpass';f.frequency.value=hard?900:1500;g2.gain.value=hard?.5:.25;s.buffer=b;s.connect(f).connect(g2).connect(AC.destination);s.start(t)}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function handSVG(k,flip){
+  const sk='var(--skin)',sk2='var(--skin2)',sl='#1b1d22';
+  if(k==='finger')return `<svg viewBox="0 0 40 80" width="100%"><rect x="12" y="40" width="16" height="40" fill="${sl}"/><path d="M10 44 Q8 30 14 28 L26 28 Q32 30 30 44 Z" fill="${sk2}"/><rect x="17" y="2" width="7" height="30" rx="3.5" fill="${sk}"/></svg>`;
+  if(k==='palm')return `<svg viewBox="0 0 60 80" width="100%"><rect x="20" y="52" width="20" height="28" fill="${sl}"/><path d="M8 30 Q6 10 14 8 L46 8 Q54 10 52 30 L44 54 L16 54 Z" fill="${sk}"/><path d="M14 10 V26 M24 6 V24 M34 6 V24 M44 10 V26" stroke="${sk2}" stroke-width="1.5"/></svg>`;
+  if(k==='fist')return `<svg viewBox="0 0 60 80" width="100%"><rect x="18" y="48" width="24" height="32" fill="${sl}"/><path d="M8 22 Q8 8 20 8 L42 8 Q54 8 52 24 L48 50 L14 50 Z" fill="${sk2}"/><path d="M12 12 h36" stroke="${sk}" stroke-width="7" stroke-linecap="round"/></svg>`;
+  return `<svg viewBox="0 0 50 80" width="100%"><rect x="16" y="46" width="18" height="34" fill="${sl}"/><path d="M8 22 Q8 10 16 10 L34 10 Q42 10 42 22 L38 48 L12 48 Z" fill="${sk}"/><g fill="${sk2}"><circle cx="14" cy="14" r="3.4"/><circle cx="21.5" cy="12" r="3.6"/><circle cx="29" cy="12" r="3.6"/><circle cx="36" cy="14" r="3.4"/></g></svg>`;
+}
+function makeTable(o){
+  const cast=o.n===2?CAST.two:o.n===5?CAST.five:CAST.std;
+  const c=document.createElement('article');c.className='card';
+  c.innerHTML=`<header><span class="no">案${o.n}</span><h2>${o.t}</h2>${o.rec?'<span class="rec">おすすめ</span>':''}${o.post?'<span class="post">公開後</span>':''}</header><p>${o.d}</p>
+  <div class="tbl">${cast.map((p,i)=>`<div class="seat s${i}${p.boss?' boss':''}"><div class="av">${p.ini}</div><div class="nm">${p.nm}</div><div class="tag"></div></div>`).join('')}
+   <div class="street">FLOP</div><div class="dcall"></div>
+   <div class="board"><div class="cd">A♠</div><div class="cd r">9♥</div><div class="cd">4♣</div><div class="cd r hide">K♦</div></div>
+   ${o.n===4?'<div class="hint">卓をダブルタップでチェック</div>':''}
+   <div class="me"><span class="mel">あなた</span>${o.n===4?'<span class="tag" id="metag"></span>':'<button class="hbtn" tabindex="-1">チェック</button>'}</div></div>`;
+  const T=c.querySelector('.tbl');T._o=o;T._cast=cast;
+  if(o.n===4)T.addEventListener('dblclick',e=>{const r=T.getBoundingClientRect();tapAt(T,(e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100);knockAt(T,50,80,'knuckle',2)});
+  return c;
+}
+function pct(T,x,y,el){el.style.left=x+'%';el.style.top=y+'%'}
+function knockAt(T,x,y,k,n,dealer){
+  const w=k==='finger'?5:k==='palm'?9:k==='fist'?9:8;
+  const h=document.createElement('div');h.className='hand';h.style.width=w+'%';h.innerHTML=handSVG(k);
+  h.style.left=(x-w/2)+'%';h.style.top=(y-(dealer?2:0))+'%';h.style.transform='translateY(-100%)';
+  if(dealer)h.style.transform='translateY(-10%) rotate(180deg)';
+  T.appendChild(h);
+  const hard=k==='fist',gap=hard?230:k==='palm'?260:190,lift=hard?18:k==='finger'?8:12;
+  const frames=[{opacity:0,offset:0}];
+  const base=dealer?'translateY(-10%) rotate(180deg)':'translateY(-100%)';
+  const dur=180+n*gap+260;
+  frames.push({opacity:1,transform:`${base} translateY(-${lift}%)`,offset:180/dur});
+  for(let i=0;i<n;i++){const t0=(180+i*gap)/dur,t1=(180+i*gap+gap*.45)/dur,t2=(180+(i+1)*gap)/dur;
+    frames.push({opacity:1,transform:`${base} translateY(0)`,offset:Math.min(t1,1)});
+    if(i<n-1)frames.push({opacity:1,transform:`${base} translateY(-${lift}%)`,offset:Math.min(t2,1)});
+    setTimeout(()=>{knockSfx(hard);ring(T,x,y+(dealer?6:-1),hard?1.5:k==='finger'?.7:1)},180+i*gap+gap*.45)}
+  frames.push({opacity:1,transform:`${base} translateY(-${lift}%)`,offset:(dur-140)/dur},{opacity:0,transform:`${base} translateY(-${lift}%)`,offset:1});
+  if(reduce){h.style.opacity=1;setTimeout(()=>h.remove(),600);for(let i=0;i<n;i++)setTimeout(()=>knockSfx(hard),i*gap);return}
+  h.animate(frames,{duration:dur,easing:'ease-out'}).onfinish=()=>h.remove();
+  const lb=document.createElement('div');lb.className='knock';lb.textContent=(hard?'ドン':k==='palm'?'トン':'コン').repeat(1)+(n>1?(hard?'、ドン':'、コン'):'');pct(T,x,y+3,lb);T.appendChild(lb);
+  lb.animate([{opacity:0},{opacity:1,offset:.3},{opacity:1,offset:.75},{opacity:0}],{duration:dur+200}).onfinish=()=>lb.remove();
+}
+function ring(T,x,y,s){if(reduce)return;const r=document.createElement('div');r.className='ring';r.style.width=r.style.height=(7*s)+'%';r.style.aspectRatio='1';r.style.height='auto';pct(T,x,y,r);T.appendChild(r);
+  r.animate([{opacity:.9,transform:'translate(-50%,-50%) scale(.2)'},{opacity:0,transform:'translate(-50%,-50%) scale(1.6)'}],{duration:500,easing:'ease-out'}).onfinish=()=>r.remove()}
+function tapAt(T,x,y){const d=document.createElement('div');d.className='tap';pct(T,x,y,d);T.appendChild(d);
+  d.animate([{opacity:0},{opacity:1,offset:.15},{opacity:0,offset:.35},{opacity:1,offset:.5},{opacity:0}],{duration:600}).onfinish=()=>d.remove()}
+function sayAt(T,i,text){const s=document.createElement('div');s.className='say on';const sp=SPOTS[i];pct(T,sp[0],sp[1]-17,s);s.style.top='4%';s.style.transform='translate(-50%,0)';
+  s.textContent=text;s.style.left=sp[0]+'%';T.appendChild(s);setTimeout(()=>s.remove(),1300)}
+function cpuCheck(T,i){
+  const o=T._o,p=T._cast[i],seat=T.querySelectorAll('.seat')[i],tag=seat.querySelector('.tag'),av=seat.querySelector('.av');
+  if(o.n===5&&p.say&&p.say!=='チェック')tag.innerHTML=`${p.say}<small>チェック</small>`;else tag.textContent='チェック';tag.classList.add('on');
+  if(!reduce)av.animate([{transform:'translateY(0)'},{transform:'translateY(2%)'},{transform:'translateY(0)'}],{duration:500});
+  if(o.n===0)return;
+  const [x,y]=SPOTS[i];knockAt(T,x,y,p.k,p.n);
+  if((o.n===2||o.n===5)&&p.say&&o.n===2)sayAt(T,i,p.say);
+}
+function meCheck(T){
+  const o=T._o;
+  if(o.n===4){tapAt(T,48,62);setTimeout(()=>tapAt(T,48,62),150);const m=T.querySelector('#metag');m.textContent='チェック';m.classList.add('on');knockAt(T,50,82,'knuckle',2);return}
+  const b=T.querySelector('.hbtn');b.classList.add('press');setTimeout(()=>b.classList.remove('press'),180);
+  if(o.n===0)return;
+  knockAt(T,50,82,'knuckle',2);
+}
+function around(T){const o=T._o;if(o.n!==3)return;const d=T.querySelector('.dcall');knockAt(T,74,66,'palm',1);
+  setTimeout(()=>{d.textContent='チェック、アラウンド';d.classList.add('on')},300);setTimeout(()=>d.classList.remove('on'),1700)}
+function reset(T){T.querySelectorAll('.tag').forEach(t=>{t.classList.remove('on');t.textContent=''});T.querySelector('.cd.hide,.cd:last-child').classList.add('hide');T.querySelector('.street').textContent='FLOP'}
+function turn(T){T.querySelector('.cd:last-child').classList.remove('hide');T.querySelector('.street').textContent='TURN';T.querySelectorAll('.tag').forEach(t=>{t.classList.remove('on');t.textContent=''})}
+const grid=document.getElementById('grid');const tables=OPTS.map(o=>{const c=makeTable(o);grid.appendChild(c);return c.querySelector('.tbl')});
+// 流れ：0.6s ゲン → 1.9s 2人目 → 3.2s 3人目 → 4.5s あなた → 5.7s（案3だけ）ディーラー → 6.9s ターン → 9.0s 最初から
+const STEPS=[[600,T=>cpuCheck(T,0)],[1900,T=>cpuCheck(T,1)],[3200,T=>cpuCheck(T,2)],[4500,meCheck],[5600,around],[6800,turn],[9000,null]];
+function loop(){if(paused){setTimeout(loop,300);return}tables.forEach(reset);STEPS.forEach(([t,f])=>setTimeout(()=>{if(f)tables.forEach(T=>f(T));else loop()},t))}
+loop();
+document.getElementById('snd').onclick=e=>{sound=!sound;e.target.setAttribute('aria-pressed',sound);e.target.textContent=sound?'音を消す':'音を出す';if(sound){AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume()}};
+document.getElementById('pause').onclick=e=>{paused=!paused;e.target.setAttribute('aria-pressed',paused);e.target.textContent=paused?'動かす':'止める'};
+</script>

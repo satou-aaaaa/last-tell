@@ -1,0 +1,4 @@
+/* 案4 試作：揺れは番の相手・テルが出ている相手・にらみ中だけ。呼吸は残す（テル「じっと」は呼吸を止めて見せるため）。降りた・抜けた人は呼吸も止める */
+.bust:not(.turn):not([class*=cue-]):not(.stare){animation:none}
+.bust.folded .body,.bust.out .body,.bust.watch .body{animation:none}
+.stack.tw .trow.back .chip{filter:none}

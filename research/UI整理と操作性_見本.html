@@ -1,0 +1,119 @@
+<title>LAST TELL 画面整理案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 縦に読む提案書：問題 → 4案 → 場面ごとに「今と4案」を横に並べて比べる。ゲームと同じ黒・深紅・金の一色の見た目 */
+:root{
+  --bg:#0c0d12; --panel:#15171f; --line:#2a2d3a; --fg:#ece6d8; --muted:#9a9cab;
+  --crimson:#d7263d; --gold:#e2b65b;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:36px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:.04em}
+h1{font-size:clamp(1.6rem,4vw,2.3rem)}
+h2{font-size:1.3rem;display:flex;gap:10px;align-items:baseline}
+h2 small{font-family:var(--body);font-size:.75rem;color:var(--gold);letter-spacing:.2em}
+.lead{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.probs{display:grid;gap:8px;margin:12px 0 0;padding:0;list-style:none}
+.probs li{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:12px;padding:10px 12px;background:var(--panel);border-left:3px solid var(--crimson)}
+.probs b{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.opt{background:var(--panel);border:1px solid var(--line);padding:14px 16px;display:grid;gap:8px;align-content:start}
+.opt.rec{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.opt h3{margin:0;font-family:var(--display);font-size:1.1rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-family:var(--body);font-size:.68rem;padding:2px 8px;background:var(--gold);color:#1a1408;font-weight:700;letter-spacing:.1em}
+.size{font-size:.72rem;color:var(--muted);letter-spacing:.1em}
+.opt ul{margin:0;padding-left:1.1em;font-size:.86rem}
+.opt li{margin:2px 0}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tabs button{font:inherit;font-size:.82rem;background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:6px 12px;cursor:pointer}
+.tabs button[aria-pressed=true]{border-color:var(--gold);color:var(--gold)}
+.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.note{font-size:.85rem;color:var(--muted);margin:10px 0 0;max-width:70ch}
+.row{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;margin-top:10px;scroll-snap-type:x proximity}
+.row figure{margin:0;flex:none;scroll-snap-align:start;display:grid;gap:6px}
+.row figcaption{font-size:.8rem;font-weight:700;display:flex;gap:6px;align-items:center}
+.row figcaption .tag{font-size:.62rem}
+.row img{display:block;border:1px solid var(--line);height:auto}
+.row.p img{width:250px}.row.l img{width:min(560px,84vw)}.row.pc img{width:min(760px,88vw)}
+.row figure.now figcaption{color:var(--crimson)}
+.keep{font-size:.86rem;background:var(--panel);padding:12px 14px;border:1px solid var(--line)}
+.keep b{color:var(--gold)}
+@media (prefers-reduced-motion:no-preference){.row{scroll-behavior:smooth}}
+</style>
+<div class="wrap">
+<header>
+  <h1>LAST TELL 画面整理案</h1>
+  <p class="lead">いまの版（v62の作業中の分を含む）を4つの画面サイズで撮り、ごちゃつき・重なり・押しにくさを数えました。下の比較画像は、本物のゲームに見た目だけを重ねて撮った試作です。ゲーム本体は変えていません。</p>
+</header>
+
+<section>
+  <h2>今いちばん困っていること <small>計測</small></h2>
+  <ul class="probs">
+    <li><b>1.4〜1.7画面</b><span>遊んでいる最中もページが縦に長く、⚙・やめる・役の一覧は上へ、ハンドの記録は下へ外れている。設定を変えるのに「上へ戻す→⚙→変える→閉じる」の4手。</span></li>
+    <li><b>相手 0人</b><span>スマホ縦でレイズ欄を開くと、相手の顔が全員画面の外へ出る（ジンの助言の帯も間に割り込む）。</span></li>
+    <li><b>ボタン 0/6</b><span>スマホ横のタイトルで、最初に見えるボタンが「English」だけ。ストーリーも押せない。</span></li>
+    <li><b>5,360px</b><span>章の一覧が縦に6.4画面ぶん。1章ごとに4つのボタンと札が並び、題名も2行に割れる。</span></li>
+    <li><b>同時に3つ</b><span>吹き出しが重なって相手の顔と名札を隠す。回想や第5章では、上の状況の文字も顔に重なる。</span></li>
+    <li><b>同じことを3回</b><span>ハンドの終わりに「〇〇の勝ち」が上の文字・名札・下の欄の3か所に出る。ポットにも「卓＋賭け」の内訳が毎回つく。</span></li>
+    <li><b>11項目</b><span>設定が長い一覧で、ボタンに「音：オフ」と見出しと同じ言葉がくり返される。</span></li>
+    <li><b>右上を占領</b><span>スマホ横ではジンの助言が右上に居座り、相手の顔は上が切れる。PCは幅560pxの細い卓で、左右が空いている。</span></li>
+  </ul>
+  <p class="note">前の調査（ボタンUX）の「下に固定」「揺さぶるの移動」「2.5BBなどのワンタップ」「PCのキー操作」は、もう入っています。プロ目線で決まった「タイトルを3つのボタン」「機能を少しずつ見せる」は、案3にそのまま組み込みました。</p>
+</section>
+
+<section>
+  <h2>4つの案 <small>軽い → 大きい</small></h2>
+  <div class="opts">
+    <div class="opt"><h3>案1 片付け</h3><span class="size">見た目だけ・小さい作業</span><ul>
+      <li>吹き出しは新しい1つだけ</li><li>ポットの内訳を消す（押すと出る）</li><li>揺さぶるは自分の顔の横の小さな💬に</li><li>結果は下の欄1か所だけ</li><li>レイズ欄の見出しを1行に</li><li>設定のオン/オフはスイッチに</li></ul></div>
+    <div class="opt"><h3>案2 卓を1画面に</h3><span class="size">案1＋ 中くらい</span><ul>
+      <li>遊んでいる間はページが動かない</li><li>上は細いバー1本（≡・章の名前・ブラインド・目標・⚙）</li><li>記録・相手メモ・やめるは ≡ の中へ</li><li>ジンの助言は卓に重ねる帯に</li><li>レイズ中も相手の顔が見える</li><li>スマホ横は右の列にバーと助言をまとめる</li></ul></div>
+    <div class="opt rec"><h3>案3 卓の外も整理 <span class="tag">おすすめ</span></h3><span class="size">案2＋ 中くらい</span><ul>
+      <li>タイトルは3つのボタン（横でも最初から見える）</li><li>章の一覧は1章1行。「この店で遊ぶ」「会話を見る」は ⋯ の中</li><li>設定は「よく使う3つ」＋「くわしい設定」</li><li>12章が約2画面に収まる</li></ul></div>
+    <div class="opt"><h3>案4 作り替え</h3><span class="size">案3＋ 大きい作業</span><ul>
+      <li>PCは卓を広げ、右に目標・記録・相手メモの列</li><li>スマホ横はボタンを大きく</li><li>左利き用にボタンの左右を入れ替える設定</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>今と4案を比べる <small>場面を選ぶ</small></h2>
+  <div class="tabs" id="tabs" role="group" aria-label="場面"></div>
+  <p class="note" id="snote"></p>
+  <div class="row" id="row"></div>
+</section>
+
+<section class="keep">
+  <b>変えないもの</b>　第1〜3章の難しさ、ジンの助言の中身、第7章のジンの本物のテル、ボタンの並びと色（左から降りる・受ける・上げる）、今のかっこいい見た目。どの案も表示と置き場所の変更だけです。
+</section>
+</div>
+<script>
+const SC=[
+ ['table','p','卓・スマホ縦','上の見出しと勝利条件が消え、卓がまるごと1画面に。吹き出しは1つだけ。'],
+ ['raise','p','レイズ欄・スマホ縦','今は相手の顔が全員外へ出ます。案2からは相手を見ながら額を選べます。'],
+ ['table','l','卓・スマホ横','右の空いた列に、細いバーとジンの助言をまとめます。'],
+ ['raise','l','レイズ欄・スマホ横',''],
+ ['ch5','l','第5章・スマホ横','吹き出しの重なりと「ストラドル」の浮いたボタンが減ります。'],
+ ['flash','p','回想（15年前）・スマホ縦','状況の文字がジンの顔に重なるのは案1でも残ります。実装では文字を卓の上の帯に移します（仕様に記載）。'],
+ ['end','p','ハンドの終わり・スマホ縦','「〇〇の勝ち」を下の欄1か所に。'],
+ ['settings','p','設定・スマホ縦','案3で「よく使う3つ」だけに。残りは「くわしい設定」の中。'],
+ ['title','l','タイトル・スマホ横','今は最初の画面にボタンが1つも見えません。'],
+ ['chapters','p','章の一覧・スマホ縦','案3で1章1行。7章と第二部が1画面ちょっとに。'],
+ ['chapters','pc','章の一覧・PC',''],
+ ['table','se','卓・小さいスマホ（375×667）',''],
+ ['table','pc','卓・PC','案4で卓を広げ、右に記録の列。'],
+];
+const NAMES=['今','案1','案2','案3','案4'];
+const tabs=document.getElementById('tabs'),row=document.getElementById('row'),note=document.getElementById('snote');
+function pick(i){const [k,v,lab,t]=SC[i];
+ [...tabs.children].forEach((b,j)=>b.setAttribute('aria-pressed',j===i));
+ note.textContent=t||'';row.className='row '+(v==='se'?'p':v);
+ row.innerHTML=NAMES.map((n,o)=>`<figure class="${o?'':'now'}"><figcaption>${n}${o===3?' <span class="tag">おすすめ</span>':''}</figcaption><img src="img/${k}_${v}_${o}.jpg" alt="${lab}：${n}" loading="${i?'lazy':'eager'}"></figure>`).join('');
+ row.scrollLeft=0;try{localStorage.setItem('uiseiri-tab',i)}catch(e){}}
+SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.id='tab'+i;b.textContent=s[2];b.onclick=()=>pick(i);tabs.appendChild(b)});
+let st=0;try{st=+localStorage.getItem('uiseiri-tab')||0}catch(e){}
+pick(st<SC.length?st:0);
+</script>

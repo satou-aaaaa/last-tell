@@ -1,0 +1,9 @@
+{
+ "_説明": "案3（開発と設計のベストプラクティス）の改名。rename.py が src/ に当てる。lane.py は古い名前で書き戻されても新しい名前に入れる。当てたら消さずに残す",
+ "js/30b_v63.js": "js/30b_pro_fixes.js",
+ "01c_style_v63.css": "01c_style_pro_fixes.css",
+ "js/32_v63_tail.js": "js/32_story_duel.js",
+ "js/31_flash.js": "js/31b_flash.js",
+ "js/33_talk_hear.js": "js/33b_talk_hear.js",
+ "js/33_check_knock.js": "js/33c_check_knock.js"
+}

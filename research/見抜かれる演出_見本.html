@@ -1,0 +1,268 @@
+<title>LAST TELL 見抜かれる演出</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* 6枚の小さな卓を並べ、同じ1ハンド（あなたが大きくレイズ→ハヤトが読む）を、いまと5案で同時に流して見比べる。本編と同じ夜の配色で、ダーク固定 */
+:root{
+  --bg:#0b0c11;--panel:#14151d;--line:#2a2b36;--ink:#ece6d6;--mute:#9a96a6;
+  --gold:#e2b65b;--crimson:#c8283c;--felt:#0f4a35;--felt2:#0a3326;--eye:#9fd8ff;
+  --num:"Oswald","Arial Narrow",sans-serif;--body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:grid;gap:22px}
+h1{font-family:var(--num);letter-spacing:.14em;font-size:1.6rem;margin:0;text-wrap:balance;line-height:1.3}
+h1 small{display:block;font-family:var(--body);letter-spacing:.05em;font-size:.9rem;color:var(--mute);font-weight:500}
+.lead{margin:0;color:var(--mute);max-width:70ch}
+.lead b{color:var(--ink)}
+.ctrl{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line)}
+button{font:700 .88rem var(--body);color:var(--bg);background:var(--gold);border:0;padding:8px 14px;cursor:pointer;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+button.ghost{background:transparent;color:var(--gold);outline:1px solid var(--gold);outline-offset:-1px;clip-path:none}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.spacer{flex:1}
+.prog{font-family:var(--num);color:var(--mute);font-size:.85rem;letter-spacing:.06em;min-width:9em;text-align:right;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);display:grid;gap:10px;padding:14px;min-width:0;align-content:start}
+.card.rec{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 30px rgba(226,182,91,.12)}
+.card h2{margin:0;font-size:1.05rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;text-wrap:balance;line-height:1.4}
+.card h2 .k{font-family:var(--num);color:var(--gold);font-size:1.3rem}
+.badge{font-size:.7rem;background:var(--crimson);color:#fff;padding:1px 8px;letter-spacing:.08em}
+.what{margin:0;color:var(--mute);font-size:.88rem}
+.pros{display:grid;gap:2px;font-size:.84rem;margin:0;padding:0;list-style:none}
+.pros li{padding-left:1.2em;position:relative}
+.pros li::before{position:absolute;left:0;font-weight:900}
+.pros li.g::before{content:"＋";color:var(--gold)}
+.pros li.b::before{content:"－";color:var(--mute)}
+.cost{font-size:.78rem;color:var(--mute)}.cost b{color:var(--ink)}
+
+/* ---------- 小さな卓（論理 360×480 で組んで、カード幅に縮める） ---------- */
+.vp{position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;background:#000;max-width:100%}
+.fr{position:absolute;left:0;top:0;width:360px;height:480px;transform-origin:0 0;overflow:hidden;
+  background:radial-gradient(ellipse at 20% 10%,rgba(200,40,60,.18),transparent 45%),radial-gradient(ellipse at 80% 0%,rgba(226,182,91,.12),transparent 40%),#0d0e14}
+.cam{position:absolute;inset:0;transform-origin:0 0;transition:transform .7s cubic-bezier(.22,.9,.24,1)}
+.cam.fast{transition:transform .32s cubic-bezier(.3,.9,.3,1)}
+.felt{position:absolute;left:-8%;right:-8%;top:30%;bottom:-6%;border-radius:48% 48% 0 0/14% 14% 0 0;background:radial-gradient(ellipse at 50% 35%,#16603f,var(--felt) 45%,var(--felt2));border-top:3px solid #6b5326;box-shadow:inset 0 10px 30px rgba(0,0,0,.5)}
+.rd{position:absolute;left:50%;top:2%;width:150px;transform:translateX(-50%);display:grid;justify-items:center;transition:filter .4s}
+.rd .av{width:132px;height:132px;display:block}
+.plate{background:rgba(0,0,0,.72);border:1px solid #e2b65b55;padding:1px 10px;font-size:.74rem;display:flex;gap:8px;align-items:center;white-space:nowrap;margin-top:-6px}
+.plate .n{font-weight:900}.plate .st{font-family:var(--num);color:var(--mute)}
+.stk{position:absolute;left:62%;top:30%;width:34px;height:40px}
+.stk i{position:absolute;left:0;width:34px;height:10px;border-radius:50%;background:#2c5fb8;border:1px solid #10285a}
+.stk i:nth-child(even){background:#e9e9e9}
+.board{position:absolute;left:50%;top:47%;transform:translateX(-50%);display:flex;gap:4px}
+.cd{width:34px;height:48px;background:#f6f2e8;border-radius:4px;color:#111;font:700 15px/1 var(--num);display:grid;place-items:center;box-shadow:0 2px 4px #0008}
+.cd.r{color:#c8283c}
+.pot{position:absolute;left:50%;top:39%;transform:translateX(-50%);font:700 .8rem var(--num);color:var(--gold);letter-spacing:.06em;background:#0009;padding:0 8px}
+.mybet{position:absolute;left:50%;top:76%;transform:translate(-50%,0);display:flex;gap:6px;align-items:center;opacity:0;transition:top .5s cubic-bezier(.22,.9,.24,1),opacity .3s}
+.mybet.in{top:61%;opacity:1}
+.mybet .ch{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#e2b65b 0 30%,#7a1020 31% 62%,#e2b65b 63%);box-shadow:0 2px 0 #3a0a10,0 4px 0 #7a1020,0 6px 0 #3a0a10}
+.mybet b{font:700 .9rem var(--num);color:var(--ink);background:#000a;padding:0 6px}
+.mine{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);display:flex;gap:5px;align-items:end}
+.mine .cd{width:44px;height:62px;font-size:19px}
+.mine .who{position:absolute;bottom:-2px;left:50%;transform:translate(-50%,100%);font-size:.66rem;color:var(--mute);white-space:nowrap}
+/* 吹き出し・文字（カメラの外＝拡大されない） */
+.hud{position:absolute;inset:0;pointer-events:none}
+.bub{position:absolute;left:50%;top:8px;transform:translateX(-50%) scale(.9);max-width:300px;background:#f3ecdc;color:#15161c;font-weight:900;font-size:.9rem;line-height:1.45;padding:6px 12px;border-radius:3px;opacity:0;transition:opacity .25s,transform .25s;text-align:center;box-shadow:0 6px 18px #000a}
+.bub.on{opacity:1;transform:translateX(-50%) scale(1)}
+.bub small{display:block;font-weight:700;font-size:.72rem;color:#5b5664}
+.act{position:absolute;left:20%;top:24%;transform:translate(-50%,-50%);font:700 2rem var(--num);letter-spacing:.12em;color:var(--ink);opacity:0;transition:opacity .25s;text-shadow:0 2px 12px #000}
+.act.on{opacity:1}
+.jin{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:8px;align-items:center;background:#000d;border-left:3px solid var(--gold);padding:5px 8px;font-size:.78rem;opacity:0;transition:opacity .3s}
+.jin.on{opacity:1}
+.jin b{color:var(--gold);flex:none}
+.sfx{position:absolute;font:900 1.5rem var(--body);color:var(--eye);text-shadow:0 0 10px #000,0 0 18px #9fd8ff88;opacity:0;transition:opacity .2s;letter-spacing:.05em}
+.sfx.on{opacity:1}
+.mytag{position:absolute;left:50%;bottom:132px;transform:translateX(-50%);font-size:.72rem;font-weight:700;color:#ffd98a;background:#000c;border:1px solid #e2b65b66;padding:1px 9px;border-radius:999px;white-space:nowrap;opacity:0;transition:opacity .3s}
+.mytag.on{opacity:1}
+.mytag.eye{color:var(--eye);border-color:#9fd8ff88}
+/* 1：視線 */
+.gaze{position:absolute;left:50%;top:150px;width:2px;height:0;transform:translateX(-50%);background:linear-gradient(var(--eye),transparent);opacity:0;transition:height .45s ease-out,opacity .3s}
+.gaze.on{height:150px;opacity:.85}
+.vign{position:absolute;inset:0;box-shadow:inset 0 0 80px 30px #000;opacity:0;transition:opacity .4s;pointer-events:none}
+.vign.on{opacity:1}
+.av .pupils{transform-box:fill-box;transform-origin:center;transition:transform .35s}
+.look .av .pupils{transform:translate(0,2.6px)}
+/* 2：読まれ度 */
+.meter{position:absolute;left:50%;top:166px;transform:translateX(-50%);display:flex;gap:5px;align-items:center;font-size:.66rem;color:var(--mute);background:#000a;padding:1px 8px;white-space:nowrap}
+.meter i{width:9px;height:9px;border-radius:50%;border:1px solid var(--eye);display:block;transition:background .3s,box-shadow .3s}
+.meter i.f{background:var(--eye)}
+.meter.full i{box-shadow:0 0 8px var(--eye)}
+.memo{position:absolute;right:10px;top:110px;width:128px;background:#efe6cf;color:#1b1a20;font-size:.7rem;line-height:1.5;padding:6px 8px;transform:rotate(3deg) translateX(190px);transition:transform .45s cubic-bezier(.22,.9,.24,1);box-shadow:0 6px 14px #000a}
+.memo.on{transform:rotate(3deg) translateX(0)}
+.memo b{display:block;font-size:.66rem;color:#7a1020}
+.memo s{text-decoration-color:#c8283c;text-decoration-thickness:2px}
+/* 3：逆手 */
+.stamp{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) rotate(-8deg) scale(1.6);border:3px solid var(--crimson);color:var(--crimson);font:900 1.3rem var(--body);padding:2px 12px;letter-spacing:.1em;opacity:0;transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1);background:#000a}
+.stamp.on{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1)}
+.stamp.gold{border-color:var(--gold);color:var(--gold)}
+.cd.back{background:repeating-linear-gradient(45deg,#7a1020 0 4px,#5a0c18 4px 8px);color:transparent;border:2px solid #f6f2e8}
+/* 4：3人 */
+.trio{position:absolute;left:0;right:0;top:4px;display:grid;grid-template-columns:repeat(3,1fr);justify-items:center}
+.trio .rd{position:relative;left:auto;top:auto;transform:none;width:110px}
+.trio .rd .av{width:96px;height:96px}
+.trio .rd.dim{filter:brightness(.45) blur(.6px)}
+.trio .what2{font-size:.62rem;color:var(--eye);margin-top:2px;white-space:nowrap}
+/* 5：答え合わせ */
+.recap{position:absolute;left:12px;right:12px;top:150px;background:#0b0c11ee;border:1px solid var(--line);padding:10px 12px;display:grid;gap:6px;font-size:.78rem;opacity:0;transform:translateY(10px);transition:opacity .35s,transform .35s}
+.card[data-v=trio] .bub{top:122px}
+.recap.on{opacity:1;transform:none}
+.recap h3{margin:0;font-size:.82rem;color:var(--gold);letter-spacing:.08em}
+.recap .row{display:grid;grid-template-columns:5.5em 1fr;gap:6px;opacity:0;transition:opacity .3s}
+.recap .row.on{opacity:1}
+.recap .row span:first-child{color:var(--mute)}
+.recap .ok{color:var(--crimson);font-weight:900}
+@media (prefers-reduced-motion:reduce){.cam,.mybet,.memo,.gaze{transition:none!important}}
+
+.cmp{overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+.cmp th,.cmp td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left}
+.cmp th{color:var(--mute);font-weight:700;font-size:.78rem;letter-spacing:.06em}
+.cmp tr.rec td{background:rgba(226,182,91,.08)}
+.reco{border:1px solid var(--gold);padding:14px 18px;display:grid;gap:8px}
+.reco h2{margin:0;font-size:1.15rem;color:var(--gold)}
+.reco p{margin:0;max-width:72ch}
+.note{font-size:.82rem;color:var(--mute);margin:0;max-width:72ch}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>LAST TELL　見抜かれる演出<small>相手が、主人公のクセ（テル）を見抜く様子をもっと伝える・深める案</small></h1>
+    <p class="lead">いまのゲームでも、ボス級と常連はあなたの<b>賭ける額・考える時間・チップを見るクセ</b>を覚えて、少しだけ打ち方を変えています。ただ、吹き出しは相手1人につき1回だけで、<b>何を見抜いて、どう判断したのか</b>が画面から分かりません。下の6つの卓は同じ1ハンド（あなたが大きくレイズ→ハヤトが読む）を、いまと5案で同時に流しています。</p>
+  </header>
+  <div class="ctrl" role="toolbar" aria-label="見本の操作">
+    <button id="replay">最初から</button>
+    <button class="ghost" id="pause" aria-pressed="false">一時停止</button>
+    <span class="spacer"></span>
+    <span class="prog" id="prog" aria-live="polite"></span>
+  </div>
+  <div class="grid" id="cards"></div>
+  <section style="display:grid;gap:14px">
+    <div class="cmp"><table>
+      <thead><tr><th>案</th><th>見抜かれた瞬間が分かる</th><th>読み合いが深まる</th><th>かっこよさ</th><th>操作</th><th>作る手間</th></tr></thead>
+      <tbody>
+        <tr><td>いま</td><td>△</td><td>△</td><td>○</td><td>増えない</td><td>－</td></tr>
+        <tr class="rec"><td><b>1 視線と寄り返し（おすすめ）</b></td><td>◎</td><td>○</td><td>◎</td><td>増えない</td><td>中</td></tr>
+        <tr><td>2 読まれ度の目盛り</td><td>○</td><td>◎</td><td>○</td><td>増えない</td><td>中</td></tr>
+        <tr><td>3 逆手に取る</td><td>○</td><td>◎</td><td>◎</td><td>増えない</td><td>中</td></tr>
+        <tr><td>4 キャラごとの見抜き方</td><td>○</td><td>○</td><td>◎</td><td>増えない</td><td>中〜大</td></tr>
+        <tr><td>5 答え合わせ</td><td>◎</td><td>○</td><td>△</td><td>増えない</td><td>小</td></tr>
+      </tbody></table></div>
+    <div class="reco">
+      <h2>おすすめは 1「視線と寄り返し」</h2>
+      <p>相手が読むとき、その人の目線があなたのチップへ下り、カメラがあなたの手元へ切り返します。そのあと相手が「強いときの額だ」のように、何を見て、どう判断したかまで言います。採用済みのカメラ演出（テルの瞬間に寄る）を、向きを逆にして使うだけなので、画面の文法がそろいます。</p>
+      <p>1が入ると「読まれた」と分かるので、3「逆手に取る」がそのまま遊べるようになります。次に足すなら3がおすすめです。</p>
+    </div>
+    <p class="note">どの案も、ボタンは増やしません。第1〜4章では今と同じく出さず、第1〜3章の難しさは変えません。第7章のジンの本物のテル（顎の傷）にも触れません。読む強さ（降りやすさの変化 最大±0.08）も今のままで、変えるのは見せ方だけです（3だけは、引っかけられた相手がそのクセを読むのをやめる処理を足します）。</p>
+  </section>
+</div>
+
+<script>
+const AV={"ハヤト_normal": "<svg class=\"av\" viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"ハヤト\"><defs>\n  <radialGradient id=\"cebmceph\" cx=\".36\" cy=\".3\" r=\".8\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".3\"/><stop offset=\".42\" stop-color=\"#fff\" stop-opacity=\"0\"/><stop offset=\".75\" stop-color=\"#000\" stop-opacity=\".12\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".42\"/></radialGradient>\n  <linearGradient id=\"cebmcepb\" x1=\"0\" y1=\"0\" x2=\".35\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".16\"/><stop offset=\".45\" stop-color=\"#000\" stop-opacity=\".1\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <linearGradient id=\"cebmceps\" x1=\"0\" x2=\"1\"><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".5\"/></linearGradient>\n  <linearGradient id=\"cebmcepv\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <filter id=\"cebmcepg\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"1.1\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter>\n</defs>\n    <path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"url(#cebmceph)\"/>\n    <path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"#e9e6df\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"url(#cebmcepb)\"/>\n      <path d=\"M36 73 L44 88 L50 80 L56 88 L64 73\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.4\"/>\n      <path d=\"M44 73 L50 82 L56 73 L56 76 L50 86 L44 76Z\" fill=\"#e6c8b0\"/><path d=\"M44 73 L50 82 L56 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1\"/><path d=\"M90 83 L96 100\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.4\" stroke-opacity=\"0.7200000000000001\"/>\n    <path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"url(#cebmcepv)\"/>\n    <g class=\"head\" transform=\"rotate(-4 51 60)\">\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cebmceps)\" opacity=\"0.8\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cebmceph)\" opacity=\".8\"/>\n    <path d=\"M51 49 L49 58 L52 58.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.2\" stroke-opacity=\".6\"/>\n    <path d=\"M45 64.5 Q50 65.5 57 61.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>\n    <g class=\"eyes\"><path d=\"M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z\" fill=\"#0b0c10\"/>\n    <g class=\"pupils\"><path d=\"M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z\" fill=\"#a3243a\" opacity=\"0.9\" /></g></g><path d=\"M33 40 L47 43.5 M67 43 L53 44.5\" stroke=\"#0b0c10\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"url(#cebmceph)\"/><path d=\"M71 40 L69 54 Q65 67 51 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.48\" stroke-opacity=\"0.8799999999999999\"/>\n    <path class=\"t-sweat\" d=\"M72 32 q-4 7 0 9 q4 -2 0 -9Z\" fill=\"#9fd8ff\" stroke=\"#2b2d4a\" stroke-width=\"1.2\"/></g>\n  </svg>", "ハヤト_think": "<svg class=\"av\" viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"ハヤト\"><defs>\n  <radialGradient id=\"cwf42o4h\" cx=\".36\" cy=\".3\" r=\".8\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".3\"/><stop offset=\".42\" stop-color=\"#fff\" stop-opacity=\"0\"/><stop offset=\".75\" stop-color=\"#000\" stop-opacity=\".12\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".42\"/></radialGradient>\n  <linearGradient id=\"cwf42o4b\" x1=\"0\" y1=\"0\" x2=\".35\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".16\"/><stop offset=\".45\" stop-color=\"#000\" stop-opacity=\".1\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <linearGradient id=\"cwf42o4s\" x1=\"0\" x2=\"1\"><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".5\"/></linearGradient>\n  <linearGradient id=\"cwf42o4v\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <filter id=\"cwf42o4g\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"1.1\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter>\n</defs>\n    <path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"url(#cwf42o4h)\"/>\n    <path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"#e9e6df\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"url(#cwf42o4b)\"/>\n      <path d=\"M36 73 L44 88 L50 80 L56 88 L64 73\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.4\"/>\n      <path d=\"M44 73 L50 82 L56 73 L56 76 L50 86 L44 76Z\" fill=\"#e6c8b0\"/><path d=\"M44 73 L50 82 L56 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1\"/><path d=\"M90 83 L96 100\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.4\" stroke-opacity=\"0.7200000000000001\"/>\n    <path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"url(#cwf42o4v)\"/>\n    <g class=\"head\" transform=\"rotate(-4 51 60)\">\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cwf42o4s)\" opacity=\"0.8\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cwf42o4h)\" opacity=\".8\"/>\n    <path d=\"M51 49 L49 58 L52 58.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.2\" stroke-opacity=\".6\"/>\n    <path d=\"M45 64.5 Q50 65.5 57 61.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>\n    <g class=\"eyes\"><path d=\"M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z\" fill=\"#0b0c10\"/>\n    <g class=\"pupils\"><path d=\"M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z\" fill=\"#a3243a\" opacity=\"0.45\" /></g></g><path d=\"M34 44 L47 45 M66 42.5 L53 45\" stroke=\"#0b0c10\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"url(#cwf42o4h)\"/><path d=\"M71 40 L69 54 Q65 67 51 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.48\" stroke-opacity=\"0.8799999999999999\"/>\n    <path class=\"t-sweat\" d=\"M72 32 q-4 7 0 9 q4 -2 0 -9Z\" fill=\"#9fd8ff\" stroke=\"#2b2d4a\" stroke-width=\"1.2\"/></g>\n  </svg>", "ハヤト_lose": "<svg class=\"av\" viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"ハヤト\"><defs>\n  <radialGradient id=\"ceznvpkh\" cx=\".36\" cy=\".3\" r=\".8\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".3\"/><stop offset=\".42\" stop-color=\"#fff\" stop-opacity=\"0\"/><stop offset=\".75\" stop-color=\"#000\" stop-opacity=\".12\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".42\"/></radialGradient>\n  <linearGradient id=\"ceznvpkb\" x1=\"0\" y1=\"0\" x2=\".35\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".16\"/><stop offset=\".45\" stop-color=\"#000\" stop-opacity=\".1\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <linearGradient id=\"ceznvpks\" x1=\"0\" x2=\"1\"><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".5\"/></linearGradient>\n  <linearGradient id=\"ceznvpkv\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <filter id=\"ceznvpkg\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"1.1\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter>\n</defs>\n    <path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M27 44 Q22 14 52 12 Q80 13 76 42 L78 56 L71 48Z\" fill=\"url(#ceznvpkh)\"/>\n    <path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"#e9e6df\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"url(#ceznvpkb)\"/>\n      <path d=\"M36 73 L44 88 L50 80 L56 88 L64 73\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.4\"/>\n      <path d=\"M44 73 L50 82 L56 73 L56 76 L50 86 L44 76Z\" fill=\"#e6c8b0\"/><path d=\"M44 73 L50 82 L56 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1\"/><path d=\"M90 83 L96 100\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.4\" stroke-opacity=\"0.7200000000000001\"/>\n    <path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"url(#ceznvpkv)\"/>\n    <g class=\"head\" transform=\"rotate(-4 51 60)\">\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"#e6c8b0\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#ceznvpks)\" opacity=\"0.8\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#ceznvpkh)\" opacity=\".8\"/>\n    <path d=\"M51 49 L49 58 L52 58.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.2\" stroke-opacity=\".6\"/>\n    <path d=\"M46 66 Q51 64 56 66\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>\n    <g class=\"eyes\"><path d=\"M36 48.5 L46 48 M54 48 L64 48.5\" stroke=\"#0b0c10\" stroke-width=\"2\"/></g><path d=\"M34 45 L47 44 M66 45 L53 44\" stroke=\"#0b0c10\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"#101118\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M28 42 Q26 15 53 14 Q76 15 74 38 L70 30 L66 40 L62 27 L56 36 L52 26 L46 37 L42 28 L36 42 L34 34Z\" fill=\"url(#ceznvpkh)\"/><path d=\"M71 40 L69 54 Q65 67 51 73\" fill=\"none\" stroke=\"#a3243a\" stroke-width=\"1.48\" stroke-opacity=\"0.8799999999999999\"/>\n    <path class=\"t-sweat\" d=\"M72 32 q-4 7 0 9 q4 -2 0 -9Z\" fill=\"#9fd8ff\" stroke=\"#2b2d4a\" stroke-width=\"1.2\"/></g>\n  </svg>", "レイカ_normal": "<svg class=\"av\" viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"レイカ\"><defs>\n  <radialGradient id=\"cy7njxch\" cx=\".36\" cy=\".3\" r=\".8\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".3\"/><stop offset=\".42\" stop-color=\"#fff\" stop-opacity=\"0\"/><stop offset=\".75\" stop-color=\"#000\" stop-opacity=\".12\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".42\"/></radialGradient>\n  <linearGradient id=\"cy7njxcb\" x1=\"0\" y1=\"0\" x2=\".35\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".16\"/><stop offset=\".45\" stop-color=\"#000\" stop-opacity=\".1\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <linearGradient id=\"cy7njxcs\" x1=\"0\" x2=\"1\"><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".5\"/></linearGradient>\n  <linearGradient id=\"cy7njxcv\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <filter id=\"cy7njxcg\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"1.1\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter>\n</defs>\n    <path d=\"M26 42 Q22 12 52 12 Q80 13 76 44 L82 92 L60 80 L40 80 L20 92Z\" fill=\"#1a1420\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M26 42 Q22 12 52 12 Q80 13 76 44 L82 92 L60 80 L40 80 L20 92Z\" fill=\"url(#cy7njxch)\"/>\n    <path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"#5a1830\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"url(#cy7njxcb)\" opacity=\"0.94\"/><path d=\"M38 73 L50 90 L62 73 L58 72 L50 82 L42 72Z\" fill=\"#f2f0ea\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M46 76 L50 78 L54 76 L54 80 L50 78.5 L46 80Z\" fill=\"#0b0c10\"/><path d=\"M90 83 L96 100\" fill=\"none\" stroke=\"#e2b65b\" stroke-width=\"1.4\" stroke-opacity=\"0.7200000000000001\"/>\n    <path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"#f0d6c4\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"url(#cy7njxcv)\"/>\n    <g class=\"head\">\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"#f0d6c4\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cy7njxcs)\" opacity=\"0.8\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cy7njxch)\" opacity=\".8\"/>\n    <path d=\"M51 49 L49 58 L52 58.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.2\" stroke-opacity=\".6\"/>\n    <path d=\"M46 64.5 L55 64\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>\n    <g class=\"eyes\"><path d=\"M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z\" fill=\"#0b0c10\"/>\n    <g class=\"pupils\"><path d=\"M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z\" fill=\"#e2b65b\" opacity=\"0.9\" /></g></g><path d=\"M33 42 L47 43.5 M67 42 L53 43.5\" stroke=\"#0b0c10\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M29 44 Q28 16 52 15 Q75 16 73 40 Q66 24 50 24 Q40 30 36 50 Q32 46 29 44Z\" fill=\"#1a1420\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M29 44 Q28 16 52 15 Q75 16 73 40 Q66 24 50 24 Q40 30 36 50 Q32 46 29 44Z\" fill=\"url(#cy7njxch)\"/><circle cx=\"31\" cy=\"60\" r=\"2\" fill=\"#e2b65b\"/><path d=\"M46.5 64.5 Q51 66.5 55 64.5\" fill=\"none\" stroke=\"#b0203a\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><g transform=\"translate(70 24) rotate(35)\"><path d=\"M0 0 Q4 -9 1 -18 Q-4 -9 0 0Z\" fill=\"#e2b65b\" stroke=\"#0b0c10\" stroke-width=\".7\"/><path d=\"M0 0 L.6 -16\" stroke=\"#0b0c10\" stroke-width=\".6\"/></g><path d=\"M71 40 L69 54 Q65 67 51 73\" fill=\"none\" stroke=\"#e2b65b\" stroke-width=\"1.48\" stroke-opacity=\"0.8799999999999999\"/>\n    <path class=\"t-sweat\" d=\"M72 32 q-4 7 0 9 q4 -2 0 -9Z\" fill=\"#9fd8ff\" stroke=\"#2b2d4a\" stroke-width=\"1.2\"/></g>\n  </svg>", "クロウ_normal": "<svg class=\"av\" viewBox=\"0 0 100 100\" role=\"img\" aria-label=\"クロウ\"><defs>\n  <radialGradient id=\"cubc9bph\" cx=\".36\" cy=\".3\" r=\".8\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".3\"/><stop offset=\".42\" stop-color=\"#fff\" stop-opacity=\"0\"/><stop offset=\".75\" stop-color=\"#000\" stop-opacity=\".12\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".42\"/></radialGradient>\n  <linearGradient id=\"cubc9bpb\" x1=\"0\" y1=\"0\" x2=\".35\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".16\"/><stop offset=\".45\" stop-color=\"#000\" stop-opacity=\".1\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <linearGradient id=\"cubc9bps\" x1=\"0\" x2=\"1\"><stop offset=\".5\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".5\"/></linearGradient>\n  <linearGradient id=\"cubc9bpv\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\".55\"/></linearGradient>\n  <filter id=\"cubc9bpg\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\"><feGaussianBlur stdDeviation=\"1.1\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter>\n</defs>\n    <path d=\"M28 40 Q26 14 52 13 Q78 14 74 40 L74 50 L70 40Z\" fill=\"#0e0f14\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M28 40 Q26 14 52 13 Q78 14 74 40 L74 50 L70 40Z\" fill=\"url(#cubc9bph)\"/>\n    <path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"#121318\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M4 100 L10 83 Q26 73 50 72 Q74 73 90 83 L96 100Z\" fill=\"url(#cubc9bpb)\" opacity=\"1\"/><path d=\"M32 74 L50 100 L68 74 L58 73 L50 84 L42 73Z\" fill=\"#1c1d24\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n      <path d=\"M42 73 L50 84 L58 73 L55 76 L50 80 L45 76Z\" fill=\"#f2f0ea\"/>\n      <path d=\"M48.5 79 L51.5 79 L52.5 98 L50 100 L47.5 98Z\" fill=\"#0b0c10\" stroke=\"#2a2c38\" stroke-width=\".6\"/>\n      <path d=\"M45 88 Q50 86 56 88 Q52 89 50 91Z\" fill=\"#c9d3e0\"/>\n      <path d=\"M32 74 L42 73 L36 100 L24 100Z M68 74 L58 73 L64 100 L76 100Z\" fill=\"#0a0b0f\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M90 83 L96 100\" fill=\"none\" stroke=\"#c9d3e0\" stroke-width=\"1.4\" stroke-opacity=\"0.8\"/>\n    <path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"#ead2c2\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M44 62 L44 75 L50 80 L56 75 L56 62Z\" fill=\"url(#cubc9bpv)\"/>\n    <g class=\"head\">\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"#ead2c2\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cubc9bps)\" opacity=\"1\"/>\n    <path d=\"M30 40 Q30 20 51 19 Q71 20 71 40 L69 54 Q65 67 51 73 Q37 67 33 54Z\" fill=\"url(#cubc9bph)\" opacity=\".8\"/>\n    <path d=\"M51 49 L49 58 L52 58.5\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.2\" stroke-opacity=\".6\"/>\n    <path d=\"M46 64.5 L55 64\" fill=\"none\" stroke=\"#0b0c10\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>\n    <g class=\"eyes\"><path d=\"M35 47 L46 45.5 L45 49.5 L37 50Z M65 47 L54 45.5 L55 49.5 L63 50Z\" fill=\"#0b0c10\"/>\n    <g class=\"pupils\"><path d=\"M40 46.6 L44 46.2 L43.6 49 L40.6 49.3Z M60 46.6 L56 46.2 L56.4 49 L59.4 49.3Z\" fill=\"#c9d3e0\" opacity=\"0.9\" /></g></g><path d=\"M33 42 L47 43.5 M67 42 L53 43.5\" stroke=\"#0b0c10\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><path d=\"M29 38 Q30 15 53 15 Q74 16 73 36 Q66 22 54 21 Q42 21 34 29 Q31 33 29 38Z\" fill=\"#0e0f14\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n      <path d=\"M40 22 Q54 18 68 26\" fill=\"none\" stroke=\"#c9d3e0\" stroke-width=\"1.1\" opacity=\".7\"/>\n      <rect x=\"64\" y=\"25\" width=\"9\" height=\"2.6\" rx=\"1\" fill=\"#c9d3e0\" transform=\"rotate(28 68 26)\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\" stroke-width=\".6\"/><path d=\"M29 38 Q30 15 53 15 Q74 16 73 36 Q66 22 54 21 Q42 21 34 29 Q31 33 29 38Z\" fill=\"url(#cubc9bph)\"/>\n      <path d=\"M40 22 Q54 18 68 26\" fill=\"none\" opacity=\".7\"/>\n      <rect x=\"64\" y=\"25\" width=\"9\" height=\"2.6\" rx=\"1\" fill=\"#c9d3e0\" transform=\"rotate(28 68 26)\"/><path d=\"M71 40 L69 54 Q65 67 51 73\" fill=\"none\" stroke=\"#c9d3e0\" stroke-width=\"1.6\" stroke-opacity=\"0.95\"/>\n    <path class=\"t-sweat\" d=\"M72 32 q-4 7 0 9 q4 -2 0 -9Z\" fill=\"#9fd8ff\" stroke=\"#2b2d4a\" stroke-width=\"1.2\"/></g><g class=\"t-glove\"><g transform=\"translate(20 100) scale(1.4) translate(-20 -100)\">\n      <path d=\"M8 100 L16 86 L30 88 L28 100Z\" fill=\"#0a0b0f\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/>\n      <path d=\"M16 86 Q14 80 18 77 L30 74 Q34 74 34 77 L33 80 Q36 81 35 84 L30 88Z\" fill=\"#f4f2ee\" stroke=\"#0b0c10\" stroke-width=\"1.5\" stroke-linejoin=\"round\" stroke-width=\"1.1\"/>\n      <path d=\"M20 79 L31 76.5 M21 82 L32 80\" stroke=\"#b9bcc6\" stroke-width=\".7\"/>\n      </g></g>\n  </svg>"};
+const VARIANTS=[
+  {id:'now',k:'0',name:'いま',what:'相手1人につき、クセの種類ごとに1回だけ吹き出しが出ます。何を見て、どう判断したかは言いません。',pc:['g:すでに動いている','b:どこで見抜いたのか、画面から分からない','b:「前と同じだな」だけで、強い・弱いどちらと読んだか不明'],cost:''},
+  {id:'gaze',k:'1',rec:true,name:'視線と寄り返し',what:'相手の目線があなたのチップへ下り、カメラがあなたの手元へ切り返す。最後に「何を見て、どう読んだか」を言う。',pc:['g:採用済みのカメラ演出と同じ文法で、逆向きに寄るだけ','g:見抜かれた瞬間がはっきり分かる','g:結論まで言うので、次から気をつけられる','b:読むたびに出すと長いので、1ハンドに1回まで'],cost:'作る手間 <b>中</b>：カメラの寄る先に「あなたの手元」を足す'},
+  {id:'meter',k:'2',name:'読まれ度の目盛り',what:'ショーダウンで手を見せるたびに、相手の名札の目盛りが1つたまり、メモが出る。3つたまると、そのクセで読んでくる。',pc:['g:読まれる前に「危ない」と分かる','g:クセをばらして目盛りを戻す、という遊びになる','b:名札のまわりが少しにぎやかになる','b:答えを教えすぎるおそれ（目盛りは見るだけにする）'],cost:'作る手間 <b>中</b>：今の記憶（selfMem）を目盛りで見せる'},
+  {id:'trap',k:'3',name:'逆手に取る',what:'読まれたクセを、弱い手でわざと出す。相手が引っかかって降りたあと、手を見せると「わざとか」と悔しがり、そのクセを読むのをやめる。',pc:['g:読まれることが、こちらの武器にもなる','g:ボタンなしで、本物の読み合いになる','b:1が無いと、引っかけたことに気づきにくい','b:ボスごとに、読み直すまでの間を決める必要'],cost:'作る手間 <b>中</b>：引っかかった記録と、読み直しの処理'},
+  {id:'trio',k:'4',name:'キャラごとの見抜き方',what:'ボスごとに得意な見抜き方を1つ決める。ハヤトは時間、レイカは目線、クロウは額。決めゼリフで見抜く。',pc:['g:キャラが立つ。誰に何を隠せばいいか考える','g:キャラ作りこみ案の設定とつながる','b:キャラごとにセリフと調整が要る','b:苦手なクセがない相手は読みが弱くなる'],cost:'作る手間 <b>中〜大</b>：読む人ごとにクセの重みとセリフ'},
+  {id:'recap',k:'5',name:'答え合わせ',what:'ハンドが終わったら、相手が「何を見て・どう読んで・どうしたか」を小さな札で振り返る。',pc:['g:何が起きたかいちばん分かりやすい','g:ジンの赤ペンにつなげやすい','b:説明っぽく、かっこよさは弱め','b:毎回出るとテンポが落ちる'],cost:'作る手間 <b>小</b>：ハンドの終わりに札を出すだけ'},
+];
+const BOARD=[['K','♠'],['9','♥'],['4','♦'],['2','♣'],['J','♥']];
+const MY={def:[['A','♠'],['K','♦']],trap:[['7','♣'],['3','♦']]};
+const cd=([r,s])=>`<div class="cd ${/[♥♦]/.test(s)?'r':''}">${r}${s}</div>`;
+function stk(){return `<div class="stk">${[0,1,2,3,4,5].map(k=>`<i style="top:${30-k*5}px"></i>`).join('')}</div>`}
+function reader(n,mood,plate){return `<div class="rd" data-r="${n}"><div class="ava">${AV[n+'_'+(mood||'normal')]}</div><div class="plate"><span class="n">${n}</span><span class="st">${plate||'約12万'}</span></div></div>`}
+function frameHTML(v){
+  const mine=(v.id==='trap'?MY.trap:MY.def).map(cd).join('');
+  const top=v.id==='trio'?`<div class="trio">${[['ハヤト','考える時間'],['レイカ','目線'],['クロウ','賭ける額']].map(([n,w])=>`<div class="rd" data-r="${n}"><div class="ava">${AV[n+'_normal']}</div><div class="plate"><span class="n">${n}</span></div><div class="what2">得意：${w}</div></div>`).join('')}</div>`:reader('ハヤト')+stk();
+  return `<div class="fr"><div class="cam">
+    <div class="felt"></div>${top}
+    ${v.id==='meter'?'<div class="meter"><span>読まれ度</span><i class="f"></i><i class="f"></i><i></i></div>':''}
+    <div class="pot">POT 24,000</div>
+    <div class="board">${BOARD.map(cd).join('')}</div>
+    ${v.id==='gaze'?'<div class="gaze"></div>':''}
+    <div class="mybet"><span class="ch"></span><b>レイズ 30,000</b></div>
+    <div class="mine">${mine}<span class="who">あなた</span></div>
+  </div>
+  <div class="hud">
+    ${v.id==='gaze'?'<div class="vign"></div><div class="sfx" style="left:44%;top:56%">じっ</div>':''}
+    ${v.id==='meter'?'<div class="memo"><b>ハヤトのメモ</b>大きく賭ける → 強い（3回）</div>':''}
+    ${v.id==='recap'?'<div class="recap"><h3>ハヤトの読み</h3><div class="row"><span>見たもの</span><span>賭ける額（ポットより大きい）</span></div><div class="row"><span>読み</span><span>強い手だ</span></div><div class="row"><span>したこと</span><span>降りた</span></div><div class="row"><span>結果</span><span class="ok">読みは当たり（A♠K♦）</span></div></div>':''}
+    <div class="bub"></div><div class="act"></div><div class="mytag"></div>
+    <div class="stamp"></div><div class="jin"><b>ジン</b><span></span></div>
+  </div></div>`}
+function build(){
+  const box=document.getElementById('cards');
+  box.innerHTML=VARIANTS.map(v=>`<article class="card${v.rec?' rec':''}" data-v="${v.id}">
+    <h2><span class="k">${v.k}</span>${v.name}${v.rec?'<span class="badge">おすすめ</span>':''}</h2>
+    <div class="vp">${frameHTML(v)}</div>
+    <p class="what">${v.what}</p>
+    <ul class="pros">${v.pc.map(x=>`<li class="${x[0]}">${x.slice(2)}</li>`).join('')}</ul>
+    ${v.cost?`<p class="cost">${v.cost}</p>`:''}</article>`).join('');
+  fit();
+}
+function fit(){document.querySelectorAll('.vp').forEach(vp=>{vp.querySelector('.fr').style.transform=`scale(${vp.clientWidth/360})`})}
+addEventListener('resize',fit);
+const W=360,H=480;
+function camAt(c,x,y,z,fast){const tx=Math.min(0,Math.max(W-W*z,W*.5-x*z)),ty=Math.min(0,Math.max(H-H*z,H*.4-y*z));c.classList.toggle('fast',!!fast);c.style.transform=z===1?'none':`translate(${tx}px,${ty}px) scale(${z})`}
+const q=(card,s)=>card.querySelector(s);
+function on(card,s,txt,html){const e=q(card,s);if(!e)return;if(txt!==undefined){if(html)e.innerHTML=txt;else{const sp=e.querySelector('span');(sp||e).textContent=txt}}e.classList.add('on')}
+function off(card,s){const e=q(card,s);if(e)e.classList.remove('on')}
+function reset(card){
+  card.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
+  q(card,'.mybet').classList.remove('in');camAt(q(card,'.cam'),0,0,1);
+  card.querySelectorAll('.rd').forEach(r=>{r.classList.remove('look','dim')});
+  const v=card.dataset.v;
+  if(v==='trap')q(card,'.mine').innerHTML=MY.trap.map(cd).map((h,i)=>h).join('')+'<span class="who">あなた</span>';
+  if(v==='meter'){const is=card.querySelectorAll('.meter i');is[2].classList.remove('f');q(card,'.meter').classList.remove('full')}
+  const ava=q(card,'.rd .ava');if(ava&&v!=='trio')ava.innerHTML=AV['ハヤト_normal'];
+  if(v==='trap'){q(card,'.mine').innerHTML=MY.trap.map(cd).join('')+'<span class="who">あなた（弱い手）</span>'}
+}
+function setAva(card,mood){const a=q(card,'.rd .ava');if(a)a.innerHTML=AV['ハヤト_'+mood]}
+/* 共通の流れ：0.6s あなたがレイズ → 各案 → 8.5sで終わり */
+const T=[];
+function at(t,f){T.push([t,f])}
+const all=f=>document.querySelectorAll('.card').forEach(c=>f(c,c.dataset.v));
+at(0,()=>all(reset));
+at(.6,()=>all(c=>q(c,'.mybet').classList.add('in')));
+// いま
+at(1.6,()=>all((c,v)=>{if(v==='now'){on(c,'.bub','その額……前と同じだな')}}));
+at(3.4,()=>all((c,v)=>{if(v==='now'){off(c,'.bub');on(c,'.act','FOLD');on(c,'.jin','賭ける額でバレている。強いときだけ大きく賭けるな')}}));
+// 1 視線と寄り返し
+at(1.3,()=>all((c,v)=>{if(v==='gaze'){camAt(q(c,'.cam'),180,90,1.9);q(c,'.rd').classList.add('look')}}));
+at(2.1,()=>all((c,v)=>{if(v==='gaze'){on(c,'.gaze')}}));
+at(2.6,()=>all((c,v)=>{if(v==='gaze'){camAt(q(c,'.cam'),180,350,2.1,true);on(c,'.vign');on(c,'.sfx');on(c,'.mytag','ハヤトが、あなたの賭けた額を見ている');q(c,'.mytag').classList.add('eye')}}));
+at(4.2,()=>all((c,v)=>{if(v==='gaze'){off(c,'.sfx');off(c,'.mytag');off(c,'.gaze');camAt(q(c,'.cam'),180,90,1.9);setAva(c,'think')}}));
+at(4.8,()=>all((c,v)=>{if(v==='gaze'){on(c,'.bub','その額……強いときの額だ。<small>読み：賭ける額 → 強い</small>',true)}}));
+at(6.4,()=>all((c,v)=>{if(v==='gaze'){off(c,'.bub');off(c,'.vign');camAt(q(c,'.cam'),0,0,1);on(c,'.act','FOLD');on(c,'.mytag','読まれた：賭ける額')}}));
+// 2 読まれ度
+at(1.4,()=>all((c,v)=>{if(v==='meter'){on(c,'.memo')}}));
+at(2.4,()=>all((c,v)=>{if(v==='meter'){c.querySelectorAll('.meter i')[2].classList.add('f');q(c,'.meter').classList.add('full')}}));
+at(3.4,()=>all((c,v)=>{if(v==='meter'){off(c,'.memo');on(c,'.bub','その額、これで3度目だ')}}));
+at(5.0,()=>all((c,v)=>{if(v==='meter'){off(c,'.bub');on(c,'.act','FOLD');on(c,'.jin','もう読まれている。手を見せる回数を減らすか、クセを混ぜろ')}}));
+// 3 逆手に取る
+at(1.6,()=>all((c,v)=>{if(v==='trap'){on(c,'.bub','その額……強いときの額だ')}}));
+at(3.0,()=>all((c,v)=>{if(v==='trap'){off(c,'.bub');on(c,'.act','FOLD')}}));
+at(4.0,()=>all((c,v)=>{if(v==='trap'){off(c,'.act');q(c,'.mine').innerHTML=MY.trap.map(cd).join('')+'<span class="who">あなた：手を見せた</span>'}}));
+at(4.6,()=>all((c,v)=>{if(v==='trap'){setAva(c,'lose');on(c,'.bub','……わざとか。チッ',false);on(c,'.stamp','引っかけた');q(c,'.stamp').classList.add('gold')}}));
+at(6.0,()=>all((c,v)=>{if(v==='trap'){off(c,'.stamp');on(c,'.mytag','ハヤトは、もう額では読まない');on(c,'.jin','読ませてから、裏をかく。それが本当のテルの使い方だ')}}));
+// 4 キャラごと
+const TRIO=[['ハヤト','速ぇな、二代目。迷ってねえ顔だ','考える時間'],['レイカ','視線、いまチップに落ちましたね','目線'],['クロウ','拝見しました。その額のときは、いつも本物でしたね','賭ける額']];
+TRIO.forEach(([n,line],k)=>at(1.4+k*2.2,()=>all((c,v)=>{if(v==='trio'){c.querySelectorAll('.trio .rd').forEach(r=>r.classList.toggle('dim',r.dataset.r!==n));on(c,'.bub',line)}})));
+at(8.0,()=>all((c,v)=>{if(v==='trio'){off(c,'.bub');c.querySelectorAll('.trio .rd').forEach(r=>r.classList.remove('dim'))}}));
+// 5 答え合わせ
+at(1.8,()=>all((c,v)=>{if(v==='recap'){on(c,'.act','FOLD')}}));
+at(3.0,()=>all((c,v)=>{if(v==='recap'){off(c,'.act');on(c,'.recap')}}));
+[3.5,4.1,4.7,5.3].forEach((t,k)=>at(t,()=>all((c,v)=>{if(v==='recap')c.querySelectorAll('.recap .row')[k].classList.add('on')})));
+const LEN=9.2;
+T.sort((a,b)=>a[0]-b[0]);
+let t0=0,ti=0,paused=false,pausedAt=0,raf=0;
+function tick(now){
+  if(paused)return;
+  const t=(now-t0)/1000;
+  while(ti<T.length&&T[ti][0]<=t){T[ti][1]();ti++}
+  document.getElementById('prog').textContent=Math.min(t,LEN).toFixed(1)+' / '+LEN.toFixed(1)+' 秒';
+  if(t>=LEN){t0=now;ti=0}
+  raf=requestAnimationFrame(tick)}
+function restart(){cancelAnimationFrame(raf);paused=false;document.getElementById('pause').setAttribute('aria-pressed','false');document.getElementById('pause').textContent='一時停止';t0=performance.now();ti=0;raf=requestAnimationFrame(tick)}
+document.getElementById('replay').onclick=restart;
+document.getElementById('pause').onclick=e=>{const b=e.currentTarget;if(!paused){paused=true;pausedAt=performance.now();b.setAttribute('aria-pressed','true');b.textContent='再生'}else{paused=false;t0+=performance.now()-pausedAt;b.setAttribute('aria-pressed','false');b.textContent='一時停止';raf=requestAnimationFrame(tick)}};
+build();restart();
+</script>

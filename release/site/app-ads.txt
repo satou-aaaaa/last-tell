@@ -1,0 +1,4 @@
+# AdMob のアカウントができたら、【pub-XXXXXXXXXXXXXXXX】を自分のパブリッシャーIDに差し替えて、
+# ストアに登録する「開発者のWebサイト」のドメイン直下（https://ドメイン/app-ads.txt）に置く。
+# GitHub Pages のサブフォルダ（/last-tell/）では読まれないので、ドメインが決まってから置くこと。
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

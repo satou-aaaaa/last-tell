@@ -1,0 +1,163 @@
+<title>主人公の名前 見本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: 上に名前の入力、下に5案のカードを2列（スマホ1列）。各カードは小さな会話場面がくり返し流れる */
+:root{
+  --bg:#0f1116; --felt:#16231f; --panel:#181b23; --line:#2a2f3b;
+  --fg:#e9e6df; --mute:#9a9fab; --gold:#e2b65b; --pick:#7fd1c0;
+  --disp:"Shippori Mincho","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.7}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:24px}
+h1{font-family:var(--disp);font-weight:800;font-size:1.9rem;margin:0;letter-spacing:.04em;text-wrap:balance}
+.lead{color:var(--mute);margin:0;max-width:62ch}
+.namebar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.namebar label{font-weight:700}
+.namebar input{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;width:11em}
+.namebar input:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.namebar small{color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.card.rec{border-color:var(--gold)}
+.tag{font-size:.75rem;letter-spacing:.12em;color:var(--mute)}
+.card.rec .tag{color:var(--gold)}
+.card h2{font-family:var(--disp);font-size:1.2rem;margin:0}
+.card p{margin:0;color:var(--mute);font-size:.9rem}
+.stage{background:radial-gradient(ellipse at 50% 120%,#21352e 0%,var(--felt) 60%,#0d1512 100%);border-radius:8px;min-height:250px;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;position:relative}
+.ln{background:#0b0d12dd;border:1px solid #ffffff1a;border-radius:6px;padding:6px 10px;font-size:.92rem;animation:in .35s ease both}
+.ln b{color:var(--gold);font-weight:700;margin-right:.5em}
+.ln.nar{background:transparent;border:none;color:#cfd3cc;font-style:normal;font-size:.86rem}
+.nm{color:var(--pick);font-weight:700}
+.ask{display:flex;gap:8px;flex-wrap:wrap;animation:in .35s ease both}
+.ask span{border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:4px 10px;font-size:.85rem;background:#0b0d12cc}
+.ask span.n{border-color:#ffffff33;color:var(--mute)}
+.book{background:#e9dfc8;color:#2a2219;border-radius:4px;padding:10px 14px;font-family:var(--disp);font-size:.9rem;line-height:1.9;animation:in .35s ease both}
+.book i{font-style:normal;color:#8a1f1f}
+.photo{display:flex;gap:10px;justify-content:center;animation:in .4s ease both}
+.photo figure{margin:0;width:62px;text-align:center;font-size:.72rem;color:#cfd3cc}
+.photo .pic{height:74px;background:#d8d1c2;border:4px solid #f2ede2;box-shadow:0 4px 10px #0008;display:grid;place-items:center;color:#5a5246;font-size:.7rem}
+.list{margin:0;padding-left:1.2em;font-size:.86rem;color:var(--fg)}
+.list li{margin:2px 0}
+.verdict{font-size:.85rem;margin:0;color:var(--fg)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ln,.ask,.book,.photo{animation:none}}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>主人公の名前</h1>
+    <p class="lead">プレイヤーの名前を主人公の名前にする5つの案です。下に名前を入れると、すべての見本がその名前で動きます。空にすると「名乗らない」ときの流れになります。</p>
+  </header>
+
+  <div class="namebar">
+    <label for="nm">名前</label>
+    <input id="nm" maxlength="12" value="サトウ" autocomplete="off">
+    <small>全角6文字／半角12文字まで（見本では長さの確認はしていません）</small>
+  </div>
+
+  <div class="grid">
+    <section class="card rec">
+      <div class="tag">案1 ★おすすめ（案3と組み合わせ）</div>
+      <h2>ジンに名乗る</h2>
+      <div class="stage" id="s1"></div>
+      <p>第1章、ジンが名乗ったあとに聞き返す。入れなくても進める。</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">案2</div>
+      <h2>錨亭の帳面に書く</h2>
+      <div class="stage" id="s2"></div>
+      <p>第1章のおわり、看板を取ったあとに店主が常連の帳面を出す。</p>
+    </section>
+
+    <section class="card rec">
+      <div class="tag">案3 ★おすすめ（案1と組み合わせ）</div>
+      <h2>呼ばれる場面をしぼる</h2>
+      <div class="stage" id="s3"></div>
+      <p>名前は「ここぞ」だけ。ジンが呼ぶのは第7章の一回きり。</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">案4</div>
+      <h2>全編で名前で呼ぶ</h2>
+      <div class="stage" id="s4"></div>
+      <p>「お前」「あんた」を名前に置きかえる。第7章の重みが消え、直す行が数百になる。</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">案5</div>
+      <h2>今の欄を表に出すだけ</h2>
+      <div class="stage" id="s5"></div>
+      <p>フリー対戦の奥にある「呼び名」を「⚙ 設定」に移す。いちばん小さい変更。</p>
+    </section>
+
+    <section class="card">
+      <div class="tag">案3で名前が出る場所</div>
+      <h2>一覧</h2>
+      <ol class="list">
+        <li>第1章　名乗った直後のゲンの一言</li>
+        <li>常連のあいさつ・うわさ（今あるもの）</li>
+        <li>章クリアの店主・ゲンの一言（各章1か所まで）</li>
+        <li>第7章　ジン「……<span class="nm" data-n></span>」</li>
+        <li>錨亭の壁の写真の下、エンドロール</li>
+        <li>第二部　師匠の名札、タロウの「〜さん」（今あるもの）</li>
+      </ol>
+      <p class="verdict">卓の名札は「あなた」のまま（狭い画面で重ならないように）。</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clean=s=>String(s||'').replace(/[\u0000-\u001f\u007f​-‏‪-‮⁦-⁩]/g,'').trim();
+let NAME=clean($('nm').value);
+const N=()=>`<span class="nm">${esc(NAME)}</span>`;
+const L=(who,t)=>`<div class="ln${who?'':' nar'}">${who?`<b>${who}</b>`:''}${t}</div>`;
+
+const SCENES={
+  s1:()=>[
+    L('ジン','ジンでいい。昔、少しだけカードをやっていた'),
+    L('ジン','……お前は'),
+    `<div class="ask"><span>${NAME?N():'（名前を入れる）'}</span><span class="n">名乗らない</span></div>`,
+    NAME?L('ゲン',`${N()}か。覚えたぞ！`):L('ゲン','名無しか。まあいい、新入りで十分だ！'),
+  ],
+  s2:()=>[
+    L('店主','約束だよ。今日から錨亭の看板はこの子のものだ'),
+    L('店主','常連はね、ここに名前を書くんだ'),
+    `<div class="book">錨亭　常連帳<br>ゲン　／　ケンジ　／　ミサキ<br><i>${NAME?esc(NAME):'（空けておく）'}</i></div>`,
+  ],
+  s3:()=>[
+    L('ジン','一人前だ'),
+    NAME?L('ジン',`……${N()}`):L('','ジンが、まっすぐにこちらを見た。'),
+    L('',NAME?'ジンが初めて、あなたの名前を呼んだ。':'名前は、最後まで聞かれなかった。'),
+    `<div class="photo"><figure><div class="pic">若い頃の<br>ジン</div>ジン</figure><figure><div class="pic">あなた</div>${NAME?esc(NAME):'　'}</figure></div>`,
+  ],
+  s4:()=>[
+    L('ジン',`${NAME?N():'お前'}、負け方が下手だな`),
+    L('ゲン',`参った！${NAME?N():'お前'}、急に固くなりやがったな`),
+    L('ジン',`いいか、${NAME?N():'お前'}。降りるのも勝負のうちだ`),
+    L('ジン',`……${NAME?N():'お前'}`),
+    L('','（第7章の一言が、ほかの行と同じ重さになる）'),
+  ],
+  s5:()=>[
+    L('','⚙ 設定'),
+    `<div class="ask"><span class="n">名前</span><span>${NAME?N():'（なし）'}</span></div>`,
+    L('店主',NAME?`${N()}、今日も来たね`:'いらっしゃい'),
+    L('','（物語の中では聞かれない。気づいた人だけ）'),
+  ],
+};
+const timers={};
+function play(id){
+  clearTimeout(timers[id]);const st=$(id),lines=SCENES[id]();st.innerHTML='';
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){st.innerHTML=lines.join('');return}
+  let i=0;const step=()=>{if(i<lines.length){st.insertAdjacentHTML('beforeend',lines[i++]);timers[id]=setTimeout(step,1300)}else timers[id]=setTimeout(()=>play(id),3200)};
+  step();
+}
+function all(){document.querySelectorAll('[data-n]').forEach(e=>e.textContent=NAME||'（名前なし）');Object.keys(SCENES).forEach(play)}
+$('nm').addEventListener('input',e=>{NAME=clean(e.target.value);all()});
+all();
+</script>
