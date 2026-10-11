@@ -20,6 +20,8 @@ const SCENES = [
   { key: 'フリー6人_自分の番', prep: `($('freeSize').value='6',startFree())`, myTurn: true },
   { key: '第5章_自分の番', prep: `startChapter(CHAPTERS[4],true)`, myTurn: true },
   { key: '第6章_自分の番', prep: `startChapter(CHAPTERS[5],true)`, myTurn: true },
+  // 1対1（v65 クリエイター目線レビュー：スマホ横で相手の顔が目から上で切れていた）
+  { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true },
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()` },
   { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
@@ -92,6 +94,11 @@ const INSPECT = `(() => {
     const hov = Math.min(r.right, br.right - br.width * .3) - Math.max(r.left, br.left + br.width * .3);
     if (hov > 0 && r.top < mouth - 1) out.push({ kind: '顔隠れ', el: desc(pl), by: '口より ' + Math.round(mouth - r.top) + 'px 上まで' });
   }
+  // 1対1・3人の卓で、正面の相手の顔（#bust1）の上端が画面の中にあるか（v65 レビュー：スマホ横で目から上が切れていた）
+  // 絵（svg）は頭の上に余白があるので、目の高さ（.bust の 37%）が画面の中で、上の帯の下にあるかを見る
+  if (!modal) { const b = document.querySelector('#bust1:not(.out)'); if (b && b.querySelector('svg') && shown(b) && vis(b)) {
+    const r = b.getBoundingClientRect(), eye = r.top + r.height * .37, bar = document.getElementById('tbar'), br = bar && vis(bar) ? bar.getBoundingClientRect() : null, barB = br && br.left < r.right - r.width * .3 && br.right > r.left + r.width * .3 ? br.bottom : 0; // 上の帯が顔の真ん中と横で重なるときだけ
+    if (eye < Math.max(0, barB) - 8) out.push({ kind: '顔切れ', el: '#bust1 の顔', by: '目の高さが画面の上から ' + Math.round(eye) + 'px（上の帯の下端 ' + Math.round(barB) + 'px）' }) } }
   // 横スクロールが出ていないか
   if (document.scrollingElement.scrollWidth > W + 2) out.push({ kind: '横スクロール', el: 'ページ全体 ' + document.scrollingElement.scrollWidth + 'px' });
   return out;

@@ -54,7 +54,8 @@ async function openGame(browser, file, { viewport = { width: 1280, height: 800 }
 const BOT = `(() => {
   if (window.__bot) return;
   const $ = id => document.getElementById(id);
-  const vis = el => !!el && !el.hidden && el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
+  // offsetParent は position:fixed の部品（スマホ横の操作パネルなど）で null になるので、getClientRects で見る
+  const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
   // 押してよいボタン（上から順に）。「やめる」「設定」などは押さない
   const CLICK = ['vsGo','twN','btnShowNo','btnIgnore','qtNo','rvOk','tourSkip','btnNoticeClose','btnAdv','btnNext','btnHelpClose','btnDailyClose','btnShareClose','btnZoomClose','btnSetClose','askGo','lkOk','nvNew']; // nvNew：v63「ポーカーを遊んだことは？」→ はじめて
   const B = window.__bot = { policy: 'random', hands: 0, decisions: 0, clicks: {}, chipErr: [], negErr: [], lastSum: null, lastNames: '', done: false, result: null, stuckAt: Date.now(), lastHand: -1, maxHands: 60, events: [], twiceSeen: [] };
