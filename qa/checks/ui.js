@@ -24,6 +24,8 @@ const SCENES = [
   { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true },
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()` },
   { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true },
+  // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
+  { key: '第2章_ハンドの終わり', prep: `startChapter(CHAPTERS[1],true)`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
   { key: '英語_フリー6人_自分の番', prep: `($('freeSize').value='6',startFree())`, myTurn: true, lang: 'en' },
   // 主人公の画面と回想（クリエイター目線レビュー v62 の直し5）。waitFor は会話や相手紹介を先へ送りながら待つ
@@ -99,6 +101,14 @@ const INSPECT = `(() => {
   if (!modal) { const b = document.querySelector('#bust1:not(.out)'); if (b && b.querySelector('svg') && shown(b) && vis(b)) {
     const r = b.getBoundingClientRect(), eye = r.top + r.height * .37, bar = document.getElementById('tbar'), br = bar && vis(bar) ? bar.getBoundingClientRect() : null, barB = br && br.left < r.right - r.width * .3 && br.right > r.left + r.width * .3 ? br.bottom : 0; // 上の帯が顔の真ん中と横で重なるときだけ
     if (eye < Math.max(0, barB) - 8) out.push({ kind: '顔切れ', el: '#bust1 の顔', by: '目の高さが画面の上から ' + Math.round(eye) + 'px（上の帯の下端 ' + Math.round(barB) + 'px）' }) } }
+  // 場札（フロップの後）の札の 15% 以上にチップ（ポットの山・賭けチップ・持ち点の塔）が重なっていないか（v71 改善提案§1）。めくる途中で細くなっている札と、飛んでいるチップは見ない
+  if (!modal) { const bc0 = [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e => shown(e) && vis(e)), mw = Math.max(0, ...bc0.map(e => e.getBoundingClientRect().width)), bc = bc0.filter(e => e.getBoundingClientRect().width > mw * .8);
+    // 1対1では、相手の伏せ札と D の札も数える（v70 レビュー：第7章で伏せ札が3枚目の場札の端に 14% かかっていた）
+    const hu = !!document.getElementById('bust1') && !document.getElementById('bust2');
+    if (bc.length >= 3) { const ch = [...document.querySelectorAll('#table .chip' + (hu ? ', #felt .spot:not(#spot0) .hand:not(.folded):not(.muck) .card, #dbtn' : ''))].filter(e => shown(e) && vis(e) && !e.closest('.potfly, .potmove, .wonfly, .wait')).map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 2);
+      for (const c of bc) { const r = c.getBoundingClientRect(); let n = 0, by = null;
+        for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { const x = r.left + r.width * (i + .5) / 8, y = r.top + r.height * (j + .5) / 8, h = ch.find(([, q]) => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom); if (h) { n++; by = h[0] } }
+        if (n / 64 >= .15) { const w = by.closest('#potChips, .chipwrap, .mystack, .won-pile, .hand') || by; out.push({ kind: 'チップ重なり', el: '場札', by: desc(c) + ' の ' + Math.round(100 * n / 64) + '% に ' + (w.id ? '#' + w.id : (w.closest('[id]') || {}).id + ' .' + String(w.className).split(' ')[0]) }) } } } }
   // 横スクロールが出ていないか
   if (document.scrollingElement.scrollWidth > W + 2) out.push({ kind: '横スクロール', el: 'ページ全体 ' + document.scrollingElement.scrollWidth + 'px' });
   return out;
