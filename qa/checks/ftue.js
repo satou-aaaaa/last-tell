@@ -28,10 +28,13 @@ async function run({ browser, file }) {
     const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: H.UNLOCKED });
     try {
       await page.evaluate(() => startChapter(CHAPTERS[1], true));
-      await H.startBot(page, { policy: 'call', maxHands: 2 });
+      // 'call' だと2ハンドで持ち点が0になって章が終わり（＝続きから が消えるのが正しい）、検査が揺れたので、払わずに済むときだけ進む 'fold' にする
+      await H.startBot(page, { policy: 'fold', maxHands: 2 });
       await H.runUntilDone(page, { timeoutMs: 60000 });
       // 重いときは保存が reload に間に合わないので、続きの記録が入るまで待つ（最大5秒）
       await page.waitForFunction(() => !!localStorage.getItem('shisho-resume'), null, { timeout: 5000 }).catch(() => { });
+      // Chromium は localStorage への書き込みを少し遅れて保存するので、すぐ開き直すと書いたばかりの値が消えることがある（v67 でも10回に1回）。少し待つ
+      await page.waitForTimeout(1500);
       await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(500);
       const has = await page.evaluate(() => [...document.querySelectorAll('button')].some(b => b.offsetParent !== null && /続きから|Continue/.test(b.textContent)));
       items.push({ id: 'ftue:resume', title: '章の途中で閉じても「続きから」で戻れる（クリエイター目線 S3）', status: has ? 'ok' : 'fail', detail: has ? 'タイトルに「続きから」が出た' : '開き直すと「続きから」が出ない' });

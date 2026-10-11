@@ -1424,6 +1424,8 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
   #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])){grid-template-columns:1fr 1fr}
   #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])) #btnNext{grid-column:1/-1}
 }
+/* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする。1行に収まるよう字間とボタンの内側の余白を少し詰める */
+html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
 
 /* 名札が顔にかからないように（2026-10-10 satou「顔にチップの表示がかぶっている」）
    名札は卓のふちから上へ伸びるので、行が増えるほど口・鼻・目が隠れていた。
@@ -1983,7 +1985,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.67.0';
+const APP_VERSION='0.68.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -6041,7 +6043,7 @@ function potGrow(pot){
     el.style.left=(px-13)+'px';el.style.top=(py-(11+4*h))+'px';el.style.zIndex=Math.round(py);
     if(h===1&&potRnd()<.35)el.style.transform=`rotate(${(potRnd()*30-15).toFixed(0)}deg)`;
     pile.appendChild(el);news.push(el);have+=h}
-  P.chips=have;potSignPlace();
+  P.chips=have;potSignSoon();
   if(!reducedMotion())news.forEach((el,i)=>el.animate([{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260*SPEED(),delay:i*25*SPEED(),easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
 // 金額札は平らな卓の外（2D）に置き、山の真下へ合わせる
 function potSignPlace(){const s=$('potSign'),p=$('potChips'),t=$('table');if(!s||!p||!t||s.hidden||camState.kind!=='wide')return;const pr=p.getBoundingClientRect(),tr=t.getBoundingClientRect();if(!pr.height)return;
@@ -6730,10 +6732,12 @@ function camGeom(i){const b=$('bust'+i),t=$('table');if(!b||!t)return null;const
     if(r.width){cx=(r.left+r.width/2-tr.left-m.e)/m.a;cy=(r.top+r.height/2-tr.top-m.f)/m.d}}
   return{W,H,bx,by,bh,cx,cy}}
 function camTopPad(){const e=$('street'),t=$('table');if(!e||!t||!e.offsetParent)return 2;const r=e.getBoundingClientRect();return Math.max(2,r.bottom-t.getBoundingClientRect().top+4)}
-function sayFollow(){requestAnimationFrame(sayFollow);const L=$('sayLayer'),c=$('cam');if(!L||!c||$('game').hidden)return;
-  const now=performance.now(),list=[...L.querySelectorAll('.say.go')].filter(sy=>now-(sy._t||0)<(sy.classList.contains('long')?3700:2800));if(!list.length)return;
+// 動作の重さの改善 案3：毎コマの呼び出しは 36_layout_pass（sayWake）から。出ている吹き出しが無くなったら false を返し、止まる
+function sayFollow(){const L=$('sayLayer'),c=$('cam');if(!L||!c||$('game').hidden)return false;
+  const now=performance.now(),list=[...L.querySelectorAll('.say.go')].filter(sy=>now-(sy._t||0)<(sy.classList.contains('long')?3700:2800));if(!list.length)return false;
+  list.forEach(sy=>{sy.style.marginLeft='';sy.style.marginTop=''});   // 先に全部戻してから測る（測る→書く→測る…をしない）
   const m=new DOMMatrix(getComputedStyle(c).transform),W=L.clientWidth,H=L.clientHeight,lr=L.getBoundingClientRect(),pad=4,tp=sayTopPad();
-  list.forEach(sy=>{sy.style.marginLeft='';sy.style.marginTop='';
+  list.forEach(sy=>{
     let dx=sy.offsetLeft*(m.a-1)+m.e,dy=sy.offsetTop*(m.d-1)+m.f;const r=sy.getBoundingClientRect();
     const l=r.left-lr.left+dx,t=r.top-lr.top+dy;
     if(l<pad)dx+=pad-l;else if(l+r.width>W-pad)dx-=l+r.width-(W-pad);
@@ -6742,20 +6746,26 @@ function sayFollow(){requestAnimationFrame(sayFollow);const L=$('sayLayer'),c=$(
   // 吹き出しどうしが重なったら、あとの方を下へずらす
   const placed=[];list.map(sy=>{const r=sy.getBoundingClientRect();return{sy,l:r.left-lr.left+sy._dx,t:r.top-lr.top+sy._dy,w:r.width,h:r.height}}).sort((a,b)=>a.t-b.t||a.l-b.l).forEach(b=>{
     for(const a of placed)if(b.l<a.l+a.w+2&&a.l<b.l+b.w+2&&b.t<a.t+a.h+2&&a.t<b.t+b.h+2){const nt=a.t+a.h+4;b.sy._dy+=nt-b.t;b.t=nt}
-    placed.push(b);b.sy.style.marginLeft=(b.sy._dx+(b.sy._ax||0)).toFixed(1)+'px';b.sy.style.marginTop=(b.sy._dy+(b.sy._ay||0)).toFixed(1)+'px'})}
-requestAnimationFrame(sayFollow);
+    placed.push(b);b.sy.style.marginLeft=(b.sy._dx+(b.sy._ax||0)).toFixed(1)+'px';b.sy.style.marginTop=(b.sy._dy+(b.sy._ay||0)).toFixed(1)+'px'});
+  return true}
 function sayTopPad(){let tp=camTopPad();const m=$('msg'),t=$('table');if(S&&m&&t&&m.textContent.trim()&&m.offsetParent){const r=m.getBoundingClientRect();tp=Math.max(tp,r.bottom-t.getBoundingClientRect().top+4)}return tp}
 (function(){const t=$('table');if(!t)return;t.style.overflow='clip';t.addEventListener('scroll',()=>{if(t.scrollTop||t.scrollLeft){t.scrollTop=0;t.scrollLeft=0}})})();
+// 動作の重さの改善 案3：描き直しの後の位置合わせ（36_layout_pass）から呼ぶ。全部測ってから全部書く（中身は今までと同じ）
 function fitTable(){const t=$('table');if(!t||$('game').hidden||!t.offsetParent)return;const tr=t.getBoundingClientRect();
   {const bc=[...t.querySelectorAll('#boardCards .card')].map(c=>c.getBoundingClientRect()).filter(r=>r.width),bt=bc.length?Math.min(...bc.map(r=>r.top)):1e9,bl=bc.length?Math.min(...bc.map(r=>r.left)):0,br=bc.length?Math.max(...bc.map(r=>r.right)):0;
-    t.querySelectorAll('.felt .spot[data-c]').forEach(sp=>{const h=sp.querySelector('.hand');if(!h)return;const r=h.getBoundingClientRect();if(!r.width)return;sp.classList.toggle('cwside',r.left<br&&r.right>bl&&r.top<bt&&r.bottom+34>bt)})}
-  t.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack').forEach(sp=>{sp.style.translate='';const r=sp.getBoundingClientRect();if(!r.width)return;let dx=0;
-    if(r.left<tr.left+2)dx=tr.left+2-r.left;else if(r.right>tr.right-2)dx=tr.right-2-r.right;if(dx)sp.style.translate=`${dx.toFixed(1)}px 0`});
+    const tg=[];t.querySelectorAll('.felt .spot[data-c]').forEach(sp=>{const h=sp.querySelector('.hand');if(!h)return;const r=h.getBoundingClientRect();if(!r.width)return;tg.push([sp,r.left<br&&r.right>bl&&r.top<bt&&r.bottom+34>bt])});
+    tg.forEach(([sp,on])=>sp.classList.toggle('cwside',on))}
+  const sps=[...t.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack')],cs=[...t.querySelectorAll('#plates .cue:not(.rd)')];
+  sps.concat(cs).forEach(e=>{if(e.style.translate)e.style.translate=''});
   const pls=[...t.querySelectorAll('#plates .plate')].map(p=>p.getBoundingClientRect());
-  t.querySelectorAll('#plates .cue:not(.rd)').forEach(c=>{c.style.translate='';const r=c.getBoundingClientRect();if(!r.width)return;
+  const out=[];
+  sps.forEach(sp=>{const r=sp.getBoundingClientRect();if(!r.width)return;let dx=0;
+    if(r.left<tr.left+2)dx=tr.left+2-r.left;else if(r.right>tr.right-2)dx=tr.right-2-r.right;if(dx)out.push([sp,`${dx.toFixed(1)}px 0`])});
+  cs.forEach(c=>{const r=c.getBoundingClientRect();if(!r.width)return;
     let dx=0,dy=0;if(r.left<tr.left+2)dx=tr.left+2-r.left;else if(r.right>tr.right-2)dx=tr.right-2-r.right;
     for(const p of pls)if(r.left+dx<p.right&&p.left<r.right+dx&&r.bottom>p.top+2&&r.top<p.bottom){dy=p.top-2-r.bottom;break}
-    if(dx||dy)c.style.translate=`${dx.toFixed(1)}px ${dy.toFixed(1)}px`})}
+    if(dx||dy)out.push([c,`${dx.toFixed(1)}px ${dy.toFixed(1)}px`])});
+  out.forEach(([e,v])=>{e.style.translate=v})}
 function fitRaise(){const p=$('raisePanel'),c=$('controls');if(!p||!c)return;
   // 操作欄が画面の下に貼りつく（スマホ縦・PC）ときは、パネルを開いている間だけ貼りつきをやめ、卓の下に並べる。手札が隠れない
   const open=!p.hidden&&!$('game').hidden;
@@ -6767,20 +6777,23 @@ setInterval(fitRaise,150);
 function fitTags(){if($('game').hidden)return;document.querySelectorAll('#plates .plate .tag, #mine .me-l .tag').forEach(t=>{const box=t.parentElement,os=[...box.children].filter(c=>c!==t&&c.offsetWidth),w=box.id==='plates'||!os.length?box.clientWidth:Math.max(56,...os.map(c=>c.scrollWidth))+10;if(!w)return;
   if(t.dataset.fz&&t.dataset.tx===t.textContent&&t.dataset.w==w)return;t.style.fontSize='';t.dataset.tx=t.textContent;t.dataset.w=w;
   let f=parseFloat(getComputedStyle(t).fontSize),n=0;t.style.maxWidth=w+'px';while(t.scrollWidth>t.clientWidth+1&&f>7&&n++<30){f-=.5;t.style.fontSize=f+'px'}t.dataset.fz='1'})}
-setInterval(fitTags,200);
-function fitMyHand(){document.querySelectorAll('.mine .myhand,#vs:not([hidden]) .vsrole,#controls button.act small').forEach(h=>{if(!h.textContent){h.style.fontSize='';return}
-  const box=h.parentElement;if(!box||!box.clientWidth)return;h.style.fontSize='';let f=parseFloat(getComputedStyle(h).fontSize),k=0;
-  while(h.scrollWidth>box.clientWidth+1&&f>9&&k++<12){f-=1;h.style.fontSize=f+'px'}})}
+function fitMyHand(){document.querySelectorAll('.mine .myhand,#vs:not([hidden]) .vsrole,#controls button.act small').forEach(h=>{if(!h.textContent){h.style.fontSize='';h._fk='';return}
+  const box=h.parentElement;if(!box||!box.clientWidth)return;
+  // 動作の重さの改善 案3：前に合わせた時と文字・欄の幅・欄の文字の大きさが同じなら、合わせ直しても同じなので飛ばす
+  const key=()=>h.textContent+'|'+box.clientWidth+'|'+getComputedStyle(box).fontSize;if(h._fk&&h._fk===key())return;
+  h.style.fontSize='';let f=parseFloat(getComputedStyle(h).fontSize),k=0;
+  while(h.scrollWidth>box.clientWidth+1&&f>9&&k++<12){f-=1;h.style.fontSize=f+'px'}h._fk=key()})}
 addEventListener('scroll',()=>{if(tourI>=0)tourGuard()},{passive:true});
 function tourGuard(){if(tourI<0)return;if($('game').hidden||(S&&(S.handOver||S.toAct!==0))){tourI=-1;$('tour').hidden=true;document.querySelectorAll('.tourhl').forEach(e=>e.classList.remove('tourhl'));return}
   const st=TOUR[tourI],el=st&&document.querySelector(st[0]);if(el&&typeof placeTour==='function')placeTour(el)}
 function fitScene(){const sc=$('scene'),st=$('stage'),adv=$('btnAdv');if(!sc||sc.hidden||!st||!adv)return;
   st.style.height='';const top=sc.getBoundingClientRect().top+scrollY,need=adv.getBoundingClientRect().bottom+scrollY-top+8,room=innerHeight-Math.max(0,top-scrollY);
   if(need>room){const h=st.getBoundingClientRect().height;st.style.height=Math.max(0,Math.round(h-(need-room)))+'px'}}
-setInterval(()=>{fitTable();fitMyHand();tourGuard();fitScene()},300);addEventListener('resize',fitScene);addEventListener('resize',fitTable);
+// 動作の重さの改善 案3：0.3秒ごとの見回りはやめ、36_layout_pass の位置合わせ（描き直しの後・大きさが変わった時・1秒ごと）で呼ぶ
+addEventListener('resize',fitScene);
 function camXform(W,H,px,py,z,ay,minTy){let tx=W/2-px*z,ty=H*ay-py*z;tx=Math.min(0,Math.max(W-W*z,tx));ty=Math.min(H*.1,Math.max(H-H*z,ty));if(minTy!=null)ty=Math.max(ty,minTy);return`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${z})`}
 function camTo(i,kind){
-  const c=$('cam'),t=$('table');if(!c)return;
+  const c=$('cam'),t=$('table');if(!c)return;if(typeof sayWake==='function')sayWake();
   if(camSet()==='off'||kind==='wide'||i<0){c.style.transform='none';c.classList.remove('snapin');t.classList.remove('focusing');camState={i:-1,kind:'wide',seq:camState.seq,t0:0};camPlate(-1);return}
   if((kind==='tell'||kind==='me')&&camSet()!=='strong')kind='mid';
   const g=camGeom(i);if(!g)return;const v=camView(),p=S.players[i];
@@ -7257,7 +7270,7 @@ function talkEnd(){if(!S||!S.players)return;talkReveal(false);const me=S.players
     if(S.handNo>=12&&!q.hurry&&Math.random()<.06)q.hurry=true});
   if(talkOK()&&!S.whatDone&&S.street!=='showdown'&&me.folded&&!me.out&&!S.myPreFold&&S.board.length>=3){
     const w=S.players.findIndex(q=>!q.human&&q.won>0&&!q.show);if(w>0){S.whatOffer=S.handNo;S.whatWho=w}}}
-function renderTalk(){if(!S||!S.players)return;const row=$('askRow'),b=$('btnNeedle'),wb=$('whatBox');if(!row||!b)return;
+function renderTalk(){if(!S||!S.players)return;const row=$('askRow'),b=$('btnNeedle'),wb=$('whatBox');if(!row||!b)return;row._bp=0;
   const a=S.ask,live=askLive(),show=live&&!a.done&&S.toAct===0;row.hidden=!show;
   if(show&&row.dataset.k!==a.hand+a.street+a.q){row.dataset.k=a.hand+a.street+a.q;row.innerHTML=a.opts.map((o,k)=>`<button class="needle ask${k===0?' quiet':''}" data-ak="${k}">${esc(o)}</button>`).join('')}
   if(live){b.hidden=true;renderNeedleMenu(false)}
@@ -7266,7 +7279,7 @@ function renderTalk(){if(!S||!S.players)return;const row=$('askRow'),b=$('btnNee
   if(S.handOver){b.hidden=!chat;b.setAttribute('aria-expanded',String(chat&&S.chatPick===S.handNo));$('table').classList.toggle('talkpick',chat&&S.chatPick===S.handNo)}
   else $('table').classList.remove('talkpick');
   if(wb)wb.hidden=!(S.handOver&&!S.result&&S.whatOffer===S.handNo&&!S.whatDone);
-  talkPlace();if(S.handOver&&S.chatPick===S.handNo&&!$('talkPicks'))talkPicks();else if(!(S.handOver&&S.chatPick===S.handNo)&&$('talkPicks'))$('talkPicks').remove()}
+  layoutSoon();if(S.handOver&&S.chatPick===S.handNo&&!$('talkPicks'))talkPicks();else if(!(S.handOver&&S.chatPick===S.handNo)&&$('talkPicks'))$('talkPicks').remove()}
 // プレートの横に小さく「話す」。プレートを押すとチップの拡大が開くので、ボタンは卓の上の別の層に置く
 function talkPicks(){const t=$('table');let box=$('talkPicks');const on=S&&S.players&&S.handOver&&!S.result&&S.chatPick===S.handNo&&S.chatHand!==S.handNo&&!$('game').hidden;
   if(!on){if(box)box.remove();return}
@@ -7361,7 +7374,7 @@ function bAvoid(){const L=$('sayLayer');if(!L||$('game').hidden)return false;con
   return true}
 // クセの札は小さい所から大きくなり、カメラも寄るので、掛け合いの吹き出しが出ているあいだは 0.3 秒ごとに見直す
 let bAvT=0;const bAvLoop=()=>{clearTimeout(bAvT);let on=false;try{on=bAvoid()}catch(e){}if(on)bAvT=setTimeout(bAvLoop,300)};
-{const o=render;render=function(){const r=o.apply(this,arguments);bAvLoop();return r}}
+// 動作の重さの改善 案3：描き直しの直後ではなく、位置合わせ（36_layout_pass）の最後に1回目を回す（クセの札の位置が決まってから測る）
 // カットイン・クイズ・案内などが出ているあいだは待つ
 function bBlocked(){return tourI>=0||['toast','quiz','cutin','camBand','mieta','foolStamp'].some(id=>$(id)&&!$(id).hidden)||$('game').hidden}
 // 1行ずつ吹き出しで出す。gap は今と同じ 1500ms × SPEED()
@@ -7446,7 +7459,7 @@ function bAnswer(k,late){const st=S.bAsk;if(!st||st.stage!==1)return;const a=st.
   const row=$('askRow'),b=$('btnNeedle'),st=S&&S.bAsk;if(!row||!b)return r;
   if(st&&st.stage===1&&S.handOver&&!S.result&&st.hand===S.handNo){const a=st.a,key='b'+a.id+S.handNo;
     if(row.dataset.k!==key){row.dataset.k=key;row.innerHTML=[a.o[0],a.o[1],'黙る'].map((o,k)=>`<button class="needle ask${k===2?' quiet':''}" data-bk="${k}">${esc(o)}</button>`).join('')}
-    row.hidden=false;row.classList.add('bask');b.hidden=true;$('table').classList.remove('talkpick');talkPlace();bPlace(row)}
+    row.hidden=false;row.classList.add('bask');b.hidden=true;$('table').classList.remove('talkpick');row._bp=1;layoutSoon()}
   else{row.classList.remove('bask');if(row.dataset.k&&row.dataset.k[0]==='b'&&!askLive()){row.hidden=true;row.dataset.k='';row.innerHTML=''}}}catch(e){}return r}}
 // 3つのボタンが場札・自分の手札・チップ・ポット表示にかからない場所を探して、少しずらす
 function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row),tb=R($('table'));if(!r0.width)return;
@@ -7655,10 +7668,12 @@ function stackTowers(amount,step,seed){const P=stackPlan(amount);let s=Math.abs(
   return`${P.back.length?`<span class="trow back">${P.back.map(col).join('')}</span>`:''}<span class="trow front">${P.front.map(col).join('')}</span>`}
 // 動作の重さの改善 案2(a)：同じ引数・同じ BB・同じ画面幅の区分なら同じ文字列なので、作った結果を覚えておく
 const CHIPSTACK_MEMO=new Map();
+// 動作の重さの改善 案3：innerWidth を読むと画面の形の計算が走るので、画面の幅の区分は大きさが変わった時だけ読む
+let VW_NARROW=innerWidth<620;addEventListener('resize',()=>{VW_NARROW=innerWidth<620});
 function chipStack(amount,label,big,small,seed){
   if(!amount)return'';
   let bb=0;try{bb=BB()}catch(e){bb=0}
-  const k=amount+'|'+label+'|'+big+'|'+small+'|'+seed+'|'+(window.innerWidth<620)+'|'+bb+'|'+(typeof I18N!=='undefined'?I18N.lang:'');
+  const k=amount+'|'+label+'|'+big+'|'+small+'|'+seed+'|'+(VW_NARROW)+'|'+bb+'|'+(typeof I18N!=='undefined'?I18N.lang:'');
   let v=CHIPSTACK_MEMO.get(k);
   if(v===undefined){v=chipStackRaw(amount,label,big,small,seed);if(CHIPSTACK_MEMO.size>3000)CHIPSTACK_MEMO.clear();CHIPSTACK_MEMO.set(k,v)}
   return v}
@@ -7668,11 +7683,11 @@ function setHTMLIfChanged(el,h,key){key=key===undefined?h:key;if(el._h===key&&el
 function htmlKeyNoIds(h){const ids=new Set();h.replace(/id="([xrc][0-9a-z]{6})/g,(m,t)=>{ids.add(t);return m});let k=h;ids.forEach(t=>{k=k.split(t).join('#')});return k}
 function chipStackRaw(amount,label,big,small,seed){
   if(!amount)return'';
-  if(small)return`<span class="stack exact tw" aria-label="${fmt(amount)}">${stackTowers(amount,window.innerWidth<620?3:4,seed)}</span>`;
+  if(small)return`<span class="stack exact tw" aria-label="${fmt(amount)}">${stackTowers(amount,VW_NARROW?3:4,seed)}</span>`;
   let rest=amount,chips=[];
   for(const [v,cls] of (small?DENOMS.filter(d=>d[0]<=10000):DENOMS)){while(rest>=v&&chips.length<(big?40:24)){chips.push(cls);rest-=v}}
   const cols=[];for(let i=0;i<chips.length;i+=8)cols.push(chips.slice(i,i+8));
-  const step=window.innerWidth<620?3:4;
+  const step=VW_NARROW?3:4;
   const html=cols.slice(0,big?5:3).map(col=>`<span class="col" style="height:${11+step*(col.length-1)+4}px">${
     col.map((cls,k)=>`<span class="chip ${cls}" style="bottom:${k*step+4}px;left:${(((k*7+col.length*3)%5)-2)*.5}px"></span>`).join('')}</span>`).join('');
   return`<span class="stack" aria-label="${fmt(amount)}">${html}${label!==false?`<span class="amt-label">${fmt(amount)}</span>`:''}</span>`;
@@ -7747,8 +7762,7 @@ function render(){
     // クセの札は名札と同じ層に置き、吹き出しより手前に出す（吹き出しに隠れないように）
     let cb=$('cue'+i);
     if(showCue){if(!cb){cb=document.createElement('span');cb.className='cue';cb.id='cue'+i;$('plates').appendChild(cb)}
-      const br=b.getBoundingClientRect(),pr=$('plates').getBoundingClientRect();
-      cb.style.right=(pr.right-br.right+br.width*.06)+'px';cb.style.top=Math.max(4,br.top-pr.top+br.height*.06)+'px';
+      cb.dataset.bust=String(i);   // 位置は描き直しの後の位置合わせ（36_layout_pass の cuePlace）で決める
       cb.classList.toggle('blue',p.tell.cue==='sweat'||p.tell.cue==='fast');
       if(cb.dataset.seq!==String(p.tell.seq)){cb.dataset.seq=String(p.tell.seq);cb.textContent=CUE_SFX[p.tell.cue];cb.title=CUE_LABEL[p.tell.cue];
         cb.classList.remove('go');void cb.offsetWidth;cb.classList.add('go')}}
@@ -7788,7 +7802,7 @@ function render(){
   if(!S.potPushing){$('potSign').hidden=paid||!potTotal();
     const ps=live>0&&pot>0?`<span class="ps">卓 ${fmt(pot)}＋賭け ${fmt(live)}</span>`:'';
     if($('potSign').dataset.k!==pk+'|'+ps||!$('potSign').querySelector('.pv')){$('potSign').dataset.k=pk+'|'+ps;$('potSign').innerHTML=`<span class="pl">ポット</span><span class="pv">${fmt(S.potPile.shown||0)}</span>${ps}`}
-    if(!paid&&S.potPile.target!==potTotal()){S.potPile.target=potTotal();potCount(potTotal(),520)}potSignPlace()}
+    if(!paid&&S.potPile.target!==potTotal()){S.potPile.target=potTotal();potCount(potTotal(),520)}potSignSoon()}
   $('msg').textContent=S.handOver?'':(S.msg||'');
   const line=senseiLine();
   $('sensei').hidden=!line;$('senseiText').textContent=line;
@@ -8863,14 +8877,15 @@ function tipWant(){const me=S.players[0];if(!me||!me.human)return'';const nv=nov
   if(!S.handOver&&!S.autoMe){
     if(S.toAct===0&&raiseOpen&&!$('raisePanel').hidden&&!tipSeen('raise'))return'raise';
     if(peekOn()&&me.hand&&me.hand.length===2&&!me.peeked&&!me.folded&&!tipSeen('hold'))return'hold';
-    if(S.toAct===0&&!$('controls').hidden&&!tipSeen('act'))return'act';
+    if(S.toAct===0&&!$('controls').hidden&&!tipSeen('act')){if(me.bet<S.currentBet)return'act';if(!tipSeen('check'))return'check'}
     if(S.board.length>=3&&!tipSeen('board'))return'board'}
   if(S.handOver&&S.handNo>0&&me.won>0&&!tipSeen('pot'))return'pot';
   return''}
 function tipShow(k){const bar=tipBar();if(!bar)return;tipMark(k);tipK=k;tipAt=performance.now();const e=tipEl();e.textContent=TIPS[k];bar.insertBefore(e,bar.firstChild);e.hidden=false;
   try{requestAnimationFrame(keepMine)}catch(x){}
   // v66（レビュー 3）：はじめての人の「act」の案内は、最初に操作ボタンを押すまで出しておく。ジンの助言はそのあと
-  if(k==='act'&&novice()){tipKeep=true;clearTimeout(tipT);clearTimeout(senseiWait.t);const s=$('sensei');if(s)s.classList.add('mwait');return}
+  // v68（v67 レビュー 3）：最初の判断で払う額が 0 なら「act」ではなく「check」の案内を先に出し、同じように押すまで出しておく
+  if((k==='act'||k==='check'&&!tipSeen('act'))&&novice()){tipKeep=true;clearTimeout(tipT);clearTimeout(senseiWait.t);const s=$('sensei');if(s)s.classList.add('mwait');return}
   const jin=$('sensei')&&!$('sensei').hidden&&($('senseiText').textContent||'').trim(),ms=jin?1500:3000;if(jin)senseiWait(ms);
   clearTimeout(tipT);tipT=setTimeout(tipHide,ms)}
 function tipTick(){try{
@@ -9457,7 +9472,7 @@ function sayOne(cur){const now=performance.now();cur._shown=now;
     sy._off=setTimeout(()=>{if(sy.dataset.seq===seq&&sy.classList.contains('go')&&cur.classList.contains('go'))sy.classList.remove('go')},left)})}
 (function(){const L=$('sayLayer');if(!L)return;
   new MutationObserver(list=>{for(const m of list){const sy=m.target;if(!sy.classList||!sy.classList.contains('say'))continue;
-    if(sy.classList.contains('go')&&m.oldValue!==null&&!/\bgo\b/.test(m.oldValue||'')){try{sayPlace(sy)}catch(e){}sayOne(sy)}}})
+    if(sy.classList.contains('go')&&m.oldValue!==null&&!/\bgo\b/.test(m.oldValue||'')){sy._lpSay=1;layoutSoon();sayWake();sayOne(sy)}}})   // 動作の重さの改善 案3：置き場所は次のコマの位置合わせで（36_layout_pass）
     .observe(L,{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true})})();
 
 // ---------- §A-3：ポットの内訳は押したときだけ（2秒） ----------
@@ -9500,7 +9515,7 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(gw.dataset.sh!==String(sh)){gw.dataset.sh=String(sh);gw.style.setProperty('--sh',sh+'px')}
   if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}}
 try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'))}catch(e){}
-setInterval(barSync,250);
+// 動作の重さの改善 案3：0.25秒ごとの見回りはやめ、位置合わせ（36_layout_pass）で呼ぶ
 
 // ---------- §B-6：自分の番に卓へ自動スクロールしない（1画面に収まっている） ----------
 // 28_controls.js の keepMine は中身を外した。24 の fitRaise のずらしは CSS で止める（レイズ欄は卓の下側に重ねる）
@@ -9571,17 +9586,23 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closes
 // ---------- v66：相手の顔（目から口）を卓の上で切らない（テスター目線 3、横画面の一騎打ち） ----------
 // 胸像の下の端はふだん卓の高さの 37%。大きい胸像（一騎打ち・強いキャラ）や背の低い卓（スマホ横）では頭が上に切れるので、
 // 下の端を名札の手前まで下げ、それでも入らなければ少し小さくする。顔の比率は qa/checks/ui.js と同じ（目 37%・口 57%、頭の上 20%）。
+// 動作の重さの改善 案3：描き直しの後の位置合わせ（36_layout_pass の合図 'layout'）で呼ぶ。全部戻す→全部測る→全部書く（中身は今までと同じ）
 function faceFit(){const B=$('busts'),P=$('plates');if(!B||!P||$('game').hidden||!B.clientHeight)return;
   const H=B.clientHeight,pr0=P.getBoundingClientRect(),k=pr0.height/(P.offsetHeight||1)||1,m=Math.max(6,H*.02);
-  B.querySelectorAll('.bust').forEach(b=>{b.style.bottom='';b.style.maxWidth='';
-    const pl=$('plate'+b.id.slice(4));if(!pl||!pl.offsetParent)return;
-    const pt=(pl.getBoundingClientRect().top-pr0.top)/k-4,h0=b.offsetHeight,h=Math.min(h0,(pt-m)/.37),base=H*.37,bot=Math.max(base,.8*h+m);
-    if(!(h>40))return;
-    if(h<h0-1)b.style.maxWidth=h.toFixed(1)+'px';if(bot>base+1)b.style.bottom=(H-bot).toFixed(1)+'px'});
+  // 縮める前の高さ（h0）は、胸像の作り・置き場所・卓の大きさが前と同じなら前に測った値を使う（戻して測り直すと形の計算が増えるため）。
+  // 1秒ごとの見回りと画面の大きさが変わった時は、全部戻して測り直す（LP.full）
+  const full=typeof LP!=='undefined'&&LP.full,bs=[...B.querySelectorAll('.bust')],keyOf=b=>{const bd=b.querySelector('.body');return b.className+'|'+(bd&&bd.dataset.mood)+'|'+b.style.left+'|'+B.clientWidth+'|'+H};
+  bs.forEach(b=>{if((b.style.bottom||b.style.maxWidth)&&(full||b._ffk!==keyOf(b))){b.style.bottom='';b.style.maxWidth='';b._ffmw=b._ffbt=''}});
+  const out=bs.map(b=>{const pl=$('plate'+b.id.slice(4));if(!pl||!pl.offsetParent)return[b,'',''];
+    const kb=keyOf(b),pt=(pl.getBoundingClientRect().top-pr0.top)/k-4,h0=b.style.maxWidth&&b._ffk===kb&&b._ffh0?b._ffh0:b.offsetHeight,h=Math.min(h0,(pt-m)/.37),base=H*.37,bot=Math.max(base,.8*h+m);
+    b._ffk=kb;b._ffh0=h0;
+    if(!(h>40))return[b,'',''];
+    return[b,h<h0-1?h.toFixed(1)+'px':'',bot>base+1?(H-bot).toFixed(1)+'px':'']});
+  // 前と同じ値なら書かない
+  out.forEach(([b,mw,bt])=>{if((b._ffmw||'')!==mw||!mw!==!b.style.maxWidth){b.style.maxWidth=mw;b._ffmw=mw}if((b._ffbt||'')!==bt||!bt!==!b.style.bottom){b.style.bottom=bt;b._ffbt=bt}});
   // 卓が見える前（相手紹介の間など）に出た吹き出しは置き場所が決まっていないので、見えてから1回だけ置き直す
-  document.querySelectorAll('#sayLayer .say.go').forEach(sy=>{if(sy._fitSeq===sy.dataset.seq||sy.classList.contains('side'))return;sy._fitSeq=sy.dataset.seq;try{sayPlace(sy)}catch(e){}})}
-LT.on('render',()=>{try{faceFit()}catch(e){}});
-addEventListener('resize',()=>{try{faceFit()}catch(e){}});
+  document.querySelectorAll('#sayLayer .say.go').forEach(sy=>{if(sy._fitSeq===sy.dataset.seq||sy.classList.contains('side'))return;sy._fitSeq=sy.dataset.seq;try{sayPlace(sy);sy._lpSay=0}catch(e){}})}
+LT.on('layout',()=>{try{faceFit()}catch(e){}});
 
 // ---------- v66：「やめる」の確認を開くときは、操作の案内を閉じる（テスター目線 8） ----------
 {const q=$('btnQuit');if(q)q.addEventListener('click',()=>{try{if(typeof tourI!=='undefined'&&tourI>=0)endTour()}catch(e){}},true)}
@@ -9684,7 +9705,7 @@ function nmAfterRender(){
   });
   const m=$('msg');if(m&&m.textContent){const t=whoText(m.textContent);if(t!==m.textContent)m.textContent=t}
   // 名前の行が出たり消えたりして名札の幅が変わったら、アクションの札の縮め方もすぐ直す（fitTags は200msごと）
-  if(flip&&typeof fitTags==='function')fitTags();
+  if(flip)layoutSoon();   // 動作の重さの改善 案3：fitTags は次のコマの位置合わせ（36_layout_pass）で
   clearTimeout(S.nmT);if(next)S.nmT=setTimeout(()=>render(),Math.max(30,next-now+30));
 }
 {const o=render;render=function(){const r=o.apply(this,arguments);try{nmAfterRender()}catch(e){}return r}}
@@ -9999,7 +10020,7 @@ function topicPick(k){const tp=S.topic;if(!tp||tp.hand!==S.handNo||!S.handOver||
   const on=tp&&tp.hand===S.handNo&&S.handOver&&!S.result&&S.chatHand!==S.handNo&&!(S.bAsk&&S.bAsk.stage===1&&S.bAsk.hand===S.handNo);
   if(on){const key='t'+tp.i+':'+S.handNo;
     if(row.dataset.k!==key){row.dataset.k=key;row.innerHTML=topicLabels(tp.i).map((o,k)=>o?`<button class="needle ask topic" data-tk="${k}">${esc(o)}</button>`:'').join('')}
-    row.hidden=false;row.classList.add('tkrow');row.setAttribute('aria-label','話題を選ぶ');b.hidden=true;$('table').classList.remove('talkpick');if($('talkPicks'))$('talkPicks').remove();talkPlace();if(typeof bPlace==='function')bPlace(row)}
+    row.hidden=false;row.classList.add('tkrow');row.setAttribute('aria-label','話題を選ぶ');b.hidden=true;$('table').classList.remove('talkpick');if($('talkPicks'))$('talkPicks').remove();row._bp=1;layoutSoon()}
   else if(row.dataset.k&&row.dataset.k[0]==='t'){if(tp&&tp.hand!==S.handNo)S.topic=null;row.hidden=true;row.dataset.k='';row.innerHTML='';row.classList.remove('tkrow');row.removeAttribute('aria-label')}}catch(e){}return r}}
 $('askRow').addEventListener('click',e=>{const x=e.target.closest('[data-tk]');if(x){e.stopPropagation();topicPick(+x.dataset.tk)}});
 // 次のハンドが配られたら、選ばなかった話題は消える（回数は減らない）
@@ -10412,10 +10433,12 @@ function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.lt
   return r}}
 function ltBoardAnim(){if(!S||!S.ltBoardAt||reducedMotion())return;const el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
     dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;return}
-  const cs=[...$('boardCards').children];
-  cs.forEach((c,k)=>{if(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back'))return;
-    if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}
-    const w=c.getBoundingClientRect().width||40,sx=flop?-(k-from)*(w+4):0;c.style.setProperty('--ltsx',sx+'px');
+  // 動作の重さの改善 案3：札の幅は先に全部測ってから書く（書く→測るをくり返さない）
+  const cs=[...$('boardCards').children].map((c,k)=>[c,k]).filter(([c,k])=>!(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back')));
+  cs.forEach(([c])=>{if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}});
+  const ws=cs.map(([c])=>c.getBoundingClientRect().width||40);
+  cs.forEach(([c,k],j)=>{
+    const w=ws[j],sx=flop?-(k-from)*(w+4):0;c.style.setProperty('--ltsx',sx+'px');
     c.style.animation=`${flop?'ltFlop':'ltTurn'} ${Math.round(dur)}ms ease-in-out ${Math.round(-el)}ms both`;
     c.querySelector(':scope > .ltbk').style.animation=`${flop?'ltBack':'ltBackT'} ${Math.round(dur)}ms linear ${Math.round(-el)}ms both`;})}
 // ショーダウン：ポットが動いたあと、負けて開いていた手をディーラーが集める（伏せる人は今の処理のまま）
@@ -10503,6 +10526,65 @@ playScene=LT.wrap('playScene',playScene);
 advance=LT.wrap('advance',advance);
 show=LT.wrap('show',show);
 renderTalk=LT.wrap('renderTalk',renderTalk);
+
+// ===== 動作の重さの改善 案3：描き直しの後の位置合わせを、次のコマの頭で1回だけ（2026-10-11） =====
+// 今までは render と後付けの処理が「書いてすぐ測る」をくり返し、1回打つたびに画面の形の計算が40回ほど起きていた。
+// ここでは render の後に layoutSoon() を呼ぶだけにして、次のコマの頭（requestAnimationFrame）で LT.emit('layout') を1回出す。
+// 'layout' の中は登録した順に動く：faceFit（30c_ui64）→ fitTags・fitMyHand → バー（barSync）→ ポットの札 → 話す欄（talkPlace）
+//   → クセの札 → 吹き出しの置き場所 → fitTable → 操作案内・場面 → 掛け合いのよけ（bAvoid）。そのあと吹き出しの追いかけ（sayFollow）。
+// 見回り（0.12〜0.3秒ごとに測る setInterval）はやめ、安全のため1秒ごとに layoutSoon() だけ残す。
+// order.json では 35_hooks_wire.js の後（LT.wrap 済みの render・renderTalk などの合図を使う）。
+const LP={raf:0,dirty:false,say:false,rendered:false,pot:false,full:true,n:0};
+function lpFrame(){LP.raf=0;
+  if(LP.dirty){LP.dirty=false;LP.n++;LT.emit('layout')}
+  if(LP.say){let on=false;try{on=sayFollow()}catch(e){}LP.say=on}
+  if(LP.say)lpKick()}
+function lpKick(){if(!LP.raf)LP.raf=requestAnimationFrame(lpFrame)}
+// 何回呼んでも、次のコマの頭で1回だけ位置合わせをする
+function layoutSoon(){LP.dirty=true;lpKick()}
+// 吹き出しの追いかけ（24_dokidoki_camera の sayFollow）を毎コマ回す。出ている吹き出しが無くなったら止まる
+function sayWake(){LP.say=true;lpKick()}
+// ポットの札：今までどおり「頼んだ時にカメラが全体なら置く」。カメラが動き始めていても、全体の時の位置で置く
+function potSignSoon(){if(typeof camState!=='undefined'&&camState.kind==='wide'){LP.pot=true;layoutSoon()}}
+function potSignPlaceWide(){const s=$('potSign'),p=$('potChips'),t=$('table'),c=$('cam');if(!s||!p||!t||s.hidden)return;
+  let m=null;try{m=c?new DOMMatrix(getComputedStyle(c).transform):null}catch(e){}
+  if(!m||m.isIdentity){const k=camState.kind;camState.kind='wide';try{potSignPlace()}finally{camState.kind=k}return}
+  // カメラが寄り始めている（または寄っている）：寄る前の位置に戻して測る（カメラは translate＋scale、原点は左上）
+  const tr=t.getBoundingClientRect(),un=y=>tr.top+(y-tr.top-m.f)/m.d,pr=p.getBoundingClientRect();if(!pr.height)return;
+  let b=un(pr.top)+pr.height/m.d*.6;for(const ch of p.children){const r=ch.getBoundingClientRect();if(r.height)b=Math.max(b,un(r.bottom))}
+  const card=document.querySelector('#mine .card'),lim=card?card.getBoundingClientRect().top-s.offsetHeight-4:1e9;
+  s.style.top=(Math.min(b+3,lim)-tr.top)+'px'}
+// クセの札：相手の胸像の右上（今まで render の中で決めていた位置と同じ式）。全部測ってから全部書く
+function cuePlace(){const P=$('plates');if(!P)return;const cs=[...P.querySelectorAll(':scope > .cue[data-bust]')];if(!cs.length)return;
+  const pr=P.getBoundingClientRect(),out=[];
+  cs.forEach(cb=>{const b=$('bust'+cb.dataset.bust);if(!b)return;const br=b.getBoundingClientRect();
+    out.push([cb,(pr.right-br.right+br.width*.06)+'px',Math.max(4,br.top-pr.top+br.height*.06)+'px'])});
+  out.forEach(([cb,r,t])=>{cb.style.right=r;cb.style.top=t})}
+const lpTry=f=>{try{f()}catch(e){console.error('[LT] layout',e)}};
+// 順番：測るだけのもの・書くことが少ないものを先に、書いてから測るもの（fitTable・吹き出しの追いかけ）を後に。faceFit は 30c_ui64 で先に登録してある
+LT.on('layout',()=>{const gameOn=!$('game').hidden;
+  if(gameOn){
+    lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
+    if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
+    lpTry(()=>{talkPlace();const row=$('askRow');if(row&&row._bp&&!row.hidden&&typeof bPlace==='function')bPlace(row)});
+    lpTry(cuePlace);
+    // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
+    document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
+    lpTry(fitTable);
+  }else{lpTry(fitMyHand);lpTry(barSync)}   // 相手紹介（#vs）は卓が出る前
+  lpTry(tourGuard);lpTry(fitScene);
+  if(LP.rendered){LP.rendered=false;if(gameOn)lpTry(bAvLoop)}
+  LP.full=false});
+LT.on('render',()=>{LP.rendered=true;layoutSoon();sayWake()});
+['renderTalk','playScene','advance','show','startHand','act'].forEach(n=>LT.on(n,layoutSoon));
+addEventListener('resize',()=>{LP.full=true;layoutSoon()});
+// 描き直し以外で形が変わる時：押した・入力した（レイズの額、引き出し、相手紹介の「勝負」など）、ジンの助言の出入り、フォントの読み込み
+['click','input','keydown'].forEach(t=>document.addEventListener(t,()=>layoutSoon(),{capture:true,passive:true}));
+try{const mo=new MutationObserver(()=>layoutSoon());['sensei','vs','scene','game','tour','controls','between'].forEach(id=>{const e=$(id);if(e)mo.observe(e,{attributes:true,attributeFilter:['hidden','class']})})}catch(e){}
+try{document.fonts&&document.fonts.addEventListener('loadingdone',()=>layoutSoon())}catch(e){}
+// 安全のための見回り：1秒ごとに1回だけ
+setInterval(()=>{if(!document.hidden){LP.full=true;layoutSoon()}},1000);
+layoutSoon();
 
 </script>
 <script>
