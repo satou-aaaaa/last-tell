@@ -1364,6 +1364,7 @@ body:has(#title:not([hidden]))::after{opacity:.6}
 
 /* 回想（第2・3・4・6章）：判断のときは「降りる・受ける」だけ（ストーリーレーン） */
 #controls.fbchoice #btnRaise,#controls.fbchoice #quick,#controls.fbchoice #btnNeedle{display:none!important}
+#game.storyfinal #quick,#game.storyfinal #declRow,#game.storyfinal #btnNeedle,#game.storyfinal #btnStraddle,#game.storyfinal #askRow,#game.storyfinal #needleMenu{display:none!important}
 
 /* テルのアップを軽く（2026-10-10、satou 案1）：寄っている間は、キャラ絵の 9px のぼかし影を外す（輪郭の光は残す）。暗くした席は影なし。
    2.7倍に拡大したまま影を毎コマ描き直すのがスマホで重かった。引いた画面の見た目は今のまま */
@@ -1998,7 +1999,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.71.0';
+const APP_VERSION='0.72.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2132,7 +2133,7 @@ EN_TPL.push(
 ["ポットは{0}と{1}と{2}と{3}へ","Pot goes to {0}, {1}, {2} and {3}"]);
 // v67：タケルの仕草（名乗る前は見た目の呼び名が入る）
 EN_TPL.push(
-["{0}が、手で「少し待って」と合図した","{0} signals with a hand: \"one moment.\""],
+["{0}が、手で「少し待って」と合図した","{0} signals with a hand: “one moment.”"],
 ["{0}が、カードを静かに前に出した","{0} quietly slides the cards forward."],
 ["{0}が、小さく頭を下げた","{0} gives a small bow."]);
 
@@ -6082,7 +6083,8 @@ addEventListener('resize',()=>{if(S)potSignPlace()});
 let potCountT=0;
 function potCount(to,ms){const pv=$('potSign').querySelector('.pv');if(!pv)return;const P=S.potPile||{};const from=P.shown||0;cancelAnimationFrame(potCountT);
   if(reducedMotion()||!ms||from===to){pv.textContent=fmt(to);P.shown=to;return}
-  const t0=performance.now(),d=ms*SPEED();const f=now=>{const k=Math.min(1,(now-t0)/d);const q=Math.floor((1-Math.pow(1-k,3))*5)/5;pv.textContent=fmt(k>=1?to:from+Math.round((to-from)*q/1000)*1000);if(k<1)potCountT=requestAnimationFrame(f);else P.shown=to};potCountT=requestAnimationFrame(f)}
+  const t0=performance.now(),d=ms*SPEED();const f=now=>{const k=Math.min(1,(now-t0)/d);const q=Math.floor((1-Math.pow(1-k,3))*5)/5,v=k>=1?to:from+Math.round((to-from)*q/1000)*1000;P.shown=v;   // 数え上げ中に .pv が作り直されても、新しい方に書く（v71 レビュー）
+    const el=$('potSign').querySelector('.pv');if(el)el.textContent=fmt(v);if(k<1)potCountT=requestAnimationFrame(f)};potCountT=requestAnimationFrame(f)}
 // 配当：山ごと勝った人へ押し出す（分けるときは、山を交互に分けて飛ばす）
 // 案3：山は名札へ飛ばして消すのではなく、勝った人の前のチップ（.mystack）の手前に残す。
 //   山の中身は勝った額ちょうどのチップ（崩れたまま）。塔はその分を引いて描くので、数えれば持ち点に合う。
@@ -7115,7 +7117,7 @@ const eqWeak=(h,b)=>b.length<3?preTier(h)===0:isWeak(h,b)&&!drawOf(h,b);
 const OPEN_LINE={レイカ:.9,ハヤト:.9};
 function proAdj(p,d,x){
   // v71（S2）：読める相手（ジン・クロウ）は、リバーでポットの1.5倍以上を賭けられたら、強い手（st.hi 以上）でなければ降りる（コールが4〜5割で揺れていた）
-  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.hi)return{type:'fold',state:'none'};
+  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.mid*.8)return{type:'fold',state:'none'};
   if(S.street!=='preflop'||x.toCall<=0)return d;
   const st=x.st;
   // A1：強キャラは、自分から最初に入るときリンプしない（レイズ2.5〜3BB か、降りる）。BBのチェックはそのまま
@@ -7508,7 +7510,7 @@ function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot
   const on=(a,dx,dy,os,m)=>os.some(o=>a.left+dx<o.right+m&&o.left-m<a.right+dx&&a.top+dy<o.bottom+m&&o.top-m<a.bottom+dy);
   const pot=[...document.querySelectorAll('#potChips .chip,#potSign')].map(R).filter(vis);
   const parts=w=>w.id==='dbtn'?[w]:[...w.querySelectorAll(w.classList.contains('hand')?'.card':'.chip')];
-  const ws=[...document.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack,#mine .mybet .chipwrap,#mine .mystack'+(N()===2?',.felt .spot .hand:not(.folded):not(.muck),#dbtn':''))].map(w=>{const cs=parts(w).map(R).filter(vis);return cs.length?[w,box(cs)]:null}).filter(x=>x&&on(x[1],0,0,bc,1));
+  const ws=[...document.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack,#mine .mybet .chipwrap,#mine .mystack,#dbtn'+(N()===2?',.felt .spot .hand:not(.folded):not(.muck)':''))].map(w=>{const cs=parts(w).map(R).filter(vis);return cs.length?[w,box(cs)]:null}).filter(x=>x&&on(x[1],0,0,bc,1));
   const out=[];ws.forEach(([w,a])=>{const sp=w.id==='dbtn'?w:w.closest('.spot')||$('mine'),sr=R(sp),kx=sr.width/(sp.offsetWidth||1)||1,ky=sr.height/(sp.offsetHeight||1)||1;
     const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn')].filter(e=>e!==w).map(R).filter(vis)),obs=bc.concat(pot);
     let ux=sr.left+sr.width/2-bx,uy=sr.top+sr.height/2-by;const n=Math.hypot(ux,uy)||1;ux/=n;uy/=n;const sx=ux<0?-1:1,fw=document.querySelector('.felt-wrap'),top=sp.id==='mine'||!fw||parts(w)[0]===w||w.classList.contains('hand')?tb.top:Math.max(tb.top,R(fw).top);   // 席のチップは卓の縁より奥（相手の体の前）へは出さない（伏せ札・D の札は今までどおり）
@@ -7525,7 +7527,6 @@ function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot
   out.forEach(([w,x0,y0,mx,my])=>{let f=1;for(let k=0;k<2&&onB(bx_(w));k++){f+=.3;tr(w,x0,y0,mx,my,f);if(outT(bx_(w))){f-=.3;tr(w,x0,y0,mx,my,f);break}}
     for(;f>.45&&outT(bx_(w));){f-=.15;tr(w,x0,y0,mx,my,f)}})}
 $('askRow').addEventListener('click',e=>{const x=e.target.closest('[data-bk]');if(x){e.stopPropagation();bAnswer(+x.dataset.bk)}});
-
 function cpuAct(i){if(S.handOver||S.toAct!==i)return;const d=cpuDecide(i);act(i,d.type,d.to)}
 
 /* ---------- 師匠のひとこと ---------- */
@@ -9498,7 +9499,7 @@ addEventListener('keydown',e=>{const d=$('menuDrawer');if(d&&!d.hidden&&inGame()
 // バーの数字（1,000/2,000　#12）
 function tbMetaSync(){const m=$('tbMeta');if(!m||!S||!S.players)return;let t='';try{t=`${fmt(SB())}/${fmt(BB())}　#${S.handNo}`}catch(e){}if(m.textContent!==t)m.textContent=t;
   // v71（v70 レビュー）：数字だけだと何の額か分からないので、触れたとき・読み上げで「ブラインド」と出す（英語は Blinds）
-  try{const l=(typeof I18N!=='undefined'&&I18N.lang==='en'?'Blinds ':'ブラインド ')+fmt(SB())+'/'+fmt(BB()),al=l+'　#'+S.handNo;if(m.title!==l)m.title=l;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}catch(e){}
+  try{const l=(typeof I18N!=='undefined'&&I18N.lang==='en'?'Blinds ':'ブラインド ')+fmt(SB())+'/'+fmt(BB()),al=l+(I18N.lang==='en'?' #':'　#')+S.handNo;if(m.title!==l)m.title=l;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}catch(e){}
   const fb=!!(typeof CFG!=='undefined'&&CFG&&CFG.flashback);m.hidden=fb}
 
 // ---------- §A-1：吹き出しは1つずつ・顔の横 ----------
@@ -10647,6 +10648,20 @@ try{document.fonts&&document.fonts.addEventListener('loadingdone',()=>layoutSoon
 // 安全のための見回り：1秒ごとに1回だけ
 setInterval(()=>{if(!document.hidden){LP.full=true;layoutSoon()}},1000);
 layoutSoon();
+
+/* ---------- 決めの一手は卓だけ（改善提案 2026-10-11 §4 案2） ---------- */
+// 第4・5・7章の「物語の一手」では、操作を降りる・受ける・上げるだけにして、相手役以外の客は黙る
+const STORY_FINAL_BOSS={4:'レイカ',5:'ハヤト',7:'ジン'};
+const storyFinal=()=>!!(typeof S!=='undefined'&&S&&S.storyHand&&CFG.ch&&!CFG.ch.p2&&[4,5,7].includes(CFG.ch.no));
+{const o=say59;say59=function(p,line){o.apply(this,arguments);if(p&&p.say&&p.say.line===line)p.say.st=true}}
+{const o=render;render=function(){
+  try{if(S&&S.players&&storyFinal()&&!S.handOver){const boss=STORY_FINAL_BOSS[CFG.ch.no];
+    S.players.forEach(p=>{if(!p.human&&p.name!==boss&&p.say&&p.say.line&&!p.say.st)p.say=null})}}catch(e){}
+  const r=o.apply(this,arguments);try{const f=storyFinal();$('controls').classList.toggle('storyfinal',f);$('game').classList.toggle('storyfinal',f)}catch(e){}
+  return r}}
+{const o=renderControls;renderControls=function(){const r=o.apply(this,arguments);
+  try{const f=storyFinal();$('controls').classList.toggle('storyfinal',f);$('game').classList.toggle('storyfinal',f)}catch(e){}
+  return r}}
 
 </script>
 <script>
