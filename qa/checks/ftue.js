@@ -28,7 +28,8 @@ async function run({ browser, file }) {
     const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: H.UNLOCKED });
     try {
       await page.evaluate(() => startChapter(CHAPTERS[1], true));
-      await H.startBot(page, { policy: 'call', maxHands: 2 });
+      // 'call' だと2ハンドで持ち点が0になって章が終わり（＝続きから が消えるのが正しい）、検査が揺れたので、払わずに済むときだけ進む 'fold' にする
+      await H.startBot(page, { policy: 'fold', maxHands: 2 });
       await H.runUntilDone(page, { timeoutMs: 60000 });
       // 重いときは保存が reload に間に合わないので、続きの記録が入るまで待つ（最大5秒）
       await page.waitForFunction(() => !!localStorage.getItem('shisho-resume'), null, { timeout: 5000 }).catch(() => { });
