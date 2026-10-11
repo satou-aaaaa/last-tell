@@ -4,6 +4,8 @@ name: QA
 
 on:
   pull_request:
+    # 下書きを外したときも回す（回らないと自動マージが起きない）
+    types: [opened, synchronize, reopened, ready_for_review]
     paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
   push:
     branches: [main]
