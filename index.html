@@ -1985,7 +1985,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.69.0';
+const APP_VERSION='0.70.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -7086,6 +7086,7 @@ const proAI=()=>!(CFG.ch&&!CFG.ura&&CFG.ch.no<=3)&&!CFG.flashback&&!S.scriptAI&&
 function betNarrow(x){x=Math.max(0,x);return x<=.5?.6*x:x<=1?.3+.6*(x-.5):x<=2?.6+.25*(x-1):.85}
 // 賭けてきた相手の手として「合わない」手：プリフロップは弱い2枚、フロップ以降はワンペア未満（場だけの役）でドローもない
 const eqWeak=(h,b)=>b.length<3?preTier(h)===0:isWeak(h,b)&&!drawOf(h,b);
+const OPEN_LINE={レイカ:.9,ハヤト:.9};
 function proAdj(p,d,x){
   if(S.street!=='preflop'||x.toCall<=0)return d;
   const st=x.st;
@@ -7093,11 +7094,13 @@ function proAdj(p,d,x){
   // v68：先にリンプした人がいても、強キャラはコールだけで入らない（1人ごとに1BB足してレイズ＝アイソレート、か降りる）。レイカ（liar）も入れた
   if(d.type==='call'&&st.noLimp&&S.street==='preflop'&&S.aggr<0&&S.raises===0){
     const limpers=S.players.filter(q=>q!==p&&!q.out&&!q.folded&&q.lastType==='call'&&q.bet>0).length;
-    if(x.rel>=enterLine(p)&&x.canRaise)return{type:'raise',to:Math.max(S.currentBet+S.minRaise,Math.round(BB()*(2.5+Math.random()*.5+limpers)/1000)*1000),state:x.rel>st.hi?'strong':'none',rel:x.rel>st.mid};
-    if(x.rel<enterLine(p))return{type:'fold',state:'none'};
+    // v69 レビュー：レイズで入る線は入る線と分ける（レイカ・ハヤトは入る線が低く、ほぼ毎回レイズになっていた）。ストラドル卓では今の額を基準に
+    const rl=Math.max(enterLine(p),OPEN_LINE[p.name]||1),base=Math.max(BB(),S.currentBet);
+    if(x.rel>=rl&&x.canRaise)return{type:'raise',to:Math.max(S.currentBet+S.minRaise,Math.round(base*(2.5+Math.random()*.5+limpers)/1000)*1000),state:x.rel>st.hi?'strong':'none',rel:x.rel>st.mid};
+    if(x.rel<rl)return{type:'fold',state:'none'};
     return d}
   // A1：読める相手は、3BBまでのオープンに対して、平均より強い手なら降りすぎない（v68：カオルが9割近く降りる回があったので、平均の0.85倍から守る）
-  if(d.type==='fold'&&(st.read||0)>=.6&&S.raises===1&&S.currentBet<=BB()*3&&x.rel>.85)return{type:'call',state:x.rel>st.hi?'strong':'none'};
+  if(d.type==='fold'&&st.noLimp&&(st.read||0)>=.6&&S.raises===1&&S.currentBet<=BB()*3&&x.rel>.85)return{type:'call',state:x.rel>st.hi?'strong':'none'};
   return d}
 function cpuDecide(i){const p=S.players[i];S._lk=null;const d=cpuDecide0(i);const k=S._lk;S._lk=null;if(k)leakSeen(p,k,d);return d}
 function cpuDecide0(i){

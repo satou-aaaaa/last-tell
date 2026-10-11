@@ -104,7 +104,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   md += `- 目で見て判断することは別：大きな変更のときは、変わった所だけテスター・プロ・クリエイター目線で見る（qa/README.md）\n`;
   fs.writeFileSync(path.join(outDir, 'report.md'), md);
   fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify({ label, ver, quick, groups }, null, 1));
-  if (official && (flag('--update-baseline') || !baseline)) { fs.writeFileSync(basePath, JSON.stringify({ madeFrom: ver, madeAt: new Date().toISOString(), ...newBase }, null, 1)); console.log('基準（baseline.json）を書き直した') }
+  if (official && (flag('--update-baseline') || !baseline)) { fs.writeFileSync(basePath, JSON.stringify({ ...newBase, madeFrom: ver, madeAt: new Date().toISOString() }, null, 1)); console.log('基準（baseline.json）を書き直した') }
   console.log(`\n${cnt('fail') ? '不合格' : '合格'}  ok ${cnt('ok')} / fail ${cnt('fail')} / warn ${cnt('warn')} / known ${cnt('known')}\n報告: ${path.join(outDir, 'report.md')}`);
   for (const i of fails) console.log('  ❌ ' + i.title + '：' + i.detail);
   // GitHub の自動実行では、不合格を注釈として出す（ログを開かなくても見える）
