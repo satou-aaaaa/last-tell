@@ -16,8 +16,9 @@ const NEVER = [
 ];
 const LONG = 70; // 吹き出しで3行を超えそうな長さ
 
-async function run({ browser, file, baseline }) {
-  const src = fs.readFileSync(file, 'utf8'), items = [];
+// ゲームのファイルから台詞を全部取り出す：[話す人, 日本語, 英語にしたとき日本語が残るか]（lines_diff.js も使う）
+async function collect(browser, file) {
+  const src = fs.readFileSync(file, 'utf8');
   const { ctx, page } = await H.openGame(browser, file, { storage: H.UNLOCKED, lang: 'en' });
   let speakers, lines;
   try {
@@ -37,7 +38,11 @@ async function run({ browser, file, baseline }) {
     // 英語にしたとき、日本語が残る行
     lines = await page.evaluate(raw => raw.map(([who, t]) => { let en = ''; try { en = I18N.tr(t.split('〈主〉').join('Ao').split('〈呼〉').join('Ao')) } catch (e) { en = '' } return [who, t, /[぀-ヿ㐀-鿿]/.test(en)] }), raw);
   } finally { await ctx.close() }
+  return lines;
+}
 
+async function run({ browser, file, baseline }) {
+  const items = [], lines = await collect(browser, file);
   const strip = t => t.replace(/「[^」]*」/g, ''); // かぎかっこの中は、誰かの言葉の引用なので見ない
   const voice = [], never = [], long = [], enMiss = [];
   for (const [who, t, jp] of lines) {
@@ -63,4 +68,4 @@ async function run({ browser, file, baseline }) {
   row('script:en', 'セリフが全部英語に訳せる（訳したあとに日本語が残らない）', enMiss, 'enMiss', `${lines.length}行、全部訳せる`);
   return { name: '台本', items, baselineOut: { script: { voice, never, dupes, long, enMiss } } };
 }
-module.exports = { run };
+module.exports = { run, collect, FIRST, FP, NEVER };

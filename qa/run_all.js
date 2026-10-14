@@ -8,10 +8,9 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const H = require('./lib/harness');
 
 const CHECKS = [
-  ['text', './checks/text'], ['script', './checks/script'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['pages', './checks/pages'],
+  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['pages', './checks/pages'], ['site', './checks/site'], ['playthrough', './checks/playthrough'],
 ];
 const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
@@ -62,10 +61,13 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
 
 (async () => {
   const t0 = Date.now();
-  const browser = await H.launch();
+  // ブラウザは、ブラウザを使う検査があるときだけ開く（unit だけなら開かない）
+  const needBrowser = CHECKS.some(([key, mod]) => (!only || only.includes(key)) && !require(mod).noBrowser);
+  const browser = needBrowser ? await require('./lib/harness').launch() : null;   // harness は Playwright を読むので、要るときだけ
   const groups = [], newBase = Object.assign({}, baseline || {});
   for (const [key, mod] of CHECKS) {
     if (only && !only.includes(key)) continue;
+    if (!only && require(mod).onlyWhenAsked) continue;   // 通しで遊ぶ（1時間）は --only で頼んだときだけ
     const t = Date.now();
     process.stdout.write(`… ${key} `);
     try {
@@ -77,7 +79,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
     }
     console.log(`${Math.round((Date.now() - t) / 1000)}秒`);
   }
-  await browser.close();
+  if (browser) await browser.close();
 
   // 既知の問題（修正待ち）を区別する
   for (const g of groups) for (const it of g.items) {
