@@ -23,5 +23,5 @@ print('index.html written,', len(src), 'chars; sw VERSION =', stamp)
 
 qa_src = pathlib.Path(sys.argv[1]).resolve().parent.parent / 'qa'
 if qa_src.is_dir():
-    shutil.copytree(qa_src, root / 'qa', dirs_exist_ok=True, ignore=shutil.ignore_patterns('reports', 'node_modules'))
+    shutil.copytree(qa_src, root / 'qa', dirs_exist_ok=True, ignore=shutil.ignore_patterns('reports', 'node_modules', 'qa-summary', 'qa-report*', 'groups'))
     print('qa/ copied from', qa_src)
