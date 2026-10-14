@@ -60,7 +60,7 @@ try { changes = JSON.parse(fs.readFileSync(path.join(out, 'ui', 'changes.json'),
 const changed = Object.entries(changes).filter(([, c]) => c.status !== 'same');
 const shotsMd = fs.existsSync(path.join(out, 'ui', '_一覧_縦.jpg'))
   ? `## 画面\n\n- 一覧（まず これを見る）：ui/_一覧_縦.jpg・ui/_一覧_横.jpg・ui/_一覧_PC.jpg\n` +
-    (Object.keys(changes).length ? `- 前の版から見た目が変わった画面 ${changed.length}枚${changed.length ? '：' + changed.map(([f, c]) => `${f}${c.status === 'new' ? '（新）' : `（${c.ratio}%）`}`).join('、') : '（目で見るのは不要）'}\n` : '- 前の版の画面が無いので、変化は比べていない\n')
+    (Object.keys(changes).length ? `- 前の版から見た目が変わった画面 ${changed.length}枚（「前｜今｜違う所」を1枚にした ui/_比べ_<名前>.jpg を見る）${changed.length ? '：' + changed.map(([f, c]) => `${f}${c.status === 'new' ? '（新）' : `（${c.ratio}%）`}`).join('、') : '（目で見るのは不要）'}\n` : '- 前の版の画面が無いので、変化は比べていない\n')
   : '';
 
 let sum = `# 検査のまとめ v${ver}\n\n` + head;

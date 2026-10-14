@@ -46,9 +46,9 @@ if [ -n "$shots" ] || [ -n "$save" ]; then
   mkdir -p "$out/ui"
   for f in summary.md report.md result.json baseline_候補.json uiux.json run.txt; do get "$dir/$f" > "$out/$f" || rm -f "$out/$f"; done
   list="_一覧_縦.jpg _一覧_横.jpg _一覧_PC.jpg changes.json"
-  # 変わった画面（と、不合格の画面）だけ1枚ずつ落とす。--save のときは全部
+  # 変わった画面は「前｜今｜違う所」の1枚（_比べ_…）だけ落とす。--save のときは全部
   if [ -n "$save" ]; then list=$(gh api "repos/$R/contents/$dir/ui?ref=qa-results" --jq '.[].name')
-  else list="$list $(get "$dir/ui/changes.json" | node -e "const c=JSON.parse(require('fs').readFileSync(0,'utf8')||'{}');console.log(Object.keys(c).filter(k=>c[k].status!=='same').join(' '))" 2>/dev/null)"; fi
+  else list="$list $(get "$dir/ui/changes.json" | node -e "const c=JSON.parse(require('fs').readFileSync(0,'utf8')||'{}');console.log(Object.keys(c).filter(k=>c[k].status!=='same').map(k=>c[k].status==='new'?k:'_比べ_'+k).join(' '))" 2>/dev/null)"; fi
   for f in $list; do get "$dir/ui/$f" > "$out/ui/$f" || rm -f "$out/ui/$f"; done
   echo; echo "画面と結果の置き場所: $out"; ls "$out/ui" | sed 's/^/  /'
 fi

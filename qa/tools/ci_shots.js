@@ -3,7 +3,7 @@
 //   node qa/tools/ci_shots.js <結果のフォルダ> [前の版の ui フォルダ]
 // - ui/*.png を小さい JPEG にする（結果のブランチ qa-results に置くため）
 // - 画面ごとの一覧 ui/_一覧_縦.jpg・_一覧_横.jpg・_一覧_PC.jpg（12場面を1枚に。まず これを見る）
-// - 前の版と比べて、見た目が変わった場面を ui/changes.json に（変わった割合）。目で見るのは変わった場面だけでよい
+// - 前の版と比べて、見た目が変わった場面を ui/changes.json に（変わった割合）と、ui/_比べ_<場面>.jpg（前｜今｜違う所）。目で見るのは変わった場面だけでよい
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -43,6 +43,27 @@ const dataUrl = f => 'data:image/' + (f.endsWith('.png') ? 'png' : 'jpeg') + ';b
         return diff / (W * H);
       }, [dataUrl(path.join(ui, f)), dataUrl(old)]);
       changes[name] = { status: ratio > 0.03 ? 'changed' : 'same', ratio: Math.round(ratio * 1000) / 10 };
+      // 変わった画面は「前｜今｜違う所（赤）」を1枚に（CIのチェック充実 案2）。Claude はこの1枚だけ見ればよい
+      if (ratio > 0.03) {
+        const url = await page.evaluate(async ([a, b]) => {
+          const load = s => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = s });
+          const [now, old] = await Promise.all([load(a), load(b)]);
+          const w = now.naturalWidth, h = now.naturalHeight, k = Math.min(1, 520 / w), W = Math.round(w * k), Hh = Math.round(h * k), gap = 8, top = 22;
+          const c = document.createElement('canvas'); c.width = W * 3 + gap * 2; c.height = Hh + top; const x = c.getContext('2d');
+          x.fillStyle = '#222'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#eee'; x.font = '14px sans-serif';
+          x.fillText('前の版', 4, 16); x.fillText('今', W + gap + 4, 16); x.fillText('違う所（赤）', 2 * (W + gap) + 4, 16);
+          x.drawImage(old, 0, top, W, Hh); x.drawImage(now, W + gap, top, W, Hh);
+          const t = document.createElement('canvas'); t.width = W; t.height = Hh; const tx = t.getContext('2d');
+          tx.drawImage(old, 0, 0, W, Hh); const po = tx.getImageData(0, 0, W, Hh).data; tx.drawImage(now, 0, 0, W, Hh); const im = tx.getImageData(0, 0, W, Hh), pn = im.data;
+          for (let i = 0; i < pn.length; i += 4) {
+            const d = Math.abs(pn[i] - po[i]) + Math.abs(pn[i + 1] - po[i + 1]) + Math.abs(pn[i + 2] - po[i + 2]) > 90;   // JPEG のにじみは拾わない
+            if (d) { pn[i] = 255; pn[i + 1] = 40; pn[i + 2] = 40 } else { pn[i] *= .35; pn[i + 1] *= .35; pn[i + 2] *= .35 }
+          }
+          tx.putImageData(im, 0, 0); x.drawImage(t, 2 * (W + gap), top);
+          return c.toDataURL('image/jpeg', .72);
+        }, [dataUrl(path.join(ui, f)), dataUrl(old)]);
+        fs.writeFileSync(path.join(ui, '_比べ_' + name), Buffer.from(url.split(',')[1], 'base64'));
+      }
     }
     fs.writeFileSync(path.join(ui, 'changes.json'), JSON.stringify(changes, null, 1));
   }
