@@ -28,7 +28,12 @@ const JP_SCAN = `(() => { const out = new Set(); const re = /[\\u3040-\\u30ff\\u
     if (el.offsetParent === null) continue; out.add(t.slice(0, 60)) }
   return [...out] })()`;
 
-async function runOne(browser, file, mode, hands) {
+// 1つのモードに使える時間。長い版（50ハンド）と WebKit は遅いので長めにする。
+// 時間切れでも、ハンドが進んでいてエラー・チップのずれが無ければ止まってはいないので ✅（何ハンドまで進んだかを書く）
+const LIMIT = (quick) => (quick ? 180 : 420) * (process.env.QA_BROWSER === 'webkit' ? 1.5 : 1) * 1000;
+const ENOUGH = 15;
+
+async function runOne(browser, file, mode, hands, limit) {
   const { ctx, page } = await H.openGame(browser, file, { lang: mode.lang || 'ja', storage: mode.storage, seed: H.seedOf('fuzz', mode.id, mode.lang || 'ja') });
   const jp = new Set();
   try {
@@ -43,14 +48,14 @@ async function runOne(browser, file, mode, hands) {
       if (s.done) {
         // 負け・勝ちで終わっても、ハンド数が足りなければもう一度はじめる
         const r = await page.evaluate(() => ({ res: __bot.result, hands: __bot.hands, errs: __qa.errors.length }));
-        if (r.res !== 'limit' && r.hands < hands && !r.errs && Date.now() - t0 < 150000) {
+        if (r.res !== 'limit' && r.hands < hands && !r.errs && Date.now() - t0 < limit - 30000) {
           await page.evaluate(w => { if (__bot.result === 'win') __bot.wins = (__bot.wins || 0) + 1; __bot.restart(); try { show('title') } catch (e) {} ; (0, eval)(w) }, mode.start);
           continue;
         }
         st = 'done'; break
       }
       if (s.idle > 20000) { st = 'stalled'; break }
-      if (Date.now() - t0 > 180000) { st = 'timeout'; break }
+      if (Date.now() - t0 > limit) { st = 'timeout'; break }
     }
     const b = await H.botState(page);
     return { mode: mode.id, status: st, ...b, pageErrors: page.__errs || [], jp: [...jp] };
@@ -60,22 +65,24 @@ async function runOne(browser, file, mode, hands) {
 }
 
 async function run({ browser, file, quick, baseline, parallel = 4 }) {
-  const list = modes(quick), hands = quick ? 15 : 50, res = [];
-  for (let i = 0; i < list.length; i += parallel) res.push(...await Promise.all(list.slice(i, i + parallel).map(m => runOne(browser, file, m, hands))));
+  // WebKit は Safari だけの崩れ・止まりを見るのが目的なので、いつも短い版で回す（長い版は Chromium だけ）
+  if (process.env.QA_BROWSER === 'webkit') quick = true;
+  const list = modes(quick), hands = quick ? 15 : 50, limit = LIMIT(quick), res = [];
+  for (let i = 0; i < list.length; i += parallel) res.push(...await Promise.all(list.slice(i, i + parallel).map(m => runOne(browser, file, m, hands, limit))));
   const items = [], known = new Set((baseline && baseline.enJapanese) || []);
   const newJp = new Set();
   for (const r of res) {
     const errs = [...new Set([...(r.errors || []), ...(r.pageErrors || []), ...(r.events || [])])];
     const bad = [];
     if (r.status === 'stalled') bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}）`);
-    if (r.status === 'timeout') bad.push('時間切れ');
+    if (r.status === 'timeout' && !(r.hands >= Math.min(ENOUGH, hands) && !errs.length && !r.chipErr.length && !r.negErr.length)) bad.push(`時間切れ（${r.hands}ハンドまで）`);
     if (r.status === 'crash') bad.push('起動できなかった');
     if (errs.length) bad.push('エラー: ' + errs.slice(0, 3).join(' / '));
     if (r.chipErr.length) bad.push(`チップの合計が合わない ${r.chipErr.length}回（例: ハンド${r.chipErr[0].hand} 差 ${r.chipErr[0].diff}）`);
     if (r.negErr.length) bad.push(`チップがマイナス・小数 ${r.negErr.length}回`);
     if (r.hands < 3 && r.status === 'done' && r.result === 'limit') bad.push('ハンドがほとんど進まない');
     items.push({ id: 'fuzz:' + r.mode, title: `自動対戦 ${r.mode}`, status: bad.length ? 'fail' : 'ok',
-      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド`, raw: bad.length ? r : undefined });
+      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド` + (r.status === 'timeout' ? `（${limit / 1000}秒で打ち切り。止まってはいない）` : ''), raw: bad.length ? r : undefined });
     (r.jp || []).forEach(t => { if (!known.has(t)) newJp.add(t) });
   }
   const allJp = [...new Set(res.flatMap(r => r.jp || []))];

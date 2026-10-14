@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CHECKS = [
-  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['pages', './checks/pages'], ['site', './checks/site'], ['playthrough', './checks/playthrough'],
+  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['site', './checks/site'], ['pages', './checks/pages'], ['playthrough', './checks/playthrough'],
 ];
 const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
@@ -63,7 +63,9 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   const t0 = Date.now();
   // ブラウザは、ブラウザを使う検査があるときだけ開く（unit だけなら開かない）
   const needBrowser = CHECKS.some(([key, mod]) => (!only || only.includes(key)) && !require(mod).noBrowser);
-  const browser = needBrowser ? await require('./lib/harness').launch() : null;   // harness は Playwright を読むので、要るときだけ
+  // 検査ごとにブラウザを開き直す（長い検査のあとでブラウザが落ちても、次の検査に響かないように。WebKit で起きた）
+  let browser = null;
+  const fresh = async () => { if (browser) await browser.close().catch(() => {}); browser = needBrowser ? await require('./lib/harness').launch() : null; };   // harness は Playwright を読むので、要るときだけ
   const groups = [], newBase = Object.assign({}, baseline || {});
   for (const [key, mod] of CHECKS) {
     if (only && !only.includes(key)) continue;
@@ -71,6 +73,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
     const t = Date.now();
     process.stdout.write(`… ${key} `);
     try {
+      if (!require(mod).noBrowser) await fresh();
       const r = await require(mod).run({ browser, file, quick, baseline, outDir, chapters: opt('--ch') ? opt('--ch').split(',').map(Number) : null });
       Object.assign(newBase, r.baselineOut || {});
       groups.push({ key, ...r, secs: Math.round((Date.now() - t) / 1000) });
@@ -79,7 +82,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
     }
     console.log(`${Math.round((Date.now() - t) / 1000)}秒`);
   }
-  if (browser) await browser.close();
+  if (browser) await browser.close().catch(() => {});
 
   // 既知の問題（修正待ち）を区別する
   for (const g of groups) for (const it of g.items) {

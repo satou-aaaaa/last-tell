@@ -1319,6 +1319,9 @@ body:has(#title:not([hidden]))::after{opacity:.6}
 #scene .venue{z-index:12;text-shadow:0 1px 4px #000,0 0 10px #000}
 @media (max-height:500px) and (orientation:landscape){#scene .lesson p{line-height:1.6;font-size:.9rem;max-width:none}#scene .lesson .lt{font-size:1.1rem}}
 .raisepanel .presets button{white-space:nowrap;letter-spacing:0;font-size:min(.8rem,3.3vw)}
+/* v75 レビュー 2：広い画面では相手紹介の一言を少し大きく */
+@media (min-width:900px) and (min-height:600px){.vsv{font-size:1.35rem}}
+
 /* ===== 開発と設計のベストプラクティス：新しい版のお知らせ（案12）。タイトル画面だけに出る ===== */
 #ltUpd{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;padding:8px 8px 8px 14px;background:#14161dee;border:1px solid #d9b45a66;border-radius:8px;box-shadow:0 6px 24px #0008;color:#efe6cf;font-size:.9rem;letter-spacing:.03em}
 #ltUpd[hidden]{display:none}
@@ -2031,7 +2034,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.75.0';
+const APP_VERSION='0.76.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -5781,6 +5784,7 @@ function freeSeats(){const six=$('freeSize').value==='6',rude=$('freeRude').chec
   return(rude?[{name:'ゴウ',style:'rude'}]:[]).concat(got).map(o=>({...o,chips:100000}))
 }
 
+// @unit-begin deck_eval（qa/unit/ が Node から読む。ここには画面やゲームの状態を読むコードを入れない）
 /* ---------- 山札・役判定 ---------- */
 function fullDeck(){const d=[];for(let s=0;s<4;s++)for(let r=2;r<=14;r++)d.push({r,s});return d}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(LT.rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -5862,6 +5866,7 @@ function preTier(h){
   if(a===14&&b>=9)return 1;
   return 0;
 }
+// @unit-end deck_eval
 
 // ===== 配る札の乱数に種（案5、2026-10-10） =====
 // shuffle（19_deck_eval.js）は LT.rand() を使う。ハンドごとに種を作り直すので、同じ種なら同じ札が配られる。
@@ -5879,6 +5884,60 @@ function preTier(h){
   LT.newHandSeed();
   LT.on('startHand:before',()=>LT.newHandSeed());
 })();
+
+// @unit-begin rules
+// ===== ルールの計算（2026-10-14 ルールの単体テスト） =====
+// 画面・S・CFG に触らない、ノーリミットホールデムの決まりだけ。ゲーム（20_state・23_house_rules・24_dokidoki_camera・27_render）はここを呼ぶ。
+// qa/unit/ が Node から直接読み込んで確かめる（ブラウザを開かない）。ここには画面やゲームの状態を読むコードを入れない。
+// 使ってよいのは 19_deck_eval.js の関数（cmp など）だけ。
+const Rules={
+  // i の次の席から回って、ok(j) が真の最初の席（なければ -1）
+  next(n,i,ok){for(let k=1;k<=n;k++){const j=(i+k)%n;if(ok(j))return j}return -1},
+  // SB・BB の席。live[j]＝その席が今のハンドに座っているか。deadBtn はトーナメント（BB が必ず1つずつ進む）
+  // 返す dealer・sbSeat は次のハンドへ持ち越す値。sb が -1 なら SB の席が空いている（デッドボタン）
+  seats(live,dealer,deadBtn,sbSeat,bbSeat){
+    const n=live.length,nx=i=>Rules.next(n,i,j=>live[j]),alive=live.filter(Boolean).length;
+    let sb=alive===2?dealer:nx(dealer),bb=nx(sb);
+    if(deadBtn){const b2=nx(bbSeat);
+      if(alive===2){bb=b2;sb=nx(b2);dealer=sb;sbSeat=sb}
+      else{const d2=sbSeat>=0?sbSeat:dealer,s2=bbSeat;
+        if(b2!==s2&&b2!==d2){bb=b2;sbSeat=s2;dealer=d2;sb=live[s2]?s2:-1}
+        else{dealer=nx(dealer);sb=nx(dealer);bb=nx(sb);sbSeat=sb}}}
+    else sbSeat=sb;
+    return{dealer,sb,bb,sbSeat}},
+  // prev まで上がっている所へ bet まで出したとき：上げ幅、ちゃんとしたレイズか（前の上げ幅以上）、次の最低の上げ幅
+  raise(prev,minRaise,bet){const inc=bet-prev,full=inc>=minRaise;return{inc,full,minRaise:full?inc:minRaise}},
+  // レイズのあと、もう一度話す（レイズもできる）ようになる席。足りないオールインは、話し終えた人に権利を戻さない。
+  // ただし、その人が最後に話してから足りないオールインが重なって、ちゃんとしたレイズの幅に届いたら戻す（R-10）
+  reopen(ps,i,full,cur,minRaise){const o=[];ps.forEach((q,j)=>{if(j!==i&&(full||(q.acted&&q.actBet!=null&&cur-q.actBet>=minRaise)))o.push(j)});return o},
+  // 自分がレイズするときに選べる額（オールインより上は選べない）
+  raiseBounds(cur,minRaise,bet,chips){const maxTo=bet+chips;return{minTo:Math.min(cur+minRaise,maxTo),maxTo}},
+  // アンティを除いた、賭けた額（BBアンティは死に金なので、だれのものでもない）
+  betOf:p=>p.total-(p.ante||0),
+  // コールされなかった賭け：いちばん多く出した人の、2番目との差。ほかに誰も出していないときは返さない
+  uncalled(ps){const b=Rules.betOf,c=ps.map((p,j)=>j).filter(j=>ps[j].total>0).sort((x,y)=>b(ps[y])-b(ps[x]));
+    if(c.length<2)return null;const amt=b(ps[c[0]])-b(ps[c[1]]);return amt>0?{i:c[0],amt}:null},
+  // ショーダウンでポットを分ける。sc[j]＝その席の役（降りた人は null）。サイドポットは賭けた額の段ごと、
+  // アンティは一番下の段に入る。同じ役なら等分（100単位）、端数はボタンの左から。
+  // ri：-1 ふつう、0／1 は2回めくりの1回目／2回目（段ごとに半分ずつ、端数は1回目）。返すのは席ごとの受け取る額
+  awards(ps,sc,dealer,ri){
+    const n=ps.length,b=Rules.betOf,g=new Array(n).fill(0),all=ps.map((p,j)=>j);
+    const contrib=all.filter(j=>ps[j].total>0),cont=all.filter(j=>sc[j]!=null);
+    const levels=[...new Set(contrib.map(j=>b(ps[j])))].sort((x,y)=>x-y),anteSum=contrib.reduce((a,j)=>a+(ps[j].ante||0),0);
+    const seat=j=>(j-dealer-1+n)%n;let prev=0;
+    for(const L of levels){
+      let amt=L===levels[0]?anteSum:0;contrib.forEach(j=>{amt+=Math.min(b(ps[j]),L)-Math.min(b(ps[j]),prev)});
+      if(ri>=0){const half=Math.floor(amt/2/100)*100;amt=ri===0?amt-half:half}
+      let elig=cont.filter(j=>b(ps[j])>=L);
+      if(!elig.length)elig=cont;
+      const top=elig.reduce((x,y)=>cmp(sc[x],sc[y])>=0?x:y);
+      const winners=elig.filter(j=>cmp(sc[j],sc[top])===0).sort((x,y)=>seat(x)-seat(y));
+      const share=Math.floor(amt/winners.length/100)*100,rem=amt-share*winners.length;
+      winners.forEach((w,k)=>{g[w]+=share+(k<Math.floor(rem/100)?100:0)+(k===0?rem%100:0)});
+      prev=L}
+    return g}
+};
+// @unit-end rules
 
 /* ---------- 状態 ---------- */
 let S,CFG;
@@ -6502,13 +6561,8 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   }
   const live=p=>!p.out;
   const alive=S.players.filter(live).length;
-  let sb=alive===2?S.dealer:nextIdx(S.dealer,live),bb=nextIdx(sb,live);
-  if(deadBtn){const b2=nextIdx(S.bbSeat,live);
-    if(alive===2){bb=b2;sb=nextIdx(b2,live);S.dealer=sb;S.sbSeat=sb}
-    else{const d2=S.sbSeat>=0?S.sbSeat:S.dealer,s2=S.bbSeat;
-      if(b2!==s2&&b2!==d2){bb=b2;S.sbSeat=s2;S.dealer=d2;sb=live(S.players[s2])?s2:-1}
-      else{S.dealer=nextIdx(S.dealer,live);sb=nextIdx(S.dealer,live);bb=nextIdx(sb,live);S.sbSeat=sb}}}
-  else S.sbSeat=sb;
+  // SB・BB の席の決め方は 19b_rules.js（Rules.seats）
+  const st=Rules.seats(S.players.map(live),S.dealer,deadBtn,S.sbSeat,S.bbSeat),sb=st.sb,bb=st.bb;S.dealer=st.dealer;S.sbSeat=st.sbSeat;
   S.bbSeat=bb;S.sbI=sb;S.bbI=bb;
   log(`ハンド #${S.handNo}`,true);
   if(CFG.tells)$('table').style.setProperty('--night',Math.min(.35,S.handNo*.015).toFixed(3));
@@ -6741,14 +6795,12 @@ function act(i,type,to){
     const prev=S.currentBet;
     post(p,to-p.bet);
     if(p.bet>prev){
-      const inc=p.bet-prev;
-      const full=inc>=S.minRaise;if(full)S.minRaise=inc;
+      const rr=Rules.raise(prev,S.minRaise,p.bet),full=rr.full;S.minRaise=rr.minRaise;   // 決まりは 19b_rules.js
       S.currentBet=p.bet;S.raises++;S.aggr=i;if(S.street==='river')S.riverAggr=i;S.lastCalled=-1;
       if(p.human&&S.street!=='preflop')S.myPostAggro=true;
       if(S.street==='preflop')p.raisedPre=true;else if(S.street==='flop'&&prev===0)p.cbetFlop=true;
       // 足りないオールインは、すでに話した人にレイズの権利を戻さない（コールかフォールドだけ）
-      if(full)S.players.forEach(q=>{if(q!==p)q.acted=false});
-      else S.players.forEach(q=>{if(q!==p&&q.acted&&q.actBet!=null&&S.currentBet-q.actBet>=S.minRaise)q.acted=false}); // R-10
+      Rules.reopen(S.players,i,full,S.currentBet,S.minRaise).forEach(j=>{S.players[j].acted=false}); // R-10 も含む
       p.lastAct=p.allIn?`オールイン ${fmt(p.bet)}`:`${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}`;p.lastType='raise';log(`${p.name}：${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}${p.allIn?'（オールイン）':''}`);
       dealerSay(p.allIn?'オールイン':`${prev===0?'ベット':'レイズ'}、${fmt(p.bet)}`);
     }else{p.lastAct='コール';p.lastType='call';log(`${p.name}：コール${p.allIn?'（オールイン）':''}`)}
@@ -6927,8 +6979,8 @@ function nextStreet(){
 }
 // コールされなかった賭けを本人へ返す（いちばん多く出した人の、2番目との差）。ほかに誰も出していないときは返さない（ポットが空にならないように）
 const betOf=p=>p.total-(p.ante||0); // アンティを除いた、賭けた額
-function refundUncalled(){const c=S.players.filter(p=>p.total>0).sort((a,b)=>betOf(b)-betOf(a));if(!c.length)return;
-  if(!c[1])return;const ex=betOf(c[0])-betOf(c[1]);if(ex<=0)return;const p=c[0];p.total-=ex;p.chips+=ex;p.refund=ex;if(p.chips>0)p.allIn=false;log(`${p.name}に、コールされなかった ${fmt(ex)} を返した`)}
+function refundUncalled(){const u=Rules.uncalled(S.players);if(!u)return;   // 額の決め方は 19b_rules.js
+  const p=S.players[u.i],ex=u.amt;p.total-=ex;p.chips+=ex;p.refund=ex;if(p.chips>0)p.allIn=false;log(`${p.name}に、コールされなかった ${fmt(ex)} を返した`)}
 function winUncontested(p){
   const pr=potRect();refundUncalled();
   const pot=potTotal();p.chips+=pot;p.won=pot;
@@ -6951,28 +7003,14 @@ function showdown(){
   S.street='showdown';
   const cont=S.players.filter(inHand);
   cont.forEach(p=>{p.show=true;p.score=bestN(p.hand.concat(S.board));p.hname=handName(p.score)});
-  const contrib=S.players.filter(p=>p.total>0);
-  const levels=[...new Set(contrib.map(betOf))].sort((a,b)=>a-b),anteSum=contrib.reduce((a,p)=>a+(p.ante||0),0);
-  let prev=0;
   // 案8：2回めくりなら、2回目の場札を配って、ポットを半分ずつ分ける（端数は1回目へ）
   if(S.twice&&S.twiceBase){S.board2=S.twiceBase.slice();while(S.board2.length<5)S.board2.push(S.deck.pop());log(`2回目：${S.board2.slice(S.twiceBase.length).map(cardStr).join(' ')}`)}
   const runs=S.board2?[[S.board,0],[S.board2,1]]:[[S.board,-1]];
   for(const [bd,ri] of runs){
-  const sc=new Map(cont.map(p=>[p,ri===1?bestN(p.hand.concat(bd)):p.score]));prev=0;
-  for(const L of levels){
-    let amt=L===levels[0]?anteSum:0;contrib.forEach(p=>{amt+=Math.min(betOf(p),L)-Math.min(betOf(p),prev)});
-    if(ri>=0){const half=Math.floor(amt/2/100)*100;amt=ri===0?amt-half:half}
-    let elig=cont.filter(p=>betOf(p)>=L);
-    if(!elig.length)elig=cont;
-    const top=elig.reduce((a,b)=>cmp(sc.get(a),sc.get(b))>=0?a:b);
-    const seat=p=>(S.players.indexOf(p)-S.dealer-1+N())%N();
-    const winners=elig.filter(p=>cmp(sc.get(p),sc.get(top))===0).sort((a,b)=>seat(a)-seat(b)); // 端数はボタンの左から
-    const share=Math.floor(amt/winners.length/100)*100;
-    let rem=amt-share*winners.length;
-    winners.forEach((w,k)=>{const g=share+(k<Math.floor(rem/100)?100:0)+(k===0?rem%100:0);w.chips+=g;w.won+=g;if(ri>=0&&g>0){(w.runWon=w.runWon||[0,0])[ri]+=g}});
-    prev=L;
-  }
-  if(ri===1)cont.forEach(p=>{p.hname2=handName(sc.get(p))});
+  // サイドポット・引き分け・端数の分け方は 19b_rules.js（Rules.awards）
+  const sc=S.players.map(p=>inHand(p)?(ri===1?bestN(p.hand.concat(bd)):p.score):null);
+  Rules.awards(S.players,sc,S.dealer,ri).forEach((g,j)=>{if(!g)return;const w=S.players[j];w.chips+=g;w.won+=g;if(ri>=0)(w.runWon=w.runWon||[0,0])[ri]+=g});
+  if(ri===1)cont.forEach(p=>{p.hname2=handName(sc[S.players.indexOf(p)])});
   }
   if(muckOn())cont.forEach(p=>{if(p.human||p.won>0||p.allIn||S.players.indexOf(p)===S.riverAggr)return;if(p.muckPlan){p.show=false;p.mucked=true}});
   const contS=cont.filter(p=>!p.mucked||p.human);
@@ -7907,8 +7945,7 @@ function render(){
 function wonPend(i){const W=S&&S.wonPile;if(!W||W.hand!==S.handNo||!S.handOver)return 0;return W.amt[i]&&!W.done[i]?W.amt[i]:0}
 let raiseOpen=false;
 function raiseBounds(){
-  const me=S.players[0],maxTo=me.bet+me.chips;
-  return{minTo:Math.min(S.currentBet+S.minRaise,maxTo),maxTo};
+  const me=S.players[0];return Rules.raiseBounds(S.currentBet,S.minRaise,me.bet,me.chips);
 }
 function renderControls(){
   const me=S.players[0];
@@ -9550,7 +9587,9 @@ function sayPlace(sy){const i=+sy.id.replace('say',''),f=faceBox(i),L=$('sayLaye
   if(!sy.dataset.x)sy.dataset.x=sy.style.left;if(sy.dataset.mw===undefined)sy.dataset.mw=sy.style.maxWidth||'';const mwBack=()=>{sy.style.removeProperty('max-width');if(sy.dataset.mw)sy.style.maxWidth=sy.dataset.mw};mwBack();if(!f||!L)return;
   const W=L.clientWidth,H=L.clientHeight,bw=sy.offsetWidth+10,bh=sy.offsetHeight,tp=(()=>{try{return sayTopPad()}catch(e){return 4}})();
   const faces=S.players.map((p,k)=>k>0&&!p.out?faceBox(k):null).filter(Boolean);
-  const hit=(x,y)=>faces.some(q=>x<q.r&&q.l<x+bw&&y<q.b&&q.t<y+bh);
+  // v75 レビュー 1：6人卓の縦では、横の席の吹き出しが奥の席の名札にかからないように、名札もよける
+  const lr=L.getBoundingClientRect(),pls=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent&&e.id!=='plate'+i).map(e=>{const r=e.getBoundingClientRect();return{l:r.left-lr.left,r:r.right-lr.left,t:r.top-lr.top,b:r.bottom-lr.top}}).filter(q=>q.r>q.l);
+  const hit=(x,y)=>faces.concat(pls).some(q=>x<q.r&&q.l<x+bw&&y<q.b&&q.t<y+bh);
   const y=Math.max(tp,f.t+f.h*.04),cand=f.cx<W*.48?['r','l']:['l','r'];
   for(const s of cand){const x=s==='r'?f.r+4:f.l-4-bw;if(x<4||x+bw>W-4||y+bh>H*.6||hit(x,y))continue;
     sy.classList.add('side',s==='r'?'sr':'sl');sy.style.left=x.toFixed(1)+'px';sy.style.top=y.toFixed(1)+'px';return}
@@ -10574,7 +10613,8 @@ function ltTags(){if(!S||!S.players)return;
 // 上のバー（UI案3）も、ハンド番号を出さずブラインドだけ。大会はレベル
 if(typeof tbMetaSync==='function'){const o=tbMetaSync;tbMetaSync=function(){const r=o.apply(this,arguments);try{const m=$('tbMeta');if(m&&S&&S.players){
   const lv=CFG.levels?Math.min(CFG.levels.length,Math.floor((S.handNo-1)/CFG.levelHands)+1):0,t=`${fmt(SB())}/${fmt(BB())}`+(lv?(I18N.lang==='en'?`　Lv${lv}`:`　レベル${lv}`):'');
-  if(m.textContent!==t)m.textContent=t}}catch(e){}return r}}
+  if(m.textContent!==t)m.textContent=t;
+  const al=(I18N.lang==='en'?'Blinds ':'ブラインド ')+t;if(m.title!==al)m.title=al;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}}catch(e){}return r}}   // v75 レビュー 3：数字だけの欄に「ブラインド」
 
 /* ---------- セリフが途中で切れないように（2026-10-10 satou 報告「セリフのやりとりが途中で切れたりしている」）
    1. 吹き出しは1人1つなので、読み終わる前に同じ人の次のセリフ（打つときのひとこと・考えるひとこと）が来ると、前のセリフが消えていた。
@@ -10647,6 +10687,8 @@ function lpFrame(){LP.raf=0;
 function lpKick(){if(!LP.raf)LP.raf=requestAnimationFrame(lpFrame)}
 // 何回呼んでも、次のコマの頭で1回だけ位置合わせをする
 function layoutSoon(){LP.dirty=true;lpKick()}
+// v76：札を配る動き（flip）が終わったあとにもう一度位置合わせ。WebKit では動きの途中に測った位置のまま、チップが場札に残ることがあった
+document.addEventListener('animationend',e=>{try{const t=e.target;if(t&&t.classList&&t.classList.contains('card')&&t.closest('#table'))layoutSoon()}catch(x){}},true);
 // 吹き出しの追いかけ（24_dokidoki_camera の sayFollow）を毎コマ回す。出ている吹き出しが無くなったら止まる
 // 顔アップの重さ 案B（2026-10-11）：毎コマ追いかけるのは、カメラが動いている間（camTo から 0.8秒）と、吹き出しが出た直後（0.3秒）だけ。
 // カメラが止まっていれば吹き出しも動かないので、出ている間ずっと測り直す必要はない（今までは出ている約3秒のあいだ毎コマ測っていた）
@@ -10690,6 +10732,8 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(cuePlace);lpTry(dcallPlace);
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
+    // v75 レビュー 1：卓の大きさが変わって（レイズの欄を開くなど）横に置いた吹き出しが名札にかかったら置き直す
+    {const pr=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent).map(e=>[e.id,e.getBoundingClientRect()]);if(pr.length)document.querySelectorAll('#sayLayer .say.go.side').forEach(sy=>{const r=sy.getBoundingClientRect(),me='plate'+sy.id.replace('say','');if(pr.some(([id,q])=>id!==me&&r.left<q.right&&q.left<r.right&&r.top<q.bottom&&q.top<r.bottom))lpTry(()=>sayPlace(sy))})}
     lpTry(fitTable);lpTry(potClear);lpTry(chipAvoid);lpTry(barSync);   // v71（改善提案§1）：場札にチップをかけない（ポットの山→席の賭けチップの順）
   }else{lpTry(fitMyHand);lpTry(barSync)}   // 相手紹介（#vs）は卓が出る前
   lpTry(tourGuard);lpTry(fitScene);
