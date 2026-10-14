@@ -32,6 +32,7 @@ concurrency:
 # 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）
 # 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
 # nobrowser: ブラウザを使わない組（Playwright と字体を入れない。数秒で終わる）
+# browser: webkit の組は iPhone の Safari と同じ WebKit で回す（CIのチェック充実 案3。画面の新しい問題は ⚠️、止まる・エラーは ❌）
 # full: 長い版のときだけ回す組。長い版の勝率は1章24回（約25分）なので、1章ずつ分ける
 # 長い版になるのは、手で「長い版」を選んだときと、公開のブランチ（publish-…）のプルリクエスト
 env:
@@ -41,6 +42,7 @@ env:
       {"name": "text,script,lines,ftue,a11y,perf,save", "only": "text,script,lines,ftue,a11y,perf,save", "ch": ""},
       {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
       {"name": "fuzz", "only": "fuzz", "ch": ""},
+      {"name": "WebKit（iPhone の Safari）ui,fuzz", "only": "ui,fuzz", "ch": "", "browser": "webkit"},
       {"name": "rules,basics", "only": "rules,basics", "ch": ""},
       {"name": "winrate 第1章", "only": "winrate", "ch": "1"},
       {"name": "winrate 第2章", "only": "winrate", "ch": "2"},
@@ -108,6 +110,8 @@ jobs:
     runs-on: ubuntu-24.04
     # 勝率は1回の上限が「手数×8秒」（80ハンドで約11分）。長い版は1章24回なので、余裕を見て60分
     timeout-minutes: 60
+    env:
+      QA_BROWSER: ${{ matrix.browser || 'chromium' }}
     strategy:
       fail-fast: false
       matrix:
@@ -125,7 +129,8 @@ jobs:
           cd qa
           # 部品の版は package-lock.json で固定（CIのチェック充実 案7）
           npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium
+          # 画面の一覧づくり（qa/tools/ci_shots.js）は Chromium を使うので、WebKit の組も両方入れる
+          npx playwright install --with-deps chromium ${{ matrix.browser == 'webkit' && 'webkit' || '' }}
       - name: 前の版を用意する（セーブの引き継ぎ・画面の比べ）
         if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'lines') || contains(matrix.only, 'ui') }}
         env:
@@ -164,7 +169,7 @@ jobs:
       - name: 報告の名前を決める
         if: always()
         id: n
-        run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}' | tr ', ' '--')" >> "$GITHUB_OUTPUT"
+        run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}-${{ matrix.browser }}' | tr ', ' '--')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

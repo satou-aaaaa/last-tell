@@ -15,6 +15,8 @@ const ui = path.join(out, 'ui');
 if (!fs.existsSync(ui)) { console.log('ui/ が無いので何もしない'); process.exit(0) }
 const pngs = fs.readdirSync(ui).filter(f => f.endsWith('.png')).sort();
 const VPS = [['縦', '縦_390x844'], ['横', '横_844x390'], ['PC', 'PC_1280x800']];
+// WebKit の組は名前に WebKit_ を付ける（Chromium の画面と混ざらないように）。前の版とは比べない
+const WK = process.env.QA_BROWSER === 'webkit' ? 'WebKit_' : '';
 const dataUrl = f => 'data:image/' + (f.endsWith('.png') ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(f).toString('base64');
 
 (async () => {
@@ -25,11 +27,11 @@ const dataUrl = f => 'data:image/' + (f.endsWith('.png') ? 'png' : 'jpeg') + ';b
     await page.setContent(`<style>body{margin:0}</style><img id=i src="${dataUrl(path.join(ui, f))}">`);
     const box = await page.$eval('#i', i => ({ w: i.naturalWidth, h: i.naturalHeight }));
     await page.setViewportSize({ width: box.w, height: box.h });
-    await page.screenshot({ path: path.join(ui, f.replace(/\.png$/, '.jpg')), type: 'jpeg', quality: 72 });
+    await page.screenshot({ path: path.join(ui, WK + f.replace(/\.png$/, '.jpg')), type: 'jpeg', quality: 72 });
   }
   // 2. 前の版と比べる（縮めてから、色の差が大きい点の割合）
   const changes = {};
-  if (prevDir && fs.existsSync(prevDir)) {
+  if (!WK && prevDir && fs.existsSync(prevDir)) {
     for (const f of pngs) {
       const name = f.replace(/\.png$/, '.jpg'), old = path.join(prevDir, name);
       if (!fs.existsSync(old)) { changes[name] = { status: 'new' }; continue }
@@ -79,7 +81,7 @@ const dataUrl = f => 'data:image/' + (f.endsWith('.png') ? 'png' : 'jpeg') + ';b
     await page.setViewportSize({ width: cols * (w + 8) + 8, height: 600 });
     await page.setContent(`<style>body{margin:0;padding:4px;background:#222;font:13px sans-serif;color:#eee;display:grid;grid-template-columns:repeat(${cols},${w}px);gap:8px}figure{margin:0}img{width:100%;display:block}b{color:#fc6}</style>${cells}`);
     await page.evaluate(() => Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => i.onload = r))));
-    await page.screenshot({ path: path.join(ui, `_一覧_${label}.jpg`), type: 'jpeg', quality: 70, fullPage: true });
+    await page.screenshot({ path: path.join(ui, `_一覧_${WK}${label}.jpg`), type: 'jpeg', quality: 70, fullPage: true });
   }
   await browser.close();
   const ch = Object.entries(changes).filter(([, c]) => c.status !== 'same');

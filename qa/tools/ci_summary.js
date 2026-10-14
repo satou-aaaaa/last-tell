@@ -19,6 +19,12 @@ let ver = 'unknown', quick = true;
 for (const d of dirs) {
   const r = JSON.parse(fs.readFileSync(path.join(inDir, d, 'result.json'), 'utf8'));
   ver = r.ver || ver; quick = r.quick;
+  // WebKit（iPhone の Safari）の組：名前を分け、画面の新しい問題は ⚠️（字の幅が Chromium の基準と違うため）。止まる・エラーは ❌ のまま（案3）
+  if (/webkit/i.test(d)) for (const g of r.groups) {
+    g.key = 'webkit-' + g.key; g.name = 'WebKit（iPhone の Safari）：' + g.name; delete g.baselineOut;
+    for (const it of g.items) { it.id = 'webkit:' + it.id; it.title = 'WebKit：' + it.title; if (it.shot) it.shot = it.shot.replace(/([^/]+)$/, 'WebKit_$1');
+      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
+  }
   for (const g of r.groups) {
     // 勝率は章ごとに別の組で回すので、一段深くまで混ぜる
     for (const [k, v] of Object.entries(g.baselineOut || {})) newBase[k] = v && typeof v === 'object' && !Array.isArray(v) && newBase[k] && typeof newBase[k] === 'object' && !Array.isArray(newBase[k]) ? { ...newBase[k], ...v } : v;
@@ -31,7 +37,8 @@ for (const d of dirs) {
   for (const f of ['uiux.json', 'lines_diff.md']) if (fs.existsSync(path.join(inDir, d, f))) fs.copyFileSync(path.join(inDir, d, f), path.join(out, f));
 }
 const order = ['unit', 'text', 'script', 'lines', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf'];
-groups.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+const rank = k => order.indexOf(k.replace(/^webkit-/, '')) + (k.startsWith('webkit-') ? 100 : 0);
+groups.sort((a, b) => rank(a.key) - rank(b.key));
 for (const g of groups) if (g.key === 'winrate') g.items.sort((a, b) => parseInt(a.id.replace(/\D/g, '')) - parseInt(b.id.replace(/\D/g, '')));
 
 // 結果の無い組
@@ -39,7 +46,7 @@ const missing = [];
 try {
   const done = new Set(groups.flatMap(g => g.key === 'winrate' ? g.items.map(i => 'winrate:' + i.id.replace(/\D/g, '')) : [g.key]));
   for (const m of JSON.parse(process.env.QA_MATRIX || '[]')) {
-    const keys = m.only === 'winrate' ? m.ch.split(',').map(c => 'winrate:' + c) : m.only.split(',');
+    const keys = m.only === 'winrate' ? m.ch.split(',').map(c => 'winrate:' + c) : m.only.split(',').map(k => (m.browser === 'webkit' ? 'webkit-' : '') + k);
     if (keys.some(k => !done.has(k))) missing.push(m.name);
   }
 } catch (e) { }
@@ -59,7 +66,7 @@ let changes = {};
 try { changes = JSON.parse(fs.readFileSync(path.join(out, 'ui', 'changes.json'), 'utf8')) } catch (e) { }
 const changed = Object.entries(changes).filter(([, c]) => c.status !== 'same');
 const shotsMd = fs.existsSync(path.join(out, 'ui', '_一覧_縦.jpg'))
-  ? `## 画面\n\n- 一覧（まず これを見る）：ui/_一覧_縦.jpg・ui/_一覧_横.jpg・ui/_一覧_PC.jpg\n` +
+  ? `## 画面\n\n- 一覧（まず これを見る）：ui/_一覧_縦.jpg・ui/_一覧_横.jpg・ui/_一覧_PC.jpg${fs.existsSync(path.join(out, 'ui', '_一覧_WebKit_縦.jpg')) ? '（iPhone の Safari は ui/_一覧_WebKit_縦.jpg ほか）' : ''}\n` +
     (Object.keys(changes).length ? `- 前の版から見た目が変わった画面 ${changed.length}枚（「前｜今｜違う所」を1枚にした ui/_比べ_<名前>.jpg を見る）${changed.length ? '：' + changed.map(([f, c]) => `${f}${c.status === 'new' ? '（新）' : `（${c.ratio}%）`}`).join('、') : '（目で見るのは不要）'}\n` : '- 前の版の画面が無いので、変化は比べていない\n')
   : '';
 
