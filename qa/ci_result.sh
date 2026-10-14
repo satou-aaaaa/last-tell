@@ -4,6 +4,7 @@
 #   sh qa/ci_result.sh <PR番号> --shots    画面の一覧3枚（縦・横・PC）と、前の版から変わった画面を手元に落として、場所を出す
 #   sh qa/ci_result.sh <PR番号> --report   全部の結果（report.md）も出す
 #   sh qa/ci_result.sh v0.75.0 [--shots]   公開した版の結果（qa-results の v<版>/）
+#   sh qa/ci_result.sh nightly             毎晩の「通しで遊ぶ」の結果
 #   sh qa/ci_result.sh <PR番号> --save v75 共有フォルダの qa/reports/v75/ に summary・report・result・画面を写す（版の正式な結果。本線だけ）
 # 終了コード：0 合格、1 不合格、3 まだ回っている、2 読めない
 # 待つときは sleep で待たない：subscribe_pr_activity で CI の終わりを知らせてもらい、知らせが来てから1回だけ読む。
@@ -16,6 +17,7 @@ get() { gh api -H 'Accept: application/vnd.github.raw' "repos/$R/contents/$1?ref
 
 case $arg in
   v[0-9]*) dir=$arg ;;
+  nightly) dir=nightly ;;   # 毎晩の「通しで遊ぶ」
   [0-9]*)
     dir=pr/$arg
     sha=$(gh api "repos/$R/pulls/$arg" --jq .head.sha) || { echo "PR #$arg が読めない"; exit 2; }

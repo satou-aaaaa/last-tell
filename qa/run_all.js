@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CHECKS = [
-  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['site', './checks/site'],
+  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['site', './checks/site'], ['playthrough', './checks/playthrough'],
 ];
 const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
@@ -67,6 +67,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   const groups = [], newBase = Object.assign({}, baseline || {});
   for (const [key, mod] of CHECKS) {
     if (only && !only.includes(key)) continue;
+    if (!only && require(mod).onlyWhenAsked) continue;   // 通しで遊ぶ（1時間）は --only で頼んだときだけ
     const t = Date.now();
     process.stdout.write(`… ${key} `);
     try {

@@ -1,0 +1,68 @@
+# 通しで遊ぶ検査（CIのチェック充実 案5、2026-10-14）：毎晩、公開中の main で、まっさらなセーブから第1章→第7章→第二部まで続けて遊ぶ。
+# 1時間ほどかかるので、プルリクエストごとの QA では回さない。
+# 結果は ブランチ qa-results の nightly/（summary.md）。❌ のときは Issue「通しで遊ぶ検査が ❌」を立てる（開いていれば追記）。
+name: 通しで遊ぶ
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 毎日 3:00（日本時間）
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playthrough
+  cancel-in-progress: false
+
+jobs:
+  play:
+    name: 通しで遊ぶ
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Playwright と日本語の字体を入れる
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
+          cd qa && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: 通しで遊ぶ
+        id: p
+        run: |
+          set +e
+          node qa/run_all.js index.html --only playthrough --out qa-report-playthrough
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: まとめる
+        if: always()
+        run: |
+          set +e
+          node qa/tools/ci_summary.js . qa-summary > /tmp/summary.log
+          grep '^::' /tmp/summary.log || true
+          printf 'branch: main\nsha: %s\nrun: %s/%s/actions/runs/%s\nfull: nightly\nat: %s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$(date -u +%FT%TZ)" > qa-summary/run.txt
+          bash qa/tools/publish_results.sh qa-summary nightly
+      - name: ❌ のときは Issue に書く
+        if: ${{ always() && steps.p.outputs.code != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="通しで遊ぶ検査が ❌"
+          body="$(head -c 60000 qa-summary/summary.md)
+
+          実行: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
+          n=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ -n "$n" ]; then gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" -f body="$body" >/dev/null
+          else gh api "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" >/dev/null; fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: playthrough
+          path: |
+            qa-report-playthrough
+            qa-summary
+          retention-days: 30

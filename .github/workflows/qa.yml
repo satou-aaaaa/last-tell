@@ -33,6 +33,7 @@ concurrency:
 # 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
 # nobrowser: ブラウザを使わない組（Playwright と字体を入れない。数秒で終わる）
 # browser: webkit の組は iPhone の Safari と同じ WebKit で回す（CIのチェック充実 案3。画面の新しい問題は ⚠️、止まる・エラーは ❌）
+# nightly: ここでは回さない組（通しで遊ぶ。1時間かかるので playthrough.yml が毎晩回す）
 # full: 長い版のときだけ回す組。長い版の勝率は1章24回（約25分）なので、1章ずつ分ける
 # 長い版になるのは、手で「長い版」を選んだときと、公開のブランチ（publish-…）のプルリクエスト
 env:
@@ -56,7 +57,8 @@ env:
       {"name": "winrate 第12章", "only": "winrate", "ch": "12", "full": true},
       {"name": "winrate 第13章", "only": "winrate", "ch": "13", "full": true},
       {"name": "winrate 第14章", "only": "winrate", "ch": "14", "full": true},
-      {"name": "winrate 第15章", "only": "winrate", "ch": "15", "full": true}
+      {"name": "winrate 第15章", "only": "winrate", "ch": "15", "full": true},
+      {"name": "通しで遊ぶ", "only": "playthrough", "ch": "", "nightly": true}
     ]
 
 jobs:
@@ -101,7 +103,7 @@ jobs:
             exit 1
           fi
           echo "full=$FULL" >> "$GITHUB_OUTPUT"
-          echo "matrix=$(jq -c --argjson full "$FULL" 'map(select(.full != true or $full))' <<<"$QA_GROUPS")" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c --argjson full "$FULL" 'map(select(.nightly != true) | select(.full != true or $full))' <<<"$QA_GROUPS")" >> "$GITHUB_OUTPUT"
 
   qa:
     name: ${{ matrix.name }}
@@ -233,32 +235,6 @@ jobs:
           vkey=""; case "$HEAD_REF" in publish-*|main) vkey="v$ver";; esac
           [ "$FULL" = true ] && [ -z "$PR" ] && vkey="v$ver"
           printf 'branch: %s\nsha: %s\nrun: %s/%s/actions/runs/%s\nfull: %s\nat: %s\n' "$HEAD_REF" "${{ github.event.pull_request.head.sha || github.sha }}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$FULL" "$(date -u +%FT%TZ)" > qa-summary/run.txt
-          export GIT_AUTHOR_NAME="github-actions[bot]" GIT_COMMITTER_NAME="github-actions[bot]"
-          export GIT_AUTHOR_EMAIL="41898282+github-actions[bot]@users.noreply.github.com" GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
-          ws="$GITHUB_WORKSPACE"
-          for i in 1 2 3 4 5; do
-            old=""
-            git -C "$ws" fetch -q --depth 1 origin +qa-results:refs/remotes/origin/qa-results 2>/dev/null && old=$(git -C "$ws" rev-parse origin/qa-results)
-            rm -rf /tmp/r && mkdir /tmp/r && git -C /tmp/r init -q
-            [ -n "$old" ] && git -C "$ws" archive "$old" | tar -x -C /tmp/r
-            rm -rf "/tmp/r/$key" && mkdir -p "/tmp/r/$key" && cp -r "$ws"/qa-summary/. "/tmp/r/$key/"
-            if [ -n "$vkey" ]; then rm -rf "/tmp/r/$vkey" && cp -r "/tmp/r/$key" "/tmp/r/$vkey"; fi
-            # 片づけ：pr/・branch/ は14日より前のもの、v<版>/ は新しい8つだけ残す
-            for d in /tmp/r/pr/* /tmp/r/branch/*; do
-              [ -f "$d/run.txt" ] || continue
-              at=$(sed -n 's/^at: //p' "$d/run.txt")
-              if [ -n "$at" ] && [ $(( $(date +%s) - $(date -d "$at" +%s) )) -gt 1209600 ]; then rm -rf "$d"; fi
-            done
-            ls -d /tmp/r/v*/ 2>/dev/null | sed 's#/tmp/r/v##; s#/$##' | sort -V | head -n -8 | while read v; do rm -rf "/tmp/r/v$v"; done
-            cp "$ws/qa/tools/qa-results-README.md" /tmp/r/README.md 2>/dev/null || true
-            git -C /tmp/r add -A && git -C /tmp/r commit -q -m "QA $key v$ver (${GITHUB_SHA::7})"
-            # 履歴は持たない（いつも1つのコミットだけ）。重くならないように
-            git -C "$ws" fetch -q /tmp/r +HEAD:refs/heads/qa-results-new
-            if git -C "$ws" push -q --force-with-lease="qa-results:$old" origin qa-results-new:qa-results; then
-              echo "置いた: $key ${vkey:+と $vkey}"; exit 0
-            fi
-            sleep $((i * 5))
-          done
-          echo "::warning title=qa-results に置けなかった::5回とも ほかの実行と重なった。結果は Actions の qa-summary にある"
+          bash qa/tools/publish_results.sh qa-summary "$key" "$vkey"
       - name: 合否
         run: exit ${{ steps.s.outputs.code || 0 }}
