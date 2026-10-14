@@ -29,7 +29,7 @@ const JP_SCAN = `(() => { const out = new Set(); const re = /[\\u3040-\\u30ff\\u
   return [...out] })()`;
 
 async function runOne(browser, file, mode, hands) {
-  const { ctx, page } = await H.openGame(browser, file, { lang: mode.lang || 'ja', storage: mode.storage });
+  const { ctx, page } = await H.openGame(browser, file, { lang: mode.lang || 'ja', storage: mode.storage, seed: H.seedOf('fuzz', mode.id, mode.lang || 'ja') });
   const jp = new Set();
   try {
     await page.evaluate(mode.start);

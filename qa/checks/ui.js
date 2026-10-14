@@ -36,6 +36,12 @@ const SCENES = [
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
   { key: '回想の結果', prep: `startFlashback(()=>{},'reika')`, settle: 2500,
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.handOver&&S.result==='flash'&&!$('btnNext').hidden)})()` },
+  // 2026-10-14 CIのチェック充実 案2：まだ撮っていなかった遊び方と画面。基準（baseline.json の uiScenes）に入るまでは、問題があっても ⚠️
+  { key: '第7章_ハンドの終わり', prep: `startChapter(CHAPTERS[6],true)`, handEnd: true },
+  { key: '第11章_自分の番', prep: `startP2(PART2[0],true)`, myTurn: true },
+  { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true },
+  { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
+  { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en' },
 ];
 
 // ページの中で、見えている大事な部品を調べる
@@ -152,6 +158,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const res = [];
   for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
   const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [];
+  // 基準を作ったときに撮っていなかった場面（uiScenes が無い古い基準では、案2で足した場面）
+  const ADDED = ['第7章_ハンドの終わり', '第11章_自分の番', '店で遊ぶ_自分の番', '裏の卓_自分の番', '英語_第1章の会話'];
+  const isNewScene = k => baseline && baseline.uiScenes ? !baseline.uiScenes.includes(k) : ADDED.includes(k);
   for (const r of res) {
     // 基準と比べる鍵は、部品の名前だけにする（「」の中の文字や数字はチップの額などで毎回変わるため）
     const bare = d => String(d || '').replace(/「.*$/, '').replace(/\d+/g, '');
@@ -162,12 +171,12 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     const fresh = r.issues.filter((x, i) => !known.has(keys[i]));
     const old = r.issues.length - fresh.length;
     const txt = x => `${x.kind}: ${x.el}${x.by ? ' ← ' + x.by : ''}`;
-    const status = r.errors.length ? 'fail' : fresh.length ? 'fail' : old ? 'known' : 'ok';
+    const status = r.errors.length ? 'fail' : fresh.length ? (isNewScene(r.scene) ? 'warn' : 'fail') : old ? 'known' : 'ok';
     items.push({ id: `ui:${r.scene}:${r.vp}`, title: `画面 ${r.scene}（${r.vp}）`, status,
-      detail: (r.errors.length ? 'エラー: ' + r.errors[0] + '。' : '') + (fresh.length ? '新しい問題: ' + fresh.slice(0, 4).map(txt).join('、') + (fresh.length > 4 ? ` ほか${fresh.length - 4}件` : '') : r.issues.length ? `前からある問題 ${old}件（${r.issues.slice(0, 2).map(txt).join('、')}）` : '重なり・はみ出し・隠れなし'),
+      detail: (r.errors.length ? 'エラー: ' + r.errors[0] + '。' : '') + (fresh.length && isNewScene(r.scene) ? '（新しく撮り始めた場面なので ⚠️。基準を書き直すと次から ❌）' : '') + (fresh.length ? '新しい問題: ' + fresh.slice(0, 4).map(txt).join('、') + (fresh.length > 4 ? ` ほか${fresh.length - 4}件` : '') : r.issues.length ? `前からある問題 ${old}件（${r.issues.slice(0, 2).map(txt).join('、')}）` : '重なり・はみ出し・隠れなし'),
       shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues });
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
-  return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))] } };
+  return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };
