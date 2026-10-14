@@ -532,6 +532,8 @@ button.act:disabled{opacity:.3}
   font:800 .95rem/1 var(--display,serif);letter-spacing:.12em;color:#f6ead0;background:rgba(6,7,10,.78);padding:7px 16px;
   border-top:1px solid var(--gold,#e2b65b);border-bottom:1px solid var(--gold,#e2b65b)}
 .dcall.go{animation:dcall 1.3s ease-out forwards}
+.dcall.dleft{left:10px;right:auto}
+.dcall.dwrap{white-space:normal;line-height:1.25}
 @keyframes dcall{0%{opacity:0;transform:translateX(-12px)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
 .potfly{position:absolute;z-index:7;pointer-events:none}
 .spot .hand.muck{animation:muck .6s ease-in forwards}
@@ -1427,6 +1429,7 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 }
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
 @media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
+@media (max-width:699px){html.fbig #game #btnFold b{letter-spacing:0!important}html.fbig #game #btnFold small{letter-spacing:-.13em!important}}
 
 /* 名札が顔にかからないように（2026-10-10 satou「顔にチップの表示がかぶっている」）
    名札は卓のふちから上へ伸びるので、行が増えるほど口・鼻・目が隠れていた。
@@ -1999,7 +2002,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.72.0';
+const APP_VERSION='0.73.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -6002,7 +6005,7 @@ function placeDealer(){
 /* ---------- ディーラーの声・演出 ---------- */
 let dcallT=0;
 function dealerSay(text){
-  const d=$('dcall');d.textContent=text;d.style.animationDuration=(1.3*SPEED())+'s';d.classList.remove('go');void d.offsetWidth;d.classList.add('go');
+  const d=$('dcall');d.textContent=text;d.style.animationDuration=(1.3*SPEED())+'s';d.classList.remove('go');void d.offsetWidth;d.classList.add('go');try{if(typeof dcallPlace==='function')dcallPlace()}catch(e){}
   clearTimeout(dcallT);dcallT=setTimeout(()=>d.classList.remove('go'),1300*SPEED());
 }
 /* ポットのチップを勝った人の席へすべらせる */
@@ -10615,6 +10618,17 @@ function potSignPlaceWide(){const s=$('potSign'),p=$('potChips'),t=$('table'),c=
   const card=document.querySelector('#mine .card'),lim=card?card.getBoundingClientRect().top-s.offsetHeight-4:1e9;
   s.style.top=(Math.min(b+3,lim)-tr.top)+'px'}
 // クセの札：相手の胸像の右上（今まで render の中で決めていた位置と同じ式）。全部測ってから全部書く
+// v73（改善提案 2026-10-14 §1）：ディーラーの声（#dcall）がクセの札（.cue）に重なるときは、声を左上へ寄せる（札は動かさない）
+function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';return}
+  const R=e=>e.getBoundingClientRect(),cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);
+  d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';if(!cs.length)return;
+  const hit=r=>c=>{const w=Math.min(r.right,c.right)-Math.max(r.left,c.left),h=Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top);return w>0&&h>0};
+  const r0=R(d);if(!cs.some(hit(r0)))return;
+  // 左上へ（札を優先）。左の吹き出し（客の一言）にかかるときは、吹き出しの上へ少し上げる（顔の上へは下げない：顔の奥に隠れるため）
+  d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
+  const r1=R(d),says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R).filter(r=>r.width>1&&hit(r1)(r));
+  if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-4-pr.top;
+  if(top>=2)d.style.top=Math.round(top)+'px'}
 function cuePlace(){const P=$('plates');if(!P)return;const cs=[...P.querySelectorAll(':scope > .cue[data-bust]')];if(!cs.length)return;
   const pr=P.getBoundingClientRect(),out=[];
   cs.forEach(cb=>{const b=$('bust'+cb.dataset.bust);if(!b)return;const br=b.getBoundingClientRect();
@@ -10627,7 +10641,7 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
     if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
     lpTry(()=>{talkPlace();const row=$('askRow');if(row&&row._bp&&!row.hidden&&typeof bPlace==='function')bPlace(row)});
-    lpTry(cuePlace);
+    lpTry(cuePlace);lpTry(dcallPlace);
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
     lpTry(fitTable);lpTry(potClear);lpTry(chipAvoid);   // v71（改善提案§1）：場札にチップをかけない（ポットの山→席の賭けチップの順）
@@ -10661,6 +10675,10 @@ const storyFinal=()=>!!(typeof S!=='undefined'&&S&&S.storyHand&&CFG.ch&&!CFG.ch.
   return r}}
 {const o=renderControls;renderControls=function(){const r=o.apply(this,arguments);
   try{const f=storyFinal();$('controls').classList.toggle('storyfinal',f);$('game').classList.toggle('storyfinal',f)}catch(e){}
+  return r}}
+// v73（v72 レビュー）：ハンドの頭で物語の一手と決まったら、前のハンドから残っている客の一言をすぐ消す（S.storyHand が立つ前の render で描かれることがあるため）
+{const o=setupScript;setupScript=function(){const r=o.apply(this,arguments);
+  try{if(storyFinal()){const boss=STORY_FINAL_BOSS[CFG.ch.no];S.players.forEach(p=>{if(!p.human&&p.name!==boss&&p.say&&!p.say.st)p.say=null})}}catch(e){}
   return r}}
 
 </script>
