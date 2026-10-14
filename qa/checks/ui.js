@@ -123,7 +123,7 @@ const INSPECT = `(() => {
 // 場所の記録（本線が手元で再現できないブラウザの崩れを、数字で見るため）。ui/rects.json（WebKit は rects_WebKit.json）
 // 足したいときは QA_RECTS="セレクタ,セレクタ" で増やせる
 const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '.spot .mystack', '#mine .me-r'].concat((process.env.QA_RECTS || '').split(',').filter(Boolean));
-const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id}});if(a.length)o[q]=a}return o})()`;
+const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id,tl:e.style.translate||undefined,ca:e.dataset.ca}});if(a.length)o[q]=a}return o})()`;
 
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, lang: scene.lang || 'ja', seed: 1000 + SCENES.indexOf(scene),
@@ -163,6 +163,17 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const jobs = []; for (const s of SCENES) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
   for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
+  // ページやブラウザが途中で閉じた場面は、1回だけ撮り直す（WebKit でたまに起きる。ブラウザごと落ちていたら開き直す）
+  let own = null;
+  for (let i = 0; i < res.length; i++) {
+    const x = res[i].issues && res[i].issues[0];
+    if (!(res[i].shot === null && x && x.kind === '撮れなかった' && /closed|crash/i.test(x.el))) continue;
+    if (!browser.isConnected() && !own) own = await H.launch();
+    const [s, v] = jobs[i];
+    res[i] = await shoot(own || browser, file, s, v, dir);
+    res[i].retried = true;
+  }
+  if (own) await own.close().catch(() => {});
   const rects = {}; for (const r of res) if (r.rects) rects[`${r.scene}_${r.vp}`] = r.rects;
   fs.writeFileSync(path.join(dir, process.env.QA_BROWSER === 'webkit' ? 'rects_WebKit.json' : 'rects.json'), JSON.stringify(rects));
   const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [];
