@@ -2,7 +2,24 @@
 
 ゲーム（story/shisho.html）を変えたら、毎回これを回します。2026-10-10 satou さんが「案1＋案2」を選んだもの。
 
-## 回し方
+## まず：重い検査は GitHub（CI）で回す（2026-10-14 satou「できるだけCI上で実行し、Claude のトークンを消費しない形で」）
+
+Claude のスレッドは、勝率・画面の撮影・全部の検査を**自分の作業場所で回さない**。GitHub で回して、結果を読むだけにする。
+
+| いつ | どうする | 結果の読み方 |
+|---|---|---|
+| 作業の途中・書き戻す前（レーン、修正のスレッド） | `sh qa/ci_check.sh <作った.html> <名前>` → 下書きのプルリクエストができる（マージも公開もされない） | `subscribe_pr_activity` でその PR を見張り、CI が終わった知らせが来たら `sh qa/ci_result.sh <番号>` |
+| 版を出すとき（本線） | 今までどおり `publish-v<版>` ブランチでプルリクエスト。**publish- のブランチは自動で長い版**（第5〜15章の勝率、前の版3つのセーブの引き継ぎ、120ハンドの重さ） | 同上。`--save v<版>` で共有フォルダの `qa/reports/v<版>/` に写す（版の正式な結果） |
+| 版ごとのレビュー（クリエイター・UI/UX・交代） | 自分では回さない | `sh qa/ci_result.sh v<版> --shots`（一覧3枚と、前の版から変わった画面だけが落ちる） |
+
+- 結果はブランチ `qa-results` の `pr/<番号>/` と `v<版>/` にある：`summary.md`（まずこれ。❌・⚠️・勝率・変わった画面）、`report.md`（全部）、`baseline_候補.json`、`ui/_一覧_縦.jpg`・`_一覧_横.jpg`・`_一覧_PC.jpg`（12場面を1枚に）、`ui/changes.json`（前の公開版と比べて見た目が3%より多く変わった画面）。
+- 画面の確認（毎回の決めごと）は、まず一覧3枚を見て、変わった画面だけ1枚ずつ見る。変わっていない画面は見直さなくてよい。
+- 待つときに `sleep` や繰り返しの確認をしない（それ自体がトークンを使う）。CI の終わりは PR の知らせで来る。
+- 基準（baseline.json）の書き直し：公開した版の `baseline_候補.json` を `qa/baseline.json` に写す（本線だけ、satou さんの OK のあと。今までの `--official --update-baseline` の代わり）。
+- 手元で回してよいのは、ブラウザを使わない数秒の検査だけ：`node qa/unit/run.js`、`node qa/run_all.js X.html --only unit`。CI が使えないとき（GitHub が落ちている等）だけ、下の「回し方」で手元で回す。
+- 仕組み：.github/workflows/qa.yml の「検査のまとめ」ジョブ、qa/tools/ci_summary.js・ci_shots.js。Actions の成果物（qa-report-*）は Claude の環境から落とせないので、qa-results ブランチに置いている。
+
+## 回し方（手元。CI が使えないときだけ）
 
 ```
 sh /mnt/project-files/qa/run_all.sh                      # 短い版（毎回の変更で）。結果は reports/_runs/ の新しいフォルダ
@@ -82,4 +99,8 @@ node /mnt/project-files/qa/unit/run.js [作った.html|src]   # ルールの単�
 
 ## GitHub（テスト公開）での自動実行
 
-テスト公開のリポジトリ satou-aaaaa/last-tell の `.github/workflows/qa.yml` が、index.html が変わったプルリクエストとプッシュのたびに短い版を回します。検査は組に分けて同時に回し（勝率は章ごと）、実行機は ubuntu-24.04 に固定しています。**新しい検査を足したら qa.yml の組（QA_GROUPS）にも足す**（入れ忘れると「検査の一覧」が ❌ になる）。結果は GitHub の Actions 画面に ✅/❌ で出て、報告と画像は「qa-report」としてダウンロードできます。
+テスト公開のリポジトリ satou-aaaaa/last-tell の `.github/workflows/qa.yml` が、index.html か qa/ が変わったプルリクエストとプッシュのたびに回します。検査は組に分けて同時に回し（勝率は章ごと）、実行機は ubuntu-24.04 に固定しています。**新しい検査を足したら qa.yml の組（QA_GROUPS）にも足す**（入れ忘れると「検査の一覧」が ❌ になる）。
+- 短い版：ふつうのプルリクエスト（ci_check.sh の下書きも）。長い版：`publish-…` ブランチと、Actions → QA → Run workflow で「長い版」を選んだとき。
+- 最後の「検査のまとめ」が全部の組の結果を1つにして qa-results に置き、❌・⚠️ を注釈に、要約をジョブのまとめに出す。結果の無い組（時間切れなど）も ❌ になる。
+- セーブの引き継ぎは、CI では main の index.html（長い版は前の版のタグ2つも）を前の版として使う（`QA_PREV_HTML`）。
+- 人が見るとき：プルリクエストの Checks →「検査のまとめ」の Summary。画像は qa-results ブランチの `pr/<番号>/ui/` か、Actions の成果物 qa-report-*（PNG）。
