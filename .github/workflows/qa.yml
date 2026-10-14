@@ -9,7 +9,8 @@ on:
   pull_request:
     # 下書きを外したときも回す（回らないと自動マージが起きない）
     types: [opened, synchronize, reopened, ready_for_review]
-    paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
+    # 全部の PR で回す（ルールセットで「検査のまとめ」を必須にするため。CIのチェック充実 案7）。
+    # ゲームも検査も変わっていない PR は「検査の一覧」が見て、重い組を飛ばす
   push:
     branches: [main]
     paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
@@ -22,6 +23,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: qa-${{ github.ref }}
@@ -61,11 +63,25 @@ jobs:
     outputs:
       matrix: ${{ steps.m.outputs.matrix }}
       full: ${{ steps.m.outputs.full }}
+      run: ${{ steps.c.outputs.run }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+      - name: ゲームか検査が変わったか見る
+        id: c
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          run=true
+          if [ -n "$PR" ]; then
+            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
+            echo "$files" | grep -qE '^(index\.html|qa/|\.github/workflows/qa\.yml$)' || run=false
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          [ "$run" = true ] || echo "::notice title=検査は飛ばした::index.html も qa/ も qa.yml も変わっていないので、重い検査は回さない"
       - name: どの組にも入っていない検査がないか見る
         id: m
         env:
@@ -87,6 +103,7 @@ jobs:
   qa:
     name: ${{ matrix.name }}
     needs: groups
+    if: ${{ needs.groups.outputs.run == 'true' }}
     # 実行機の版を固定する（ubuntu-latest は 2026-10-19 から Ubuntu 26 になり、字体が変わって画面の判定がずれるため）
     runs-on: ubuntu-24.04
     # 勝率は1回の上限が「手数×8秒」（80ハンドで約11分）。長い版は1章24回なので、余裕を見て60分
@@ -96,8 +113,8 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.groups.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
       - name: Playwright と日本語の字体を入れる
@@ -106,7 +123,8 @@ jobs:
           # 基準（qa/baseline.json）を作った環境と同じ字体にする。字の幅が変わると画面の判定がずれるため
           sudo apt-get update -q && sudo apt-get install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
           cd qa
-          npm install --no-audit --no-fund
+          # 部品の版は package-lock.json で固定（CIのチェック充実 案7）
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: 前の版を用意する（セーブの引き継ぎ・画面の比べ）
         if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'ui') }}
@@ -147,7 +165,7 @@ jobs:
         if: always()
         id: n
         run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}' | tr ', ' '--')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: ${{ steps.n.outputs.name }}
@@ -165,15 +183,20 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - uses: actions/download-artifact@v7
+      - name: 対象外の PR
+        if: ${{ needs.groups.outputs.run != 'true' }}
+        run: echo "検査の対象外（index.html も qa/ も変わっていない）" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        if: ${{ needs.groups.outputs.run == 'true' }}
         with:
           pattern: qa-report-*
           path: groups
       - name: まとめる
+        if: ${{ needs.groups.outputs.run == 'true' }}
         id: s
         env:
           QA_MATRIX: ${{ needs.groups.outputs.matrix }}
@@ -182,14 +205,15 @@ jobs:
           node qa/tools/ci_summary.js groups qa-summary > /tmp/summary.log
           echo "code=$?" >> "$GITHUB_OUTPUT"
           grep '^::' /tmp/summary.log || true
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ needs.groups.outputs.run == 'true' }}
         with:
           name: qa-summary
           path: qa-summary
           retention-days: 90
       - name: ブランチ qa-results に置く
         # よその人のフォークからのプルリクエストは書き込めないので置かない
-        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        if: ${{ needs.groups.outputs.run == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         env:
           PR: ${{ github.event.pull_request.number }}
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
@@ -229,4 +253,4 @@ jobs:
           done
           echo "::warning title=qa-results に置けなかった::5回とも ほかの実行と重なった。結果は Actions の qa-summary にある"
       - name: 合否
-        run: exit ${{ steps.s.outputs.code }}
+        run: exit ${{ steps.s.outputs.code || 0 }}
