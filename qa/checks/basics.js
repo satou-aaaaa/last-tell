@@ -92,7 +92,7 @@ const PROBE = `(() => {
 })();`;
 
 async function session(browser, file, start, policy, hands, opts = {}) {
-  const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: opts.storage });
+  const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: opts.storage, seed: H.seedOf('basics', start, policy) });
   try {
     await page.evaluate(PROBE);
     if (opts.noBlindCheck) await page.evaluate(() => { __bp.checkBlinds = false });

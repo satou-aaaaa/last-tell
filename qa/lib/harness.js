@@ -152,4 +152,8 @@ async function botState(page) {
 // 第1部クリア済み・操作案内を見た状態（第二部や章の一覧を開くため）
 const UNLOCKED = { 'shisho-progress': JSON.stringify({ v: 1, cleared: 7 }), 'shisho-guide': JSON.stringify({ done: true }) };
 
-module.exports = { UNLOCKED, launch, openGame, startBot, runUntilDone, botState, pw };
+// 打ち方を見る検査（rules・basics・fuzz）の乱数を、場面ごとに決まった数にする（2026-10-14 CIのチェック充実 案1）。
+// 同じゲームのファイルなら、何度回しても同じ配り方・同じ CPU の迷いになる
+const seedOf = (...xs) => { let h = 2166136261; for (const c of xs.join('|')) h = Math.imul(h ^ c.codePointAt(0), 16777619); return (h >>> 0) % 1e9 + 1 };
+
+module.exports = { UNLOCKED, launch, openGame, startBot, runUntilDone, botState, pw, seedOf };
