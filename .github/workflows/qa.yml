@@ -162,6 +162,8 @@ jobs:
             fi
           fi
       - name: 検査を回す
+        # WebKit の組の合否は「検査のまとめ」が決める（画面の新しい問題は ⚠️、止まる・エラーは ❌）。ここで赤くすると自動マージが止まるため
+        continue-on-error: ${{ matrix.browser == 'webkit' }}
         env:
           QA_LIGHTHOUSE: ${{ contains(matrix.only, 'site') && '1' || '' }}
         run: node qa/run_all.js index.html --only ${{ matrix.only }} ${{ matrix.ch && format('--ch {0}', matrix.ch) || '' }} --out qa-report ${{ needs.groups.outputs.full == 'true' && '--full' || '' }}
