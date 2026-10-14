@@ -44,10 +44,13 @@ jobs:
           rsync -a --exclude='.git*' --exclude='.github' --exclude='_site' --exclude='tools' --exclude='qa' \
             --exclude='README.md' --exclude='*.py' --exclude='node_modules' ./ _site/
           # 足りないファイルがあれば止める（ゲームの「その他」から開くページなど）
-          for f in index.html sw.js manifest.webmanifest privacy.html terms.html support.html; do
+          for f in index.html sw.js manifest.webmanifest style.css privacy.html terms.html support.html privacy-en.html terms-en.html support-en.html; do
             test -s "_site/$f" || { echo "$f がありません"; exit 1; }
           done
-          ls -la _site
+          ls -la _site _site/licenses
+      - name: ゲームが開くページとライセンス全文がそろっているか見る（qa/checks/pages.js を公開する中身に当てる）
+        run: |
+          node -e "require('./qa/checks/pages').run({file:'_site/index.html'}).then(r=>{let bad=0;for(const i of r.items){console.log((i.status==='ok'?'OK ':'NG ')+i.title+'：'+i.detail);if(i.status!=='ok'){bad=1;console.log('::error title='+i.title+'::'+i.detail)}}process.exit(bad)})"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

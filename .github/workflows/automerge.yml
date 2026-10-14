@@ -44,7 +44,7 @@ jobs:
           # 説明だけの PR は、QA が ✅ でも手でマージする（2026-10-14、QA を全部の PR で回すようにしたため）
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           if echo "$files" | grep -q '^\.github/'; then echo "#$pr は .github/ を変えるので手でマージ"; exit 0; fi
-          if ! echo "$files" | grep -qE '^(index\.html|qa/)'; then echo "#$pr はゲームも検査も変えないので手でマージ"; exit 0; fi
+          if ! echo "$files" | grep -qE '^([^/]+\.html$|sw\.js$|style\.css$|licenses/|qa/)'; then echo "#$pr はゲームも検査も変えないので手でマージ"; exit 0; fi
           if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"

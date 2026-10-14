@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CHECKS = [
-  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['site', './checks/site'], ['playthrough', './checks/playthrough'],
+  ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['lines', './checks/lines_diff'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['pages', './checks/pages'], ['site', './checks/site'], ['playthrough', './checks/playthrough'],
 ];
 const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
