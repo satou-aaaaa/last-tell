@@ -3,6 +3,7 @@
 #   sh qa/ci_result.sh <PR番号>            CI の各組の ✅/❌ と、まとめ（summary.md）を出す。まだ回っていれば「回っている」と出して終わる（終了コード 3）
 #   sh qa/ci_result.sh <PR番号> --shots    画面の一覧3枚（縦・横・PC）と、前の版から変わった画面を手元に落として、場所を出す
 #   sh qa/ci_result.sh <PR番号> --report   全部の結果（report.md）も出す
+#   sh qa/ci_result.sh <PR番号> --rects 第2章_ハンドの終わり   部品の場所（#boardCards .card・.spot .mystack・#mine .me-r など。WebKit も）
 #   sh qa/ci_result.sh v0.75.0 [--shots]   公開した版の結果（qa-results の v<版>/）
 #   sh qa/ci_result.sh nightly             毎晩の「通しで遊ぶ」の結果
 #   sh qa/ci_result.sh <PR番号> --save v75 共有フォルダの qa/reports/v75/ に summary・report・result・画面を写す（版の正式な結果。本線だけ）
@@ -11,8 +12,8 @@
 R=satou-aaaaa/last-tell
 Q=$(cd "$(dirname "$0")" && pwd)
 arg=$1; shift
-shots=; report=; save=
-while [ $# -gt 0 ]; do case $1 in --shots) shots=1;; --report) report=1;; --save) save=$2; shift;; esac; shift; done
+shots=; report=; save=; rects=
+while [ $# -gt 0 ]; do case $1 in --shots) shots=1;; --report) report=1;; --rects) rects=$2; shift;; --save) save=$2; shift;; esac; shift; done
 get() { gh api -H 'Accept: application/vnd.github.raw' "repos/$R/contents/$1?ref=qa-results" 2>/dev/null; }
 
 case $arg in
@@ -42,6 +43,12 @@ esac
 echo
 get "$dir/summary.md" || { echo "$dir の結果が qa-results に無い"; exit 2; }
 [ -n "$report" ] && { echo; get "$dir/report.md"; }
+# 部品の場所（getBoundingClientRect など）。--rects <場面名の一部> 。WebKit は rects_WebKit.json
+if [ -n "$rects" ]; then
+  for f in rects.json rects_WebKit.json; do
+    get "$dir/ui/$f" | node -e "const o=JSON.parse(require('fs').readFileSync(0,'utf8')||'{}');for(const k of Object.keys(o).filter(k=>k.includes(process.argv[1]))){console.log('\n## '+process.argv[2]+' '+k);for(const[q,a]of Object.entries(o[k]))for(const e of a)console.log(q.padEnd(18),JSON.stringify(e))}" "$rects" "$f" 2>/dev/null
+  done
+fi
 
 if [ -n "$shots" ] || [ -n "$save" ]; then
   if [ -n "$save" ]; then out=$Q/reports/$save; else out=${TMPDIR:-/tmp}/qa-ci/$(echo "$dir" | tr / -); fi

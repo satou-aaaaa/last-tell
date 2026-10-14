@@ -120,6 +120,11 @@ const INSPECT = `(() => {
   return out;
 })()`;
 
+// 場所の記録（本線が手元で再現できないブラウザの崩れを、数字で見るため）。ui/rects.json（WebKit は rects_WebKit.json）
+// 足したいときは QA_RECTS="セレクタ,セレクタ" で増やせる
+const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '.spot .mystack', '#mine .me-r'].concat((process.env.QA_RECTS || '').split(',').filter(Boolean));
+const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id}});if(a.length)o[q]=a}return o})()`;
+
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, lang: scene.lang || 'ja', seed: 1000 + SCENES.indexOf(scene),
     storage: scene.fresh ? null : H.UNLOCKED });
@@ -144,9 +149,10 @@ async function shoot(browser, file, scene, vp, dir) {
       same = y === last ? same + 1 : 0; last = y;
     }
     const issues = await page.evaluate(INSPECT);
+    const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
-    return { scene: scene.key, vp: vp.key, issues, shot, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -157,6 +163,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const jobs = []; for (const s of SCENES) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
   for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
+  const rects = {}; for (const r of res) if (r.rects) rects[`${r.scene}_${r.vp}`] = r.rects;
+  fs.writeFileSync(path.join(dir, process.env.QA_BROWSER === 'webkit' ? 'rects_WebKit.json' : 'rects.json'), JSON.stringify(rects));
   const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [];
   // 基準を作ったときに撮っていなかった場面（uiScenes が無い古い基準では、案2で足した場面）
   const ADDED = ['第7章_ハンドの終わり', '第11章_自分の番', '店で遊ぶ_自分の番', '裏の卓_自分の番', '英語_第1章の会話'];
