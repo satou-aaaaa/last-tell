@@ -31,6 +31,9 @@ async function run({ browser, file, baseline }) {
     while ((m = reWho.exec(src))) if (set.has(m[1])) raw.push([m[1], m[2].replace(/\\(['"])/g, '$1')]);
     raw.push(...await page.evaluate(() => { const r = []; if (typeof FINAL_DUEL59 === 'undefined') return r;
       for (const d of Object.values(FINAL_DUEL59)) for (const k of ['flop', 'turn', 'river', 'lose']) if (d && d.boss && d[k] && d[k].ja) r.push([d.boss, d[k].ja]); return r }));
+    // 行動のひとこと（LINES：降りる・上げる・勝ったときなど。交代レビュー v73 で追加。v72 までは読んでいなかった）
+    raw.push(...await page.evaluate(() => { const r = []; if (typeof LINES === 'undefined') return r;
+      for (const [who, o] of Object.entries(LINES)) for (const [k, v] of Object.entries(o || {})) if (Array.isArray(v)) v.forEach(t => { if (typeof t === 'string' && t.length > 1) r.push([who, t]) }); return r }));
     // 英語にしたとき、日本語が残る行
     lines = await page.evaluate(raw => raw.map(([who, t]) => { let en = ''; try { en = I18N.tr(t.split('〈主〉').join('Ao').split('〈呼〉').join('Ao')) } catch (e) { en = '' } return [who, t, /[぀-ヿ㐀-鿿]/.test(en)] }), raw);
   } finally { await ctx.close() }
