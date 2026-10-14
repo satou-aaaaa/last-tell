@@ -38,7 +38,7 @@ env:
   QA_GROUPS: >-
     [
       {"name": "unit（ルールの単体テスト）", "only": "unit", "ch": "", "nobrowser": true},
-      {"name": "text,script,ftue,a11y,perf,save", "only": "text,script,ftue,a11y,perf,save", "ch": ""},
+      {"name": "text,script,lines,ftue,a11y,perf,save", "only": "text,script,lines,ftue,a11y,perf,save", "ch": ""},
       {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
       {"name": "fuzz", "only": "fuzz", "ch": ""},
       {"name": "rules,basics", "only": "rules,basics", "ch": ""},
@@ -127,7 +127,7 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: 前の版を用意する（セーブの引き継ぎ・画面の比べ）
-        if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'ui') }}
+        if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'lines') || contains(matrix.only, 'ui') }}
         env:
           FULL: ${{ needs.groups.outputs.full }}
         run: |

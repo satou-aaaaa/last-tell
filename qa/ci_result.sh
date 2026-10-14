@@ -44,7 +44,7 @@ get "$dir/summary.md" || { echo "$dir の結果が qa-results に無い"; exit 2
 if [ -n "$shots" ] || [ -n "$save" ]; then
   if [ -n "$save" ]; then out=$Q/reports/$save; else out=${TMPDIR:-/tmp}/qa-ci/$(echo "$dir" | tr / -); fi
   mkdir -p "$out/ui"
-  for f in summary.md report.md result.json baseline_候補.json uiux.json run.txt; do get "$dir/$f" > "$out/$f" || rm -f "$out/$f"; done
+  for f in summary.md report.md result.json baseline_候補.json uiux.json lines_diff.md run.txt; do get "$dir/$f" > "$out/$f" || rm -f "$out/$f"; done
   list="_一覧_縦.jpg _一覧_横.jpg _一覧_PC.jpg changes.json"
   # 変わった画面は「前｜今｜違う所」の1枚（_比べ_…）だけ落とす。--save のときは全部
   if [ -n "$save" ]; then list=$(gh api "repos/$R/contents/$dir/ui?ref=qa-results" --jq '.[].name')

@@ -28,9 +28,9 @@ for (const d of dirs) {
   // 画面：JPEG と一覧と changes.json だけ写す（PNG は Actions の qa-report-* に残る）
   const ui = path.join(inDir, d, 'ui');
   if (fs.existsSync(ui)) for (const f of fs.readdirSync(ui)) if (/\.(jpg|json)$/.test(f)) fs.copyFileSync(path.join(ui, f), path.join(out, 'ui', f));
-  for (const f of ['uiux.json']) if (fs.existsSync(path.join(inDir, d, f))) fs.copyFileSync(path.join(inDir, d, f), path.join(out, f));
+  for (const f of ['uiux.json', 'lines_diff.md']) if (fs.existsSync(path.join(inDir, d, f))) fs.copyFileSync(path.join(inDir, d, f), path.join(out, f));
 }
-const order = ['unit', 'text', 'script', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf'];
+const order = ['unit', 'text', 'script', 'lines', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf'];
 groups.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 for (const g of groups) if (g.key === 'winrate') g.items.sort((a, b) => parseInt(a.id.replace(/\D/g, '')) - parseInt(b.id.replace(/\D/g, '')));
 
@@ -69,6 +69,7 @@ if (warns.length) sum += `## ⚠️ 気にかけること\n\n${warns.map(line).j
 if (fixed.length) sum += `## 直ったもの（known.json から外す）\n\n${fixed.map(i => `- ${i.title}`).join('\n')}\n\n`;
 const wr = (groups.find(g => g.key === 'winrate') || { items: [] }).items;
 if (wr.length) sum += `## 勝率\n\n${wr.map(i => `- ${icon[i.status]} ${i.title}：${i.detail}`).join('\n')}\n\n`;
+try { const ld = fs.readFileSync(path.join(out, 'lines_diff.md'), 'utf8').split('\n'); sum += `## 台詞の変化（lines_diff.md）\n\n` + ld.slice(2, 40).join('\n') + (ld.length > 40 ? `\n…（続きは lines_diff.md、${ld.length}行）` : '') + '\n\n' } catch (e) { }
 sum += shotsMd + `\n全部の結果は report.md、基準を書き直すときは baseline_候補.json（qa/baseline.json に写す。本線だけ、satou さんの OK のあと）。\n`;
 
 let md = `# 検査の結果 v${ver}（GitHub）\n\n` + head;
