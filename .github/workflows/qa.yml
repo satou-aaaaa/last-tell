@@ -44,6 +44,7 @@ env:
       {"name": "fuzz", "only": "fuzz", "ch": ""},
       {"name": "WebKit（iPhone の Safari）ui,fuzz", "only": "ui,fuzz", "ch": "", "browser": "webkit"},
       {"name": "rules,basics", "only": "rules,basics", "ch": ""},
+      {"name": "公開サイト（オフライン・リンク・Lighthouse）", "only": "site", "ch": ""},
       {"name": "winrate 第1章", "only": "winrate", "ch": "1"},
       {"name": "winrate 第2章", "only": "winrate", "ch": "2"},
       {"name": "winrate 第3章", "only": "winrate", "ch": "3"},
@@ -159,6 +160,8 @@ jobs:
             fi
           fi
       - name: 検査を回す
+        env:
+          QA_LIGHTHOUSE: ${{ contains(matrix.only, 'site') && '1' || '' }}
         run: node qa/run_all.js index.html --only ${{ matrix.only }} ${{ matrix.ch && format('--ch {0}', matrix.ch) || '' }} --out qa-report ${{ needs.groups.outputs.full == 'true' && '--full' || '' }}
       - name: 画面を見やすくする（JPEG・一覧・前の版との違い）
         if: ${{ always() && contains(matrix.only, 'ui') }}

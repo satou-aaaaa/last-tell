@@ -36,7 +36,7 @@ for (const d of dirs) {
   if (fs.existsSync(ui)) for (const f of fs.readdirSync(ui)) if (/\.(jpg|json)$/.test(f)) fs.copyFileSync(path.join(ui, f), path.join(out, 'ui', f));
   for (const f of ['uiux.json', 'lines_diff.md']) if (fs.existsSync(path.join(inDir, d, f))) fs.copyFileSync(path.join(inDir, d, f), path.join(out, f));
 }
-const order = ['unit', 'text', 'script', 'lines', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf'];
+const order = ['unit', 'text', 'script', 'lines', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf', 'site'];
 const rank = k => order.indexOf(k.replace(/^webkit-/, '')) + (k.startsWith('webkit-') ? 100 : 0);
 groups.sort((a, b) => rank(a.key) - rank(b.key));
 for (const g of groups) if (g.key === 'winrate') g.items.sort((a, b) => parseInt(a.id.replace(/\D/g, '')) - parseInt(b.id.replace(/\D/g, '')));
