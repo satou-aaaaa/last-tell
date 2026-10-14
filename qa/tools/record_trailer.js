@@ -29,35 +29,44 @@ const CAP = {
   await page.goto('file://' + file, { waitUntil: 'load' }); await page.waitForTimeout(800);
   // 1. 錨亭のジン（第1章の始まりの会話）
   await page.evaluate(() => startChapter(CHAPTERS[0]));
-  await page.waitForTimeout(500); await page.evaluate(() => { const b = $('btnAdv'); if (b && b.offsetParent) b.click() });
+  // 老人（ジン）の顔と「……お前、負け方が下手だな」が出るところまで進める（地の文は飛ばす）
+  for (let k = 0; k < 12; k++) { await page.waitForTimeout(450); const ok = await page.evaluate(() => { const st = $('stage'), bx = $('box'); return !!(st && st.querySelector('svg,img') && /老人|old man/i.test(bx.textContent)) }); if (ok) break; await page.evaluate(() => { const b = $('btnAdv'); if (b && b.offsetParent) b.click() }) }
   await page.waitForTimeout(700); ev.jin = T(); await page.waitForTimeout(4200);
   // 2. 第4章の卓。自分はいつもコール（チェック）。相手が賭けてクセが出たら記録し、そのハンドで自分が勝ったら、そこを使う
   await page.evaluate(() => { startChapter(CHAPTERS[3], true); window.__tv = { tells: [], hands: [] };
     const _s = showTell; showTell = function (i, d) { const r = _s.apply(this, arguments); try { const p = S.players[i]; if (p && p.tell && !TW_KEEP.includes(p.name)) __tv.tells.push({ hand: S.handNo, name: p.name, cue: p.tell.cue || '', t: Date.now() }) } catch (e) {} return r };
     LT.on('startHand', () => __tv.hands.push({ hand: S.handNo, t: Date.now() }));
     // 勝ったハンドは画面に結果が出たまま 3.5秒止める（自動の打ち手を待たせる）
-    LT.on('endHand', () => { try { const me = S.players[0], w = me.won > 0 && !me.folded && S.street === 'showdown'; __tv.hands.push({ hand: S.handNo, end: Date.now(), won: w }); if (w) window.__hold = Date.now() + 3500 } catch (e) {} }) });
+    const _sd = showdown; showdown = function () { const r = _sd.apply(this, arguments); try { const w = S.players[0].won > 0; __tv.hands.push({ hand: S.handNo, end: Date.now(), won: w }); if (w) window.__hold = Date.now() + 4000 } catch (e) {} return r } });
   await H.startBot(page, { policy: 'call', maxHands: 400 });
   await page.evaluate(() => { const B = __bot; clearInterval(B.timer); B.timer = setInterval(() => { if (Date.now() < (window.__hold || 0)) return; B.tick() }, 120) });
   const tAt0 = Date.now(); let pick = null;
   while (Date.now() - tAt0 < maxMin * 60000 && !pick) { await page.waitForTimeout(1500);
     const tv = await page.evaluate(() => window.__tv);
-    for (const h of tv.hands.filter(h => h.end && h.won)) { const tl = tv.tells.find(x => x.hand === h.hand); const st = tv.hands.find(x => x.hand === h.hand && x.t);
+    for (const h of tv.hands.filter(h => h.end && h.won)) { const st = tv.hands.filter(x => x.hand === h.hand && x.t && x.t <= h.end).pop(); const tl = st && tv.tells.filter(x => x.hand === h.hand && x.t >= st.t && x.t <= h.end).pop();
       if (tl && st) { pick = { start: (st.t - t0) / 1000, tell: (tl.t - t0) / 1000, end: (h.end - t0) / 1000, who: tl.name, cue: tl.cue }; break } }
     if (await page.evaluate(() => __bot.done)) await page.evaluate(() => { startChapter(CHAPTERS[3], true); __bot.restart() }) }
-  if (pick) await page.waitForTimeout(3500);
+  if (pick) await page.waitForTimeout(4000);
   // 3. タイトル
   await page.evaluate(() => show('title')); await page.waitForTimeout(400); ev.title = T(); await page.waitForTimeout(5000);
-  const vid = await page.video().path(); await ctx.close(); await b.close();
+  const vid = await page.video().path(); const tEnd = T(); await ctx.close(); await b.close();
+  // 録画の長さは時計とずれることがある（重いと間引かれる）。全体の長さで時刻を合わせる
+  const vlen = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', vid]).toString().trim() || tEnd, k = vlen / tEnd;
+  console.log(`録画 ${vlen.toFixed(1)}秒／時計 ${tEnd.toFixed(1)}秒`);
+  for (const o of [ev, pick]) if (o) for (const x in o) if (typeof o[x] === 'number') o[x] *= k;
   fs.writeFileSync(path.join(OUT, `trailer_${lang}.json`), JSON.stringify({ ev, pick }, null, 1));
   if (!pick) { console.log('クセ→コール→勝ちのハンドが出なかった。--min を増やしてもう一度'); process.exit(1) }
-  // 切り出し：ジン 4秒、卓（そのハンドの始まりから勝ちの後 2.5秒まで。長いときはクセの 8秒前から）、タイトル 3秒
-  const s0 = Math.max(pick.start, pick.tell - 6), e0 = pick.end + 2.5, cut = [[ev.jin, 4], [s0, e0 - s0], [ev.title, 3]];
-  const tot = cut.reduce((a, c) => a + c[1], 0), tT = 4 + (pick.tell - s0), tE = 4 + (pick.end - s0);
+  // 切り出し：ジン 4秒 → 卓の始まり 3秒 → クセの前後 6秒 → 勝つ前 4秒〜後 3秒 → タイトル 3秒（だいたい 23秒）
+  //   クセから勝ちまでが短い（10秒以内）ときは、クセの前から勝ちの後まで続けて使う
+  const tl0 = Math.max(pick.start + 3, pick.tell - 3), one = pick.end - tl0 <= 10, sd0 = pick.end - 4;
+  const cut = [[ev.jin, 4], [pick.start, 3]].concat(one ? [[tl0, pick.end + 3 - tl0]] : [[tl0, 6], [sd0, 7]], [[ev.title, 3]]);
+  const tot = cut.reduce((a, c) => a + c[1], 0), tT = 7 + (pick.tell - tl0), tE = one ? 7 + (pick.end - tl0) : 17;
   const esc = s => s.replace(/\\/g, '\\\\').replace(/'/g, "\u2019").replace(/:/g, '\\:').replace(/,/g, '\\,');
-  const dt = (txt, a, z, y) => `drawtext=fontfile=${FONT}:text='${esc(txt)}':fontsize=46:fontcolor=white:borderw=4:bordercolor=black@0.85:x=(w-text_w)/2:y=${y}:enable='between(t,${a.toFixed(2)},${z.toFixed(2)})'`;
-  const caps = [dt(CAP.jin, 0, 4, 'h*0.08'), dt(CAP.table, 4, Math.min(tT, 4 + 4), 'h*0.08'), dt(CAP.tell, tT, tT + 3, 'h*0.08'), dt(CAP.call, tT + 3, Math.max(tT + 4, tE - 0.5), 'h*0.08'),
-    dt(CAP.win, tE - 0.5, tot - 3, 'h*0.08'), dt(CAP.title, tot - 3, tot, 'h*0.86')].join(',');
+  // 文字の大きさは幅に収まるように（英字は和文の半分強の幅）。後ろに薄い黒の帯を敷いて、ゲームの文字と混ざらないようにする
+  const fsz = txt => Math.min(46, Math.floor(800 / [...txt].reduce((n, c) => n + (c.charCodeAt(0) < 0x2000 ? .56 : 1), 0)));
+  const dt = (txt, a, z, y) => `drawtext=fontfile=${FONT}:text='${esc(txt)}':fontsize=${fsz(txt)}:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=18:x=(w-text_w)/2:y=${y}:enable='between(t,${a.toFixed(2)},${z.toFixed(2)})'`;
+  const caps = [dt(CAP.jin, 0, 4, 'h*0.08'), dt(CAP.table, 4, 7, 'h*0.08'), dt(CAP.tell, 7, Math.min(tT + 3, tE - 1), 'h*0.08'), dt(CAP.call, Math.min(tT + 3, tE - 1), tE, 'h*0.08'),
+    dt(CAP.win, tE, tot - 3, 'h*0.08'), dt(CAP.title, tot - 3, tot, 'h*0.86')].join(',');
   const fc = cut.map((c, i) => `[0:v]trim=start=${c[0].toFixed(2)}:duration=${c[1].toFixed(2)},setpts=PTS-STARTPTS[v${i}]`).join(';') + ';' + cut.map((_, i) => `[v${i}]`).join('') + `concat=n=${cut.length}:v=1:a=0[cv];[cv]scale=886:1920:flags=lanczos,${caps},fps=30,format=yuv420p[o]`;
   const mp4 = path.join(OUT, `trailer_${lang}.mp4`);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', vid, '-filter_complex', fc, '-map', '[o]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-movflags', '+faststart', mp4]);
