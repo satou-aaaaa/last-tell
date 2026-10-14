@@ -6,14 +6,23 @@
 const H = require('../lib/harness');
 const os = require('os');
 
-async function playOnce(browser, file, ch, maxHands, seed) {
+// テルを主軸に（js/39_tell_win.js 案1）：CFG.tells の卓では、クセの札が出るのは「相手がフロップ以降で賭けた・上げた」ときだけ（改善提案 2026-10-14b §1）。
+// showTell を外から包んで、札が出たときの通り（street）と動き（d.type）を数える。特別なクセ（TW_KEEP：本物のテル・手袋）と、台本の手は数えない
+const TW_WATCH = () => { try { if (typeof showTell !== 'function' || typeof TW_KEEP === 'undefined') return; window.__tw = { n: 0, bad: 0, ex: [] }; const _s = showTell;
+  showTell = function (i, d) { const r = _s.apply(this, arguments); try { const p = S.players[i];
+    if (p && p.tell && CFG.tells && !CFG.flashback && !S.scriptAI && !S.storyHand && !S.finalHand && !TW_KEEP.includes(p.name)) { __tw.n++;
+      if (S.street === 'preflop' || !d || d.type !== 'raise') { __tw.bad++; if (__tw.ex.length < 3) __tw.ex.push(p.name + ' ' + S.street + ' ' + (d && d.type)) } } } catch (e) {} return r } } catch (e) {} };
+
+async function playOnce(browser, file, ch, maxHands, seed, tw) {
   const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: ch > 10 ? H.UNLOCKED : null, seed });
   try {
     await page.evaluate(n => n > 10 ? startP2(PART2[n - 11], true) : startChapter(CHAPTERS[n - 1], true), ch);
+    await page.evaluate(TW_WATCH);
+    const twGet = async () => { try { const t = await page.evaluate(() => window.__tw || null); if (t && tw) { tw.n += t.n; tw.bad += t.bad; tw.ex.push(...t.ex) } } catch (e) {} };
     await H.startBot(page, { policy: 'cpu', maxHands });
     // 上限は手数に合わせる（1ハンド約4秒、ブラウザがコアを分け合うと遅くなるので2倍見る）。本当に止まったのは stallMs で分かる
     const r = await H.runUntilDone(page, { timeoutMs: maxHands * 8000, stallMs: 20000 });
-    const b = await H.botState(page);
+    const b = await H.botState(page); await twGet();
     // 手は進んでいるのに時間切れ → 80ハンドで決着しない回と同じく「決着なし」（負け扱い）。止まった（stalled）ときだけエラー
     return r.status === 'done' ? b.result : r.status === 'timeout' ? 'nodecision' : 'error';
   } catch (e) { return 'error' } finally { await ctx.close() }
@@ -24,11 +33,12 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
   const N = quick ? 8 : 24, maxHands = 80, items = [], out = {};
   const all = quick ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15];
   for (const ch of chapters ? all.filter(c => chapters.includes(c)) : all) {
-    const jobs = Array.from({ length: N }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1));
+    const tw = { n: 0, bad: 0, ex: [] };
+    const jobs = Array.from({ length: N }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw));
     const res = [];
     for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
     // 途中で止まった回は1度だけ1つずつやり直す（実行機が混んでいただけのことがある）
-    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1);
+    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw);
     const ok = res.filter(r => r !== 'error'), w = ok.filter(r => r === 'win').length;
     const rate = ok.length ? w / ok.length : 0;
     out['ch' + ch] = { rate, n: ok.length };
@@ -46,6 +56,8 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
       else if (Math.abs(rate - base.rate) > tol) status = 'warn';
     } else detail += '、基準なし（今回の値を基準にする）';
     items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail, games: res.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
+    if (tw.n) items.push({ id: 'tellwin:ch' + ch, title: `第${ch}章：クセの札は相手のフロップ以降の賭け・上げのときだけ`, status: tw.bad ? 'fail' : 'ok',
+      detail: `札 ${tw.n}回のうち、それ以外で出たのは ${tw.bad}回` + (tw.ex.length ? '（例：' + tw.ex.slice(0, 3).join('／') + '）' : '') });
   }
   return { name: '勝率', items, baselineOut: { winrate: out } };
 }

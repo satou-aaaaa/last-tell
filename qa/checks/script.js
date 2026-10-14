@@ -35,6 +35,12 @@ async function collect(browser, file) {
     // 行動のひとこと（LINES：降りる・上げる・勝ったときなど。交代レビュー v73 で追加。v72 までは読んでいなかった）
     raw.push(...await page.evaluate(() => { const r = []; if (typeof LINES === 'undefined') return r;
       for (const [who, o] of Object.entries(LINES)) for (const [k, v] of Object.entries(o || {})) if (Array.isArray(v)) v.forEach(t => { if (typeof t === 'string' && t.length > 1) r.push([who, t]) }); return r }));
+    // テルを主軸に（js/39_tell_win.js）：見せ札の一言（話すのはその時の相手）と、ジンの三行の1行目（twLine。クセの言葉と 1回／複数回の形を全部作る）（改善提案 2026-10-14b §1）
+    raw.push(...await page.evaluate(() => { const r = []; try {
+      if (typeof TW_SHOW_LINES !== 'undefined') TW_SHOW_LINES.forEach(t => r.push(['相手（見せ札）', t]));
+      if (typeof twLine === 'function' && typeof TW_CUE_WORD !== 'undefined') { const keep = S;
+        try { for (const c of Object.keys(TW_CUE_WORD).concat(['?'])) for (const [w, v] of [[1, 1], [2, 1], [1, 2], [2, 2], [1, 0], [2, 0], [0, 1], [0, 2]]) { S = { tw: { won: w, saved: v, cue: { [c]: 1 } } }; const t = twLine(); if (t && !r.some(x => x[1] === t)) r.push(['ジン', t]) } } finally { S = keep } }
+    } catch (e) {} return r }));
     // 英語にしたとき、日本語が残る行
     lines = await page.evaluate(raw => raw.map(([who, t]) => { let en = ''; try { en = I18N.tr(t.split('〈主〉').join('Ao').split('〈呼〉').join('Ao')) } catch (e) { en = '' } return [who, t, /[぀-ヿ㐀-鿿]/.test(en)] }), raw);
   } finally { await ctx.close() }
