@@ -1,4 +1,4 @@
-# ゲーム（index.html）が変わるたびに検査（qa/）を回す。
+# ゲーム（index.html）と、ゲームが開くページ（規約など・sw.js・licenses/）が変わるたびに検査（qa/）を回す。
 # テスト公開はプルリクエストで出して、✅ を見てからマージする。
 name: QA
 
@@ -6,10 +6,10 @@ on:
   pull_request:
     # 下書きを外したときも回す（回らないと自動マージが起きない）
     types: [opened, synchronize, reopened, ready_for_review]
-    paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
+    paths: ['*.html', 'sw.js', 'style.css', 'licenses/**', 'qa/**', '.github/workflows/qa.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'qa/**', '.github/workflows/qa.yml']
+    paths: ['*.html', 'sw.js', 'style.css', 'licenses/**', 'qa/**', '.github/workflows/qa.yml']
   workflow_dispatch:
     inputs:
       full:
@@ -29,7 +29,7 @@ concurrency:
 env:
   QA_GROUPS: >-
     [
-      {"name": "text,script,ftue,a11y,perf,save", "only": "text,script,ftue,a11y,perf,save", "ch": ""},
+      {"name": "text,script,ftue,a11y,perf,save,pages", "only": "text,script,ftue,a11y,perf,save,pages", "ch": ""},
       {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
       {"name": "fuzz", "only": "fuzz", "ch": ""},
       {"name": "rules,basics", "only": "rules,basics", "ch": ""},

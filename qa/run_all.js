@@ -11,7 +11,7 @@ const path = require('path');
 const H = require('./lib/harness');
 
 const CHECKS = [
-  ['text', './checks/text'], ['script', './checks/script'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'],
+  ['text', './checks/text'], ['script', './checks/script'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'], ['pages', './checks/pages'],
 ];
 const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
