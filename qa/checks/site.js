@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { execFileSync } = require('child_process');
+const { execFile } = require('child_process');
 const H = require('../lib/harness');
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml' };
@@ -74,8 +74,9 @@ async function run({ browser, file, baseline }) {
     const scores = {};
     if (process.env.QA_LIGHTHOUSE === '1') {
       try {
-        const out = execFileSync('npx', ['-y', 'lighthouse@12.8.2', url, '--quiet', '--output=json', '--only-categories=performance,accessibility,best-practices,seo', '--form-factor=mobile',
-          '--chrome-flags=--headless=new --no-sandbox'], { env: { ...process.env, CHROME_PATH: H.pw.chromium.executablePath() }, maxBuffer: 1 << 28, timeout: 420000 }).toString();
+        // 同じプロセスでページを配っているので、待つ間も止めない（execFileSync だと配れなくなって止まる）
+        const out = await new Promise((ok, ng) => execFile('npx', ['-y', 'lighthouse@12.8.2', url, '--quiet', '--output=json', '--only-categories=performance,accessibility,best-practices,seo', '--form-factor=mobile',
+          '--chrome-flags=--headless=new --no-sandbox'], { env: { ...process.env, CHROME_PATH: H.pw.chromium.executablePath() }, maxBuffer: 1 << 28, timeout: 420000 }, (e, so) => e ? ng(e) : ok(String(so))));
         const j = JSON.parse(out); for (const [k, c] of Object.entries(j.categories)) scores[k] = Math.round(c.score * 100);
       } catch (e) { items.push({ id: 'site:lighthouse', title: 'Lighthouse の点', status: 'warn', detail: '測れなかった: ' + String(e.message).slice(0, 160) }) }
       if (Object.keys(scores).length) {
