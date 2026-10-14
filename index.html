@@ -2034,7 +2034,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.77.0';
+const APP_VERSION='0.78.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -10695,7 +10695,9 @@ function lpFrame(){LP.raf=0;
   if(LP.dirty){LP.dirty=false;LP.n++;LT.emit('layout')}
   if(LP.say){let on=false;try{on=sayFollow()}catch(e){}LP.say=on&&performance.now()<LP.until}   // 顔アップの重さ 案B：決めた時間を過ぎたら止める
   if(LP.say)lpKick()}
-function lpKick(){if(!LP.raf)LP.raf=requestAnimationFrame(lpFrame)}
+function lpKick(){if(LP.raf)return;LP.raf=requestAnimationFrame(lpFrame);clearTimeout(LP.to);LP.to=setTimeout(()=>{if(LP.raf){cancelAnimationFrame(LP.raf);lpFrame()}},150)}
+// v78：Safari（WebKit）では次のコマ（requestAnimationFrame）がしばらく来ないことがあり、位置合わせが回らず、描き直した席のチップが場札に残っていた
+// （CI の rects：WebKit だけ spot1 .mystack に data-ca も translate も無い＝chipAvoid が後で一度も通っていない）。0.15秒来なければ自分で回す
 // 何回呼んでも、次のコマの頭で1回だけ位置合わせをする
 function layoutSoon(){LP.dirty=true;lpKick()}
 // v76：札を配る動き（flip）が終わったあとにもう一度位置合わせ。WebKit では動きの途中に測った位置のまま、チップが場札に残ることがあった
