@@ -1517,6 +1517,8 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 .mine .hold.gone::after{content:attr(data-gone);position:absolute;left:50%;top:42%;translate:-50% 0;white-space:nowrap;font-size:.72rem;color:var(--muted,#9a968c);background:rgba(0,0,0,.6);padding:1px 8px;letter-spacing:.04em}
 .mine .hold.gone.mucked .card{filter:none}
 @media (prefers-reduced-motion:reduce){.fxlayer .knockhand,.fxlayer .foldhand,.fxlayer .knockring{display:none}}
+/* v79（v78 レビュー 1）：6人卓の縦（.ring6）は場札が小さく下にあるので、上の置き場所だと自分の手札に乗る。場札の左に置く */
+@media (max-width:699px) and (orientation:portrait){.ring6 .felt .boardspot > .muckpile{left:-60px;top:0}}
 
 /* 話しかける要素：話題の3つ、章の前に誰に聞くか、噂の印 */
 .t3d .needlerow .askrow.tkrow{flex-direction:row;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px)}
@@ -2034,7 +2036,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.78.0';
+const APP_VERSION='0.79.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html'};
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2178,8 +2180,13 @@ Object.assign(EN_DICT,{
 });
 [['口元','smile'],['口数','chatter'],['目線','glance'],['汗','sweat'],['止まった手','stillness'],['視線','stare'],['速さ','speed'],['顔','face']].forEach(([ja,en])=>EN_TPL.push(
 [ja+"で{1}回取って、{2}回降りて守った。顔が見えてきたな","You took {1} pots off their "+en+", and folded {2} times to save chips. You're starting to see faces."],
-[ja+"で{1}回、取ったな。あれは運じゃない","You took {1} pots off their "+en+". That wasn't luck."]));
-EN_TPL.push(["{0}回、クセを見て降りた。あれも勝ちだ","You read a tell and folded {0} times. That's a win too."]);
+[ja+"で{1}回、取ったな。あれは運じゃない","You took {1} pots off their "+en+". That wasn't luck."],
+// v79（v78 レビュー 4）：1回のときの英語（"1 pots"・"1 times" にしない）。字の多い型が先に当たる
+[ja+"で1回取って、1回降りて守った。顔が見えてきたな","You took a pot off their "+en+", and folded once to save chips. You're starting to see faces."],
+[ja+"で1回取って、{2}回降りて守った。顔が見えてきたな","You took a pot off their "+en+", and folded {2} times to save chips. You're starting to see faces."],
+[ja+"で{1}回取って、1回降りて守った。顔が見えてきたな","You took {1} pots off their "+en+", and folded once to save chips. You're starting to see faces."],
+[ja+"で1回、取ったな。あれは運じゃない","You took a pot off their "+en+". That wasn't luck."]));
+EN_TPL.push(["{0}回、クセを見て降りた。あれも勝ちだ","You read a tell and folded {0} times. That's a win too."],["1回、クセを見て降りた。あれも勝ちだ","You read a tell and folded once. That's a win too."]);
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
@@ -10735,6 +10742,11 @@ function cuePlace(){const P=$('plates');if(!P)return;const cs=[...P.querySelecto
   cs.forEach(cb=>{const b=$('bust'+cb.dataset.bust);if(!b)return;const br=b.getBoundingClientRect();
     out.push([cb,(pr.right-br.right+br.width*.06)/z+'px',Math.max(4,(br.top-pr.top+br.height*.06)/z)+'px'])});
   out.forEach(([cb,r,t])=>{cb.style.right=r;cb.style.top=t})}
+// v79（v78 レビュー 2）：ジンの一言の帯が、あと少しの幅で2行になると卓（自分の手札）にかかる（Safari は字が少し広い）。2px までなら字を小さくして1行に収める。収まらない長い文は2行のまま
+function senseiFit(){const p=$('senseiText'),b=$('sensei');if(!p||!b||b.hidden||!p.offsetParent)return;const k=p.textContent+'|'+p.clientWidth;if(p._sk===k)return;
+  p.style.fontSize='';const cs=getComputedStyle(p),f0=parseFloat(cs.fontSize),lh=parseFloat(cs.lineHeight)||f0*1.45;
+  if(p.scrollHeight>lh*1.5){let f=f0;while(f>f0-2&&p.scrollHeight>lh*1.5){f-=.5;p.style.fontSize=f+'px'}if(p.scrollHeight>lh*1.5)p.style.fontSize=''}
+  p._sk=k}
 const lpTry=f=>{try{f()}catch(e){console.error('[LT] layout',e)}};
 // 順番：測るだけのもの・書くことが少ないものを先に、書いてから測るもの（fitTable・吹き出しの追いかけ）を後に。faceFit は 30c_ui64 で先に登録してある
 LT.on('layout',()=>{const gameOn=!$('game').hidden;
@@ -10747,7 +10759,7 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
     // v75 レビュー 1：卓の大きさが変わって（レイズの欄を開くなど）横に置いた吹き出しが名札にかかったら置き直す
     {const R0=($('table')||document.body).getBoundingClientRect(),pr=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent).map(e=>[e.id,e.getBoundingClientRect()]);if(pr.length)document.querySelectorAll('#sayLayer .say.go.side').forEach(sy=>{const r=sy.getBoundingClientRect(),me='plate'+sy.id.replace('say','');const k=(sy.dataset.seq||'')+'|'+Math.round(R0.height);if(sy._rpK===k)return;if(pr.some(([id,q])=>id!==me&&r.left<q.right&&q.left<r.right&&r.top<q.bottom&&q.top<r.bottom)){sy._rpK=k;lpTry(()=>sayPlace(sy))}})}   // 同じ吹き出し・同じ卓の高さでは1回だけ（置き場が無いときに毎コマ置き直さない）
-    lpTry(fitTable);lpTry(potClear);lpTry(chipAvoid);lpTry(barSync);   // v71（改善提案§1）：場札にチップをかけない（ポットの山→席の賭けチップの順）
+    lpTry(senseiFit);lpTry(fitTable);lpTry(potClear);lpTry(chipAvoid);lpTry(barSync);   // v71（改善提案§1）：場札にチップをかけない（ポットの山→席の賭けチップの順）
   }else{lpTry(fitMyHand);lpTry(barSync)}   // 相手紹介（#vs）は卓が出る前
   lpTry(tourGuard);lpTry(fitScene);
   if(LP.rendered){LP.rendered=false;if(gameOn)lpTry(bAvLoop)}
