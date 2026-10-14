@@ -7,8 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-// 安い検査（合わせて20秒ほど）はいつも回す
-const ALWAYS = ['text', 'script', 'ftue', 'a11y', 'perf'];
+// 安い検査（合わせて30秒ほど）はいつも回す。unit はルールの単体テスト（ブラウザなし）
+const ALWAYS = ['unit', 'text', 'script', 'ftue', 'a11y', 'perf'];
 
 // [ファイル名に合う正規表現, 回す検査]（上から順に全部見る。どれにも合わなければ全部）
 const RULES = [

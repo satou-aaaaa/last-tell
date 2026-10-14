@@ -1,6 +1,7 @@
 // 再発チェック：プロポーカー目線・ゲームクリエイター目線で見つかった問題が、また起きていないか
 // 中身は research/プロポーカープレイヤー目線_実装仕様.md と research/プロ目線の改善_実装仕様.md の「確認」から
 'use strict';
+const fs = require('fs');
 const H = require('../lib/harness');
 
 // ゲームの関数を包んで、CPUの判断とショーダウンを記録する
@@ -70,6 +71,8 @@ const STRONG = ['ジン', 'クロウ', 'ハヤト', 'レイカ', 'カオル'];
 async function run({ browser, file, quick }) {
   const H1 = quick ? 25 : 80, items = [];
   const st7 = H.UNLOCKED;
+  // S1（BBアンティが返らない）は、ゲームに Rules（19b_rules.js）が入っていれば単体テスト unit:uncalled で確かめる（2026-10-14）
+  const unitS1 = fs.readFileSync(file, 'utf8').includes('// @unit-begin rules');
   const jobs = [
     ['startChapter(CHAPTERS[0],true)', 'call', H1],
     [`($('freeSize').value='6',startFree())`, 'call', H1],
@@ -89,11 +92,14 @@ async function run({ browser, file, quick }) {
   ];
   // 4つずつ回す（一度に全部だと遅くなりすぎる）
   const res = [];
-  for (let i = 0; i < jobs.length; i += 4) res.push(...await Promise.all(jobs.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
+  const skip = unitS1 ? [0, 1] : [], EMPTY = { limp: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, hands: 0, errs: [], errors: [] };
+  const todo = jobs.filter((j, k) => !skip.includes(k)), got = [];
+  for (let i = 0; i < todo.length; i += 4) got.push(...await Promise.all(todo.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
+  jobs.forEach((j, k) => res.push(skip.includes(k) ? EMPTY : got.shift()));
   const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF] = res;
   // S1 BBアンティ
   const a = merge(s1, s1b);
-  items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
+  if (!unitS1) items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
     detail: `全員コールのショーダウン ${a.sdHands}回のうち、アンティがBBに返った ${a.sdRefundBB}回` });
   // A2 トーナメント
   const t = merge(merge(tour6, tour14), ura6);

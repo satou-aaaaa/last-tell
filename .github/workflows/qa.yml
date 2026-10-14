@@ -26,9 +26,11 @@ concurrency:
 
 # 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）
 # 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
+# nobrowser: ブラウザを使わない組（Playwright と字体を入れない。数秒で終わる）
 env:
   QA_GROUPS: >-
     [
+      {"name": "unit（ルールの単体テスト）", "only": "unit", "ch": "", "nobrowser": true},
       {"name": "text,script,ftue,a11y,perf,save", "only": "text,script,ftue,a11y,perf,save", "ch": ""},
       {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
       {"name": "fuzz", "only": "fuzz", "ch": ""},
@@ -85,6 +87,7 @@ jobs:
         with:
           node-version: 22
       - name: Playwright と日本語の字体を入れる
+        if: ${{ !matrix.nobrowser }}
         run: |
           # 基準（qa/baseline.json）を作った環境と同じ字体にする。字の幅が変わると画面の判定がずれるため
           sudo apt-get update -q && sudo apt-get install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
