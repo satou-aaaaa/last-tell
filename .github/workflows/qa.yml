@@ -158,7 +158,8 @@ jobs:
     # 組ごとの結果を1つにまとめて、ブランチ qa-results に置く。Claude はここだけ読む（qa/ci_result.sh）
     name: 検査のまとめ
     needs: [groups, qa]
-    if: ${{ always() && needs.groups.result == 'success' }}
+    # 新しいコミットで取り消された実行では まとめない（結果の無い組が ❌ に見えるため）
+    if: ${{ !cancelled() && needs.groups.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
