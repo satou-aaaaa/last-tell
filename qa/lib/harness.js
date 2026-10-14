@@ -30,8 +30,6 @@ function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {
 
 async function launch() {
   const exe = fs.existsSync('/opt/pw-browsers/chromium') ? undefined : undefined;
-  // QA_BROWSER=webkit で iPhone の Safari と同じ WebKit で回す（2026-10-14 CIのチェック充実 案3）
-  if (process.env.QA_BROWSER === 'webkit') return pw.webkit.launch();
   return pw.chromium.launch({ args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
 }
 

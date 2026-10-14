@@ -86,17 +86,15 @@ async function run({ browser, file, quick }) {
   if (fresh.errors.length) items.push({ id: 'save:play-errors', title: 'セーブを作るために遊んだときのエラー', status: 'fail', detail: fresh.errors.slice(0, 3).join(' / ') });
 
   // 2. 前の版のセーブ
-  // GitHub（CI）では控えが無いので、QA_PREV_HTML=名前=ファイル,… で前の版（main の index.html など）を渡す（2026-10-14 検証をCIに寄せる）
-  const prev = (process.env.QA_PREV_HTML || '').split(',').filter(Boolean).map(x => x.split('=')).filter(([, f]) => f && fs.existsSync(f));
-  const snaps = prev.length ? prev.map(([n]) => n) : fs.existsSync(SNAP) ? fs.readdirSync(SNAP).map(f => (/^v(\d+)\.tar\.gz$/.exec(f) || [])[1]).filter(Boolean).map(Number).filter(n => n < minor(ver)).sort((a, b) => b - a) : [];
+  const snaps = fs.existsSync(SNAP) ? fs.readdirSync(SNAP).map(f => (/^v(\d+)\.tar\.gz$/.exec(f) || [])[1]).filter(Boolean).map(Number).filter(n => n < minor(ver)).sort((a, b) => b - a) : [];
   if (!snaps.length) {
-    items.push({ id: 'save:carry', title: '前の版のセーブを新しい版で開ける', status: 'warn', detail: '前の版の控え（dev/snapshots/、CI では QA_PREV_HTML）が無いので飛ばした' });
+    items.push({ id: 'save:carry', title: '前の版のセーブを新しい版で開ける', status: 'warn', detail: '前の版の控え（dev/snapshots/）が無いので飛ばした' });
     return { name: 'セーブの引き継ぎ', items };
   }
   for (const n of quick ? snaps.slice(0, 1) : snaps) {
     let bad = [], detail = '';
     try {
-      const old = await playAndDump(browser, prev.length ? prev.find(([k]) => k === n)[1] : buildSnapshot(n), null);
+      const old = await playAndDump(browser, buildSnapshot(n), null);
       const r = await openInNew(browser, file, old.storage);
       if (r.lost.length) bad.push(`消えた鍵: ${r.lost.join('、')}`);
       if (r.broken.length) bad.push(`読めなくなった鍵: ${r.broken.join('、')}`);

@@ -1,7 +1,6 @@
 // 再発チェック：プロポーカー目線・ゲームクリエイター目線で見つかった問題が、また起きていないか
 // 中身は research/プロポーカープレイヤー目線_実装仕様.md と research/プロ目線の改善_実装仕様.md の「確認」から
 'use strict';
-const fs = require('fs');
 const H = require('../lib/harness');
 
 // ゲームの関数を包んで、CPUの判断とショーダウンを記録する
@@ -46,7 +45,7 @@ const PROBE = `(() => {
 })();`;
 
 async function session(browser, file, start, policy, hands, storage) {
-  const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage, seed: H.seedOf('rules', start, policy) });
+  const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage });
   try {
     await page.evaluate(PROBE);
     const t0 = Date.now();
@@ -67,17 +66,10 @@ const pct = (h) => h && h.n ? Math.round(h.hit / h.n * 100) : null;
 function merge(a, b) { const o = JSON.parse(JSON.stringify(a)); for (const k of ['limp', 'rivBig', 'faceOpen']) for (const n in b[k]) { o[k][n] = o[k][n] || { n: 0, hit: 0 }; o[k][n].n += b[k][n].n; o[k][n].hit += b[k][n].hit } for (const k of ['sdRefundBB', 'sdHands', 'twice', 'twiceAsk', 'bomb', 'hands']) o[k] = (o[k] || 0) + (b[k] || 0); return o }
 
 const STRONG = ['ジン', 'クロウ', 'ハヤト', 'レイカ', 'カオル'];
-// 割合を見る検査は、測れた回数が少ないと1〜2回の違いで外れる（2026-10-14 PR #22 で S2 がジン 11回 45% で ❌、同じ中身の #21 は ✅）。
-// 外れたキャラが MIN_N 回以上測れていれば ❌、全部それより少なければ ⚠️（CIのチェック充実 案1）
-const MIN_N = 20;
-const rateStatus = bad => !bad.length ? 'ok' : bad.some(x => x[2] >= MIN_N) ? 'fail' : 'warn';
 
 async function run({ browser, file, quick }) {
-  // リバーの2倍ベット（S2）は、短い版でも強いキャラごとに20回ほど測れるように多めに打つ（CIのチェック充実 案1）
-  const H1 = quick ? 25 : 80, H2 = quick ? 60 : 120, items = [];
+  const H1 = quick ? 25 : 80, items = [];
   const st7 = H.UNLOCKED;
-  // S1（BBアンティが返らない）は、ゲームに Rules（19b_rules.js）が入っていれば単体テスト unit:uncalled で確かめる（2026-10-14）
-  const unitS1 = fs.readFileSync(file, 'utf8').includes('// @unit-begin rules');
   const jobs = [
     ['startChapter(CHAPTERS[0],true)', 'call', H1],
     [`($('freeSize').value='6',startFree())`, 'call', H1],
@@ -88,23 +80,20 @@ async function run({ browser, file, quick }) {
     ['startChapter(CHAPTERS[5],true)', 'fold', H1],
     ['startChapter(CHAPTERS[6],true)', 'fold', H1],
     [`($('freeSize').value='6',startFree())`, 'fold', H1],
-    ['startChapter(CHAPTERS[5],true)', 'overbet', H2],
-    ['startChapter(CHAPTERS[6],true)', 'overbet', H2],
-    [`($('freeSize').value='6',startFree())`, 'overbet', H2],
+    ['startChapter(CHAPTERS[5],true)', 'overbet', H1],
+    ['startChapter(CHAPTERS[6],true)', 'overbet', H1],
+    [`($('freeSize').value='6',startFree())`, 'overbet', H1],
     ['startChapter(CHAPTERS[5],true)', 'open3', H1],
     ['startChapter(CHAPTERS[6],true)', 'open3', H1],
     [`($('freeSize').value='6',startFree())`, 'open3', H1],
   ];
   // 4つずつ回す（一度に全部だと遅くなりすぎる）
   const res = [];
-  const skip = unitS1 ? [0, 1] : [], EMPTY = { limp: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, hands: 0, errs: [], errors: [] };
-  const todo = jobs.filter((j, k) => !skip.includes(k)), got = [];
-  for (let i = 0; i < todo.length; i += 4) got.push(...await Promise.all(todo.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
-  jobs.forEach((j, k) => res.push(skip.includes(k) ? EMPTY : got.shift()));
+  for (let i = 0; i < jobs.length; i += 4) res.push(...await Promise.all(jobs.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
   const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF] = res;
   // S1 BBアンティ
   const a = merge(s1, s1b);
-  if (!unitS1) items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
+  items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
     detail: `全員コールのショーダウン ${a.sdHands}回のうち、アンティがBBに返った ${a.sdRefundBB}回` });
   // A2 トーナメント
   const t = merge(merge(tour6, tour14), ura6);
@@ -115,20 +104,20 @@ async function run({ browser, file, quick }) {
   const L = [lim4, lim6, lim7, free6].reduce(merge);
   const limpStrong = STRONG.filter(n => L.limp[n] && L.limp[n].n >= 8).map(n => [n, pct(L.limp[n]), L.limp[n].n]);
   const badLimp = limpStrong.filter(x => x[1] > 10);
-  items.push({ id: 'rule:A1-limp', title: '強いキャラが最初にコールだけで入らない（プロポーカー A1）', status: !limpStrong.length ? 'warn' : rateStatus(badLimp),
+  items.push({ id: 'rule:A1-limp', title: '強いキャラが最初にコールだけで入らない（プロポーカー A1）', status: !limpStrong.length ? 'warn' : badLimp.length ? 'fail' : 'ok',
     detail: limpStrong.length ? limpStrong.map(x => `${x[0]} ${x[1]}%（${x[2]}回）`).join('、') + '（10%以下で合格）' : '測れる回数が足りない' });
   // A1 後半：3BBのオープンに降りすぎない
   const O = [op6, op7, opF].reduce(merge);
   const foldStrong = STRONG.filter(n => O.faceOpen[n] && O.faceOpen[n].n >= 8).map(n => [n, pct(O.faceOpen[n]), O.faceOpen[n].n]);
   const badFold = foldStrong.filter(x => x[1] > 80);
-  items.push({ id: 'rule:A1-faceopen', title: '強いキャラが3BBのオープンに降りすぎない（プロポーカー A1）', status: !foldStrong.length ? 'warn' : rateStatus(badFold),
+  items.push({ id: 'rule:A1-faceopen', title: '強いキャラが3BBのオープンに降りすぎない（プロポーカー A1）', status: !foldStrong.length ? 'warn' : badFold.length ? 'fail' : 'ok',
     detail: foldStrong.length ? foldStrong.map(x => `${x[0]} 降りる ${x[1]}%（${x[2]}回）`).join('、') + '（80%以下で合格）' : '測れる回数が足りない' });
   // S2 リバーの大きなベット
   const R = [ob6, ob7, obF].reduce(merge);
   const callStrong = STRONG.filter(n => R.rivBig[n] && R.rivBig[n].n >= 6).map(n => [n, pct(R.rivBig[n]), R.rivBig[n].n]);
   const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
-  items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
-    detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
+  items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : badCall.length ? 'fail' : 'ok',
+    detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + '（40%以下で合格。30回以上測れたときは10%以上も）' : '測れる回数が足りない' });
   const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });
   return { name: 'プロポーカー目線の再発チェック', items };
