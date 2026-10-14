@@ -21,7 +21,7 @@ const SCENES = [
   { key: '第5章_自分の番', prep: `startChapter(CHAPTERS[4],true)`, myTurn: true },
   { key: '第6章_自分の番', prep: `startChapter(CHAPTERS[5],true)`, myTurn: true },
   // 1対1（v65 クリエイター目線レビュー：スマホ横で相手の顔が目から上で切れていた）
-  { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true },
+  { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true, street: 'flop' },
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()` },
   { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true },
   // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
@@ -39,7 +39,7 @@ const SCENES = [
   // 2026-10-14 CIのチェック充実 案2：まだ撮っていなかった遊び方と画面。基準（baseline.json の uiScenes）に入るまでは、問題があっても ⚠️
   { key: '第7章_ハンドの終わり', prep: `startChapter(CHAPTERS[6],true)`, handEnd: true },
   { key: '第11章_自分の番', prep: `startP2(PART2[0],true)`, myTurn: true },
-  { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true },
+  { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true, street: 'flop' },
   { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
   { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en' },
 ];
@@ -107,6 +107,11 @@ const INSPECT = `(() => {
   if (!modal) { const b = document.querySelector('#bust1:not(.out)'); if (b && b.querySelector('svg') && shown(b) && vis(b)) {
     const r = b.getBoundingClientRect(), eye = r.top + r.height * .37, bar = document.getElementById('tbar'), br = bar && vis(bar) ? bar.getBoundingClientRect() : null, barB = br && br.left < r.right - r.width * .3 && br.right > r.left + r.width * .3 ? br.bottom : 0; // 上の帯が顔の真ん中と横で重なるときだけ
     if (eye < Math.max(0, barB) - 8) out.push({ kind: '顔切れ', el: '#bust1 の顔', by: '目の高さが画面の上から ' + Math.round(eye) + 'px（上の帯の下端 ' + Math.round(barB) + 'px）' }) } }
+  // 捨て札の山（.muckcard。pointer-events:none なので上の「隠れ」では見えない）が、自分の手札・場札・ボタン・名札の 25% 以上にかかっていないか（改善提案 2026-10-14b §1）
+  if (!modal) { const mk = [...document.querySelectorAll('.muckpile .muckcard')].filter(e => shown(e) && vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
+    if (mk.length) for (const el of imp) { const r = el.getBoundingClientRect(); if (r.width * r.height < 4) continue; let n = 0;
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) { const x = r.left + r.width * (i + .5) / 6, y = r.top + r.height * (j + .5) / 6; if (mk.some(q => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom)) n++ }
+      if (n / 36 >= .25) out.push({ kind: '隠れ', el: desc(el), by: '捨て札の山（.muckcard）' }) } }
   // 場札（フロップの後）の札の 15% 以上にチップ（ポットの山・賭けチップ・持ち点の塔）が重なっていないか（v71 改善提案§1）。めくる途中で細くなっている札と、飛んでいるチップは見ない
   if (!modal) { const bc0 = [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e => shown(e) && vis(e)), mw = Math.max(0, ...bc0.map(e => e.getBoundingClientRect().width)), bc = bc0.filter(e => e.getBoundingClientRect().width > mw * .8);
     // 1対1では、相手の伏せ札と D の札も数える（v70 レビュー：第7章で伏せ札が3枚目の場札の端に 14% かかっていた）
@@ -134,7 +139,8 @@ async function shoot(browser, file, scene, vp, dir) {
     if (scene.myTurn || scene.handEnd) {
       await H.startBot(page, { policy: 'call', maxHands: 99 });
       // 自分の番（またはハンドの終わり）が来たら止める
-      await page.evaluate(h => { const B = __bot, t = B.tick; B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden)) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, !!scene.handEnd);
+      // street：撮る時点を決めた通り（例 'flop'＝フロップで自分の番）にする。版ごとにプリフロップ・フロップと揺れて「22% 変わった」と出ていた（改善提案 2026-10-14b §1）。30秒で来なければ、どの番でも撮る
+      await page.evaluate(([h, st]) => { const B = __bot, t = B.tick, t0 = Date.now(); B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden && (!st || S.street === st || Date.now() - t0 > 30000))) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, [!!scene.handEnd, scene.street || '']);
       while (!(await page.evaluate(() => __bot.done)) && Date.now() - t0 < 60000) await page.waitForTimeout(150);
       await page.evaluate(() => clearInterval(__bot.timer));
     } else {
