@@ -8,7 +8,6 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const H = require('./lib/harness');
 
 const CHECKS = [
   ['unit', './checks/unit'], ['text', './checks/text'], ['script', './checks/script'], ['ftue', './checks/ftue'], ['fuzz', './checks/fuzz'], ['rules', './checks/rules'], ['basics', './checks/basics'], ['save', './checks/save'], ['winrate', './checks/winrate'], ['ui', './checks/ui'], ['uiux', './checks/uiux'], ['a11y', './checks/a11y'], ['perf', './checks/perf'],
@@ -64,7 +63,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   const t0 = Date.now();
   // ブラウザは、ブラウザを使う検査があるときだけ開く（unit だけなら開かない）
   const needBrowser = CHECKS.some(([key, mod]) => (!only || only.includes(key)) && !require(mod).noBrowser);
-  const browser = needBrowser ? await H.launch() : null;
+  const browser = needBrowser ? await require('./lib/harness').launch() : null;   // harness は Playwright を読むので、要るときだけ
   const groups = [], newBase = Object.assign({}, baseline || {});
   for (const [key, mod] of CHECKS) {
     if (only && !only.includes(key)) continue;
