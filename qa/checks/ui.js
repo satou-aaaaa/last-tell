@@ -32,6 +32,8 @@ const SCENES = [
   { key: '名乗る', prep: `startChapter(CHAPTERS[0])`, fresh: true,
     waitFor: `(()=>{const a=$('askGo');if(a&&a.offsetParent)return true;if(!$('scene').hidden)advance();return false})()` },
   { key: '身なり', prep: `lookOpen()`, waitFor: `!$('lookDlg').hidden` },
+  // 改善提案 第5回 §1：はじめての人がストーリーを押すと出る「注意書き＋遊んだことは？」の箱（v82 レビュー：縦でスクロールなしに収まるか）
+  { key: 'はじめての箱', prep: `$('btnStory').click()`, fresh: true, waitFor: `!!$('novDlg')&&!$('novDlg').hidden` },
   { key: '回想の判断', prep: `startFlashback(()=>{},'seki')`, settle: 2500,
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
   { key: '回想の結果', prep: `startFlashback(()=>{},'reika')`, settle: 2500,
