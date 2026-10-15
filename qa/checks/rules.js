@@ -101,6 +101,8 @@ async function run({ browser, file, quick }) {
     [`($('freeSize').value='6',startFree())`, 'open3', H1],
     // S2：クロウ・カオルは第14章の卓にいる。ほかの卓だけでは12回・8回しか測れず揺れていた（v83 レビュー）ので、第14章でも2倍ベットを打つ
     ['startP2(PART2[3],true)', 'overbet', H2, st7],
+    // v84 から S2 は1対1のリバーだけ数えるので、クロウは11回しか測れなかった（v85 交代レビュー）。第14章をもう1回打って20回以上にする（かっこで包んで種を変える）
+    ['(startP2(PART2[3],true))', 'overbet', H2, st7],
   ];
   // 4つずつ回す（一度に全部だと遅くなりすぎる）
   const res = [];
@@ -108,7 +110,7 @@ async function run({ browser, file, quick }) {
   const todo = jobs.filter((j, k) => !skip.includes(k)), got = [];
   for (let i = 0; i < todo.length; i += 4) got.push(...await Promise.all(todo.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
   jobs.forEach((j, k) => res.push(skip.includes(k) ? EMPTY : got.shift()));
-  const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14] = res;
+  const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14, ob14b] = res;
   // S1 BBアンティ
   const a = merge(s1, s1b);
   if (!unitS1) items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
@@ -131,12 +133,12 @@ async function run({ browser, file, quick }) {
   items.push({ id: 'rule:A1-faceopen', title: '強いキャラが3BBのオープンに降りすぎない（プロポーカー A1）', status: !foldStrong.length ? 'warn' : rateStatus(badFold),
     detail: foldStrong.length ? foldStrong.map(x => `${x[0]} 降りる ${x[1]}%（${x[2]}回）`).join('、') + '（80%以下で合格）' : '測れる回数が足りない' });
   // S2 リバーの大きなベット
-  const R = [ob6, ob7, obF, ob14].reduce(merge);
+  const R = [ob6, ob7, obF, ob14, ob14b].reduce(merge);
   const callStrong = STRONG.filter(n => R.rivBig[n] && R.rivBig[n].n >= 6).map(n => [n, pct(R.rivBig[n]), R.rivBig[n].n]);
   const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
   items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
     detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
-  const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14].flatMap(x => (x.errs || []).concat(x.errors || []));
+  const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14, ob14b].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });
   return { name: 'プロポーカー目線の再発チェック', items };
 }

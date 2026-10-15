@@ -41,6 +41,10 @@ async function collect(browser, file) {
     // テルを主軸に（js/39_tell_win.js）：見せ札の一言（話すのはその時の相手）と、ジンの三行の1行目（twLine。クセの言葉と 1回／複数回の形を全部作る）（改善提案 2026-10-14b §1）
     raw.push(...await page.evaluate(() => { const r = []; try {
       if (typeof TW_SHOW_LINES !== 'undefined') TW_SHOW_LINES.forEach(t => r.push(['相手（見せ札）', t]));
+      // より面白く（js/41_more_fun.js）：ジンの一言・アオの心の声（v85 交代レビューで追加）
+      if (typeof MF_LINES !== 'undefined') Object.values(MF_LINES).forEach(t => typeof t === 'string' && r.push(['ジン', t]));
+      if (typeof MF_RECALL !== 'undefined') (function walk(o) { for (const v of Object.values(o || {})) typeof v === 'string' ? r.push(['アオ（心の声）', v]) : Array.isArray(v) ? v.forEach(t => typeof t === 'string' && r.push(['アオ（心の声）', t])) : typeof v === 'object' && walk(v) })(MF_RECALL);
+      if (typeof MF_RECALL_DOUBT === 'string') r.push(['アオ（心の声）', MF_RECALL_DOUBT]);
       if (typeof twLine === 'function' && typeof TW_CUE_WORD !== 'undefined') { const keep = S;
         try { for (const c of Object.keys(TW_CUE_WORD).concat(['?'])) for (const [w, v] of [[1, 1], [2, 1], [1, 2], [2, 2], [1, 0], [2, 0], [0, 1], [0, 2]]) { S = { tw: { won: w, saved: v, cue: { [c]: 1 } } }; const t = twLine(); if (t && !r.some(x => x[1] === t)) r.push(['ジン', t]) } } finally { S = keep } }
     } catch (e) {} return r }));
