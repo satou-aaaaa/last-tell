@@ -1,0 +1,25 @@
+name: Changes
+
+# 遊ぶ人向けの「更新情報」ページ（changes.html）を、マージされたプルリクエストの題から作り直す（Claude は使わない）。
+# 検査や CI だけを変えた PR と bot の PR は載せない。中身は共通部品 satou-aaaaa/shared-workflows。
+on:
+  push:
+    branches: [main]
+    paths-ignore: [changes.html]
+  # 自動マージ（GITHUB_TOKEN）は push を起こさないので、その後にも動かす
+  workflow_run:
+    workflows: ["Auto merge"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: write
+
+jobs:
+  build:
+    uses: satou-aaaaa/shared-workflows/.github/workflows/changes-page.yml@main
+    with:
+      app_name: LAST TELL（最後のテル）
+      dispatch: pages.yml
