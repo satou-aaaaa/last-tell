@@ -64,7 +64,22 @@ const BOT = `(() => {
   function sum() { return S.players.reduce((a, p) => a + p.chips, 0) }
   function decide() {
     const me = S.players[0], toCall = S.currentBet - me.bet;
-    if ((B.policy === 'cpu' || (B.policy === 'mix' && Math.random() < .6)) && typeof cpuDecide === 'function') { try { const d = cpuDecide(0); if (d && d.type) return d } catch (e) { B.events.push('cpuDecide(0) error: ' + e.message) } }
+    // 'tell'：クセの札を読んで打つ（改善提案 2026-10-15 §2）。見てよいのは画面に出た札（名札の cue-◯◯）と TELLS の意味だけ。相手の手札・p.tell の当たり外れは見ない
+    if (B.policy === 'tell' && toCall > 0 && S.aggr > 0 && !S.scriptAI && !S.duelHand && !S.finalHand && !S.storyHand && !CFG.flashback) {
+      const i = S.aggr, p = S.players[i], T = p && typeof TELLS !== 'undefined' && TELLS[p.name], bust = $('bust' + i);
+      const keep = typeof TW_KEEP !== 'undefined' ? TW_KEEP : ['ジン', '師匠', 'クロウ'];
+      if (T && !keep.includes(p.name) && bust && $('cue' + i)) {
+        const c = ([...bust.classList].find(k => k.startsWith('cue-') && k !== 'cue-undefined') || '').slice(4);
+        let m = c === T.strong.cue ? 'strong' : c === T.bluff.cue ? 'bluff' : '';
+        if (m && T.reverse) m = m === 'strong' ? 'bluff' : 'strong';
+        if (m) { B.reads = (B.reads || 0) + 1;
+          if (m === 'bluff') return { type: 'call' };
+          const h = me.hand, bd = S.board, top = bd.length ? Math.max(...bd.map(x => x.r)) : 0, cat = bd.length >= 3 ? bestN(h.concat(bd))[0] : -1;
+          const tp = cat >= 2 || (cat === 1 && (h.some(x => x.r === top) || (h[0].r === h[1].r && h[0].r > top)));
+          if (!tp) return { type: 'fold' } }
+      }
+    }
+    if ((B.policy === 'cpu' || B.policy === 'tell' || (B.policy === 'mix' && Math.random() < .6)) && typeof cpuDecide === 'function') { try { const d = cpuDecide(0); if (d && d.type) return d } catch (e) { B.events.push('cpuDecide(0) error: ' + e.message) } }
     if (B.policy === 'fold') return toCall > 0 ? { type: 'fold' } : { type: 'call' };
     if (B.policy === 'call') return { type: 'call' };
     if (B.policy === 'overbet') {
