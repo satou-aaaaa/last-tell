@@ -77,6 +77,40 @@ const STRONG = ['ジン', 'クロウ', 'ハヤト', 'レイカ', 'カオル'];
 const MIN_N = 20;
 const rateStatus = bad => !bad.length ? 'ok' : bad.some(x => x[2] >= MIN_N) ? 'fail' : 'warn';
 
+
+// S2 の直接の測り方（v85.2 交代レビュー案）：対戦を回さず、1対1・リバー・ポットP・相手が2Pベットの場面を作って、
+// 強いキャラに「中くらいの強さ」（でたらめな手に対する勝率 45〜75%）の手を配り、判断（cpuDecide0）だけを各200回呼ぶ。弱点（S._lk）で決めた判断は数えない
+async function probeS2(browser, file) {
+  const { ctx, page } = await H.openGame(browser, file, { fast: 40, storage: H.UNLOCKED, seed: H.seedOf('rules', 's2probe', 'direct') });
+  try {
+    await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
+    await page.waitForTimeout(1500);
+    return await page.evaluate(() => {
+      const out = {}, k = 1, p = S.players[k], p0 = S.players[0], saved = { name: p.name, style: p.style, styleKey: p.styleKey };
+      for (const [name, sk] of [['ジン', 'jin'], ['クロウ', 'crow'], ['カオル', 'tight2']]) {
+        p.name = name; p.style = STYLES[sk]; p.styleKey = sk;
+        let n = 0, call = 0, lk = 0, tries = 0;
+        while (n < 200 && tries < 4000) {
+          tries++;
+          const deck = fullDeck(); for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(LT.rand() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]] }
+          const board = deck.slice(0, 5), mine = deck.slice(5, 7), opp = deck.slice(7, 9);
+          const e = equity(opp, board, 1, 120); if (e < .45 || e > .75) continue;
+          const P = 10 * BB();
+          S.players.forEach((q, j) => { q.folded = j !== 0 && j !== k; q.bet = 0; q.total = 0; q.chips = 200 * BB(); q.allIn = false; q.acted = false });
+          S.board = board; p.hand = opp; p0.hand = mine; S.street = 'river';
+          p0.total = P / 2 + 2 * P; p0.bet = 2 * P; p.total = P / 2; S.currentBet = 2 * P; S.aggr = 0; p0.lastType = 'raise'; S.raises = 1; S.toAct = k; S.handOver = false;
+          S._lk = null; const d = cpuDecide0(k);
+          if (S._lk) { lk++; S._lk = null; continue }
+          n++; if (d.type !== 'fold') call++;
+        }
+        out[name] = { n, call, lk };
+      }
+      Object.assign(p, saved);
+      return out;
+    });
+  } catch (e) { return { err: e.message } } finally { await ctx.close() }
+}
+
 async function run({ browser, file, quick }) {
   // リバーの2倍ベット（S2）は、短い版でも強いキャラごとに20回ほど測れるように多めに打つ（CIのチェック充実 案1）
   const H1 = quick ? 25 : 80, H2 = quick ? 60 : 120, items = [];
@@ -138,6 +172,14 @@ async function run({ browser, file, quick }) {
   const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
   items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
     detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
+  // S2 の直接の測り方：今は ⚠️ だけ（基準 40% を決め直すまで、公開は止めない）
+  {
+    const d = await probeS2(browser, file);
+    if (d.err) items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: 'warn', detail: '測れなかった: ' + d.err });
+    else { const rows = Object.entries(d).map(([n, x]) => [n, Math.round(100 * x.call / Math.max(1, x.n)), x.n, x.lk]); const bad = rows.filter(x => x[1] > 40);
+      items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: bad.length ? 'warn' : 'ok',
+        detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。40%を超えたら ⚠️、基準は様子見）' }) }
+  }
   const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14, ob14b].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });
   return { name: 'プロポーカー目線の再発チェック', items };

@@ -59,6 +59,12 @@ async function run({ browser, file }) {
       });
       add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
       add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
+      // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
+      if (vp === '390x844') {
+        const g = await page.evaluate(() => { const ho = S.handOver, won = S.players.map(p => p.won); const small = S.players.map((p, i) => i && $('plate' + i) && ($('plate' + i).offsetHeight < 16 || $('plate' + i).offsetWidth < 28) ? i : 0).filter(Boolean);
+          if (!small.length) return null; try { S.handOver = true; S.players.forEach((p, i) => p.won = small.includes(i) ? 1 : 0); llWinEdge(); return small.map(i => [i, $('bust' + i).classList.contains('llwin'), $('plate' + i).classList.contains('llwin')]) } finally { S.handOver = ho; S.players.forEach((p, i) => p.won = won[i]); llWinEdge() } });
+        if (g) add(`livelook:winedge-small:${vp}`, `名札が空の席が勝つと顔の下に金の線（${vp}）`, g.filter(x => !x[1] || x[2]).map(x => `席${x[0] + 1}`).join(', '), `${g.length}席`);
+      }
       add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:backs:${vp}`, `相手の伏せ札が寝ている（${vp}）`, r.flat ? `${r.flat}/${r.backs}枚が立ったまま（${r.flatWho.slice(0, 2).join(' / ')}）` : '', `${r.backs}枚`);
