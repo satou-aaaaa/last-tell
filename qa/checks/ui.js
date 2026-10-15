@@ -168,7 +168,7 @@ async function shoot(browser, file, scene, vp, dir) {
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(() => { const e = $('mfInner'); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
         // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
         .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);

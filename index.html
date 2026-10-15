@@ -2129,7 +2129,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.86.4';
+const APP_VERSION='0.86.5';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11175,11 +11175,18 @@ function mfInner(text){const tb=$('table');if(!tb||!text)return;
 function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)return;
   el.classList.remove('side');el.style.left='';el.style.width='';   // 右の列に出していても、卓の中の幅で測り直す
   const T=tb.getBoundingClientRect(),h=el.offsetHeight||28,vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2;
-  const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip')].filter(vis).map(e=>e.getBoundingClientRect());
+  const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip, #dbtn, .dbadge, .llseats i')].filter(vis).map(e=>e.getBoundingClientRect());
+  // D ボタンと席番号（.llseats i）も避ける（v86.4 レビュー：横で D と席4・5を隠した）
   // 吹き出しは読めなくなるので重みを4倍に（v85.2 レビュー：「うう、降ります」の真上に乗った）。吹き出しは #sayLayer と #plates の両方に出る
   avoid.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(vis).map(e=>{const r=e.getBoundingClientRect();return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
   // ポットの額も読めなくなるので吹き出しと同じ重み（v86.2 レビュー：スマホ縦で「ポット 約1万」の真上に乗った）
   {const ps=$('potSign');if(vis(ps)){const r=ps.getBoundingClientRect();avoid.push({left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2,k:4})}}
+  // 横向きは右の操作の列（指示の箱の下・ボタンの上）に空きがあれば、まずそこに出す（v85.2 レビュー。v86.4 レビュー：卓の上だと D と席番号を隠すので先に試す）
+  const C=$('controls'),sn=$('sensei');
+  const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
+  if(innerWidth>innerHeight&&shown(C)){const c=C.getBoundingClientRect();
+    if(c.left>=T.right-2){const top0=shown(sn)?sn.getBoundingClientRect().bottom+8:T.top+8,y=c.top-h-10;
+      if(y>=top0){el.classList.add('side');el.style.left=c.left.toFixed(0)+'px';el.style.width=c.width.toFixed(0)+'px';el.style.top=y.toFixed(0)+'px';return}}}
   const bd=$('boardCards'),mine=$('mine'),bb=vis(bd)?bd.getBoundingClientRect():null,mr=vis(mine)?mine.getBoundingClientRect():null;
   if(bb)avoid.push(bb);   // 配っている途中の札は飛んでくる位置にあるので、場札の枠ごと避ける（まだ配る前でも）
   const ys=[];if(bb&&mr&&mr.top-bb.bottom>h+4)ys.push((bb.bottom+mr.top-h)/2);if(mr)ys.push(mr.top-h-6);if(bb){ys.push(bb.bottom+6);ys.push(bb.top-h-6)}ys.push(T.top+8,T.top+T.height*.62,T.top+T.height*.75);if(mr)ys.push(mr.top-h-40);   // スマホ縦で下が詰まっているときは卓の上の端
@@ -11188,12 +11195,6 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   let best=ys[0],bc=Infinity;for(const y of ys){const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}
   // まだ少し重なるなら、その近くを 4px ずつ上下にずらして重ならない所を探す（v86.3 レビュー：縦で吹き出しの上の余白に 3px）
   if(bc>0){const b0=best;for(let d=4;d<=48&&bc>0;d+=4)for(const y of [b0-d,b0+d]){if(y<T.top+2||y+h>T.bottom-2)continue;const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}}
-  // 横向きで卓の中にどこも空きがなければ、右の操作の列（指示の箱の下・ボタンの上）の空きに出す（v85.2 レビュー）
-  const C=$('controls'),sn=$('sensei');
-  const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
-  if(bc>0&&innerWidth>innerHeight&&shown(C)){const c=C.getBoundingClientRect();
-    if(c.left>=T.right-2){const top0=shown(sn)?sn.getBoundingClientRect().bottom+8:T.top+8,y=c.top-h-10;
-      if(y>=top0){el.classList.add('side');el.style.left=c.left.toFixed(0)+'px';el.style.width=c.width.toFixed(0)+'px';el.style.top=y.toFixed(0)+'px';return}}}
   el.style.top=(best-T.top).toFixed(0)+'px'}
 LT.on('layout',()=>{try{mfPlace()}catch(e){}});
 // 心の声が出ているあいだに吹き出しが後から出たら置き直す（v85.1 レビュー：横でケンジの「チェック！」と重なった）
