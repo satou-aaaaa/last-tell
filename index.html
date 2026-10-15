@@ -1600,6 +1600,7 @@ body.en .felt .potzone::before{letter-spacing:.32em;padding-left:.32em;font-size
 /* 勝った人の名札の縁（字は出さない） */
 #game #plates .plate.llwin{box-shadow:0 0 0 2px #d8b25a,0 0 10px rgba(216,178,90,.45)!important}
 #game .mine .me-ava.llwin{box-shadow:0 0 0 2px #d8b25a,0 0 10px rgba(216,178,90,.45)!important}
+#busts .bust.llwin::after{content:"";position:absolute;left:22%;right:22%;bottom:2px;height:3px;border-radius:2px;background:#d8b25a;box-shadow:0 0 8px rgba(216,178,90,.55);pointer-events:none}
 
 /* 話しかける要素：話題の3つ、章の前に誰に聞くか、噂の印 */
 .t3d .needlerow .askrow.tkrow{flex-direction:row;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px)}
@@ -2126,7 +2127,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.85.1';
+const APP_VERSION='0.85.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11178,6 +11179,9 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   let best=ys[0],bc=Infinity;for(const y of ys){const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}
   el.style.top=(best-T.top).toFixed(0)+'px'}
 LT.on('layout',()=>{try{mfPlace()}catch(e){}});
+// 心の声が出ているあいだに吹き出しが後から出たら置き直す（v85.1 レビュー：横でケンジの「チェック！」と重なった）
+{let mfT=0;const mo=window.MutationObserver&&new MutationObserver(()=>{const el=$('mfInner');if(!el||el.hidden)return;cancelAnimationFrame(mfT);mfT=requestAnimationFrame(()=>{try{mfPlace()}catch(e){}})});   // 吹き出しは #sayLayer と #plates の両方に出る
+  if(mo)['sayLayer','plates'].forEach(id=>{const n=$(id);if(n)mo.observe(n,{subtree:true,attributes:true,attributeFilter:['class','hidden'],childList:true})})}
 
 // showTell を包む（39_tell_win.js と同じやり方）：元の showTell のあとに、出たクセがあれば案1のジンの一言と案2の心の声
 {const _st=showTell;showTell=function(i,d){const p=S.players[i],before=p&&p.tell&&p.tell.seq;const r=_st.apply(this,arguments);
@@ -11383,7 +11387,10 @@ LT.on('render',()=>{try{llRail()}catch(e){}});
 // v85 レビュー、satou 2026-10-15 12:30Z「縁を金色に」。引き分けなら全員、自分なら顔の枠
 function llWinEdge(){
   const on=S&&S.handOver&&S.players&&!llEasy();
-  S.players&&S.players.forEach((p,i)=>{const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(t)t.classList.toggle('llwin',!!(on&&p.won>0))})}
+  S.players&&S.players.forEach((p,i)=>{let t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');const w=!!(on&&p.won>0);
+    // 名札が空（縦の6人卓の横の席など）だと縁が小さな四角になるので、そのときは顔の下に金の線（v85.1 レビュー）
+    const b=i&&$('bust'+i),small=i&&t&&(t.offsetHeight<16||t.offsetWidth<28);
+    if(b)b.classList.toggle('llwin',w&&!!small);if(t)t.classList.toggle('llwin',w&&!small)})}
 LT.on('render',()=>{try{llWinEdge()}catch(e){}});
 LT.on('endHand',()=>{try{llWinEdge()}catch(e){}});
 
