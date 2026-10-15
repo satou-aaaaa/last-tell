@@ -2129,7 +2129,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.86.2';
+const APP_VERSION='0.86.3';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11175,9 +11175,11 @@ function mfInner(text){const tb=$('table');if(!tb||!text)return;
 function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)return;
   el.classList.remove('side');el.style.left='';el.style.width='';   // 右の列に出していても、卓の中の幅で測り直す
   const T=tb.getBoundingClientRect(),h=el.offsetHeight||28,vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2;
-  const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #potSign, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip')].filter(vis).map(e=>e.getBoundingClientRect());
+  const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip')].filter(vis).map(e=>e.getBoundingClientRect());
   // 吹き出しは読めなくなるので重みを4倍に（v85.2 レビュー：「うう、降ります」の真上に乗った）。吹き出しは #sayLayer と #plates の両方に出る
   avoid.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(vis).map(e=>{const r=e.getBoundingClientRect();return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  // ポットの額も読めなくなるので吹き出しと同じ重み（v86.2 レビュー：スマホ縦で「ポット 約1万」の真上に乗った）
+  {const ps=$('potSign');if(vis(ps)){const r=ps.getBoundingClientRect();avoid.push({left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2,k:4})}}
   const bd=$('boardCards'),mine=$('mine'),bb=vis(bd)?bd.getBoundingClientRect():null,mr=vis(mine)?mine.getBoundingClientRect():null;
   if(bb)avoid.push(bb);   // 配っている途中の札は飛んでくる位置にあるので、場札の枠ごと避ける（まだ配る前でも）
   const ys=[];if(bb&&mr&&mr.top-bb.bottom>h+4)ys.push((bb.bottom+mr.top-h)/2);if(mr)ys.push(mr.top-h-6);if(bb){ys.push(bb.bottom+6);ys.push(bb.top-h-6)}ys.push(T.top+8,T.top+T.height*.62,T.top+T.height*.75);if(mr)ys.push(mr.top-h-40);   // スマホ縦で下が詰まっているときは卓の上の端
