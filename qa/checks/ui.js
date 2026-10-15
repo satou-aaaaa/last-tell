@@ -196,7 +196,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   for (let i = 0; i < res.length; i++) {
     const x = res[i].issues && res[i].issues[0];
     if (!(res[i].shot === null && x && x.kind === '撮れなかった' && /closed|crash/i.test(x.el))) continue;
-    if (!browser.isConnected() && !own) own = await H.launch();
+    if (!own) own = await H.launch();   // 撮り直しはいつも新しいブラウザで（WebKit は落ちる前に調子が悪くなっていて、同じブラウザで撮り直しても落ちた：v0.86.4 CI）
     const [s, v] = jobs[i];
     res[i] = await shoot(own || browser, file, s, v, dir);
     res[i].retried = true;
