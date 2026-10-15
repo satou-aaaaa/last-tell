@@ -168,7 +168,7 @@ async function shoot(browser, file, scene, vp, dir) {
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(() => { const e = $('mfInner'); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, [id^=plate]:not(#plates)')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 }).length });
     if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
       const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
