@@ -48,12 +48,15 @@ async function run({ browser, file }) {
         return {
           toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
           cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
+          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
       });
       add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
       add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
+      add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
+      add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:backs:${vp}`, `相手の伏せ札が寝ている（${vp}）`, r.flat ? `${r.flat}/${r.backs}枚が立ったまま（${r.flatWho.slice(0, 2).join(' / ')}）` : '', `${r.backs}枚`);
       add(`livelook:burn:${vp}`, `場札を出すたびにバーン（${vp}）`, r.burns !== 3 ? `リバーまでで${r.burns}枚（期待3）` : '', '3枚');
       add(`livelook:words:${vp}`, `卓に「勝ち +」「伏せた」「あなたのチップ」が出ない（${vp}）`, r.words.join(', '), 'なし');
@@ -68,6 +71,26 @@ async function run({ browser, file }) {
       await H.startBot(page, { policy: 'call', maxHands: 6 }); await H.runUntilDone(page, { timeoutMs: 90000, stallMs: 20000 });
       const r = await page.evaluate(() => __ll);
       add('livelook:jin', 'ジンの席にプロテクターが出ない・第7章でめくりが出ない', r.jin || r.peek ? `プロテクター${r.jin}回、めくり${r.peek}回` : '', '0回');
+    } finally { await ctx.close() }
+  }
+  // 5) 大一番ほどクセが濃い（改善提案 2026-10-15b 案1）：ターン・リバーでポット15BB以上なら正しいクセが+10pt以上、それ未満・フロップは0（v85 交代レビューで追加）
+  {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 40, storage: H.UNLOCKED });
+    try {
+      await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
+      if (!(await toStreet(page, 'turn'))) add('morefun:bigboost', '大一番でクセが濃くなる', 'ターンまで進めなかった', '', true);
+      else {
+        const r = await page.evaluate(() => { if (typeof mfBigBoost !== 'function') return null; const keep = S.players.map(q => q.total), st = S.street, p = S.players.find(q => !q.human && !TW_KEEP.includes(q.name));
+          const pot = n => S.players.forEach((q, k) => q.total = k ? 0 : n * BB()); try {   // potTotal は const なので、各人の出した額で大きさを作る
+          pot(20); const big = mfBigBoost(p); pot(5); const small = mfBigBoost(p); pot(20); S.street = 'flop'; const flop = mfBigBoost(p); return { big, small, flop } } finally { S.players.forEach((q, k) => q.total = keep[k]); S.street = st } });
+        add('morefun:bigboost', 'ターン・リバーでポット15BB以上なら正しいクセが+10pt以上、それ未満とフロップは変わらない', !r ? 'mfBigBoost が無い' : (r.big < .1 || r.small || r.flop) ? `大${r.big} 小${r.small} フロップ${r.flop}` : '', r ? `+${Math.round(r.big * 100)}pt / 0 / 0` : '');
+        // 勝った人の名札の縁（satou 12:30Z「縁を金色に」）：ハンドの終わりに金の縁が1人以上・字は出さない
+        await page.evaluate(() => { const B = __bot; B.done = false; clearInterval(B.timer); B.timer = setInterval(() => { if (S.handOver) { B.done = true; clearInterval(B.timer); return } B.tick() }, 4) });
+        await page.waitForFunction(() => S.handOver, null, { timeout: 30000 }).catch(() => {});
+        await page.waitForTimeout(300);
+        const w = await page.evaluate(() => ({ over: !!S.handOver, gold: document.querySelectorAll('.llwin').length, won: S.players.filter(p => p.won > 0).length }));
+        add('livelook:winedge', 'ハンドの終わりに勝った人の名札の縁が金色（第4章以降・フリー）', !w.over ? 'ハンドが終わらなかった' : w.gold !== w.won ? `金の縁 ${w.gold}人（勝った人 ${w.won}人）` : '', `${w.gold}人`, !w.over);
+      }
     } finally { await ctx.close() }
   }
   // 4) めくる相手の選ばれ方が手の強さと関係しない（1000ハンド分、選ぶ処理だけを回す）

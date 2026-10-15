@@ -1534,9 +1534,9 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 
 /* ---------- ライブポーカーらしい見た目（js/41_live_look.js と組） ---------- */
 /* 案3 札を文字に：名札の「勝ち」「フォールド」、自分の「伏せた」「あなたのチップ」を出さない。勝ちはポットの動きとディーラーの声、降りた人は顔が暗くなるだけ */
-#game .tag.win,#game .tag.act-fold{display:none}
-#game .mine .hold.gone.mucked:not(.folded)::after{display:none}
-#game .mine .me-r .lbl2{display:none}
+#game:not(.ll-easy) .tag.win,#game:not(.ll-easy) .tag.act-fold{display:none}
+#game:not(.ll-easy) .mine .hold.gone.mucked:not(.folded)::after{display:none}
+#game:not(.ll-easy) .mine .me-r .lbl2{display:none}   /* 第1〜3章は練習なので札を残す（v85 レビュー） */
 #game:not(.ll-easy) .mine .chp{font-size:12px;color:rgba(255,255,255,.72)}
 /* ポット：黒地に金の札をやめて、ラシャの上の小さな文字だけにする（中身と数え方は今のまま） */
 #game .potsign.slim{background:none;box-shadow:none;clip-path:none;border:0;padding:0 6px;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.5)}
@@ -1588,6 +1588,7 @@ body.en .felt .potzone::before{letter-spacing:.32em;padding-left:.32em;font-size
   background:radial-gradient(closest-side,var(--fill) 72%,var(--rim) 76% 92%,rgba(0,0,0,.4) 96%);box-shadow:0 2px 4px rgba(0,0,0,.6)}
 #table > .cup.off{display:none}
 #table > .cup i{position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.28),transparent 45%);animation:llsway 6s ease-in-out infinite}
+#table > .cup::after{content:"";position:absolute;left:52%;top:18%;width:2px;height:46%;border-radius:1px;background:rgba(0,0,0,.35);rotate:28deg;pointer-events:none}   /* ストローの影（押せる丸に見えないように） */
 @keyframes llsway{0%,100%{translate:0 0}50%{translate:1px -1px}}
 @media (orientation:landscape) and (max-height:500px){#table > .nrail{height:16px}}
 @media (prefers-reduced-motion:reduce){#table > .cup i{animation:none}}
@@ -1596,6 +1597,9 @@ body.en .felt .potzone::before{letter-spacing:.32em;padding-left:.32em;font-size
 .felt .spot .hand .card.back:last-child[style*="ltDeal"]{animation-name:llDealBack2!important}
 @keyframes llDealBack{from{opacity:0;transform:translate(0,-60px) rotate(-8deg) scale(.64)}to{opacity:1;transform:rotateX(38deg) rotate(-8deg) scale(.8)}}
 @keyframes llDealBack2{from{opacity:0;transform:translate(0,-60px) rotate(-8deg) scale(.64)}to{opacity:1;transform:rotateX(38deg) rotate(8deg) scale(.8)}}
+/* 勝った人の名札の縁（字は出さない） */
+#game #plates .plate.llwin{box-shadow:0 0 0 2px #d8b25a,0 0 10px rgba(216,178,90,.45)!important}
+#game .mine .me-ava.llwin{box-shadow:0 0 0 2px #d8b25a,0 0 10px rgba(216,178,90,.45)!important}
 
 /* 話しかける要素：話題の3つ、章の前に誰に聞くか、噂の印 */
 .t3d .needlerow .askrow.tkrow{flex-direction:row;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px)}
@@ -2122,7 +2126,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.85.0';
+const APP_VERSION='0.85.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11166,7 +11170,7 @@ function mfInner(text){const tb=$('table');if(!tb||!text)return;
   mfPlace();clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('go');el.hidden=true},MF.innerMs*(typeof SPEED==='function'?Math.max(.6,SPEED()):1))}
 function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)return;
   const T=tb.getBoundingClientRect(),h=el.offsetHeight||28,vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2;
-  const avoid=[...document.querySelectorAll('#table button, #felt .card, #plates .cue, #plates .plate, #dcall.go, #potSign, #sayLayer .say.go, #mine .card, #controls')].filter(vis).map(e=>e.getBoundingClientRect());
+  const avoid=[...document.querySelectorAll('#table button, #felt .card, #plates .cue, #plates .plate, #dcall.go, #potSign, #sayLayer .say.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip')].filter(vis).map(e=>e.getBoundingClientRect());
   const bd=$('boardCards'),mine=$('mine'),bb=vis(bd)?bd.getBoundingClientRect():null,mr=vis(mine)?mine.getBoundingClientRect():null;
   const ys=[];if(bb&&mr&&mr.top-bb.bottom>h+4)ys.push((bb.bottom+mr.top-h)/2);if(mr)ys.push(mr.top-h-6);if(bb){ys.push(bb.bottom+6);ys.push(bb.top-h-6)}ys.push(T.top+8,T.top+T.height*.62);   // スマホ縦で下が詰まっているときは卓の上の端
   // 重ならない場所がなければ、重なる面積がいちばん小さい場所
@@ -11203,7 +11207,7 @@ const DRINK={
 };
 const DRINK_LOOK={ // 上から見た丸：縁の色、中身の色
   coffee:{rim:'#e9e4da',fill:'#3b2414'}, tea:{rim:'#e9e4da',fill:'#9a5a22'},
-  soda:{rim:'#9fb3b8',fill:'#cfe3e0'},  water:{rim:'#9fb3b8',fill:'#dfe9ec'},
+  soda:{rim:'#9fb3b8',fill:'#6f9a98'},  water:{rim:'#9fb3b8',fill:'#7fa3a8'},   // v85 レビュー：白い丸だとボタンに見えるので、少し暗い青緑
 };
 
 // 案2 相手のプロテクター：主なキャラは決まった小物。ここに無い人は名前のハッシュで3人に1人だけ「チップ1枚」を置く
@@ -11243,8 +11247,10 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
-  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body')].filter(vis).map(R);
+  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body')].filter(vis).map(R);
   const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue')].filter(vis).map(R);
+  const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
     if(!r&&i){const sp=$('spot'+i);if(sp){const q=R(sp);r={left:q.left+q.width/2-14,right:q.left+q.width/2+14,top:q.top,bottom:q.top+20,height:20}}}
@@ -11252,7 +11258,8 @@ function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$
     const cy=r.top+(r.height-z)/2,cs=i?[[r.left-z-6,cy],[r.right+6,cy]]:[];
     let c=cs.find(([x,y])=>ok(x,y));
     // 横に場所がなければ名札（自分は顔）の左上の角に重ねて付ける（席の札のように）
-    if(!c){const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(vis(t)){const q=R(t);c=[q.left-z/2,q.top-z/2]}}
+    // 横に場所がなければ名札（自分は顔）の左上、だめなら右上の角に重ねる。D・場札・札に重なるなら出さない（v85 レビュー）
+    if(!c){const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(vis(t)){const q=R(t);c=[[q.left-z/2,q.top-z/2],[q.right-z/2,q.top-z/2]].find(([x,y])=>okCorner(x,y))}}
     el.hidden=!c;if(c){el.style.left=(c[0]-T.left).toFixed(0)+'px';el.style.top=(c[1]-T.top).toFixed(0)+'px'}})}
 // ディーラーの道具：チップのラックと伏せた山（場札のまわりの空いている所。動かない絵）
 function llTools(){const bs=document.querySelector('.felt .boardspot');if(!bs)return;
@@ -11269,8 +11276,8 @@ function llBurn(){if(CFG.flashback||typeof muckAdd!=='function')return;(S.ll=S.l
   const w=a.w,P=(x,y,r)=>`translate(${x-w/2}px,${y}px) rotate(${r}deg)`;el.style.width=w+'px';
   const an=el.animate([{transform:P(a.x+a.w/2,a.y,0)},{transform:P(b.x+b.w/2,b.y+b.h/2-w*.7,-14)}],{duration:220*Math.max(.6,SPEED()),easing:'ease-out'});
   an.onfinish=()=>{el.remove();muckAdd()}}
-LT.on('nextStreet:before',()=>{try{(S.ll=S.ll||{}).nb=S.board.length}catch(e){}});
-LT.on('nextStreet',()=>{try{if(S.ll&&S.board.length>S.ll.nb)llBurn()}catch(e){}});
+// 場札を出す前（本物の順）。リバーのあと（ショーダウンへ）とハンドの終わりは出さない
+LT.on('nextStreet:before',()=>{try{if(S&&!S.handOver&&!S.reveal&&['preflop','flop','turn'].includes(S.street))llBurn()}catch(e){}});
 LT.on('render',()=>{for(const f of [llPrint,llSeats,llTools])try{f()}catch(e){}});
 // 置き場所：捨て札の山の左 → 場札の下の真ん中 → 場札の右 → 場札の上 → 場札の下（右・左）。場札・相手の札・ポット・クセの札・名札・手元に重ならない最初の場所。どこも重なるなら出さない
 function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .lltools'),bs=t&&t.parentNode,bd=$('boardCards'),tb=$('table');if(!t||!bd||!tb)return;
@@ -11293,7 +11300,11 @@ function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .llto
   if(!c){t.classList.add('off');return}
   t.style.left=((c[0]-B.left)/sx).toFixed(1)+'px';t.style.top=((c[1]-B.top)/sy).toFixed(1)+'px'}
 // 札が配られる動きの途中で測ると小さく出るので、動きが終わったころにもう1回
-let llPlaceT=0;LT.on('layout',()=>{try{llToolsPlace()}catch(e){}clearTimeout(llPlaceT);llPlaceT=setTimeout(()=>{try{llToolsPlace();llCupPlace();llSeatsPlace()}catch(e){}},900)});
+// 置き場所の計算は、ハンド・通り・画面の大きさ・席の数・答え待ちが変わったときだけ（毎回の layout では測らない。v85 レビュー：重さ）
+let llPlaceT=0,llPlaceK='';
+const llKey=()=>S?[S.handNo,S.street,S.handOver?1:0,S.board.length,innerWidth,innerHeight,S.players.length,S.toAct===0?1:0,document.body.classList.contains('en')?1:0].join('|'):'';
+function llPlaceAll(){try{llToolsPlace()}catch(e){}try{llCupPlace()}catch(e){}try{llSeatsPlace()}catch(e){}}
+LT.on('layout',()=>{const k=llKey();if(k===llPlaceK)return;llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
 
 // ===== 案2：相手の伏せ札 =====
 // 寝かせた2枚の上に、主なキャラは自分の小物。ほかの人は名前で決まる3人に1人だけチップ1枚。ジンは置かない
@@ -11367,8 +11378,14 @@ function llCupPlace(){const c=document.querySelector('#table > .cup'),tb=$('tabl
   const cs=[[T.right-14-W,T.bottom-14-W],[T.left+14,T.bottom-14-W]];if(M){cs.push([M.right-W,M.top-W-8],[M.left-W-10,M.bottom-W])}
   const p=cs.find(([x,y])=>ok(x,y));c.classList.toggle('off',!p);if(p){c.style.left=(p[0]-T.left).toFixed(0)+'px';c.style.top=(p[1]-T.top).toFixed(0)+'px'}}
 LT.on('render',()=>{try{llRail()}catch(e){}});
-LT.on('layout',()=>{try{llCupPlace()}catch(e){}});
-LT.on('layout',()=>{try{llSeatsPlace()}catch(e){}});   // 道具とカップの場所が決まった後にもう1回
+
+// ===== ハンドの終わり：勝った人の名札の縁だけ金色（第4章以降。字は出さない。次のハンドで消える）=====
+// v85 レビュー、satou 2026-10-15 12:30Z「縁を金色に」。引き分けなら全員、自分なら顔の枠
+function llWinEdge(){
+  const on=S&&S.handOver&&S.players&&!llEasy();
+  S.players&&S.players.forEach((p,i)=>{const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(t)t.classList.toggle('llwin',!!(on&&p.won>0))})}
+LT.on('render',()=>{try{llWinEdge()}catch(e){}});
+LT.on('endHand',()=>{try{llWinEdge()}catch(e){}});
 
 </script>
 <script>
