@@ -88,7 +88,7 @@ async function probeS2(browser, file) {
     return await page.evaluate(() => {
       const out = {}, k = 1, p = S.players[k], p0 = S.players[0], saved = { name: p.name, style: p.style, styleKey: p.styleKey };
       for (const [name, sk] of [['ジン', 'jin'], ['クロウ', 'crow'], ['カオル', 'tight2']]) {
-        p.name = name; p.style = STYLES[sk]; p.styleKey = sk;
+        p.name = name; p.style = typeof charStyle === 'function' ? charStyle(name, sk) : STYLES[sk]; p.styleKey = sk;   // キャラごとの上書き（42_char_style.js）も入れる
         let n = 0, call = 0, lk = 0, tries = 0;
         while (n < 200 && tries < 4000) {
           tries++;
@@ -172,13 +172,13 @@ async function run({ browser, file, quick }) {
   const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
   items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
     detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
-  // S2 の直接の測り方：今は ⚠️ だけ（基準 40% を決め直すまで、公開は止めない）
+  // S2 の直接の測り方（40%を超えたら ❌）
   {
     const d = await probeS2(browser, file);
     if (d.err) items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: 'warn', detail: '測れなかった: ' + d.err });
     else { const rows = Object.entries(d).map(([n, x]) => [n, Math.round(100 * x.call / Math.max(1, x.n)), x.n, x.lk]); const bad = rows.filter(x => x[1] > 40);
-      items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: bad.length ? 'warn' : 'ok',
-        detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。40%を超えたら ⚠️、基準は様子見）' }) }
+      items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: bad.length ? 'fail' : 'ok',   // v0.86.0 でカオルを直したので合否にする（v85 交代レビュー）
+        detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。40%以下で合格）' }) }
   }
   const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14, ob14b].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });
