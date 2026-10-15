@@ -14,7 +14,8 @@ const VIEWPORTS = [
 const SCENES = [
   { key: 'タイトル', prep: `0`, waitFor: `!$('title').hidden`, fresh: true },
   { key: '章の一覧', prep: `showChapters()`, waitFor: `!$('chapters').hidden` },
-  { key: '第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden` },
+  // 扉は自動で進まない（はじめての人の第1章だけ）ので、扉なら1つ進めて最初の会話を撮る（v83 レビュー）
+  { key: '第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
   { key: '6人卓の相手紹介', prep: `startChapter(CHAPTERS[3],true)`, waitFor: `!$('vs').hidden` },
   { key: '第1章_自分の番', prep: `startChapter(CHAPTERS[0],true)`, myTurn: true },
   { key: 'フリー6人_自分の番', prep: `($('freeSize').value='6',startFree())`, myTurn: true },
@@ -43,7 +44,7 @@ const SCENES = [
   { key: '第11章_自分の番', prep: `startP2(PART2[0],true)`, myTurn: true },
   { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true, street: 'flop' },
   { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
-  { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en' },
+  { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en', after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
 ];
 
 // ページの中で、見えている大事な部品を調べる
@@ -162,10 +163,14 @@ async function shoot(browser, file, scene, vp, dir) {
       same = y === last ? same + 1 : 0; last = y;
     }
     const issues = await page.evaluate(INSPECT);
+    // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
+    let face = null;
+    if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
+      const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -209,6 +214,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
       shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues });
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
+  // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
+  for (const r of res) if (r.face != null) items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
+    detail: `話し手の絵の ${r.face}% が会話の箱に隠れている（目安 25%まで）` });
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };

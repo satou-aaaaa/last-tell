@@ -82,6 +82,9 @@ const BOT = `(() => {
           // 測るだけ（判断には使わない）：札の当たり外れと、読まない打ち手（cpuDecide）と判断が変わったか
           try { if (p.tell && p.tell.truth === m) B.hits = (B.hits || 0) + 1; const d0 = cpuDecide(0), dd = d || d0, diff = !!(d0 && dd && d0.type !== dd.type);
             if (!B.rp || B.rp.hand !== S.handNo) B.rp = { hand: S.handNo, start: me.chips + me.total, diff }; else B.rp.diff = B.rp.diff || diff;
+            // 読みの得（v83 レビュー）：判断が変わったとき、相手の本当の札から勝つ見込み eq を出し、EV(コール)=eq×(ポット+払う額)−払う額、降りる=0 として「選んだ手 − 読まない手」を BB で足す（測るだけ）
+            if (diff) { const pay = Math.min(toCall, me.chips), pot = S.players.reduce((a, q) => a + q.total, 0), eq = B.eqVs(me.hand, S.board, S.players.filter(q => q !== me && !q.folded && q.hand).map(q => q.hand), 300);
+              const ev = t => t === 'fold' ? 0 : eq * (pot + pay) - pay; B.evGain = (B.evGain || 0) + (ev(dd.type) - ev(d0.type)) / Math.max(1, BB()); B.evN = (B.evN || 0) + 1 }
             if (d) return d; if (d0 && d0.type) return d0 } catch (e) { if (d) return d } }
       }
     }
@@ -105,6 +108,17 @@ const BOT = `(() => {
     const k = [1, 1, 2, 3, 6, 999][Math.floor(Math.random() * 6)];
     return { type: 'raise', to: Math.min(me.bet + me.chips, S.currentBet + mr * k) };
   }
+  // 自分の手と、相手たちの本当の手札で、残りの場札を何度も配って勝つ見込みを出す（引き分けは分け合う）
+  B.eqVs = function (hand, board, opps, sims) {
+    const known = hand.concat(board, ...opps), rest = fullDeck().filter(c => !known.some(k => k.r === c.r && k.s === c.s)), need = 5 - board.length; let sc = 0;
+    for (let t = 0; t < sims; t++) {
+      for (let i = 0; i < need; i++) { const j = i + Math.floor(Math.random() * (rest.length - i)); [rest[i], rest[j]] = [rest[j], rest[i]] }
+      const b = board.concat(rest.slice(0, need)), mine = bestN(hand.concat(b)); let lose = false, ties = 0;
+      for (const o of opps) { const d = cmp(bestN(o.concat(b)), mine); if (d > 0) { lose = true; break } if (d === 0) ties++ }
+      if (!lose) sc += 1 / (ties + 1);
+    }
+    return sc / sims;
+  };
   function clickables() {
     for (const id of CLICK) { const b = $(id); if (vis(b) && !b.disabled) return b }
     // 場面・はしご・席選びなどのボタン
