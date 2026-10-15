@@ -750,6 +750,8 @@ body.en .p2head span,body.en .p2head b{letter-spacing:.06em}
 .partcard.door b{font-size:clamp(1.15rem,5.6vw,1.9rem);letter-spacing:.08em;text-align:center;text-wrap:balance;word-break:auto-phrase;max-width:100%;line-height:1.35}
 .partcard.door em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.2em;font-size:.88rem;font-weight:700;border-top:1px solid var(--line);padding-top:6px;margin-top:2px;text-align:center}
 body.en .partcard.door em,body.en .partcard.door span{letter-spacing:.08em}
+.partcard.door .doorcap{margin:10px 0 0;text-wrap:balance;word-break:auto-phrase;font-size:.95rem;color:#cfd3cc;text-align:center;line-height:1.6;max-width:22em}
+@media (max-height:460px){.partcard.door{gap:2px;padding:2px 0}.partcard.door b{font-size:1.35rem}.partcard.door .doorcap{margin-top:4px;font-size:.85rem}}
 #scene.il{background:linear-gradient(180deg,#2a3440,#12161c 80%)}
 #scene.il .stage{filter:saturate(.6) brightness(.92)}
 #scene.il .stage.cool::before{background:linear-gradient(110deg,transparent 30%,#4d5d70 30% 46%,transparent 46%)}
@@ -1435,6 +1437,9 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
 @media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
 @media (max-width:699px){html.fbig #game #btnFold b{letter-spacing:0!important}html.fbig #game #btnFold small{letter-spacing:-.13em!important}}
+/* 改善提案 第5回 §1：注意書きを「遊んだことは？」の箱に同居 */
+#novDlg .novnote{font-size:.85rem;color:var(--ink);line-height:1.6;padding-bottom:10px;border-bottom:1px solid #ffffff1a}
+#novDlg [hidden]{display:none!important}
 
 /* 名札が顔にかからないように（2026-10-10 satou「顔にチップの表示がかぶっている」）
    名札は卓のふちから上へ伸びるので、行が増えるほど口・鼻・目が隠れていた。
@@ -2041,7 +2046,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.81.0';
+const APP_VERSION='0.82.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2209,7 +2214,9 @@ Object.assign(EN_DICT,{
 "コピーしました。アンケートの最後に貼ってください":"Copied. Paste it at the end of the survey.","コピーできませんでした":"Couldn't copy",
 "……感想を聞かせてくれ。直すのは、聞いてからだ":"...Tell me what you thought. We fix things after we listen.",
 // 改善提案 第5回 §0-1：使い回しを散らした掛け合い
-"待つのも勝負のうちだよ":"Waiting is part of the game too.","文句は勝ってから言え":"Complain after you beat me.","止める理由がねえだろ":"Why would I stop?"
+"待つのも勝負のうちだよ":"Waiting is part of the game too.","文句は勝ってから言え":"Complain after you beat me.","止める理由がねえだろ":"Why would I stop?",
+// 改善提案 第5回 §1
+"……お前、負け方が下手だな。ゲンは何にでも参加する。お前は、強い手のときだけ戦えばいい。それで勝てる":"...You lose badly. Gen plays every hand. You only fight with strong ones. That's enough to win."
 });
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
@@ -2317,11 +2324,9 @@ const CHAPTERS=[
   lore:'この店では昔、7と2の最弱の手で勝つと、卓の全員が一杯おごるという決まりがあったらしい。',
   you:60000,blinds:[1000,2000],opps:[{name:'ゲン',style:'station',chips:60000,label:'何でも参加'}],
   intro:[
-   {door:1},
-   ['','雨の夜。港のはずれにあるバー「錨亭」。'],
+   {door:1,cap:'雨の夜。港のはずれにあるバー「錨亭」。'},
    ['ゲン','おう新入り、もう一勝負だ！配られた札は全部勝負、それがポーカーってもんよ！'],
-   ['老人','……お前、負け方が下手だな'],
-   ['老人','ゲンは何にでも参加する。だから、お前は強い手のときだけ戦えばいい。それだけで勝てる'],
+   ['老人','……お前、負け方が下手だな。ゲンは何にでも参加する。お前は、強い手のときだけ戦えばいい。それで勝てる'],
   ],
   // S1：ハンドの合間の場面。n ハンド目が終わって、次を配る前に1回だけ流す（章選択から始めたとき。負けてやり直しでも、まだ流していないものは流す）
   beats:[
@@ -5733,7 +5738,9 @@ function renderLine(){
     $('stage').className='stage preview';$('stage').innerHTML=`<div class="portrait sil">${avatar(pv.boss)}</div><div class="sign">${esc(pv.sign)}</div>`;
     $('box').innerHTML=`<span class="lesson-tag">次回</span><div class="lesson"><div class="lt">第${nc.no}章　${esc(nc.title)}</div><p>「${esc(pv.line)}」</p></div>`}
   else if(l&&l.door){setStage(null);$('stage').className='stage part';const c=CHAPTERS[l.door-1],dd=DOOR_DAYS[l.door];
-    $('box').innerHTML=`<div class="partcard door"><span>第${l.door}章</span><b>${esc(c.title)}</b>${dd?`<em>${esc(dd)}</em>`:''}</div>`}
+    $('box').innerHTML=`<div class="partcard door"><span>第${l.door}章</span><b>${esc(c.title)}</b>${dd?`<em>${esc(dd)}</em>`:''}${l.cap?`<p class="doorcap">${esc(l.cap)}</p>`:''}</div>`;
+    // 改善提案 第5回 §1：扉は 1.5秒で自動で次へ（押せばすぐ進む）。添え文があるときは少し長く
+    clearTimeout(SC._dt);const at=SC.i,me=SC;SC._dt=setTimeout(()=>{if(SC===me&&SC.i===at&&!$('scene').hidden)advance()},(l.cap?2600:1500)*(typeof SPEED==='function'?SPEED():1))}
   else if(l&&l.choice){$('box').innerHTML=`<div class="line narr">${esc(TEMPT.ask)}</div><div class="tchoice">${TEMPT.choices.map(c=>`<button class="ghost" data-tc="${c.id}">${esc(c.label)}</button>`).join('')}</div>`;
     $('box').querySelectorAll('[data-tc]').forEach(b=>b.onclick=e=>{e.stopPropagation();temptPick(b.dataset.tc)})}
   else if(l&&l.epilogue){setStage(null);
@@ -5751,7 +5758,7 @@ function renderLine(){
     $('box').innerHTML=`${who?`<span class="nametag${cute?' cute':''}">${esc(who==='師匠'?mentorName():who)}${l[2]&&l[2].voice?`<small class="voice">（${esc(l[2].voice)}）</small>`:''}${CHARS[who]&&!(l[2]&&l[2].voice)?`<span class="stars">${stars(rankOf(who))}</span>`:''}</span>`:''}<div class="line${who?'':' narr'}">${who?'「'+esc(text)+'」':esc(text)}</div>${mark}`;
   }
   p2After(l);
-  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
+  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked)||!!(l&&l.door);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
 }
 function setStage(who){
   const st=$('stage');
@@ -8928,7 +8935,8 @@ document.querySelector('.wrap').appendChild($('setPanel'));
 $('btnSound').addEventListener('click',()=>{if($('game').hidden)Sound.stop()});
 addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('moreDlg').hidden){e.preventDefault();mDlgClose()}else if(!$('setPanel').hidden&&$('game').hidden){e.preventDefault();$('btnSetClose').click()}});
 // --- 初回だけの注意（B-5） ---
-$('firstNotice').hidden=!!SETTINGS.seenNotice;
+// 改善提案 第5回 §1：タイトルには出さない。ストーリーは「遊んだことは？」の箱で、ほかの始め方は始める前に1回だけ箱で出す（askNovice）
+$('firstNotice').hidden=true;
 $('btnNoticeClose').onclick=()=>{SETTINGS.seenNotice=true;saveSettings();$('firstNotice').hidden=true;$('btnStory').focus({preventScroll:true})};
 // --- ブラウザに消されにくくする（B-2c） ---
 try{const st=navigator.storage;if(st&&st.persist)Promise.resolve(st.persisted?st.persisted():false).then(p=>p||st.persist()).catch(()=>{})}catch(e){}
@@ -9080,10 +9088,17 @@ setInterval(()=>{try{if(typeof S==='undefined'||!S||!S.players||!S.handOver||S.h
   if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.ch.no!==1||CFG.ch.p2||CFG.flashback)return;const g=guideGet();if(g.novice!==true||g.handsShown)return;
   if(['vs','quiz','help','setPanel','cutin','mieta','tour'].some(id=>$(id)&&!$(id).hidden))return;guideSet({handsShown:1});showHelp('hands')}catch(e){}},600);
 // 「ポーカーは初めて？」：タイトルの「ストーリー」から初めて始めるときだけ（1回だけ聞く）
-function askNovice(go){if(guideGet().novice!==undefined)return go();
+// 改善提案 第5回 §1：最初の注意書き（#firstNotice の文をそのまま）も、この箱の上に一緒に出す。only=true は注意書きだけ（フリー対戦などから始める人）
+function askNovice(go,only){const seen=!!SETTINGS.seenNotice,ask=!only&&guideGet().novice===undefined;if(!ask&&seen)return go();
   let d=$('novDlg');if(!d){d=document.createElement('div');d.id='novDlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
-    d.innerHTML=`<div class="novbox"><b>ポーカーを遊んだことは？</b><div class="novbtns"><button class="primary" id="nvNew">はじめて</button><button class="ghost" id="nvYes">ある</button></div><p>あとで設定（くわしい設定）から変えられます</p></div>`;document.body.appendChild(d)}
-  d.hidden=false;const done=v=>{guideSet({novice:v});d.hidden=true;try{novLab()}catch(e){}go()};$('nvNew').onclick=()=>done(true);$('nvYes').onclick=()=>done(false);setTimeout(()=>$('nvNew').focus({preventScroll:true}),0)}
+    d.innerHTML=`<div class="novbox"><p class="novnote" id="nvNote"></p><b id="nvQ">ポーカーを遊んだことは？</b><div class="novbtns"><button class="primary" id="nvNew">はじめて</button><button class="ghost" id="nvYes">ある</button><button class="primary" id="nvOk">閉じる</button></div><p id="nvSub">あとで設定（くわしい設定）から変えられます</p></div>`;document.body.appendChild(d)}
+  $('nvNote').textContent=$('firstNotice').querySelector('p').textContent;$('nvNote').hidden=seen;
+  ['nvQ','nvNew','nvYes','nvSub'].forEach(id=>$(id).hidden=!ask);$('nvOk').hidden=ask;
+  d.hidden=false;const done=v=>{if(v!==undefined)guideSet({novice:v});if(!SETTINGS.seenNotice){SETTINGS.seenNotice=true;saveSettings()}d.hidden=true;try{novLab()}catch(e){}go()};
+  $('nvNew').onclick=()=>done(true);$('nvYes').onclick=()=>done(false);$('nvOk').onclick=()=>done();setTimeout(()=>$(ask?'nvNew':'nvOk').focus({preventScroll:true}),0)}
+// ストーリー以外（フリー対戦・今日の1ハンド・はしご）から始める人にも、始める前に注意書きを1回だけ
+document.addEventListener('click',e=>{if(SETTINGS.seenNotice)return;const b=e.target.closest&&e.target.closest('#btnFree,#btnDaily,#btnRun');if(!b)return;
+  e.stopPropagation();e.preventDefault();askNovice(()=>b.click(),true)},true);
 {const det=document.querySelector('#setIn .setmore');if(det){const r=document.createElement('div');r.className='setrow';
   r.innerHTML=`<div><b>初めての人向けの案内</b><p>ルールの1行の案内を、初めての場面ごとに出します</p></div><button id="btnNovice" class="mini"></button>`;det.appendChild(r);
   $('btnNovice').onclick=()=>{guideSet({novice:!novice()});novLab()};novLab()}}
