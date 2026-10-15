@@ -225,7 +225,13 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
     detail: `話し手の絵の ${r.face}% が会話の箱に隠れている（目安 25%まで）` });
   // ライブポーカーらしい見た目（2026-10-15）の「できた」の条件。Chromium と WebKit の両方で回るように、ここから呼ぶ
-  try { items.push(...(await require('./livelook').run({ browser, file })).items) } catch (e) { items.push({ id: 'livelook:error', title: 'ライブポーカーらしい見た目の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
+  // WebKit でページやブラウザが途中で閉じたときは、ブラウザを開き直して1回だけやり直す（撮影と同じ。v85.2 の CI で2回続けて起きた）
+  try {
+    let ll = (await require('./livelook').run({ browser: browser.isConnected() ? browser : (own = await H.launch()), file })).items;
+    if (ll.some(x => x.id === 'livelook:error' && x.closed)) { const b2 = await H.launch(); try { ll = (await require('./livelook').run({ browser: b2, file })).items.map(x => ({ ...x, detail: (x.detail || '') + '（ブラウザを開き直した2回目）' })) } finally { await b2.close().catch(() => {}) } }
+    items.push(...ll.map(({ closed, ...x }) => x));
+  } catch (e) { items.push({ id: 'livelook:error', title: 'ライブポーカーらしい見た目の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
+  finally { if (own) await own.close().catch(() => {}) }
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };
