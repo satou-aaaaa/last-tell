@@ -19,7 +19,8 @@ const PROBE = `(() => {
       const p = S.players[i], toCall = S.currentBet - p.bet, potBefore = S.players.reduce((a, q) => a + q.total, 0) - toCall;
       if (S.street === 'preflop') {
         const others = S.players.filter((q, j) => j !== i && q.bet > BB()).length; // BBより多く出した人がいない＝まだ誰も上げていない
-        if (S.raises === 0 && others === 0 && toCall > 0) inc(P.limp, p.name, d.type === 'call');
+        // 持ちチップがBB以下の人のコールは、オールインで入るしかないのでリンプに数えない（v84：クロウ 2,500 で BB 4,000 にコール → 11%）
+        if (S.raises === 0 && others === 0 && toCall > 0 && p.chips > toCall) inc(P.limp, p.name, d.type === 'call');
         if (S.raises === 1 && S.players[0].raisedPre && S.currentBet <= BB() * 3 && toCall > 0) inc(P.faceOpen, p.name, d.type === 'fold');
       }
       // S2 は1対1のリバーだけ数える（v84：第14章の3〜4人の卓では、ほかの人がコール済みでポットの見込みが変わり、コールが正しいことも多い）
