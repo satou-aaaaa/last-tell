@@ -43,7 +43,7 @@ async function run({ browser, file }) {
     try {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
-      const r = await page.evaluate(() => {
+      const measure = () => page.evaluate(() => {
         const R = e => e.getBoundingClientRect(), vis = e => e && e.offsetParent && R(e).width > 2, ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
         const hit = (sel, against) => { const out = []; for (const e of document.querySelectorAll(sel)) { if (!vis(e) || e.closest('.off')) continue; const a = R(e); for (const o of document.querySelectorAll(against)) if (vis(o) && !e.contains(o) && !o.contains(e) && ov(a, R(o))) out.push((o.id || o.className).slice(0, 20)) } return out };
         const tools = document.querySelector('.felt .lltools'), cup = document.querySelector('#table > .cup');
@@ -57,6 +57,9 @@ async function run({ browser, file }) {
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
       });
+      let r = await measure();
+      // 重なりが出たら 1.5秒待って測り直す（WebKit は顔アップや札の動きの途中で測ることがある。v0.86.4 CI）。残ったものだけを問題にする
+      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length) { await page.waitForTimeout(1500); r = await measure() }
       add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
       add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
       // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
