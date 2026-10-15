@@ -14,12 +14,12 @@ const PROBE = `(() => {
   if (window.__bp) return; ${EVAL}
   const P = window.__bp = { acts: 0, raises: 0, minRaiseBad: [], reopenBad: [], blindBad: [], orderBad: [], sd: 0, sdBad: [], errs: [], checkBlinds: true };
   const nm = i => S.players[i] ? S.players[i].name : '?';
-  let key = '', closed = {}, first = true;
+  let key = '', closed = {}, closedAt = {}, first = true;
   const _sh = startHand;
   startHand = function () {
     const r = _sh.apply(this, arguments);
     try {
-      key = ''; closed = {}; first = true; P.order0 = S.players.map(q => q.name).join(',') + '|' + S.dealer;
+      key = ''; closed = {}; closedAt = {}; first = true; P.order0 = S.players.map(q => q.name).join(',') + '|' + S.dealer;
       const live = p => !p.out, alive = S.players.filter(live).length;
       const sb = alive === 2 ? S.dealer : nextIdx(S.dealer, live), bb = nextIdx(sb, live);
       const p1 = S.players[sb], p2 = S.players[bb];
@@ -37,7 +37,7 @@ const PROBE = `(() => {
     try {
       const k = S.handNo + ':' + S.street;
       if (k !== key) {
-        key = k; closed = {};
+        key = k; closed = {}; closedAt = {};
         // 最初に話す人：プリフロップはBBの左（2人ならボタン＝SB）、フロップ以降はボタンの左
         // 席を選び直して並びが変わったハンド（前の対戦の待ち時間が残ったまま次を始めたとき）は数えない
         if (P.checkBlinds && !CFG.house && !S.scriptAI && P.order0 === S.players.map(q => q.name).join(',') + '|' + S.dealer) {
@@ -62,8 +62,10 @@ const PROBE = `(() => {
           if (!p.allIn && inc < need) P.minRaiseBad.push('ハンド' + pre.hand + ' ' + p.name + ' ' + pre.cb + '→' + p.bet + '（最低 +' + need + '）');
           if (pre.closed) P.reopenBad.push('ハンド' + pre.hand + ' ' + p.name + ' ' + pre.cb + '→' + p.bet + '（足りないオールインのあとに再レイズ）');
           if (inc >= need) S.players.forEach((q, j) => { if (j !== i) closed[j] = false });
+          // 足りないオールインが重なって、話し終えた人が最後に話したときからちゃんとしたレイズの幅に届いたら、その人には権利が戻る（R-10、19b_rules.js の reopen）
+          else S.players.forEach((q, j) => { if (j !== i && closed[j] && closedAt[j] != null && p.bet - closedAt[j] >= pre.mr) closed[j] = false });
         }
-        closed[i] = true;
+        closed[i] = true; closedAt[i] = S.players[i].bet;
       }
     } catch (e) { P.errs.push('act後: ' + e.message) }
     return r;
