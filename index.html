@@ -2129,7 +2129,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.86.0';
+const APP_VERSION='0.86.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11195,7 +11195,8 @@ LT.on('layout',()=>{try{mfPlace()}catch(e){}});
 // 心の声が出ているあいだに吹き出しが後から出たら置き直す（v85.1 レビュー：横でケンジの「チェック！」と重なった）
 {let mfT=0;const mo=window.MutationObserver&&new MutationObserver(ms=>{const el=$('mfInner');if(!el||el.hidden||mfT)return;
     if(!ms.some(m=>m.target.classList&&m.target.classList.contains('say')||[...m.addedNodes].some(n=>n.classList&&n.classList.contains('say'))))return;   // 吹き出し以外の変化（名札の付け替えなど）は見ない
-    mfT=setTimeout(()=>{mfT=0;try{mfPlace()}catch(e){}},60)});   // rAF は WebKit で止まることがあるので setTimeout。60ms に1回まで
+    mfT=setTimeout(()=>{mfT=0;try{mfPlace()}catch(e){}},60);   // rAF は WebKit で止まることがあるので setTimeout。60ms に1回まで
+    clearTimeout(mo._t2);mo._t2=setTimeout(()=>{try{mfPlace()}catch(e){}},450)});   // 吹き出しは出たあと 0.2秒ほど動き（せり上がり・よけ）、そのあと止まった位置でもう1回（v86 レビュー：PC 6人でミサキの吹き出しの角に数px）
   if(mo)['sayLayer','plates'].forEach(id=>{const n=$(id);if(n)mo.observe(n,{subtree:true,attributes:true,attributeFilter:['class'],childList:true})})}
 
 // showTell を包む（39_tell_win.js と同じやり方）：元の showTell のあとに、出たクセがあれば案1のジンの一言と案2の心の声
