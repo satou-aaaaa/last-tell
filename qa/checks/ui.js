@@ -67,7 +67,9 @@ const INSPECT = `(() => {
     const offX = r.left < -2 || r.right > W + 2, offY = r.top < -2 || r.bottom > Hh + 2;
     if ((offX || offY) && !scrollable(el)) out.push({ kind: 'はみ出し', el: desc(el), rect: [r.left, r.top, r.width, r.height].map(Math.round) });
     // 隠れ：5点のうち3点以上がほかの部品の下
-    const pts = [[.5, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]].map(([a, b]) => [r.left + r.width * a, r.top + r.height * b]).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < Hh);
+    // スクロールする枠の外（下へ流れて見えていない所）は「隠れ」に数えない。スクロールすれば見える（改善提案 第5回 §0-4）
+    const clip = (() => { for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 2) return e.getBoundingClientRect() } return null })();
+    const pts = [[.5, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]].map(([a, b]) => [r.left + r.width * a, r.top + r.height * b]).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < Hh && (!clip || (y >= clip.top && y <= clip.bottom && x >= clip.left && x <= clip.right)));
     let cov = 0, by = null;
     for (const [x, y] of pts) { const t = document.elementFromPoint(x, y); if (t && !el.contains(t) && !t.contains(el)) { cov++; by = by || t } }
     if (pts.length >= 3 && cov >= 3) {
@@ -77,10 +79,13 @@ const INSPECT = `(() => {
     // 文字が切れている（ボタン）
     if (el.tagName === 'BUTTON' && (el.scrollWidth > el.clientWidth + 3) && /hidden|clip/.test(getComputedStyle(el).overflow)) out.push({ kind: '文字切れ', el: desc(el) });
   }
-  // ボタン同士の重なり
+  // ボタン同士の重なり。スクロールする枠の中の部品は、枠で切れて見えている部分だけで比べる（改善提案 第5回 §0-4）
+  const visRect = el => { const r = el.getBoundingClientRect(); let L = r.left, T = r.top, R = r.right, B = r.bottom;
+    for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 2) { const c = e.getBoundingClientRect(); L = Math.max(L, c.left); T = Math.max(T, c.top); R = Math.min(R, c.right); B = Math.min(B, c.bottom) } }
+    return { left: L, top: T, right: R, bottom: B, width: Math.max(0, R - L), height: Math.max(0, B - T) } };
   const btn = imp.filter(e => e.tagName === 'BUTTON');
   for (let i = 0; i < btn.length; i++) for (let j = i + 1; j < btn.length; j++) {
-    const a = btn[i].getBoundingClientRect(), b = btn[j].getBoundingClientRect();
+    const a = visRect(btn[i]), b = visRect(btn[j]);
     if (btn[i].contains(btn[j]) || btn[j].contains(btn[i])) continue;
     const w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
     if (w > 0 && h > 0 && w * h > 0.15 * Math.min(a.width * a.height, b.width * b.height)) out.push({ kind: '重なり', el: desc(btn[i]), by: desc(btn[j]) });
