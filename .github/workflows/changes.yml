@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
     paths-ignore: [changes.html]
+  # 自動マージ（GITHUB_TOKEN）は push を起こさないので、その後にも動かす
+  workflow_run:
+    workflows: ["Auto merge"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
