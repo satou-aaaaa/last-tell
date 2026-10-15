@@ -10,16 +10,20 @@ const PROBE = `(() => {
   const inc = (o, k, f) => { o[k] = o[k] || { n: 0, hit: 0 }; o[k].n++; if (f) o[k].hit++ };
   const _cd = cpuDecide;
   cpuDecide = function (i) {
+    try { S._lk = null } catch (e) {}
     const d = _cd.apply(this, arguments);
     try {
       if (i === 0) return d;
+      // 弱点（LEAKS：クロウの「大きな勝負から降りられん」など、わざと入れた読める癖）で決めた判断は、S2 などの割合に数えない（v83 レビュー：クロウ 48%）
+      if (S._lk) return d;
       const p = S.players[i], toCall = S.currentBet - p.bet, potBefore = S.players.reduce((a, q) => a + q.total, 0) - toCall;
       if (S.street === 'preflop') {
         const others = S.players.filter((q, j) => j !== i && q.bet > BB()).length; // BBより多く出した人がいない＝まだ誰も上げていない
         if (S.raises === 0 && others === 0 && toCall > 0) inc(P.limp, p.name, d.type === 'call');
         if (S.raises === 1 && S.players[0].raisedPre && S.currentBet <= BB() * 3 && toCall > 0) inc(P.faceOpen, p.name, d.type === 'fold');
       }
-      if (S.street === 'river' && toCall > 0 && toCall >= potBefore * 1.5) inc(P.rivBig, p.name, d.type !== 'fold');
+      // S2 は1対1のリバーだけ数える（v84：第14章の3〜4人の卓では、ほかの人がコール済みでポットの見込みが変わり、コールが正しいことも多い）
+      if (S.street === 'river' && toCall > 0 && toCall >= potBefore * 1.5 && S.players.filter(q => !q.folded && !q.out).length === 2) inc(P.rivBig, p.name, d.type !== 'fold');
     } catch (e) { P.errs.push(e.message) }
     return d;
   };
@@ -94,6 +98,8 @@ async function run({ browser, file, quick }) {
     ['startChapter(CHAPTERS[5],true)', 'open3', H1],
     ['startChapter(CHAPTERS[6],true)', 'open3', H1],
     [`($('freeSize').value='6',startFree())`, 'open3', H1],
+    // S2：クロウ・カオルは第14章の卓にいる。ほかの卓だけでは12回・8回しか測れず揺れていた（v83 レビュー）ので、第14章でも2倍ベットを打つ
+    ['startP2(PART2[3],true)', 'overbet', H2, st7],
   ];
   // 4つずつ回す（一度に全部だと遅くなりすぎる）
   const res = [];
@@ -101,7 +107,7 @@ async function run({ browser, file, quick }) {
   const todo = jobs.filter((j, k) => !skip.includes(k)), got = [];
   for (let i = 0; i < todo.length; i += 4) got.push(...await Promise.all(todo.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3]))));
   jobs.forEach((j, k) => res.push(skip.includes(k) ? EMPTY : got.shift()));
-  const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF] = res;
+  const [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14] = res;
   // S1 BBアンティ
   const a = merge(s1, s1b);
   if (!unitS1) items.push({ id: 'rule:S1-ante', title: 'BBアンティがショーダウンでBBに返らない（プロポーカー S1）', status: a.sdRefundBB ? 'fail' : 'ok',
@@ -124,12 +130,12 @@ async function run({ browser, file, quick }) {
   items.push({ id: 'rule:A1-faceopen', title: '強いキャラが3BBのオープンに降りすぎない（プロポーカー A1）', status: !foldStrong.length ? 'warn' : rateStatus(badFold),
     detail: foldStrong.length ? foldStrong.map(x => `${x[0]} 降りる ${x[1]}%（${x[2]}回）`).join('、') + '（80%以下で合格）' : '測れる回数が足りない' });
   // S2 リバーの大きなベット
-  const R = [ob6, ob7, obF].reduce(merge);
+  const R = [ob6, ob7, obF, ob14].reduce(merge);
   const callStrong = STRONG.filter(n => R.rivBig[n] && R.rivBig[n].n >= 6).map(n => [n, pct(R.rivBig[n]), R.rivBig[n].n]);
   const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
   items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
     detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
-  const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF].flatMap(x => (x.errs || []).concat(x.errors || []));
+  const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });
   return { name: 'プロポーカー目線の再発チェック', items };
 }
