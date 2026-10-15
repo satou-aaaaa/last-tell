@@ -38,7 +38,8 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
   const all = quick ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15];
   for (const ch of chapters ? all.filter(c => chapters.includes(c)) : all) {
     const tw = { n: 0, bad: 0, ex: [] };
-    const nN = !quick && ch >= 4 ? TELL_N : N;
+    // 第4〜6章は「読む・読まない」の差を確かめるので 24回＋24回（改善提案 2026-10-15b 案1 の「できた」の条件）
+    const nN = !quick && ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : N;
     const jobs = Array.from({ length: nN }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw));
     const res = [];
     for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
@@ -63,7 +64,7 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
     items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail, games: res.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
     if (!quick) {
       // 同じ章をクセを読む打ち手でも回す。乱数は読まない方と別の並び（+500）
-      const rd = { n: 0, h: 0, r: [], ev: 0, en: 0 }, tj = Array.from({ length: ch >= 4 ? TELL_N : TELL_N13 }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + 500 + i + 1, null, 'tell', rd));
+      const rd = { n: 0, h: 0, r: [], ev: 0, en: 0 }, tj = Array.from({ length: ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : TELL_N13 }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + 500 + i + 1, null, 'tell', rd));
       const tr = [];
       for (let i = 0; i < tj.length; i += parallel) tr.push(...await Promise.all(tj.slice(i, i + parallel).map(f => f())));
       const tok = tr.filter(r => r !== 'error'), tw2 = tok.filter(r => r === 'win').length, trate = tok.length ? tw2 / tok.length : 0;
