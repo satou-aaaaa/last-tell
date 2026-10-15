@@ -26,7 +26,7 @@ async function playOnce(browser, file, ch, maxHands, seed, tw, policy = 'cpu', r
     // 上限は手数に合わせる（1ハンド約4秒、ブラウザがコアを分け合うと遅くなるので2倍見る）。本当に止まったのは stallMs で分かる
     const r = await H.runUntilDone(page, { timeoutMs: maxHands * 8000, stallMs: 20000 });
     const b = await H.botState(page); await twGet();
-    if (rd) { try { rd.n += await page.evaluate(() => __bot.reads || 0) } catch (e) {} }
+    if (rd) { try { const x = await page.evaluate(() => ({ n: __bot.reads || 0, h: __bot.hits || 0, r: __bot.readRes || [] })); rd.n += x.n; rd.h += x.h; rd.r.push(...x.r) } catch (e) {} }
     // 手は進んでいるのに時間切れ → 80ハンドで決着しない回と同じく「決着なし」（負け扱い）。止まった（stalled）ときだけエラー
     return r.status === 'done' ? b.result : r.status === 'timeout' ? 'nodecision' : 'error';
   } catch (e) { return 'error' } finally { await ctx.close() }
@@ -63,15 +63,19 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
     items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail, games: res.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
     if (!quick) {
       // 同じ章をクセを読む打ち手でも回す。乱数は読まない方と別の並び（+500）
-      const rd = { n: 0 }, tj = Array.from({ length: ch >= 4 ? TELL_N : TELL_N13 }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + 500 + i + 1, null, 'tell', rd));
+      const rd = { n: 0, h: 0, r: [] }, tj = Array.from({ length: ch >= 4 ? TELL_N : TELL_N13 }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + 500 + i + 1, null, 'tell', rd));
       const tr = [];
       for (let i = 0; i < tj.length; i += parallel) tr.push(...await Promise.all(tj.slice(i, i + parallel).map(f => f())));
       const tok = tr.filter(r => r !== 'error'), tw2 = tok.filter(r => r === 'win').length, trate = tok.length ? tw2 / tok.length : 0;
       const gap = Math.round((trate - rate) * 100);
-      const judged = ch >= 4, low = judged && gap < TELL_GAP;
+      // 読みが5回未満の章は判定しない（第7・15章は決め手の相手が特別なクセなので読む札がほとんど出ない）
+      const judged = ch >= 4 && rd.n >= 5, low = judged && gap < TELL_GAP;
+      const avg = a => a.length ? (a.reduce((x, y) => x + y.bb, 0) / a.length).toFixed(1) : '-';
+      const dv = rd.r.filter(x => x.diff), sm = rd.r.filter(x => !x.diff);
+      const more = `。札の当たり ${rd.n ? Math.round(rd.h / rd.n * 100) : '-'}%（${rd.h}/${rd.n}）、読みで判断が変わったハンド ${dv.length}回 平均 ${avg(dv)}BB（変わらなかったハンド ${sm.length}回 ${avg(sm)}BB）`;
       items.push({ id: 'tellgap:ch' + ch, title: `第${ch}章：クセを読むと勝てるか`, status: low ? 'warn' : 'ok',
         detail: `読まない ${Math.round(rate * 100)}%（${ok.length}回）／読む ${Math.round(trate * 100)}%（${tok.length}回、札を読んだ判断 ${rd.n}回）／差 ${gap >= 0 ? '+' : ''}${gap}ポイント` +
-          (judged ? (low ? `。差が ${TELL_GAP}ポイント未満：第${ch}章はクセを読んでも勝ちやすくなっていない` : '') : '（第1〜3章は数字だけ）'),
+          more + (judged ? (low ? `。差が ${TELL_GAP}ポイント未満：第${ch}章はクセを読んでも勝ちやすくなっていない（回数が少ないのでぶれは大きい）` : '') : ch < 4 ? '（第1〜3章は数字だけ）' : '（読みが5回未満なので判定しない）'),
         games: tr.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
     }
     if (tw.n) items.push({ id: 'tellwin:ch' + ch, title: `第${ch}章：クセの札は相手のフロップ以降の賭け・上げのときだけ`, status: tw.bad ? 'fail' : 'ok',

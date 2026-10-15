@@ -22,11 +22,14 @@ async function collect(browser, file) {
   const { ctx, page } = await H.openGame(browser, file, { storage: H.UNLOCKED, lang: 'en' });
   let speakers, lines;
   try {
-    speakers = await page.evaluate(() => [...new Set([...Object.keys(typeof INTRO !== 'undefined' ? INTRO : {}), 'ジン', '師匠', '店主', 'ディーラー', 'アオ'])]);
+    speakers = await page.evaluate(() => [...new Set([...Object.keys(typeof INTRO !== 'undefined' ? INTRO : {}), 'ジン', '師匠', '店主', 'ディーラー', 'アオ', '老人'])]);
     const set = new Set(speakers);
     const re = /\[\s*(['"])([^'"\]\n]{1,8})\1\s*,\s*(['"])((?:(?!\3)[^\n]){2,400})\3\s*\]/g;
     const raw = []; let m;
     while ((m = re.exec(src))) if (set.has(m[2])) raw.push([m[2], m[4].replace(/\\(['"])/g, '$1')]);
+    // 章の扉の添え文 {door:1,cap:'…'}（改善提案 第5回 §1。v83 で追加）
+    const reCap = /\{\s*door\s*:\s*\d+\s*,\s*cap\s*:\s*(['"])((?:(?!\1)[^\n]){2,200})\1/g;
+    while ((m = reCap.exec(src))) raw.push(['扉の添え文', m[2]]);
     // {"who": "ロク", "ja": "…"} の形（v63 の決着の一手・章の締めの差し替えなど）と、一騎打ちの相手役（boss）の flop/turn/river/lose（交代レビュー v63 で追加）
     const reWho = /\{\s*"who"\s*:\s*"([^"]{1,8})"\s*,\s*"ja"\s*:\s*"((?:[^"\\\n]|\\.){2,400})"/g;
     while ((m = reWho.exec(src))) if (set.has(m[1])) raw.push([m[1], m[2].replace(/\\(['"])/g, '$1')]);

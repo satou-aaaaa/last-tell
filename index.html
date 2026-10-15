@@ -1318,6 +1318,8 @@ body:has(#title:not([hidden]))::after{opacity:.6}
 #btnShot{white-space:nowrap;letter-spacing:0}@media(max-height:500px){#btnShot{font-size:.8rem;padding-left:.5em;padding-right:.5em}}
 #quiz .qopts button{white-space:nowrap;letter-spacing:0;font-size:clamp(.78rem,3.8vw,1rem)}
 @media (max-height:500px) and (orientation:landscape){#scene .stage{height:min(30vh,360px)}#scene .scene-btns{position:sticky;bottom:6px;z-index:6}}
+/* v82 レビュー：横向きの会話で話し手の顔が小さく、肩が箱に隠れる → 箱を詰めて、顔の段を残りの高さいっぱいにする */
+@media (max-height:460px) and (orientation:landscape){#scene .stage{height:max(120px,calc(100dvh - 236px))}#scene .box{min-height:72px;padding:20px 16px 10px}}
 #scene .venue{z-index:12;text-shadow:0 1px 4px #000,0 0 10px #000}
 @media (max-height:500px) and (orientation:landscape){#scene .lesson p{line-height:1.6;font-size:.9rem;max-width:none}#scene .lesson .lt{font-size:1.1rem}}
 .raisepanel .presets button{white-space:nowrap;letter-spacing:0;font-size:min(.8rem,3.3vw)}
@@ -1957,7 +1959,7 @@ html.ingame #game{height:100%}
   <section id="scene" hidden>
     <div class="venue" id="venue"></div>
     <div class="stage" id="stage"></div>
-    <div class="box" id="box" role="button" tabindex="0" aria-label="次へ進む"></div>
+    <div class="box" id="box" aria-live="polite" aria-atomic="true"></div>
     <div class="row scene-btns">
       <button class="ghost small" id="btnSkip">スキップ</button>
       <button class="primary" id="btnAdv">次へ</button>
@@ -2046,7 +2048,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.82.0';
+const APP_VERSION='0.83.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -5739,8 +5741,8 @@ function renderLine(){
     $('box').innerHTML=`<span class="lesson-tag">次回</span><div class="lesson"><div class="lt">第${nc.no}章　${esc(nc.title)}</div><p>「${esc(pv.line)}」</p></div>`}
   else if(l&&l.door){setStage(null);$('stage').className='stage part';const c=CHAPTERS[l.door-1],dd=DOOR_DAYS[l.door];
     $('box').innerHTML=`<div class="partcard door"><span>第${l.door}章</span><b>${esc(c.title)}</b>${dd?`<em>${esc(dd)}</em>`:''}${l.cap?`<p class="doorcap">${esc(l.cap)}</p>`:''}</div>`;
-    // 改善提案 第5回 §1：扉は 1.5秒で自動で次へ（押せばすぐ進む）。添え文があるときは少し長く
-    clearTimeout(SC._dt);const at=SC.i,me=SC;SC._dt=setTimeout(()=>{if(SC===me&&SC.i===at&&!$('scene').hidden)advance()},(l.cap?2600:1500)*(typeof SPEED==='function'?SPEED():1))}
+    // 改善提案 第5回 §1：はじめての第1章の扉だけ自動で次へ（押せばすぐ進む）。添え文を読む時間を取るので SPEED では縮めない（v82 レビュー）
+    clearTimeout(SC._dt);if(doorAuto(l)){const at=SC.i,me=SC;SC._dt=setTimeout(()=>{if(SC===me&&SC.i===at&&!$('scene').hidden)advance()},l.cap?3500:1800)}}
   else if(l&&l.choice){$('box').innerHTML=`<div class="line narr">${esc(TEMPT.ask)}</div><div class="tchoice">${TEMPT.choices.map(c=>`<button class="ghost" data-tc="${c.id}">${esc(c.label)}</button>`).join('')}</div>`;
     $('box').querySelectorAll('[data-tc]').forEach(b=>b.onclick=e=>{e.stopPropagation();temptPick(b.dataset.tc)})}
   else if(l&&l.epilogue){setStage(null);
@@ -5758,8 +5760,9 @@ function renderLine(){
     $('box').innerHTML=`${who?`<span class="nametag${cute?' cute':''}">${esc(who==='師匠'?mentorName():who)}${l[2]&&l[2].voice?`<small class="voice">（${esc(l[2].voice)}）</small>`:''}${CHARS[who]&&!(l[2]&&l[2].voice)?`<span class="stars">${stars(rankOf(who))}</span>`:''}</span>`:''}<div class="line${who?'':' narr'}">${who?'「'+esc(text)+'」':esc(text)}</div>${mark}`;
   }
   p2After(l);
-  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked)||!!(l&&l.door);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
+  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked)||doorAuto(l);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
 }
+function doorAuto(l){try{return !!(l&&l.door===1&&SC.ch&&SC.ch.no===1&&!SC.ch.p2&&!loadCleared())}catch(e){return false}}
 function setStage(who){
   const st=$('stage');
   if(!who){st.className='stage';st.innerHTML='';return}
@@ -9031,10 +9034,7 @@ function beatRest(){
   if(typeof CFG==='undefined'||!CFG||!CFG.ch||!CFG.ch.beats||!CFG.beatsOn||!S)return[];
   const d=beatDoneMap(),bs=CFG.ch.beats.filter(b=>!d[b.after]);
   beatMark(bs);return[].concat(...bs.map(b=>b.lines))}
-// 初めての第1章：扉は少し待って自動で進む（タップしてもよい）
-{const o=renderLine;renderLine=function(){const r=o.apply(this,arguments);
-  try{const l=SC&&SC.lines[SC.i];if(l&&l.door===1&&SC.ch&&SC.ch.no===1&&!SC.ch.p2&&!loadCleared()){const sc=SC,i=SC.i;setTimeout(()=>{if(SC===sc&&SC.i===i)advance()},1800)}}catch(e){}
-  return r}}
+// 初めての第1章の扉の自動送りは 18_scene.js の doorAuto（v83 で1本にまとめた）
 
 // ---------- S2：その場で1行の案内 ----------
 function guideGet(){try{const o=JSON.parse(localStorage.getItem(HELP_KEY));return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return{}}}

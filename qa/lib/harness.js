@@ -71,12 +71,18 @@ const BOT = `(() => {
       if (T && !keep.includes(p.name) && bust && $('cue' + i)) {
         const c = ([...bust.classList].find(k => k.startsWith('cue-') && k !== 'cue-undefined') || '').slice(4);
         let m = c === T.strong.cue ? 'strong' : c === T.bluff.cue ? 'bluff' : '';
-        if (m && T.reverse) m = m === 'strong' ? 'bluff' : 'strong';
+        // レイカの「逆のクセ」は、ゲームが知らせた（師匠の「今のは、わざとだ」＝ S.revSaid）あとだけ入れ替えて読む
+        if (m && T.reverse && S.revSaid) m = m === 'strong' ? 'bluff' : 'strong';
         if (m) { B.reads = (B.reads || 0) + 1;
-          if (m === 'bluff') return { type: 'call' };
-          const h = me.hand, bd = S.board, top = bd.length ? Math.max(...bd.map(x => x.r)) : 0, cat = bd.length >= 3 ? bestN(h.concat(bd))[0] : -1;
-          const tp = cat >= 2 || (cat === 1 && (h.some(x => x.r === top) || (h[0].r === h[1].r && h[0].r > top)));
-          if (!tp) return { type: 'fold' } }
+          let d;
+          if (m === 'bluff') d = { type: 'call' };
+          else { const h = me.hand, bd = S.board, top = bd.length ? Math.max(...bd.map(x => x.r)) : 0, cat = bd.length >= 3 ? bestN(h.concat(bd))[0] : -1;
+            const tp = cat >= 2 || (cat === 1 && (h.some(x => x.r === top) || (h[0].r === h[1].r && h[0].r > top)));
+            if (!tp) d = { type: 'fold' } }
+          // 測るだけ（判断には使わない）：札の当たり外れと、読まない打ち手（cpuDecide）と判断が変わったか
+          try { if (p.tell && p.tell.truth === m) B.hits = (B.hits || 0) + 1; const d0 = cpuDecide(0), dd = d || d0, diff = !!(d0 && dd && d0.type !== dd.type);
+            if (!B.rp || B.rp.hand !== S.handNo) B.rp = { hand: S.handNo, start: me.chips + me.total, diff }; else B.rp.diff = B.rp.diff || diff;
+            if (d) return d; if (d0 && d0.type) return d0 } catch (e) { if (d) return d } }
       }
     }
     if ((B.policy === 'cpu' || B.policy === 'tell' || (B.policy === 'mix' && Math.random() < .6)) && typeof cpuDecide === 'function') { try { const d = cpuDecide(0); if (d && d.type) return d } catch (e) { B.events.push('cpuDecide(0) error: ' + e.message) } }
@@ -122,6 +128,7 @@ const BOT = `(() => {
         // 台本で全員のチップを配り直したとき（第13章の最初のハンドなど）は数えない
         const reset = S.players.every(p => p.chips === p.start) || S.chipsReset === S.handNo; // 決まった札のラッシュのあとなど、ゲームが予定どおりチップを戻したハンド（v65 から S.chipsReset）
         if (B.lastSum !== null && names === B.lastNames && s !== B.expect && !reset) B.chipErr.push({ hand: S.handNo, before: B.expect, after: s, diff: s - B.expect, log: [...document.querySelectorAll('#log > *')].slice(-12).map(x => x.textContent) });
+        if (B.rp && B.rp.hand === S.handNo) { const me = S.players[0]; (B.readRes = B.readRes || []).push({ bb: (me.chips - B.rp.start) / Math.max(1, BB()), diff: B.rp.diff }); B.rp = null }
         B.lastSum = s; B.lastNames = names;
         // 次のハンドで補充される分
         B.expect = s + (CFG.refill ? S.players.filter(p => !p.human && !p.extra && p.chips <= 0).reduce((a, p) => a + p.start, 0) : 0);
