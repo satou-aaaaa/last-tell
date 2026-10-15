@@ -88,7 +88,8 @@ async function run({ browser, file }) {
       else {
         const r = await page.evaluate(() => { if (typeof mfBigBoost !== 'function') return null; const keep = S.players.map(q => q.total), st = S.street, p = S.players.find(q => !q.human && !TW_KEEP.includes(q.name));
           const pot = n => S.players.forEach((q, k) => q.total = k ? 0 : n * BB()); try {   // potTotal は const なので、各人の出した額で大きさを作る
-          pot(20); const big = mfBigBoost(p); pot(5); const small = mfBigBoost(p); pot(20); S.street = 'flop'; const flop = mfBigBoost(p); return { big, small, flop } } finally { S.players.forEach((q, k) => q.total = keep[k]); S.street = st } });
+          S.street = 'turn'; pot(20); const big = mfBigBoost(p);   // 待つあいだに持ち時間で通りが進むことがあるので、通りはここで決める
+           pot(5); const small = mfBigBoost(p); pot(20); S.street = 'flop'; const flop = mfBigBoost(p); return { big, small, flop } } finally { S.players.forEach((q, k) => q.total = keep[k]); S.street = st } });
         add('morefun:bigboost', 'ターン・リバーでポット15BB以上なら正しいクセが+10pt以上、それ未満とフロップは変わらない', !r ? 'mfBigBoost が無い' : (r.big < .1 || r.small || r.flop) ? `大${r.big} 小${r.small} フロップ${r.flop}` : '', r ? `+${Math.round(r.big * 100)}pt / 0 / 0` : '');
         // 勝った人の名札の縁（satou 12:30Z「縁を金色に」）：ハンドの終わりに金の縁が1人以上・字は出さない
         await page.evaluate(() => { const B = __bot; B.done = false; clearInterval(B.timer); B.timer = setInterval(() => { if (S.handOver) { B.done = true; clearInterval(B.timer); return } B.tick() }, 4) });
