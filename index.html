@@ -2129,7 +2129,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.86.3';
+const APP_VERSION='0.86.4';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11186,6 +11186,8 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   // 重ならない場所がなければ、重なる面積がいちばん小さい場所
   const w=el.offsetWidth,L=el.getBoundingClientRect().left,cost=y=>avoid.reduce((a,r)=>a+(r.k||1)*Math.max(0,Math.min(L+w,r.right)-Math.max(L,r.left))*Math.max(0,Math.min(y+h,r.bottom)-Math.max(y,r.top)),0);
   let best=ys[0],bc=Infinity;for(const y of ys){const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}
+  // まだ少し重なるなら、その近くを 4px ずつ上下にずらして重ならない所を探す（v86.3 レビュー：縦で吹き出しの上の余白に 3px）
+  if(bc>0){const b0=best;for(let d=4;d<=48&&bc>0;d+=4)for(const y of [b0-d,b0+d]){if(y<T.top+2||y+h>T.bottom-2)continue;const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}}
   // 横向きで卓の中にどこも空きがなければ、右の操作の列（指示の箱の下・ボタンの上）の空きに出す（v85.2 レビュー）
   const C=$('controls'),sn=$('sensei');
   const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
