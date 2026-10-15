@@ -27,7 +27,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url)
+          base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null || true)
+          if [ -z "$base" ]; then
+            echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           base="${base%/}/"
           echo "公開URL: $base" | tee -a "$GITHUB_STEP_SUMMARY"
           bad=0
