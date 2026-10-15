@@ -169,13 +169,18 @@ async function shoot(browser, file, scene, vp, dir) {
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(() => { const e = $('mfInner'); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
       return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
-        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 }).length });
+        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
+        // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
+        .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+          const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
+          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) });
     if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
       const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, errors: await page.evaluate(() => __qa.errors) };
+    let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -221,7 +226,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:inner:${r.vp}`, title: `心の声の字幕がほかの部品に重ならない（${r.vp}）`, status: r.face === 0 ? 'ok' : 'warn',
-    detail: r.face < 0 ? '字幕が出なかった' : `重なっている部品 ${r.face}個（ボタン・手札・場札・名札・クセの札・ディーラーの声）` });
+    detail: r.face < 0 ? '字幕が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声）') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
     detail: `話し手の絵の ${r.face}% が会話の箱に隠れている（目安 25%まで）` });
   // ライブポーカーらしい見た目（2026-10-15）の「できた」の条件。Chromium と WebKit の両方で回るように、ここから呼ぶ
