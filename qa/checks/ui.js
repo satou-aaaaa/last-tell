@@ -36,6 +36,9 @@ const SCENES = [
   // 改善提案 第5回 §1：はじめての人がストーリーを押すと出る「注意書き＋遊んだことは？」の箱（v82 レビュー：縦でスクロールなしに収まるか）
   // 改善提案 2026-10-15b 案2：アオの心の声（字幕）がボタン・手札・場札・クセの札・ディーラーの声に重ならないか
   { key: 'フリー6人_心の声', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', after: `(MF.innerMs=1e7,mfInner(MF_RECALL.smile.strong))`, measure: 'inner' },
+  // 改善提案 2026-10-15b 案5：章クリアの「この章の読み」（読み勝ちの見返し）。札・名前・クセが画面に収まるか（v87 レビュー）
+  { key: '読み勝ちの見返し', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 3400,
+    after: `(MF_REPLAY.ms=1e7,(()=>{const o=S.players.find(p=>!p.human&&!p.out&&p.hand&&p.hand.length);mfReplay({pot:1,name:o.name,cue:'smile',act:'call',hand:o.hand.slice(),board:S.board.slice(),hand2:S.players[0].hand.slice()})})())` },
   { key: 'はじめての箱', prep: `$('btnStory').click()`, fresh: true, waitFor: `!!$('novDlg')&&!$('novDlg').hidden` },
   { key: '回想の判断', prep: `startFlashback(()=>{},'seki')`, settle: 2500,
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
@@ -59,7 +62,7 @@ const INSPECT = `(() => {
   const screenEl = ['title', 'chapters', 'scene', 'game', 'notebook', 'more'].map(id => document.getElementById(id)).find(e => e && !e.hidden);
   const root = document;
   // 調べる部品：ボタン、自分の手札、場札、相手の名札。相手の伏せ札・空の札置き場は飾りなので見ない
-  const sel = 'button, #mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot), [id^=plate]:not(#plates)';
+  const sel = 'button, #mfReplay .card, #mfReplay .mfr-lab, #mfReplay .mfr-cue, #mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot), [id^=plate]:not(#plates)';
   // 窓（相手紹介・設定・はしごなど）が開いているときは、その中だけを見る
   const modal = [...document.querySelectorAll('#vs, #setPanel, #runBox, #quiz, #help, #daily, #share, #moreDlg, #stackZoom, #tour, [role=dialog]')]
     .filter(e => shown(e) && vis(e)).filter(e => { const r = e.getBoundingClientRect(); return r.width * r.height > 0.5 * W * Hh })[0];

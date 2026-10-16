@@ -1948,17 +1948,19 @@ html.ingame #game{height:100%}
 #mfReplay .mfr-name{font-size:.85rem}
 #mfReplay .mfr-cue{font-size:1rem;font-weight:600}
 #mfReplay .mfr-act{font-size:.95rem;color:#d9b45a}
-#mfReplay .mfr-cards{display:flex;flex-direction:column;align-items:center;gap:6px;--cw:clamp(26px,8vmin,40px)}
+#mfReplay .mfr-cards{display:flex;flex-direction:column;align-items:center;gap:6px;--cw:clamp(30px,10vmin,44px)}
+#mfReplay .mfr-grp{display:flex;flex-direction:column;align-items:center;gap:2px}
+#mfReplay .mfr-lab{font-size:12px;opacity:.75;line-height:1.2}
 #mfReplay .mfr-row{display:flex;gap:4px;justify-content:center}
 #mfReplay .mfr-row .card{width:var(--cw);flex:none;animation:none}
-#mfReplay .mfr-skip{font-size:.7rem;opacity:.6}
+#mfReplay .mfr-skip{font-size:12px;opacity:.65}
 #mfReplay .mfr-s1,#mfReplay .mfr-s2,#mfReplay .mfr-s3,#mfReplay .mfr-s4{opacity:0;animation:mfrIn .4s ease forwards}
 #mfReplay .mfr-s2{animation-delay:.8s}#mfReplay .mfr-s3{animation-delay:1.6s}#mfReplay .mfr-s4{animation-delay:2.4s}
 #mfReplay.still .mfr-s1,#mfReplay.still .mfr-s2,#mfReplay.still .mfr-s3,#mfReplay.still .mfr-s4{opacity:1;animation:none}
 @keyframes mfrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (max-height:420px){#mfReplay .mfr-box{width:min(560px,100%);display:grid;grid-template-columns:auto 1fr;grid-template-areas:"head head" "face cue" "face act" "cards cards" "skip skip";column-gap:16px;row-gap:4px}
   #mfReplay .mfr-head{grid-area:head}#mfReplay .mfr-face{grid-area:face}#mfReplay .mfr-cue{grid-area:cue;align-self:end}#mfReplay .mfr-act{grid-area:act;align-self:start}
-  #mfReplay .mfr-cards{grid-area:cards;flex-direction:row;gap:12px}#mfReplay .mfr-skip{grid-area:skip}}
+  #mfReplay .mfr-cards{grid-area:cards;flex-direction:row;gap:28px;align-items:flex-end}#mfReplay .mfr-skip{grid-area:skip}}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2151,7 +2153,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.87.0';
+const APP_VERSION='0.87.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2330,7 +2332,7 @@ Object.assign(EN_DICT,{
 "……前と同じとは、限らない":"...It might not mean the same thing this time."
 });
 // 案5 読み勝ちの見返し
-Object.assign(EN_DICT,{"この章の読み":"Your read of the chapter","あなたはコールした":"You called.","あなたは降りた":"You folded.","タップでとばす":"Tap to skip"});
+Object.assign(EN_DICT,{"この章の読み":"This chapter's read","場の札":"Board","あなたはコールした":"You called.","あなたは降りた":"You folded.","タップでとばす":"Tap to skip"});
 
 // 改善提案 2026-10-14b §2〜4（記録を残す・ひと息・感想）の英語
 Object.assign(EN_DICT,{
@@ -11239,16 +11241,16 @@ LT.on('layout',()=>{try{mfPlace()}catch(e){}});
 // 案5 読み勝ちの見返し（satou 2026-10-16「読み勝ちの見返し」を 1.0 に）：章をクリアしたとき、ジンの三行の前に、
 // その章でいちばん大きかった「クセで取った／クセで降りて守った」1ハンドを4秒で（顔 → クセ → あなたの判断 → 開いた手札）。タップで即とばす。
 // 出さない：読み勝ち0回・第1〜3章・第7章・ストーリーの最後の手で決まった章・裏の卓・はしご。S.tw.best は 39_tell_win.js の twBest が残す
-const MF_REPLAY={ms:4000,act:{call:'あなたはコールした',fold:'あなたは降りた'},head:'この章の読み',skip:'タップでとばす'};
+const MF_REPLAY={ms:5500,you:'あなた',board:'場の札',act:{call:'あなたはコールした',fold:'あなたは降りた'},head:'この章の読み',skip:'タップでとばす'};
 function mfReplayOk(){const ch=CFG&&CFG.ch;if(!S||S.result!=='win'||!ch||CFG.ura||CFG.run||CFG.flashback||S.storyHand||S.finalHand)return false;
   if(!ch.p2&&(ch.no<=3||ch.no===7))return false;return !!(S.tw&&S.tw.best&&(S.tw.won||S.tw.saved))}
 function mfReplay(b){let el=$('mfReplay');if(!el){el=document.createElement('div');el.id='mfReplay';el.className='mfreplay';el.setAttribute('role','dialog');el.setAttribute('aria-label',MF_REPLAY.head);document.body.appendChild(el)}
-  const open=b.act==='call'||b.shown,cards=(a,h)=>(a||[]).map(c=>cardHTML(c,h)).join('');
+  const open=b.act==='call'||b.shown,grp=(l,h,c)=>h&&`<div class="mfr-grp${c||''}"><div class="mfr-lab">${l}</div><div class="mfr-row">${h}</div></div>`,cards=(a,h)=>(a||[]).map(c=>cardHTML(c,h)).join('');
   el.innerHTML=`<div class="mfr-box"><div class="mfr-head">${MF_REPLAY.head}</div>`+
     `<div class="mfr-face mfr-s1">${avatar(b.name,'normal')}<div class="mfr-name">${esc(b.name)}</div></div>`+
     `<div class="mfr-cue mfr-s2">${esc(CUE_LABEL[b.cue]||'')}</div>`+
     `<div class="mfr-act mfr-s3">${MF_REPLAY.act[b.act]||''}</div>`+
-    `<div class="mfr-cards mfr-s4"><div class="mfr-row">${cards(b.hand,!open)}</div><div class="mfr-row mfr-board">${cards(b.board)}</div><div class="mfr-row">${cards(b.hand2)}</div></div>`+
+    `<div class="mfr-cards mfr-s4">${grp(esc(b.name),cards(b.hand,!open))||''}${grp(MF_REPLAY.board,cards(b.board),' mfr-board')||''}${grp(MF_REPLAY.you,cards(b.hand2))||''}</div>`+
     `<div class="mfr-skip">${MF_REPLAY.skip}</div></div>`;
   el.hidden=false;el.classList.toggle('still',reducedMotion());
   const close=()=>{clearTimeout(el._t);el.onclick=null;el.hidden=true;el.innerHTML=''};
