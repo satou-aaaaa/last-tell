@@ -43,7 +43,7 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
     // 第4〜6章は「読む・読まない」の差を確かめるので 24回＋24回（改善提案 2026-10-15b 案1 の「できた」の条件）
     const nN = !quick && ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : N;
     // 第4章から（読み比べを判定する章）は配る札をゲームの ?seed= で決めて、読む方と同じ札で対にする（改善提案 2026-10-16 §0-2）
-    const paired = !quick && ch >= 4, dealOf = i => paired ? ch * 1000 + i + 1 : null, hbN = [], hbT = [];
+    const paired = !quick && ch >= 4, dealOf = i => paired ? ((ch * 1000 + i + 1) * 100003) >>> 0 : null, hbN = [], hbT = [];
     const jobs = Array.from({ length: nN }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw, 'cpu', null, dealOf(i), hbN[i] = {}));
     const res = [];
     for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
