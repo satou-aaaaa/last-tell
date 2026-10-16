@@ -21,8 +21,9 @@ async function playChapter(browser, file, ch, storage, seed) {
       back = await page.evaluate(() => {
         const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
         if ((vis($('chapters')) || vis($('title'))) && !vis($('scene'))) return true;
-        // 締めの会話の中の回想の卓（第2章のロクなど）は「降りる・受ける」を待つ。ボットはもう止まっているので受ける（改善提案 2026-10-16 §0-1：毎晩第2章で止まっていた）
-        if (typeof flashOf === 'function' && flashOf() && S && S.fbAsk && !S.handOver && S.toAct === 0 && vis($('btnCall'))) { $('btnCall').click(); return false }
+        // 締めの会話の中の回想の卓は、人の手番で止まる。ボットはもう止まっているので、押せる方を押す（改善提案 2026-10-16 §0-1）
+        //   第2・3・4・6章の回想は「降りる・受ける」の判断（受ける）、第5章のジンの回想は「上げる」だけ
+        if (typeof CFG !== 'undefined' && CFG && CFG.flashback && S && S.players && !S.handOver && S.toAct === 0) { const k = ['btnCall', 'btnCheck', 'btnRaise'].map(id => $(id)).find(x => vis(x) && !x.disabled); if (k) { k.click(); return false } }
         const b = ['lkOk', 'askGo', 'vsGo', 'rvOk', 'btnNoticeClose', 'btnNext', 'btnAdv'].map(id => $(id)).find(x => vis(x) && !x.disabled)
           || [...document.querySelectorAll('#scene button, #between button:not(#btnQuit), [role=dialog] button')].find(x => vis(x) && !x.disabled && !/^(btnSkip|btnShot|btnSave|btnPen)$/.test(x.id));
         if (b) b.click(); else if (vis($('scene')) && typeof advance === 'function') advance();
@@ -32,7 +33,7 @@ async function playChapter(browser, file, ch, storage, seed) {
     let where = '';
     if (b.result === 'win' && !back) { r.status = 'stalled-outro';
       where = await page.evaluate(() => { const vis = el => !!el && !el.hidden && el.getClientRects().length > 0;
-        return '見えている画面: ' + ['title', 'chapters', 'scene', 'game', 'between', 'vs'].filter(id => vis($(id))).join('・') + '、押せるボタン: ' + [...document.querySelectorAll('button')].filter(x => vis(x) && !x.disabled).map(x => x.id || x.textContent.trim().slice(0, 8)).slice(0, 12).join('・') }) }
+        return '見えている画面: ' + ['title', 'chapters', 'scene', 'game', 'between', 'vs'].filter(id => vis($(id))).join('・') + '、押せるボタン: ' + [...document.querySelectorAll('button')].filter(x => vis(x) && !x.disabled).map(x => x.id || x.textContent.trim().slice(0, 8)).slice(0, 12).join('・') + (typeof S !== 'undefined' && S && S.players ? `、卓: 手番 ${S.toAct}・${S.street}・終わり ${!!S.handOver}・回想 ${!!(typeof flashOf === 'function' && flashOf())}・判断待ち ${!!S.fbAsk}・自動 ${!!S.autoMe}` : '') }) }
     await page.waitForTimeout(800);
     const after = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])));
     return { status: r.status, where, result: b.result, hands: b.hands, errors: [...new Set([...(b.chipErr || []).map(e => 'チップの合計 ' + e.diff), ...(await page.evaluate(() => __qa.errors))])].slice(0, 3), after };
