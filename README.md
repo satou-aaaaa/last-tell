@@ -31,6 +31,6 @@ Issues は誰でも見られるので、個人的な連絡はサポートペー�
 - `.github/ISSUE_TEMPLATE/`：テスター向けの報告フォーム
 - `.github/workflows/pages.yml`：テスト公開（Settings → Pages の公開元が「GitHub Actions」のときだけ動く。遊ぶ人に要るファイルだけを出す）
 - `.github/workflows/release.yml`：版が上がったらタグとリリースを作る
-- `.github/workflows/automerge.yml`：QA が全部 ✅ になったプルリクエストをマージし、公開とタグを起こす。QA は index.html か qa/ が変わるときだけ回るので、それ以外のプルリクエストは手でマージする
+- `.github/workflows/automerge.yml`：QA が全部 ✅ になったプルリクエストをマージし、公開とタグを起こす。QA は index.html か qa/ が変わるときだけ回るので、それ以外のプルリクエストは、CI が緑なら担当のエージェントがマージする
 - `.github/dependabot.yml`：Actions の部品を月1回新しくする
 - `.gitattributes`：index.html の差分をプルリクエストで畳む
