@@ -66,3 +66,8 @@ jobs:
             qa-report-playthrough
             qa-summary
           retention-days: 30
+      - name: ❌ なら Actions も赤にする
+        if: ${{ always() && steps.p.outputs.code != '0' }}
+        run: |
+          echo "::error::通しで遊ぶ検査が ❌（code=${{ steps.p.outputs.code }}）。Issue「通しで遊ぶ検査が ❌」を見てください"
+          exit 1
