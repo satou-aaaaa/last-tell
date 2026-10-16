@@ -21,6 +21,8 @@ async function playChapter(browser, file, ch, storage, seed) {
       back = await page.evaluate(() => {
         const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
         if ((vis($('chapters')) || vis($('title'))) && !vis($('scene'))) return true;
+        // 締めの会話の中の回想の卓（第2章のロクなど）は「降りる・受ける」を待つ。ボットはもう止まっているので受ける（改善提案 2026-10-16 §0-1：毎晩第2章で止まっていた）
+        if (typeof flashOf === 'function' && flashOf() && S && S.fbAsk && !S.handOver && S.toAct === 0 && vis($('btnCall'))) { $('btnCall').click(); return false }
         const b = ['lkOk', 'askGo', 'vsGo', 'rvOk', 'btnNoticeClose', 'btnNext', 'btnAdv'].map(id => $(id)).find(x => vis(x) && !x.disabled)
           || [...document.querySelectorAll('#scene button, #between button:not(#btnQuit), [role=dialog] button')].find(x => vis(x) && !x.disabled && !/^(btnSkip|btnShot|btnSave|btnPen)$/.test(x.id));
         if (b) b.click(); else if (vis($('scene')) && typeof advance === 'function') advance();

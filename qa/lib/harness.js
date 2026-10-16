@@ -37,7 +37,7 @@ async function launch() {
 
 // ゲームを開く。fonts.googleapis は止める（読み込みが止まるため）
 // lite:true のときは動き（アニメーション）を止めて速く回す。画面チェックでは lite:false
-async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true, seed = null } = {}) {
+async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true, seed = null, deal = null } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile, hasTouch, serviceWorkers: 'block', reducedMotion: lite ? 'reduce' : 'no-preference' });
   if (lite) await ctx.addInitScript(`document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition-duration:0s!important;transition-delay:0s!important}';document.head.appendChild(st)})`);
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
@@ -46,7 +46,8 @@ async function openGame(browser, file, { viewport = { width: 1280, height: 800 }
   if (storage) await ctx.addInitScript(`(()=>{try{const s=${JSON.stringify(storage)};for(const k in s)localStorage.setItem(k,s[k])}catch(e){}})()`);
   const page = await ctx.newPage();
   page.on('pageerror', e => page.__errs = (page.__errs || []).concat(String(e.message)));
-  await page.goto('file://' + path.resolve(file), { waitUntil: 'load' });
+  // deal：配る札だけの種（ゲームの ?seed=、19a_seed.js）。CPU の乱数（seed）と分けるので、打ち方が違っても n ハンド目の札は同じ
+  await page.goto('file://' + path.resolve(file) + (deal != null ? '?seed=' + (Number(deal) >>> 0) : ''), { waitUntil: 'load' });
   await page.waitForTimeout(300);
   return { ctx, page };
 }
@@ -142,6 +143,8 @@ const BOT = `(() => {
         // 台本で全員のチップを配り直したとき（第13章の最初のハンドなど）は数えない
         const reset = S.players.every(p => p.chips === p.start) || S.chipsReset === S.handNo; // 決まった札のラッシュのあとなど、ゲームが予定どおりチップを戻したハンド（v65 から S.chipsReset）
         if (B.lastSum !== null && names === B.lastNames && s !== B.expect && !reset) B.chipErr.push({ hand: S.handNo, before: B.expect, after: s, diff: s - B.expect, log: [...document.querySelectorAll('#log > *')].slice(-12).map(x => x.textContent) });
+        // ハンドごとの自分の増減（BB）。読む・読まないを同じ配り札で対にして比べる（改善提案 2026-10-16 §0-2）
+        { const me = S.players[0]; if (me && !reset) (B.hb = B.hb || {})[S.handNo] = (me.chips - (B.prevMe != null ? B.prevMe : me.start)) / Math.max(1, BB()); B.prevMe = me ? me.chips : null }
         if (B.rp && B.rp.hand === S.handNo) { const me = S.players[0]; (B.readRes = B.readRes || []).push({ bb: (me.chips - B.rp.start) / Math.max(1, BB()), diff: B.rp.diff }); B.rp = null }
         B.lastSum = s; B.lastNames = names;
         // 次のハンドで補充される分
