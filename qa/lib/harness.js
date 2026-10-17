@@ -63,6 +63,8 @@ const BOT = `(() => {
   const CLICK = ['vsGo','twN','btnShowNo','btnIgnore','qtNo','rvOk','tourSkip','btnNoticeClose','btnAdv','btnNext','btnHelpClose','btnDailyClose','btnShareClose','btnZoomClose','btnSetClose','askGo','lkOk','nvNew']; // nvNew：v63「ポーカーを遊んだことは？」→ はじめて
   const B = window.__bot = { policy: 'random', hands: 0, decisions: 0, clicks: {}, chipErr: [], negErr: [], lastSum: null, lastNames: '', done: false, result: null, stuckAt: Date.now(), lastHand: -1, maxHands: 60, events: [], twiceSeen: [] };
   function sum() { return S.players.reduce((a, p) => a + p.chips, 0) }
+  // ブラフの札でコールしたとき、こちらに役があったか（1ペア以上か A を持っている）（v88 レビュー：ブラフ読みのコールが損なのは役なしでもコールするからか、を分けて測る）
+  B.madeOrA = (h, bd) => { try { return h.some(x => x.r === 14) || (bd.length >= 3 ? bestN(h.concat(bd))[0] >= 1 : h[0].r === h[1].r) } catch (e) { return false } };
   function decide() {
     const me = S.players[0], toCall = S.currentBet - me.bet;
     // 'tell'：クセの札を読んで打つ（改善提案 2026-10-15 §2）。見てよいのは画面に出た札（名札の cue-◯◯）と TELLS の意味だけ。相手の手札・p.tell の当たり外れは見ない
@@ -88,7 +90,7 @@ const BOT = `(() => {
             if (diff) { const pay = Math.min(toCall, me.chips), pot = S.players.reduce((a, q) => a + q.total, 0), eq = B.eqVs(me.hand, S.board, S.players.filter(q => q !== me && !q.folded && q.hand).map(q => q.hand), 300);
               const ev = t => t === 'fold' ? 0 : eq * (pot + pay) - pay; const g = (ev(dd.type) - ev(d0.type)) / Math.max(1, BB()); B.evGain = (B.evGain || 0) + g; B.evN = (B.evN || 0) + 1;
               // 内訳（改善提案 2026-10-17 §0-1）：賭けた本人のほかに残っている相手の数（0＝1対1）× 札の意味。払う額／ポットも記録
-              const left = S.players.filter(q => q !== me && q !== p && !q.folded && !q.out && q.hand && q.hand.length).length, k = (left ? 'multi' : 'hu') + '_' + m;
+              const left = S.players.filter(q => q !== me && q !== p && !q.folded && !q.out && q.hand && q.hand.length).length, k = (left ? 'multi' : 'hu') + '_' + m + (m === 'bluff' ? (B.madeOrA(me.hand, S.board) ? '_made' : '_air') : '');
               const e = (B.evBy = B.evBy || {})[k] = B.evBy[k] || { n: 0, bb: 0, pp: 0 }; e.n++; e.bb += g; e.pp += pay / Math.max(1, pot) }
             if (d) return d; if (d0 && d0.type) return d0 } catch (e) { if (d) return d } }
       }

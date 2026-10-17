@@ -83,7 +83,8 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
       const avg = a => a.length ? (a.reduce((x, y) => x + y.bb, 0) / a.length).toFixed(1) : '-';
       const dv = rd.r.filter(x => x.diff), sm = rd.r.filter(x => !x.diff);
       // 読みの得の内訳（改善提案 2026-10-17 §0-1）：1対1／3人以上 × ブラフの札でコール／強い札で降りた。判定には使わない
-      const byLine = by => { const L = { hu_bluff: '1対1・ブラフの札でコール', hu_strong: '1対1・強い札で降りた', multi_bluff: '3人以上・ブラフの札でコール', multi_strong: '3人以上・強い札で降りた' };
+      // ブラフの札でのコールは、こちらに役（1ペア以上・A を持つ）があったかで分ける（v88 レビュー）
+      const byLine = by => { const L = { hu_bluff_made: '1対1・ブラフの札でコール（役あり）', hu_bluff_air: '1対1・ブラフの札でコール（役なし）', hu_bluff: '1対1・ブラフの札でコール', hu_strong: '1対1・強い札で降りた', multi_bluff_made: '3人以上・ブラフの札でコール（役あり）', multi_bluff_air: '3人以上・ブラフの札でコール（役なし）', multi_bluff: '3人以上・ブラフの札でコール', multi_strong: '3人以上・強い札で降りた' };
         const xs = Object.keys(L).filter(k => by && by[k] && by[k].n).map(k => `${L[k]} ${by[k].bb >= 0 ? '+' : ''}${by[k].bb.toFixed(1)}BB（${by[k].n}回、払う額／ポット ${(by[k].pp / by[k].n).toFixed(2)}）`);
         return xs.length ? '。読みの得の内訳：' + xs.join('、') : '' };
       // 読みの得：判断が変わったときの「選んだ手 − 読まない手」の EV の合計（相手の本当の札で見た勝つ見込みから）。ハンドの結果（BB）は運が大きいので参考
