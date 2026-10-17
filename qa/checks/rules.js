@@ -169,16 +169,17 @@ async function run({ browser, file, quick }) {
   // S2 リバーの大きなベット
   const R = [ob6, ob7, obF, ob14, ob14b].reduce(merge);
   const callStrong = STRONG.filter(n => R.rivBig[n] && R.rivBig[n].n >= 6).map(n => [n, pct(R.rivBig[n]), R.rivBig[n].n]);
-  const badCall = callStrong.filter(x => x[1] > 40 || (x[2] >= 30 && x[1] < 10));   // v72：降りすぎ（何でも大きく賭ければ降りる）も止める
-  items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : rateStatus(badCall),
-    detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れたときは10%以上も。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
+  // 降りすぎ（10%未満）は、打って数えた回数が少なく揺れが大きいので ⚠️ だけ。合否は下の直接の測り方で決める（satou 2026-10-17「直接測定で判断」：v0.89.1 で CPU を変えずにジン 8%（49回）が出た）
+  const badCall = callStrong.filter(x => x[1] > 40), lowCall = callStrong.filter(x => x[2] >= 30 && x[1] < 10);
+  items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : badCall.length ? rateStatus(badCall) : lowCall.length ? 'warn' : 'ok',
+    detail: callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れて10%未満なら降りすぎの ⚠️。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない' });
   // S2 の直接の測り方（40%を超えたら ❌）
   {
     const d = await probeS2(browser, file);
     if (d.err) items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: 'warn', detail: '測れなかった: ' + d.err });
-    else { const rows = Object.entries(d).map(([n, x]) => [n, Math.round(100 * x.call / Math.max(1, x.n)), x.n, x.lk]); const bad = rows.filter(x => x[1] > 40);
+    else { const rows = Object.entries(d).map(([n, x]) => [n, Math.round(100 * x.call / Math.max(1, x.n)), x.n, x.lk]); const bad = rows.filter(x => x[1] > 40 || x[1] < 10);   // 降りすぎ（10%未満）もここで止める（上の打って数える方は ⚠️ だけ）
       items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: bad.length ? 'fail' : 'ok',   // v0.86.0 でカオルを直したので合否にする（v85 交代レビュー）
-        detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。40%以下で合格）' }) }
+        detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。10%以上40%以下で合格）' }) }
   }
   const errs = [s1, s1b, tour6, tour14, ura6, lim4, lim6, lim7, free6, ob6, ob7, obF, op6, op7, opF, ob14, ob14b].flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });

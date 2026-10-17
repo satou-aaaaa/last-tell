@@ -51,6 +51,7 @@ async function run({ browser, file, quick, baseline }) {
       const lt = await page.evaluate(k => __lt.slice(k), lt0);
       out.hands = played; out.heapEndMB = await heapMB(c);
       out.longPerHand = Math.round(lt.length / Math.max(1, played - 10) * 10) / 10;
+      out.longMsPerHand = Math.round(lt.reduce((a, d) => a + d, 0) / Math.max(1, played - 10));   // 1ハンドあたり止まっていた時間の合計（v89 レビュー）
       out.longMaxMs = Math.round(Math.max(0, ...lt));
       out.errors = await page.evaluate(() => __qa.errors.slice(0, 3));
     } finally { await ctx.close() }
@@ -62,7 +63,7 @@ async function run({ browser, file, quick, baseline }) {
     detail: `ファイル ${out.sizeKB}KB${vs('sizeKB')}、読み込み ${out.loadMs}ms、タイトルが出るまで ${out.titleMs}ms${vs('titleMs')}（目安 5000ms 以内）、メモリ ${out.heapLoadMB}MB` });
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
-    detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });
+    detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });
   const grow = out.heap10MB ? Math.round((out.heapEndMB / out.heap10MB - 1) * 100) : 0;
   // v82 レビュー：% は元が小さいと大きく見える（6MB → 9MB で +50%）。終わりの MB で見る：前の版の 1.3倍+1MB を超えたら、基準が無いときは 10ハンド後から +8MB を超えたら ⚠️
   const memBad = b.heapEndMB != null ? worse('heapEndMB', 1.3, 1) : (out.heapEndMB - out.heap10MB) > 8;
