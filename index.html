@@ -11643,7 +11643,9 @@ function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
   return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
-LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const t=Date.now();if(t-llSeatChkAt>=1000){llSeatChkAt=t;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
+// 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
+function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
+LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const w=1000-(Date.now()-llSeatChkAt);if(w<=0)llSeatChk();else if(!llSeatChk.t)llSeatChk.t=setTimeout(llSeatChk,w);return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
 
 // ===== 案2：相手の伏せ札 =====
 // 寝かせた2枚の上に、主なキャラは自分の小物。ほかの人は名前で決まる3人に1人だけチップ1枚。ジンは置かない
