@@ -12460,7 +12460,10 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   if(!hit)return set(s,'marginLeft','');
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right));
   let dx=L-4-sr.right;if(sr.left+dx<g.left+4){const d2=Rr+4-sr.left;dx=sr.right+d2<=g.right-4?d2:g.left+4-sr.left}
-  set(s,'marginLeft',Math.round(dx)+'px')}
+  set(s,'marginLeft',Math.round(dx)+'px');
+  // ずらした額がラック（道具）にかかったら、ラックを置き直す（ラックは額を避けて置く。v0.93.1 CI：WebKit 縦で額がラックに重なった）
+  const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
+  if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
 LT.on('layout',()=>{try{c35PotTight()}catch(e){}});
 
 </script>
