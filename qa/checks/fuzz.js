@@ -14,10 +14,12 @@ function modes(quick) {
   for (const i of [1, 4, 6]) m.push({ id: `店で遊ぶ（第${i}章の店）`, start: `startStore(CHAPTERS[${i - 1}],true)` });
   for (const i of [1, 6, 7]) m.push({ id: `裏の卓（第${i}章）`, start: `startUra(${i})` });
   m.push({ id: 'はしご', start: `startRun()` });
+  // 第5章の1ハンド目（AA のハンド。オールインを自分で受ける）のあとに、終わりの回想（若き日のジンとして打つ）。2026-10-17 回想で止まった件の再現
+  m.push({ id: '第5章→回想', start: `(startChapter(CHAPTERS[4],true),window.__fb5=1,LT.on('startHand',()=>{if(window.__fb5===1&&S.handNo===2&&!CFG.flashback){window.__fb5=2;setTimeout(()=>startFlashback(()=>{window.__fb5=1;try{__bot.restart()}catch(e){}startChapter(CHAPTERS[4],true)},'jin'),0)}}))` });
   // 英語版
   for (const x of [['第1章', 'startChapter(CHAPTERS[0],true)'], ['第6章', 'startChapter(CHAPTERS[5],true)'], ['第7章', 'startChapter(CHAPTERS[6],true)'], ['フリー6人', `($('freeSize').value='6',startFree())`], ['第11章', 'startP2(PART2[0],true)']])
     m.push({ id: `英語・${x[0]}`, start: x[1], lang: 'en', storage: H.UNLOCKED });
-  return quick ? m.filter((x, i) => i % 2 === 0 || /英語/.test(x.id)) : m;
+  return quick ? m.filter((x, i) => i % 2 === 0 || /英語|回想/.test(x.id)) : m;
 }
 
 // 英語のとき、画面に残っている日本語を集める
@@ -59,7 +61,9 @@ async function runOne(browser, file, mode, hands, limit) {
       if (Date.now() - t0 > limit) { st = 'timeout'; break }
     }
     const b = await H.botState(page);
-    return { mode: mode.id, status: st, ...b, pageErrors: page.__errs || [], jp: [...jp] };
+    // 止まったときは、ページのタイマーが動いているかも測る（3秒待って来なければ -1）
+    let timerMs = null; if (st === 'stalled') try { timerMs = await page.evaluate(() => new Promise(r => { const t = Date.now(); setTimeout(() => r(Date.now() - t), 50); setTimeout(() => r(-1), 3000) })) } catch (e) {}
+    return { mode: mode.id, status: st, ...b, timerMs, pageErrors: page.__errs || [], jp: [...jp] };
   } catch (e) {
     return { mode: mode.id, status: 'crash', errors: [String(e.message)], chipErr: [], negErr: [], jp: [...jp] };
   } finally { await ctx.close() }
@@ -86,7 +90,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   for (const r of res) {
     const errs = [...new Set([...(r.errors || []), ...(r.pageErrors || []), ...(r.events || [])])];
     const bad = [];
-    if (r.status === 'stalled') bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}）`);
+    if (r.status === 'stalled') { const g = r.gs; bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}${g ? `、ハンド${g.hand}・${g.street}・番${g.toAct}${g.over ? '・終わり' : ''}${g.ctrl ? '・ボタンあり' : ''}・ボットの最後の動き${Math.round(g.sinceTick / 1000)}秒前（${g.ticks}回）・行動 ${g.acted}${g.hidden ? '・裏のタブ' : ''}${g.lt ? '・長い処理 ' + g.lt : ''}${g.sc ? '・場面 ' + g.sc : ''}${g.btns ? '・ボタン ' + g.btns : ''}` : ''}${r.timerMs != null ? `、50ms のタイマー ${r.timerMs < 0 ? '来ない' : r.timerMs + 'ms'}` : ''}${r.lastLog && r.lastLog.length ? '、最後の記録「' + r.lastLog.slice(-2).join('／') + '」' : ''}）`) }
     if (r.status === 'timeout' && !(r.hands >= Math.min(ENOUGH, hands) && !errs.length && !r.chipErr.length && !r.negErr.length)) bad.push(`時間切れ（${r.hands}ハンドまで）`);
     if (r.status === 'crash') bad.push('起動できなかった');
     if (errs.length) bad.push('エラー: ' + errs.slice(0, 3).join(' / '));

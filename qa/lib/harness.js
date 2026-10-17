@@ -56,6 +56,8 @@ async function openGame(browser, file, { viewport = { width: 1280, height: 800 }
 // policy: 'random'（なんでも押す）, 'cpu'（ゲームのCPUと同じ考え方で打つ）, 'fold'（いつも降りる）
 const BOT = `(() => {
   if (window.__bot) return;
+  // 長い処理（50ms 以上）の回数と合計（止まったときに、ページが重くて回っていなかったかを見る。Chromium だけ）
+  window.__qaLong = { n: 0, ms: 0, max: 0 }; try { new PerformanceObserver(l => l.getEntries().forEach(e => { __qaLong.n++; __qaLong.ms += e.duration; __qaLong.max = Math.max(__qaLong.max, e.duration) })).observe({ entryTypes: ['longtask'] }) } catch (e) {}
   const $ = id => document.getElementById(id);
   // offsetParent は position:fixed の部品（スマホ横の操作パネルなど）で null になるので、getClientRects で見る
   const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
@@ -136,6 +138,7 @@ const BOT = `(() => {
     return null;
   }
   B.tick = function () {
+    B.tickN = (B.tickN || 0) + 1; B.tickAt = Date.now();   // 止まったときに、ボットのタイマーが回っていたかを見る
     if (B.done) return;
     try {
       const press = b => { const k = b.id || b.textContent.trim().slice(0, 8); B.clicks[k] = 1 + (B.clicks[k] || 0); B.totalClicks = (B.totalClicks || 0) + 1; b.click() };
@@ -161,7 +164,14 @@ const BOT = `(() => {
         if (B.hands >= B.maxHands) { B.result = 'limit'; B.done = true; B.games = B.games || 1; return }
       }
       if (S.twice && !B.twiceSeen.includes(S.handNo)) B.twiceSeen.push(S.handNo);
-      if (!S.handOver && S.toAct === 0 && !S.autoMe && vis($('controls'))) { if (B.firstDecisionClicks === undefined) B.firstDecisionClicks = B.totalClicks || 0; const d = decide(); B.decisions++; act(0, d.type, d.to); return }
+      if (!S.handOver && S.toAct === 0 && !S.autoMe && vis($('controls'))) {
+        // 人が押せるボタンがあるか（2026-10-17 第5章の回想で止まった件：「レイズ」が隠れたままで、押せるボタンが1つも無かった。ボットは act を直接呼ぶので気づかなかった）
+        const can = ['btnFold', 'btnCall', 'btnRaise'].some(id => { const b = $(id); return vis(b) && !b.disabled }) || [...document.querySelectorAll('#quick button')].some(b => vis(b) && !b.disabled);
+        if (!can) { const k = S.handNo + '|' + S.street + '|' + S.currentBet + '|' + (CFG.flashback ? 'fb' : '');
+          if (B.nbKey !== k) { B.nbKey = k; B.nbAt = Date.now() }
+          if (Date.now() - B.nbAt < 1500) return;   // 描き直しの途中の一瞬は数えない
+          if (B.nbSaid !== k) { B.nbSaid = k; B.events.push('自分の番なのに押せるボタンが無い（ハンド' + S.handNo + '・' + S.street + (CFG.flashback ? '・回想' : '') + '）') } }
+        if (B.firstDecisionClicks === undefined) B.firstDecisionClicks = B.totalClicks || 0; const d = decide(); B.decisions++; act(0, d.type, d.to); return }
       const b = clickables(); if (b) press(b);
     } catch (e) { B.events.push('bot: ' + e.message) }
   };
@@ -194,7 +204,12 @@ async function botState(page) {
     const overlays = [...document.querySelectorAll('[role=dialog],.qin,.vsin')].filter(vis).map(e => e.id || e.className).slice(0, 5);
     return { result: B.result, games: B.games || 1, wins: B.wins || 0, hands: B.hands, decisions: B.decisions, chipErr: B.chipErr, negErr: B.negErr, events: B.events.slice(0, 10), clicks: B.clicks,
       errors: __qa.errors.slice(0, 10), twice: B.twiceSeen.length, screen, overlays,
-      lastLog: [...document.querySelectorAll('#log > *')].slice(-6).map(x => x.textContent) };
+      lastLog: [...document.querySelectorAll('#log > *')].slice(-6).map(x => x.textContent),
+      // 止まった場所を調べるため（2026-10-17 WebKit の1ハンド目の止まり）
+      gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
+        sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden,
+        lt: window.__qaLong ? Math.round(__qaLong.ms / 1000) + "秒/" + __qaLong.n + "回（最長" + Math.round(__qaLong.max) + 'ms）' : '',
+        sc: (typeof SC !== 'undefined' && SC) ? (SC.i + '/' + (SC.lines ? SC.lines.length : '?')) : '', btns: [...document.querySelectorAll('#scene button, #vs button, #between button')].filter(vis).map(b => b.id || b.textContent.trim().slice(0, 6)).slice(0, 5).join('/') } : null };
   });
 }
 
