@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const H = require('../lib/harness');
+const { pool } = require('../lib/pool');
 const { VIEWPORTS, SCENES } = require('./ui');
 
 // ページの中で測る
@@ -109,7 +110,7 @@ const GAME = /自分の番|レイズを開く|ハンドの終わり/;
 async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const jobs = []; for (const s of SCENES) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
-  for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => measure(browser, file, s, v))));
+  res.push(...await pool(jobs.map(([s, v]) => () => measure(browser, file, s, v)), parallel));   // 1つ終わったらすぐ次（CIの高速化 案2）
   fs.writeFileSync(path.join(outDir, 'uiux.json'), JSON.stringify(res, null, 1));
   const base = (baseline && baseline.uiux) || {}, out = {}, items = [];
   for (const M of METRICS) {

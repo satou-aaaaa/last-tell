@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const H = require('../lib/harness');
+const { pool } = require('../lib/pool');
 
 const VIEWPORTS = [
   { key: '縦_390x844', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
@@ -219,7 +220,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const only = (process.env.QA_SCENES || '').split(',').filter(Boolean);
   const jobs = []; for (const s of SCENES) if (!only.length || only.some(o => s.key.includes(o))) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
-  for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
+  res.push(...await pool(jobs.map(([s, v]) => () => shoot(browser, file, s, v, dir)), parallel));   // 1つ終わったらすぐ次（CIの高速化 案2）
   // ページやブラウザが途中で閉じた場面は、1回だけ撮り直す（WebKit でたまに起きる。ブラウザごと落ちていたら開き直す）
   let own = null;
   for (let i = 0; i < res.length; i++) {

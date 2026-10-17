@@ -16,6 +16,9 @@ const baseline = fs.existsSync(path.join(qaDir, 'baseline.json')) ? JSON.parse(f
 const dirs = fs.existsSync(inDir) ? fs.readdirSync(inDir).filter(d => fs.existsSync(path.join(inDir, d, 'result.json'))).sort() : [];
 const groups = [], newBase = JSON.parse(JSON.stringify(baseline));
 let ver = 'unknown', quick = true;
+// --part で分けた組（CIの高速化 案1）：結果の届いた「検査#組」と、勝率の生の結果（章ごとに混ぜてから判定する）
+const done = new Set(), wrRaw = {};
+const J = require('../lib/winrate_judge');
 for (const d of dirs) {
   const r = JSON.parse(fs.readFileSync(path.join(inDir, d, 'result.json'), 'utf8'));
   ver = r.ver || ver; quick = r.quick;
@@ -26,6 +29,10 @@ for (const d of dirs) {
       if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
   }
   for (const g of r.groups) {
+    done.add(g.key + (r.part ? '#' + r.part : ''));
+    if (g.key === 'winrate') for (const it of g.items) done.add('winrate:' + it.id.replace(/\D/g, ''));
+    for (const raw of g.partial || []) wrRaw[raw.ch] = J.mergeRaw(wrRaw[raw.ch], raw);
+    delete g.partial;
     // 勝率は章ごとに別の組で回すので、一段深くまで混ぜる
     for (const [k, v] of Object.entries(g.baselineOut || {})) newBase[k] = v && typeof v === 'object' && !Array.isArray(v) && newBase[k] && typeof newBase[k] === 'object' && !Array.isArray(newBase[k]) ? { ...newBase[k], ...v } : v;
     const same = groups.find(x => x.key === g.key);
@@ -36,6 +43,18 @@ for (const d of dirs) {
   if (fs.existsSync(ui)) for (const f of fs.readdirSync(ui)) if (/\.(jpg|json)$/.test(f)) fs.copyFileSync(path.join(ui, f), path.join(out, 'ui', f));
   for (const f of ['uiux.json', 'lines_diff.md']) if (fs.existsSync(path.join(inDir, d, f))) fs.copyFileSync(path.join(inDir, d, f), path.join(out, f));
 }
+// 分けて回した勝率を章ごとに判定する（判定の中身は手元の run_all と同じ lib/winrate_judge.js）
+if (Object.keys(wrRaw).length) {
+  const known = JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8'));
+  let g = groups.find(x => x.key === 'winrate'); if (!g) groups.push(g = { key: 'winrate', name: '勝率', items: [] });
+  const wr = {};
+  for (const raw of Object.values(wrRaw)) {
+    const j = J.judge(raw, { quick, baseline });
+    for (const it of j.items) { const k = known[it.id]; if (k && it.status === 'fail') { it.status = 'known'; it.detail += `（修正待ち：${k}）` } else if (k && it.status === 'ok') { it.fixed = true; it.detail += '（直った。known.json から外してよい）' } }
+    g.items.push(...j.items); wr['ch' + raw.ch] = j.out;
+  }
+  newBase.winrate = { ...(newBase.winrate || {}), ...wr };
+}
 const order = ['unit', 'text', 'script', 'lines', 'ftue', 'fuzz', 'rules', 'basics', 'save', 'winrate', 'ui', 'uiux', 'a11y', 'perf', 'site'];
 const rank = k => order.indexOf(k.replace(/^webkit-/, '')) + (k.startsWith('webkit-') ? 100 : 0);
 groups.sort((a, b) => rank(a.key) - rank(b.key));
@@ -44,9 +63,8 @@ for (const g of groups) if (g.key === 'winrate') g.items.sort((a, b) => parseInt
 // 結果の無い組
 const missing = [];
 try {
-  const done = new Set(groups.flatMap(g => g.key === 'winrate' ? g.items.map(i => 'winrate:' + i.id.replace(/\D/g, '')) : [g.key]));
   for (const m of JSON.parse(process.env.QA_MATRIX || '[]')) {
-    const keys = m.only === 'winrate' ? m.ch.split(',').map(c => 'winrate:' + c) : m.only.split(',').map(k => (m.browser === 'webkit' ? 'webkit-' : '') + k);
+    const keys = m.only === 'winrate' && m.ch ? m.ch.split(',').map(c => 'winrate:' + c) : m.only.split(',').map(k => (m.browser === 'webkit' ? 'webkit-' : '') + k + (m.part ? '#' + m.part : ''));
     if (keys.some(k => !done.has(k))) missing.push(m.name);
   }
 } catch (e) { }
