@@ -5,14 +5,14 @@
 'use strict';
 const H = require('../lib/harness');
 
-const TRIES = 10, HANDS = 150;
+const TRIES = process.env.QA_PLAY_TRIES ? +process.env.QA_PLAY_TRIES : 10, HANDS = 150;   // QA_PLAY_TRIES=0 で、すぐ「相手を減らした11回目」だけを試せる
 const ORDER = process.env.QA_PLAY_CH ? process.env.QA_PLAY_CH.split(',').map(Number) : [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15];   // QA_PLAY_CH=1,2 で一部だけ
 
-async function playChapter(browser, file, ch, storage, seed) {
+async function playChapter(browser, file, ch, storage, seed, weaken) {
   const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage, seed });
   try {
     await page.evaluate(n => n > 10 ? startP2(PART2[n - 11]) : startChapter(CHAPTERS[n - 1]), ch);
-    await H.startBot(page, { policy: 'cpu', maxHands: HANDS });
+    await H.startBot(page, { policy: 'cpu', maxHands: HANDS, weaken: !!weaken });
     const r = await H.runUntilDone(page, { timeoutMs: HANDS * 8000, stallMs: 30000 });
     const b = await H.botState(page);
     // 勝ったら「次へ」を押して、締めの会話を最後まで送る（章の一覧かタイトルに戻るまで）。ここで進みが保存される
@@ -39,6 +39,7 @@ async function playChapter(browser, file, ch, storage, seed) {
     return { status: r.status, where, result: b.result, hands: b.hands, errors: [...new Set([...(b.chipErr || []).map(e => 'チップの合計 ' + e.diff), ...(await page.evaluate(() => __qa.errors))])].slice(0, 3), after };
   } catch (e) { return { status: 'error', result: null, hands: 0, errors: [String(e.message).slice(0, 160)], after: null } } finally { await ctx.close() }
 }
+const cleared2 = st => { try { return JSON.parse((st || {})['shisho-part2'] || '{}').cleared || 0 } catch (e) { return 0 } };
 const cleared = st => { try { return JSON.parse((st || {})['shisho-progress'] || '{}').cleared || 0 } catch (e) { return 0 } };
 
 async function run({ browser, file }) {
@@ -54,6 +55,13 @@ async function run({ browser, file }) {
       if (r.result === 'win') got = r;
       if (bad.length) break;
     }
+    // 10回勝てなかった章は、11回目だけ相手のチップを 1BB に減らして打ち、締めの会話・見返し・次の章へのつなぎを最後まで通す（改善提案 2026-10-17 §0-2）
+    let weak = false;
+    if (!got && !bad.length) { const r = await playChapter(browser, file, ch, storage, H.seedOf('playthrough', ch, TRIES), true);
+      if (r.status === 'stalled' || r.status === 'error') bad.push(`${TRIES + 1}回目（相手を減らして）で止まった（${r.hands}ハンド）`);
+      if (r.status === 'stalled-outro') bad.push('${TRIES + 1}回目（相手を減らして）勝ったあとの締めの会話が終わらない（章の一覧・タイトルに戻らない）。' + r.where);
+      if (r.errors.length) bad.push('エラー: ' + r.errors.join(' / '));
+      if (r.result === 'win' && !bad.length) { got = r; weak = true } }
     const name = ch > 10 ? `第二部 第${ch}章` : `第${ch}章`;
     if (bad.length) { items.push({ id: `play:ch${ch}`, title: `通しで遊ぶ：${name}`, status: 'fail', detail: bad.join('。') }); break }
     if (!got) {
@@ -64,10 +72,12 @@ async function run({ browser, file }) {
       else { let p = {}; try { p = JSON.parse(storage['shisho-part2'] || '{}') } catch (e) { } storage['shisho-part2'] = JSON.stringify({ ...p, cleared: Math.max(ch - 10, +p.cleared || 0) }) }
       continue;
     }
-    const before = cleared(storage), now = cleared(got.after);
-    const opened = ch > 7 || now >= ch;
-    items.push({ id: `play:ch${ch}`, title: `通しで遊ぶ：${name}`, status: opened ? 'ok' : 'fail',
-      detail: `${tries}回目で勝った（${got.hands}ハンド）。進み 第${before}章 → 第${now}章まで` + (opened ? '' : '。勝ったのに次の章が開かない') });
+    const before = ch > 10 ? cleared2(storage) + 10 : cleared(storage), now = ch > 10 ? cleared2(got.after) + 10 : cleared(got.after);
+    const opened = now >= ch;
+    // 第15章のあとは、エンディングを通ってタイトル（か章の一覧）に戻り、第二部の cleared が 5 になっていること
+    const end = ch === 15 ? (cleared2(got.after) >= 5 ? '。エンディングを通ってタイトルに戻った（第二部 cleared 5）' : '') : '';
+    items.push({ id: `play:ch${ch}`, title: `通しで遊ぶ：${name}`, status: opened ? (weak ? 'warn' : 'ok') : 'fail',
+      detail: (weak ? `${TRIES}回打って勝てなかった（ボットの弱さ）。${TRIES + 1}回目（相手を減らして）勝った（${got.hands}ハンド）。締めまで通った` : `${tries}回目で勝った（${got.hands}ハンド）。締めまで通った`) + `。進み 第${before}章 → 第${now}章まで` + end + (opened ? '' : '。勝ったのに次の章が開かない') });
     if (!opened) break;
     storage = got.after;
   }
