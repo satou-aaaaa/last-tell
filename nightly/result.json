@@ -1,0 +1,45 @@
+{
+ "label": "v0.92.2",
+ "ver": "0.92.2",
+ "quick": true,
+ "sha": "d276359ff806066a0523fc257491ff88fc4c7ccc",
+ "groups": [
+  {
+   "key": "playthrough",
+   "name": "通しで遊ぶ",
+   "items": [
+    {
+     "id": "play:ch1",
+     "title": "通しで遊ぶ：第1章",
+     "status": "ok",
+     "detail": "1回目で勝った（33ハンド）。締めまで通った。進み 第0章 → 第1章まで"
+    },
+    {
+     "id": "play:ch2",
+     "title": "通しで遊ぶ：第2章",
+     "status": "ok",
+     "detail": "1回目で勝った（82ハンド）。締めまで通った。進み 第1章 → 第2章まで"
+    },
+    {
+     "id": "play:ch3",
+     "title": "通しで遊ぶ：第3章",
+     "status": "ok",
+     "detail": "2回目で勝った（21ハンド）。締めまで通った。進み 第2章 → 第3章まで"
+    },
+    {
+     "id": "play:ch4",
+     "title": "通しで遊ぶ：第4章",
+     "status": "ok",
+     "detail": "3回目で勝った（34ハンド）。締めまで通った。進み 第3章 → 第4章まで"
+    },
+    {
+     "id": "play:ch5",
+     "title": "通しで遊ぶ：第5章",
+     "status": "fail",
+     "detail": "勝ったあとの締めの会話が終わらない（章の一覧・タイトルに戻らない）。見えている画面: game、押せるボタン: btnMenu・btnGoal・btnSet、卓: 手番 0・preflop・終わり false・回想 false・判断待ち false・自動 false"
+    }
+   ],
+   "secs": 407
+  }
+ ]
+}

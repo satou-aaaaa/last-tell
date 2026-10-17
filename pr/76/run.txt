@@ -1,0 +1,5 @@
+branch: check-play35b-look
+sha: 70d7dd0ba67568f346fa5c712418d9ae37113b42
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39059634981
+full: false
+at: 2026-10-17T19:09:42Z

@@ -1,0 +1,5 @@
+branch: check-play35-fixes
+sha: 854c4d6a6b3b4bab17c7c32e0c273dfe6a7b78cf
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39053125117
+full: false
+at: 2026-10-17T17:55:05Z

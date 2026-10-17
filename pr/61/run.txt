@@ -1,0 +1,5 @@
+branch: qa-round8
+sha: e7348b810660e97b54052d3d2585fe844293860f
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/38991807636
+full: false
+at: 2026-10-17T01:53:20Z

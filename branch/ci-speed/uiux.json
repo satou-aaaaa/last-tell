@@ -1,0 +1,2344 @@
+[
+ {
+  "scene": "タイトル",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 10,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "タイトル",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1.1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 20,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "タイトル",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 22,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "章の一覧",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 2.04,
+   "smallTargets": 30,
+   "smallList": [
+    "button.ghost 97×36",
+    "button 83×40",
+    "button.mini 300×40",
+    "button.mini 300×40",
+    "button 83×40",
+    "button.mini 300×40"
+   ],
+   "buttons": 24,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 139,
+   "tinyText": 37,
+   "tinyList": [
+    "span.stars3「☆☆☆」11.84px",
+    "span.v「港のバー「錨亭」」11.84px",
+    "span.reglb「常連度」11.52px",
+    "span.reg「☆☆」11.52px",
+    "span.fitgot「服：ニット」10.56px",
+    "span.stars3「☆☆☆」11.84px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "章の一覧",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 3.89,
+   "smallTargets": 30,
+   "smallList": [
+    "button.ghost 97×36",
+    "button 83×40",
+    "button.mini 300×40",
+    "button.mini 300×40",
+    "button 83×40",
+    "button.mini 300×40"
+   ],
+   "buttons": 11,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 48,
+   "tinyText": 16,
+   "tinyList": [
+    "span.stars3「☆☆☆」11.84px",
+    "span.v「港のバー「錨亭」」11.84px",
+    "span.reglb「常連度」11.52px",
+    "span.reg「☆☆」11.52px",
+    "span.stars3「☆☆☆」11.84px",
+    "span.v「古いクラブ「銀の」11.84px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "章の一覧",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.9,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 24,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 136,
+   "tinyText": 36,
+   "tinyList": [
+    "span.stars3「☆☆☆」11.84px",
+    "span.v「港のバー「錨亭」」11.84px",
+    "span.reglb「常連度」11.52px",
+    "span.reg「☆☆」11.52px",
+    "span.fitgot「服：ニット」10.56px",
+    "span.stars3「☆☆☆」11.84px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章の会話",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 1,
+   "smallList": [
+    "#btnSkip 83×36"
+   ],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章の会話",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1.07,
+   "smallTargets": 1,
+   "smallList": [
+    "#btnSkip 83×36"
+   ],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章の会話",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "6人卓の相手紹介",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 26,
+   "tinyText": 7,
+   "tinyList": [
+    "span.stars「★★★☆☆」11.2px",
+    "span.stars「★★★★☆」11.2px",
+    "span.stars「★★☆☆☆」11.2px",
+    "span.stars「★★☆☆☆」11.2px",
+    "span.stars「★★★☆☆」11.2px",
+    "p.vfstars「★は強さ（5つが」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "6人卓の相手紹介",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 26,
+   "tinyText": 7,
+   "tinyList": [
+    "span.stars「★★★☆☆」11.2px",
+    "span.stars「★★★★☆」11.2px",
+    "span.stars「★★☆☆☆」11.2px",
+    "span.stars「★★☆☆☆」11.2px",
+    "span.stars「★★★☆☆」11.2px",
+    "p.vfstars「★は強さ（5つが」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "6人卓の相手紹介",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 33,
+   "tinyText": 12,
+   "tinyList": [
+    "span.stars「★★★☆☆」11.2px",
+    "div.vsq「「ボタン、動いて」11.2px",
+    "span.stars「★★★★☆」11.2px",
+    "div.vsq「「嘘かどうか、顔」11.2px",
+    "span.stars「★★☆☆☆」11.2px",
+    "div.vsq「「よ、よろしくお」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 102×20"
+   ],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 13,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 110×24"
+   ],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 33,
+   "tinyText": 10,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.nm「ゲン」11.84px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第1章_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 36,
+   "tinyText": 9,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.vfpos「BB」10px",
+    "span.lbl2「あなたのチップ」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 110×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 40,
+   "tinyText": 27,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.nm「紺のニット」11px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 116×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 39,
+   "tinyText": 23,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 116×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 45,
+   "tinyText": 25,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第5章_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 111×17"
+   ],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 22,
+   "tinyText": 12,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「約5万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.nm「橙のワッペン」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第5章_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 118×19"
+   ],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 22,
+   "tinyText": 10,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約5万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第5章_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 118×19"
+   ],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 23,
+   "tinyText": 9,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約5万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第6章_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 110×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 40,
+   "tinyText": 27,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.nm「ゴウ」11px",
+    "span.chp「約8万」11.2px",
+    "span.ltact「レイズ」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第6章_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 116×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 40,
+   "tinyText": 23,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.ltact「レイズ」10px",
+    "span.chp「約8万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第6章_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 116×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 45,
+   "tinyText": 25,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.chp「約8万」11.2px",
+    "span.ltact「レイズ」10px",
+    "span.chp「約8万」11.2px",
+    "span.ltact「フォールド」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 111×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 27,
+   "tinyText": 11,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.pl「ポット」9.92px",
+    "span.peekhint「タップしてめくる」11.52px",
+    "#btnNeedle「💬 揺さぶる」0px",
+    "i「5,000」11.52px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 118×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 27,
+   "tinyText": 11,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.pl「ポット」9.92px",
+    "span.peekhint「タップしてめくる」11.52px",
+    "#btnNeedle「💬 揺さぶる」0px",
+    "i「5,000」11.52px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 118×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 33,
+   "tinyText": 13,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.pl「ポット」9.92px",
+    "span.peekhint「タップしてめくる」11.52px",
+    "#btnNeedle「💬 揺さぶる」0px",
+    "i「5,000」11.52px",
+    "kbd.k「1」9.92px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_レイズを開く",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 11,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 111×17",
+    "#btnNeedle 40×40",
+    "#raiseRange 318×28"
+   ],
+   "buttons": 17,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 28,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.dbadge「D」9.6px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_レイズを開く",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 11,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 118×19",
+    "#btnNeedle 40×40",
+    "#raiseRange 320×28"
+   ],
+   "buttons": 17,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 26,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.dbadge「D」9.6px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_レイズを開く",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 118×19"
+   ],
+   "buttons": 17,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 50,
+   "tinyText": 25,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.dbadge「D」9.6px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_ハンドの終わり",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#btnNeedle 40×40"
+   ],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 61,
+   "tinyText": 28,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♦」10.2px",
+    "i「♦」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_ハンドの終わり",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#btnNeedle 40×40"
+   ],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 63,
+   "tinyText": 39,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.r「8」10.2px",
+    "i「♠」8.67px",
+    "span.r「8」10.2px",
+    "i「♠」8.67px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_ハンドの終わり",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 6,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 58,
+   "tinyText": 12,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「8」7.8px",
+    "span.r「J」7.8px",
+    "b「J」9.36px",
+    "i「♥」6.24px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第2章_ハンドの終わり",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 3,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40"
+   ],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 51,
+   "tinyText": 20,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」9.6px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第2章_ハンドの終わり",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 3,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40"
+   ],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 51,
+   "tinyText": 35,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.r「10」10.2px",
+    "i「♠」8.67px",
+    "span.r「10」10.2px",
+    "i「♠」8.67px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第2章_ハンドの終わり",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 5,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「3」10.2px",
+    "span.r「A」10.2px",
+    "span.tag「フォールド」10.48px",
+    "span.lbl2「あなたのチップ」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "設定",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 19,
+   "smallList": [
+    "#btnSetClose 69×36",
+    "#sel_btnPeek 184×36",
+    "#sel_btnSound 105×36",
+    "#sel_btnSpeed 98×36",
+    "#sel_btnCam 98×36",
+    "#btnFoldFast 52×30"
+   ],
+   "buttons": 8,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 17,
+   "tinyText": 2,
+   "tinyList": [
+    "#btnFoldFast「降りたら速く回す」0px",
+    "#btnDepth「立体：オン」0px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "設定",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 19,
+   "smallList": [
+    "#btnSetClose 69×36",
+    "#sel_btnPeek 184×36",
+    "#sel_btnSound 105×36",
+    "#sel_btnSpeed 98×36",
+    "#sel_btnCam 98×36",
+    "#btnFoldFast 52×30"
+   ],
+   "buttons": 5,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 8,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "設定",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 8,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 16,
+   "tinyText": 2,
+   "tinyList": [
+    "#btnFoldFast「降りたら速く回す」0px",
+    "#btnDepth「立体：オン」0px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_フリー6人_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 59×40",
+    "#btnSet 40×40",
+    "#potSign 93×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 36,
+   "tinyText": 22,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.nm「Navy kni」11px",
+    "span.chp「~100K」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_フリー6人_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 57×40",
+    "#btnSet 40×40",
+    "#potSign 99×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 36,
+   "tinyText": 19,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.ltact「Fold」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_フリー6人_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 99×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 42,
+   "tinyText": 22,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.chp「~100K」11.2px",
+    "span.ltact「Fold」10px",
+    "span.chp「~100K」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "名乗る",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 12,
+   "tinyText": 3,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px",
+    "p.vfstars「★は強さ（5つが」11px",
+    "span「勝利条件」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "名乗る",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 10,
+   "tinyText": 3,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px",
+    "p.vfstars「★は強さ（5つが」11px",
+    "span「勝利条件」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "名乗る",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 1,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 12,
+   "tinyText": 3,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px",
+    "p.vfstars「★は強さ（5つが」11px",
+    "span「勝利条件」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "身なり",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 4,
+   "smallList": [
+    "button 35×44",
+    "#lkOm 92×40",
+    "#lkReset 171×40",
+    "#lkOk 105×40"
+   ],
+   "buttons": 32,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 27,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "身なり",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1.1,
+   "smallTargets": 23,
+   "smallList": [
+    "button 72×32",
+    "button 72×32",
+    "button 49×32",
+    "button 62×32",
+    "button 75×32",
+    "button 49×32"
+   ],
+   "buttons": 26,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 20,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "身なり",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 36,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 31,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_心の声",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 110×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 42,
+   "tinyText": 28,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.nm「ミサキ」11px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.nm「ソウ」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_心の声",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 116×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 42,
+   "tinyText": 23,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_心の声",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 116×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 46,
+   "tinyText": 26,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「コール」10px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "読み勝ちの見返し",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 0,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 27,
+   "tinyText": 16,
+   "tinyList": [
+    "span.r「6」11.7px",
+    "i「♥」9.945px",
+    "span.r「6」11.7px",
+    "i「♥」9.945px",
+    "span.r「7」11.7px",
+    "i「♥」9.945px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "読み勝ちの見返し",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 0,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 26,
+   "tinyText": 16,
+   "tinyList": [
+    "span.r「6」11.7px",
+    "i「♥」9.945px",
+    "span.r「6」11.7px",
+    "i「♥」9.945px",
+    "span.r「7」11.7px",
+    "i「♥」9.945px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "読み勝ちの見返し",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 0,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 27,
+   "tinyText": 8,
+   "tinyList": [
+    "i「♥」11.22px",
+    "i「♥」11.22px",
+    "i「♥」11.22px",
+    "i「♥」11.22px",
+    "i「♥」11.22px",
+    "i「♥」11.22px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_人だかり",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 110×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 41,
+   "tinyText": 27,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.nm「赤い上着」11px",
+    "span.chp「約9万」11.2px",
+    "span.ltact「レイズ」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_人だかり",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 116×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 41,
+   "tinyText": 23,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約9万」11.2px",
+    "span.ltact「レイズ」10px",
+    "span.chp「約10万」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "フリー6人_人だかり",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 116×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 25,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.chp「約10万」11.2px",
+    "span.chp「約9万」11.2px",
+    "span.ltact「レイズ」10px",
+    "span.chp「約10万」11.2px",
+    "span.ltact「フォールド」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "はじめての箱",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 5,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "はじめての箱",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1.1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 5,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "はじめての箱",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 5,
+   "tinyText": 0,
+   "tinyList": [],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の判断",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 104×17"
+   ],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 39,
+   "tinyText": 13,
+   "tinyList": [
+    "i「▾」11.2px",
+    "i「♣」10.2px",
+    "i「♣」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♥」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の判断",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 110×19"
+   ],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 39,
+   "tinyText": 23,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「A」10.2px",
+    "i「♣」8.67px",
+    "span.r「A」10.2px",
+    "i「♣」8.67px",
+    "span.r「9」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の判断",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 110×19"
+   ],
+   "buttons": 7,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 41,
+   "tinyText": 5,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.pl「ポット」9.92px",
+    "span.peekhint「タップしてめくる」11.52px",
+    "kbd.k「F」9.92px",
+    "kbd.k「C」9.92px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の結果",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 3,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40"
+   ],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 53,
+   "tinyText": 18,
+   "tinyList": [
+    "i「▾」11.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♠」10.2px",
+    "i「♦」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の結果",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 3,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40"
+   ],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 53,
+   "tinyText": 29,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「A」10.2px",
+    "i「♠」8.67px",
+    "span.r「A」10.2px",
+    "i「♠」8.67px",
+    "span.r「7」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "回想の結果",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 4,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 53,
+   "tinyText": 5,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「Q」10.2px",
+    "i「♠」8.16px",
+    "span.r「J」10.2px",
+    "i「♠」8.16px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_ハンドの終わり",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#btnNeedle 40×40"
+   ],
+   "buttons": 5,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 43,
+   "tinyText": 18,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "i「♦」10.2px",
+    "i「♦」9.6px",
+    "i「♦」10.2px",
+    "i「♦」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_ハンドの終わり",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 4,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#btnNeedle 40×40"
+   ],
+   "buttons": 5,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 43,
+   "tinyText": 30,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.r「J」10.2px",
+    "i「♦」8.67px",
+    "i「♦」8.16px",
+    "span.r「J」10.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第7章_ハンドの終わり",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 5,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 43,
+   "tinyText": 5,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.r「K」10.2px",
+    "i「♥」8.16px",
+    "span.r「6」10.2px",
+    "#btnNeedle「💬 話す」0px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第11章_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 111×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 31,
+   "tinyText": 13,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.dbadge「D」9.6px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.peekhint「タップしてめくる」11.52px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第11章_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 118×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 31,
+   "tinyText": 15,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.nm「ケンジ」11.84px",
+    "span.dbadge「D」9.6px",
+    "span.nm「ゲン」11.84px",
+    "span.pl「ポット」9.92px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "第11章_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 118×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 37,
+   "tinyText": 15,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.dbadge「D」9.6px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.peekhint「タップしてめくる」11.52px",
+    "#btnNeedle「💬 揺さぶる」0px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "店で遊ぶ_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 111×17",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 29,
+   "tinyText": 13,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.vfpos「BB」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "店で遊ぶ_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 118×19",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 29,
+   "tinyText": 14,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.nm「ゲン」11.84px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "店で遊ぶ_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 1,
+   "smallList": [
+    "#potSign 118×19"
+   ],
+   "buttons": 12,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 35,
+   "tinyText": 16,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.vfpos「BB」10px",
+    "span.peekhint「タップしてめくる」11.52px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "裏の卓_自分の番",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 52×40",
+    "#btnSet 40×40",
+    "#potSign 120×20",
+    "#btnNeedle 40×40",
+    "button 102×40"
+   ],
+   "buttons": 11,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 41,
+   "tinyText": 13,
+   "tinyList": [
+    "#tbMeta「1,000/2,」10.88px",
+    "i「▾」11.2px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.vfpos「BB」10px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "裏の卓_自分の番",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1,
+   "smallTargets": 8,
+   "smallList": [
+    "#btnMenu 40×40",
+    "#btnGoal 50×40",
+    "#btnSet 40×40",
+    "#potSign 132×24",
+    "#btnNeedle 40×40",
+    "button 103×40"
+   ],
+   "buttons": 11,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 41,
+   "tinyText": 14,
+   "tinyList": [
+    "#tbMeta「1,000/2,」11.2px",
+    "i「▾」11.2px",
+    "span.nm「ゲン」11.84px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "裏の卓_自分の番",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 11,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 47,
+   "tinyText": 16,
+   "tinyList": [
+    "i「▾」11.2px",
+    "span.ltact「コール」10px",
+    "span.pl「ポット」9.92px",
+    "span.vfturn「あなたの番」11px",
+    "span.vfpos「BB」10px",
+    "span.lbl2「あなたのチップ」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_第1章の会話",
+  "vp": "縦_390x844",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 1,
+   "smallList": [
+    "#btnSkip 63×36"
+   ],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_第1章の会話",
+  "vp": "横_844x390",
+  "m": {
+   "screens": 1.07,
+   "smallTargets": 1,
+   "smallList": [
+    "#btnSkip 63×36"
+   ],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ },
+ {
+  "scene": "英語_第1章の会話",
+  "vp": "PC_1280x800",
+  "m": {
+   "screens": 1.02,
+   "smallTargets": 0,
+   "smallList": [],
+   "buttons": 2,
+   "unlabeled": 0,
+   "unlabeledList": [],
+   "texts": 7,
+   "tinyText": 1,
+   "tinyList": [
+    "span.stars「★☆☆☆☆」11.2px"
+   ],
+   "lowContrast": 0,
+   "lowList": [],
+   "offFirstView": 0,
+   "offList": [],
+   "bubbles": 0
+  }
+ }
+]

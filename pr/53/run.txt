@@ -1,0 +1,5 @@
+branch: qa-paired-tellgap
+sha: dd487bf25f8462468ccc4f90409c2b2ce194dd98
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/38835742624
+full: false
+at: 2026-10-16T01:44:48Z

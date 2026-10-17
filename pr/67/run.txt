@@ -1,0 +1,5 @@
+branch: check-video-fixes
+sha: 83b1f8aa437df9da2ad3c264595204ffad006649
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39027937144
+full: false
+at: 2026-10-17T11:44:58Z

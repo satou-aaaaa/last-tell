@@ -1,0 +1,5 @@
+branch: qa-v83-review
+sha: 05532fbd96aae6e7d492760f7de859956798c8c0
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/38697409861
+full: false
+at: 2026-10-15T07:23:17Z

@@ -1,0 +1,5 @@
+branch: ci-speed
+sha: 386627d67d702e828b635ade03e23c99d4a0d8c3
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39041068457
+full: false
+at: 2026-10-17T14:44:50Z
