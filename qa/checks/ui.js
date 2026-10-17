@@ -90,6 +90,12 @@ const INSPECT = `(() => {
     // 文字が切れている（ボタン）
     if (el.tagName === 'BUTTON' && (el.scrollWidth > el.clientWidth + 3) && /hidden|clip/.test(getComputedStyle(el).overflow)) out.push({ kind: '文字切れ', el: desc(el) });
   }
+  // 吹き出しが上の帯（☰・章名・目標）の下に入って切れていないか（v88.1 レビュー：第11章の縦でゲンの名前が帯に隠れた）
+  { const tb = document.getElementById('tbar'); if (tb && vis(tb) && !modal) { const b = tb.getBoundingClientRect().bottom;
+    const q = tb.getBoundingClientRect();
+    for (const sy of document.querySelectorAll('#sayLayer .say.go, #plates .say.go')) if (shown(sy) && vis(sy)) { const r = sy.getBoundingClientRect();
+      if (r.top < b - 1 && r.bottom > q.top && r.right > q.left && r.left < q.right) out.push({ kind: '隠れ', el: desc(sy), by: '#tbar（上の帯）' });
+      else if (r.top < -1) out.push({ kind: 'はみ出し', el: desc(sy), rect: [r.left, r.top, r.width, r.height].map(Math.round) }) } } }
   // ボタン同士の重なり。スクロールする枠の中の部品は、枠で切れて見えている部分だけで比べる（改善提案 第5回 §0-4）
   const visRect = el => { const r = el.getBoundingClientRect(); let L = r.left, T = r.top, R = r.right, B = r.bottom;
     for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 2) { const c = e.getBoundingClientRect(); L = Math.max(L, c.left); T = Math.max(T, c.top); R = Math.min(R, c.right); B = Math.min(B, c.bottom) } }
