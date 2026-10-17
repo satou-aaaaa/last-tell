@@ -2272,7 +2272,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.92.1';
+const APP_VERSION='0.92.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11164,7 +11164,7 @@ function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-4-pr.top;
   if(top>=2)d.style.top=Math.round(top)+'px'}
 // クセの札に当たらないときも、吹き出しから 4px 離す（v92 レビュー：PC で #dcall と #say5 が 3px 重なった）。上へ逃がす（顔の上へは下げない）
-function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=4;
+function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=7;   // 7px 離す（v92.1 レビュー：WebKit の PC で 4px では字の幅の差で 3px かかった）
   const says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R)
     .filter(c=>c.width>14&&r.left<c.right+m&&c.left<r.right+m&&r.top<c.bottom+m&&c.top<r.bottom+m);
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r.height-m-pr.top;
@@ -11643,7 +11643,9 @@ function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
   return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
-LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const t=Date.now();if(t-llSeatChkAt>=1000){llSeatChkAt=t;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
+// 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
+function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
+LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const w=1000-(Date.now()-llSeatChkAt);if(w<=0)llSeatChk();else if(!llSeatChk.t)llSeatChk.t=setTimeout(llSeatChk,w);return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
 
 // ===== 案2：相手の伏せ札 =====
 // 寝かせた2枚の上に、主なキャラは自分の小物。ほかの人は名前で決まる3人に1人だけチップ1枚。ジンは置かない
@@ -12025,7 +12027,7 @@ function awPlace(){
   const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
   // チップの山の端に少しかかるのは読めるので軽く、席番号・D・吹き出し・札・ほかの席の名札・語と顔は重く数える（v91.2 レビュー：縦で左の席の頭に乗った）
   const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&(!e.classList.contains('say')||+getComputedStyle(e).opacity>.05))
-    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)?1:4,pl,bu}}).filter(o=>o.r.width>1);
+    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)?1:/dbadge/.test(e.className)||e.id==='dbtn'?8:4,pl,bu}}).filter(o=>o.r.width>1);
   // 吹き出しは .go に限らず、見えている物はすべて（v92 CI：出し終わって残った #say1 に「フォールド」がかかった）
   // ほかの席の顔（顔のまわりの空いた所は入れない faceBox。体の箱 .body は隣の席どうしで重なるほど大きいので使わない）
   {const L0=$('sayLayer'),lr=L0&&L0.getBoundingClientRect();if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);
@@ -12034,15 +12036,20 @@ function awPlace(){
   // それでも重なるときだけ名札の上を試す（上は最後。v91.2 レビュー：席によって上と下に分かれて読みにくい）
   els.forEach(el=>{const own=el.parentNode,i=String(own.id||'').replace('plate',''),ownB=$('bust'+i);
     const mine=av.filter(o=>o.el!==own&&o.el!==el&&!(ownB&&o.bu===ownB));   // 自分の名札の中の D（.dbadge）は避ける。名札そのものと自分の顔だけ外す
+    // 自分の名札の名前と額の行は重く数える（v92.1 レビュー：縦6人卓で上下にずらした語が自分の名前を隠した）
+    own.querySelectorAll(':scope > .nm, :scope > .chp').forEach(e=>{if(vis(e)){const r=e.getBoundingClientRect();if(r.width>1)mine.push({r,el:e,k:6})}});
     mine.forEach(o=>{if(o.el&&o.el.classList.contains('ltact'))o.r=o.el.getBoundingClientRect()});   // 先に置いたほかの席の語は、動かした後の場所で数える
     const cost=r=>mine.reduce((a,{r:q,k})=>{const w=Math.min(r.right,q.right)-Math.max(r.left,q.left),h=Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top);return a+(w>0&&h>0?w*h*k:0)},0);
-    const c0=cost(el.getBoundingClientRect());if(!c0&&!el.classList.contains('up'))return;
+    // まわりと名札が前に測ったときと同じなら探し直さない（v92.2 CI：避けられない重なりがあると毎回100通り測り直して WebKit が落ちた）
+    const pr=own.getBoundingClientRect(),key=[pr.left,pr.top,el.textContent,...mine.map(o=>o.r.left+','+o.r.top+','+o.r.width+','+o.r.height)].map(v=>typeof v==='number'?Math.round(v):v).join('|');
+    if(el._awK===key)return;
+    const c0=cost(el.getBoundingClientRect());if(!c0&&!el.classList.contains('up')){el._awK=key;return}
     let best={c:Infinity,up:false,dx:0,dy:0};
     // それでもかかるときだけ、少し上下にもずらす（v92.1 CI：残った #say1 に「フォールド」が 5px かかった）。上下は margin（下に付く .up は margin-bottom で同じ向きに動く。transform は blClamp が使う）
-    out:for(const dy of [0,6,-6,10])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36]){if(!dy&&Math.abs(dx)>28)continue;
-      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';el.style.marginTop=dy?dy+'px':'';el.style.marginBottom=dy?-dy+'px':'';
-      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy};if(c<1)break out}
-    el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':'';el.style.marginTop=best.dy?best.dy+'px':'';el.style.marginBottom=best.dy?-best.dy+'px':''})}
+    out:for(const dy of [0,6,10,14])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36,-44,44]){if(!dy&&Math.abs(dx)>28)continue;   // 上下は名札から離れる向きだけ（下の語は下へ、上の語は上へ）
+      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';const yy=up?-dy:dy;el.style.marginTop=yy?yy+'px':'';el.style.marginBottom=yy?-yy+'px':'';
+      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy:yy};if(c<1)break out}
+    el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':'';el.style.marginTop=best.dy?best.dy+'px':'';el.style.marginBottom=best.dy?-best.dy+'px':'';el._awK=key})}
 LT.on('layout',()=>{try{awPlace()}catch(e){}});
 {const o=actWords;actWords=function(){const r=o.apply(this,arguments);try{if(typeof layoutSoon==='function'&&document.querySelector('#plates .plate > .ltact:not([hidden])'))layoutSoon()}catch(e){}return r}}
 
