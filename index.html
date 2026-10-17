@@ -1277,8 +1277,8 @@ body.en #game button.act.fold:not(:disabled) small{visibility:hidden}
    linear-gradient(transparent 70%,rgba(255,200,120,.35) 70% 72%,transparent 72%);
   filter:blur(3px);-webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
 #title::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 50% 45% at 72% 30%,rgba(255,190,110,.12),transparent 70%),var(--noise);background-size:auto,160px 160px;opacity:.5;mix-blend-mode:overlay}
-body:has(#title:not([hidden]))::before{opacity:.45}
-body:has(#title:not([hidden]))::after{opacity:.6}
+body.ltTitle::before{opacity:.45}
+body.ltTitle::after{opacity:.6}
 .logo h1{color:#fff4e0;text-shadow:0 0 3px #fff,0 0 12px rgba(255,214,150,.9),0 0 32px rgba(226,182,91,.6)}
 .logo h1 span{color:#ffd9de;text-shadow:0 0 3px #fff,0 0 12px rgba(255,80,100,.95),0 0 32px rgba(215,38,61,.7)}
 .logo h1 .fl{color:inherit;text-shadow:inherit;animation:lflicker 6s steps(1) infinite}
@@ -1433,8 +1433,8 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 #novDlg .novbtns{display:flex;gap:10px;flex-wrap:wrap}#novDlg p{margin:0;font-size:.78rem;color:var(--muted)}
 /* スマホ縦で終わりのボタンが3つ以上並ぶときは、「先へ進む」を下の段に1つで置く（v63 クリエイターレビュー 4） */
 @media (max-width:560px){
-  #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])){grid-template-columns:1fr 1fr}
-  #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])) #btnNext{grid-column:1/-1}
+  #between .acts.acts3{grid-template-columns:1fr 1fr}
+  #between .acts.acts3 #btnNext{grid-column:1/-1}
 }
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
 @media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
@@ -1463,16 +1463,16 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 .plate:nth-of-type(1):not(:only-of-type) .dbadge,.plate:nth-of-type(2):nth-last-of-type(n+3) .dbadge{left:auto;right:-7px}
 /* v67：6人卓の細い名札では D が「約8万」の頭や隣の名札の名前にかかったので、D は名札の角の上（肩の位置）に出す */
 .n6 .plate .dbadge{top:-17px}
-.plate:has(.eqb) .tag:not(.win),.plate:has(.handname) .tag:not(.win),.plate:has(.handname) .eqb{display:none}
-.t3d:has(#plate3) .plate .nm{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline;justify-content:center}
-.t3d:has(#plate3) .plate .nm .lang{margin-left:0;padding:0 3px}
-.t3d:has(#plate3) .plate .nm .stars{letter-spacing:-.08em}
-.t3d:has(#plate3) .plate .tag b{display:none}
-.t3d:has(#plate3) .plate:has(.tag.win):has(.handname) .chp{display:none}
+.plate.pEqb .tag:not(.win),.plate.pHn .tag:not(.win),.plate.pHn .eqb{display:none}
+.t3d.hasP3 .plate .nm{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline;justify-content:center}
+.t3d.hasP3 .plate .nm .lang{margin-left:0;padding:0 3px}
+.t3d.hasP3 .plate .nm .stars{letter-spacing:-.08em}
+.t3d.hasP3 .plate .tag b{display:none}
+.t3d.hasP3 .plate.pWin.pHn .chp{display:none}
 .n6 .plate .tag.win{letter-spacing:-.03em}
 .n6 .plate .eqb{font-size:.62rem;padding:0 3px;line-height:1.2}
 /* スマホ縦の4〜5人卓：隣の名札と重ならないよう、6人卓と同じく星を省いて幅を詰める */
-@media (max-width:620px){.t3d:has(#plate3) .plate .nm .stars{display:none}.t3d:has(#plate3) .plate{max-width:33%}}
+@media (max-width:620px){.t3d.hasP3 .plate .nm .stars{display:none}.t3d.hasP3 .plate{max-width:33%}}
 @media (prefers-reduced-motion:reduce){.plate.flash::before{animation:none}}
 
 /* 相手をタップすると反応（2026-10-10） */
@@ -1494,7 +1494,7 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 /* 6人卓は名札が細いので、呼び名は小さめにして言葉の札を省く（隣の名札と重ならないように） */
 .n6 .plate .nm.nm-on{font-size:12px;letter-spacing:-.03em;white-space:nowrap}
 .n6 .plate .nm.nm-on .lang{display:none}
-@media (max-width:620px){.n6 .plate .nm.nm-on{font-size:11px;letter-spacing:-.05em}.t3d:has(#plate3) .plate .nm.nm-on .lang{display:none}}
+@media (max-width:620px){.n6 .plate .nm.nm-on{font-size:11px;letter-spacing:-.05em}.t3d.hasP3 .plate .nm.nm-on .lang{display:none}}
 /* スマホ横は高さが無いので、吹き出しの呼び名は省く（同じ時に名札にも出ている） */
 @media (max-height:500px){.say .nmwho{display:none}}
 /* スマホ縦の6人卓：長い呼び名（銀のネックレス など）が隣の名札に重ならないよう、名札の幅で切って「…」にする（全部はタップや吹き出しで見える） */
@@ -1531,6 +1531,8 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 /* 改善提案 2026-10-14b §2〜4：章の区切りの小さな窓（顔＋一言） */
 .mdlgin .cqh{display:flex;align-items:center;gap:10px}.mdlgin .cqh .ava{width:40px;height:40px;flex:none;border-radius:50%;overflow:hidden;display:block}
 .mdlgin .cqh .ava svg{width:100%;height:100%;display:block}.mdlgin .cqline{font-size:.95rem}
+/* v88.2 レビュー：ハンドの終わりに見せた札と重なる捨て札の山は隠す（山は札より手前に描かれるので、薄くしても札が白っぽく見えた。js/44b_show_over_muck.js） */
+.felt .boardspot > .muckpile.mkyield{visibility:hidden}
 
 /* ---------- ライブポーカーらしい見た目（js/41_live_look.js と組） ---------- */
 /* 案3 札を文字に：名札の「勝ち」「フォールド」、自分の「伏せた」「あなたのチップ」を出さない。勝ちはポットの動きとディーラーの声、降りた人は顔が暗くなるだけ */
@@ -1690,7 +1692,7 @@ html.ingame #game{height:100%}
   background:rgba(12,13,18,.9);border-top:1px solid rgba(226,182,91,.45);box-shadow:0 -6px 16px rgba(0,0,0,.4)}
 #game .sensei .ava{width:34px;height:34px}
 #game .sensei p{font-size:.84rem;line-height:1.45;padding:0 0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#game:has(#raisePanel:not([hidden])) .gwrap>.sensei{display:none}
+#game.rpOpen .gwrap>.sensei{display:none}
 /* 助言の帯が出ている間は、自分の顔・持ち点・💬 を帯の上へ送る（手札はそのまま。帯は手札の下の端にだけかかる） */
 #game .mine .me-l,#game .mine .me-r{translate:0 calc(-1 * var(--sb,0px));transition:translate .2s}
 #game .t3d .needlerow.nr64{margin-bottom:var(--sb,0px)}
@@ -1826,7 +1828,7 @@ html.ingame #game{height:100%}
   #game .goaldrop{position:fixed;left:auto;right:0;top:44px;width:var(--side);box-sizing:border-box;max-height:calc(100vh - 44px);overflow:auto}
   #game .gwrap>.sensei{position:fixed;left:auto;right:0;top:44px;bottom:auto;width:var(--side);box-sizing:border-box;z-index:31;max-height:30vh}
   #game .gwrap>.actionbar{position:fixed!important;top:auto;bottom:0;max-height:calc(100vh - 44px)}
-  #game:has(.gwrap>.sensei:not([hidden])) .gwrap>.actionbar{max-height:calc(100vh - 44px - var(--sh,0px))}
+  #game.seOn .gwrap>.actionbar{max-height:calc(100vh - 44px - var(--sh,0px))}
   .t3d .needlerow.nr64{left:58px;bottom:8px}
   #game .t3d .hud{padding:4px 8px 8px}
 }
@@ -1838,10 +1840,10 @@ html.ingame #game{height:100%}
 /* v71（改善提案§2）：横画面の1対1だけ、卓の縁（と名札）を少し下げる。相手の頭のてっぺんが画面に入り、口までは縁にかからない（胸像の大きさは 30c の faceFit が合わせる）。
    場札は卓の中で少し上げて、手前の札・ポットの札との間を保つ */
 @media (orientation:landscape) and (max-height:520px){
-  #game .t3d:has(#bust1):not(:has(#bust2)) .felt-wrap{top:40%}
-  #game .t3d:has(#bust1):not(:has(#bust2)) .plate{top:42%}
-  #game .t3d:has(#bust1):not(:has(#bust2)) .felt .boardspot{top:28.5%}
-  #game .t3d:has(#bust1):not(:has(#bust2)) .felt .spot:not(#spot0){top:5.5%!important}
+  #game .t3d.hu1 .felt-wrap{top:40%}
+  #game .t3d.hu1 .plate{top:42%}
+  #game .t3d.hu1 .felt .boardspot{top:28.5%}
+  #game .t3d.hu1 .felt .spot:not(#spot0){top:5.5%!important}
 }
 
 /* 章の一覧の下（裏の卓・カードプロテクター）：1人1行・横に並べて、ページを短く */
@@ -1975,6 +1977,24 @@ html.ingame #game{height:100%}
 #table .ltcrowd.cr-still i{transition:none}
 #crowdSay{position:absolute;left:0;right:0;margin-inline:auto;width:fit-content;z-index:7;padding:2px 10px;border-radius:10px;background:rgba(8,9,12,.72);font-size:12px;line-height:1.5;color:#f2ead8;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .3s}
 #crowdSay.go{opacity:.92}#crowdSay.still{transition:none}#crowdSay[hidden]{display:none}
+
+/* アニメーションの重さ 案1（2026-10-17）：顔の絵（SVG）の中を動かす動きは、わずかでも毎コマ顔を丸ごと描き直す。
+   まばたき：ずっと流す動き（4.6秒の94%は止まっている）をやめ、js/45_anim_lite.js が数秒おきに .blk を付けた0.28秒だけ動かす。見え方は今と同じ。
+   ジンの手の揺れ（0.6px）：卓の外の顔（師匠の一言・タイトル）では止める。卓に座っているジン（.bust）はそのまま */
+.av .eyes,.bust .av.real .eyes,.portrait .av.real .eyes,.nava .av.real .eyes{animation:none}
+.av.blk .eyes,.bust .av.real.blk .eyes,.portrait .av.real.blk .eyes,.nava .av.real.blk .eyes{animation:ltBlink .28s ease-in-out 1}
+.bust.cue-still .av .eyes{animation:none!important}
+@keyframes ltBlink{0%,100%{transform:scaleY(1)}35%{transform:scaleY(.1)}}
+.av .t-hand{animation:none}
+.bust .av .t-hand{animation:tHand 3.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.av.blk .eyes,.bust .av .t-hand{animation:none!important}}
+
+/* 案5：動きを減らす（設定「動き」＝少なめ、または自動で遅い端末と分かったとき。html.ltLite）
+   止めるのは、見ていなくてよい背景の動きだけ：背景の光の漂い・もや・飲み物・伏せ札の光の筋・タイトルの飾り、
+   待っている相手（番でもクセが出てもいない人）の呼吸と揺れ。番の人とクセが出ている人は今のまま動く（テル「じっと動かない」も今のまま見える） */
+.ltLite body::before,.ltLite .t3d .haze,.ltLite #table > .cup i,.ltLite .card.back::after,.ltLite .logo h1 .fl,.ltLite #title .row button.primary::after{animation:none!important}
+.ltLite .bust:not(.turn):not([class*="cue-"]){animation:none!important}
+.ltLite .bust:not(.turn):not([class*="cue-"]) .body{animation:none!important}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2167,7 +2187,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.88.2';
+const APP_VERSION='0.89.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2372,6 +2392,12 @@ Object.assign(EN_DICT,{
 "待つのも勝負のうちだよ":"Waiting is part of the game too.","文句は勝ってから言え":"Complain after you beat me.","止める理由がねえだろ":"Why would I stop?",
 // 改善提案 第5回 §1
 "……お前、負け方が下手だな。ゲンは何にでも参加する。お前は、強い手のときだけ戦えばいい。それで勝てる":"...You lose badly. Gen plays every hand. You only fight with strong ones. That's enough to win."
+});
+
+// アニメーションの重さ 案5（2026-10-17）の英語
+Object.assign(EN_DICT,{
+"動き":"Motion","少なめ":"Less",
+"少なめにすると、背景や待っている相手の動きを止めて軽くします。自動は、動きが重い端末だけ少なめにします":"Less stops background motion and idle opponents to keep things smooth. Auto reduces it only on devices that struggle."
 });
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
@@ -11476,10 +11502,14 @@ LT.on('render',()=>{try{llRail()}catch(e){}});
 // v85 レビュー、satou 2026-10-15 12:30Z「縁を金色に」。引き分けなら全員、自分なら顔の枠
 function llWinEdge(){
   const on=S&&S.handOver&&S.players&&!llEasy();
-  S.players&&S.players.forEach((p,i)=>{let t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');const w=!!(on&&p.won>0);
+  // アニメーションの重さ 案2（2026-10-17）：ハンドの途中は、付いている縁を外すだけ（測らない）。
+  // 今までは打つたびに6人分の名札の大きさを測っていて、描き直しの直後に画面の計算をやり直させていた
+  if(!on){document.querySelectorAll('.llwin').forEach(e=>e.classList.remove('llwin'));return}
+  // ハンドの終わり：先に全員分を測ってから、まとめて付ける
+  const R=S.players.map((p,i)=>{const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');
     // 名札が空（縦の6人卓の横の席など）だと縁が小さな四角になるので、そのときは顔の下に金の線（v85.1 レビュー）
-    const b=i&&$('bust'+i),small=i&&t&&(t.offsetHeight<16||t.offsetWidth<28);
-    if(b)b.classList.toggle('llwin',w&&!!small);if(t)t.classList.toggle('llwin',w&&!small)})}
+    return {t,b:i&&$('bust'+i),w:p.won>0,small:i&&t&&(t.offsetHeight<16||t.offsetWidth<28)}});
+  R.forEach(({t,b,w,small})=>{if(b)b.classList.toggle('llwin',w&&!!small);if(t)t.classList.toggle('llwin',w&&!small)})}
 LT.on('render',()=>{try{llWinEdge()}catch(e){}});
 LT.on('endHand',()=>{try{llWinEdge()}catch(e){}});
 
@@ -11614,6 +11644,78 @@ LT.on('layout',()=>{try{if(!$('game').hidden)sayClampTop()}catch(e){}});
 addEventListener('scroll',()=>{try{if(!$('game').hidden)layoutSoon()}catch(e){}},{passive:true});
 // 追いかけ（sayFollow）は位置合わせのあとに毎コマ margin を書き直し、掛け合いのよけ（bAvoid）の上向きのずれも足すので、そのあとにも止める
 {const _sf=sayFollow;sayFollow=function(){const on=_sf.apply(this,arguments);if(on)try{sayClampTop()}catch(e){}return on}}
+
+/* ---------- 見せた札を捨て札の山より見せる（v88.2 レビュー） ---------- */
+// 6人卓の縦で、ショーダウンで勝った左の席の見せた札（5♠）が捨て札の山（.muckpile）の下に隠れていた。
+// ハンドの終わりに、見せた札と重なる山は隠す（山は飾り。札は勝ち負けの答えなので見えるほうを取る）。次のハンドで戻る。
+function muckYield(){const m=document.querySelector('.felt .boardspot > .muckpile');if(!m)return;
+  const on=!!(S&&S.handOver);if(!on||!m.children.length){m.classList.remove('mkyield');return}
+  const R=e=>e.getBoundingClientRect(),shown=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.back):not(.slot)')].filter(e=>e.offsetParent).map(R);
+  const hit=[...m.querySelectorAll('.muckcard')].map(R).some(a=>shown.some(b=>a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1));
+  m.classList.toggle('mkyield',hit)}
+LT.on('layout',()=>{try{muckYield()}catch(e){}});
+
+// アニメーションの重さ 案1（2026-10-17）：まばたきを「数秒おきに0.28秒だけ」動かす（01f_style_anim_lite.css）。
+// 今までは目に4.6秒の動きをずっと流していて、止まっている間も毎コマ顔の絵を描き直していた。
+// まばたきする顔：今までと同じ（かわいい絵の顔はどこでも、リアルの顔は卓・会話・名前の顔だけ）。テル「じっと動かない」（.cue-still）の間はしない
+const AL={next:new WeakMap(),sel:'svg.av:not(.real), .bust svg.av.real, .portrait svg.av.real, .nava svg.av.real'};
+function alBlinkTick(){
+  if(document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const now=performance.now();
+  document.querySelectorAll(AL.sel).forEach(sv=>{
+    let t=AL.next.get(sv);
+    if(t===undefined){AL.next.set(sv,now+800+Math.random()*4200);return}   // 顔ごとにずらす（LT.rand は配る札の乱数なので使わない）
+    if(now<t)return;
+    AL.next.set(sv,now+3000+Math.random()*3200);                           // 次は3〜6秒あと（今の4.6秒おきと同じくらい）
+    if(sv.closest('.cue-still')||!sv.getClientRects().length)return;
+    sv.classList.add('blk');
+    setTimeout(()=>sv.classList.remove('blk'),320);
+  });
+}
+setInterval(alBlinkTick,400);
+
+// アニメーションの重さ 案2（2026-10-17）：CSS の :has()（19か所）を、ここで付ける目印の class に置き換えた。
+// :has() は卓の中の部品が変わるたびに広い範囲で当てはまりを調べ直すので、相手が打つたびの止まる時間の約4割になっていた。
+// 目印は部品が変わった直後（MutationObserver：同じ処理の終わり、画面を描く前）に付け直すので、見え方は今と同じ
+function alHasSync(){
+  const b=document.body,g=$('game'),tt=$('title');
+  if(b&&tt)b.classList.toggle('ltTitle',!tt.hidden);
+  document.querySelectorAll('.t3d').forEach(t=>{t.classList.toggle('hasP3',!!t.querySelector('#plate3'));t.classList.toggle('hu1',!!t.querySelector('#bust1')&&!t.querySelector('#bust2'))});
+  document.querySelectorAll('.plate').forEach(p=>{p.classList.toggle('pEqb',!!p.querySelector('.eqb'));p.classList.toggle('pHn',!!p.querySelector('.handname'));p.classList.toggle('pWin',!!p.querySelector('.tag.win'))});
+  if(g){const rp=$('raisePanel'),se=g.querySelector('.gwrap>.sensei');g.classList.toggle('rpOpen',!!rp&&!rp.hidden);g.classList.toggle('seOn',!!se&&!se.hidden)}
+  document.querySelectorAll('#between .acts').forEach(a=>a.classList.toggle('acts3',[...a.children].filter(c=>c.classList.contains('act')&&!c.hidden).length>=3));
+}
+{let q=false;const kick=()=>{if(q)return;q=true;queueMicrotask(()=>{q=false;try{alHasSync()}catch(e){}})};
+  const mo=new MutationObserver(kick),o={subtree:true,childList:true,attributes:true,attributeFilter:['hidden']};   // 名札の中身（.tag.win・.eqb・.handname）は作り直し（childList）で変わる
+  for(const id of ['title','game'])try{const e=$(id);if(e)mo.observe(e,id==='title'?{attributes:true,attributeFilter:['hidden']}:o)}catch(e){}
+  try{alHasSync()}catch(e){}}
+
+// 案5（2026-10-17）：設定「動き」（自動・ふつう・少なめ）。自動は、卓に着いて最初の数秒のなめらかさを測り、遅い端末なら少なめにする（その回だけ。毎回測り直す）
+const ALM={auto:null,sampling:false};
+const motionSet=()=>['auto','full','less'].includes(SETTINGS.motion)?SETTINGS.motion:'auto';
+function motionApply(){const lite=motionSet()==='less'||(motionSet()==='auto'&&ALM.auto===true);document.documentElement.classList.toggle('ltLite',lite)}
+function motionSample(){
+  if(ALM.auto!==null||ALM.sampling||motionSet()!=='auto'||document.hidden)return;
+  const g=$('game');if(!g||g.hidden)return;
+  ALM.sampling=true;const iv=[];let last=0,t0=0;
+  const f=t=>{if(document.hidden||g.hidden){ALM.sampling=false;return}   // 途中で隠れたら、次の機会に測り直す
+    if(!t0)t0=t;else iv.push(t-last);last=t;
+    if(t-t0<4000){requestAnimationFrame(f);return}
+    ALM.sampling=false;iv.sort((a,b)=>a-b);const med=iv[Math.floor(iv.length/2)]||16;
+    ALM.auto=med>40;   // 1秒に25コマより少ない端末は少なめにする
+    motionApply()};
+  setTimeout(()=>requestAnimationFrame(f),1500)}   // 卓を作った直後の重い1回は数えない
+LT.on('startHand',()=>{try{motionSample()}catch(e){}});
+// 設定の行（くわしい設定の中、「立体」の近く）
+(function(){const box=$('setIn');if(!box)return;const det=box.querySelector('.setmore')||box;
+  const r=document.createElement('div');r.className='setrow';r.id='rowMotion';
+  r.innerHTML='<div><b>動き</b><p>少なめにすると、背景や待っている相手の動きを止めて軽くします。自動は、動きが重い端末だけ少なめにします</p></div>';
+  const s=document.createElement('select');s.className='selpick';s.id='selMotion';s.setAttribute('aria-label','動き');
+  s.innerHTML='<option value="auto">自動</option><option value="full">ふつう</option><option value="less">少なめ</option>';
+  s.value=motionSet();s.onchange=()=>{SETTINGS.motion=s.value;saveSettings();motionApply()};r.appendChild(s);
+  const dep=$('btnDepth'),after=dep&&dep.closest('.setrow');if(after&&after.parentElement)after.after(r);else det.appendChild(r);
+  ['btnSet','mSet'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>{s.value=motionSet()})})})();
+motionApply();
 
 </script>
 <script>
