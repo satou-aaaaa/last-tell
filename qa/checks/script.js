@@ -45,6 +45,9 @@ async function collect(browser, file) {
       if (typeof MF_LINES !== 'undefined') Object.values(MF_LINES).forEach(t => typeof t === 'string' && r.push(['ジン', t]));
       if (typeof MF_RECALL !== 'undefined') (function walk(o) { for (const v of Object.values(o || {})) typeof v === 'string' ? r.push(['アオ（心の声）', v]) : Array.isArray(v) ? v.forEach(t => typeof t === 'string' && r.push(['アオ（心の声）', t])) : typeof v === 'object' && walk(v) })(MF_RECALL);
       if (typeof MF_RECALL_DOUBT === 'string') r.push(['アオ（心の声）', MF_RECALL_DOUBT]);
+      // 卓の因縁（js/43_grudge.js）と人だかりの声（js/43b_crowd.js）（v88 レビューで追加）
+      if (typeof MF_GRUDGE !== 'undefined') for (const [who, o] of Object.entries(MF_GRUDGE)) for (const t of Object.values(o || {})) typeof t === 'string' && r.push([who === '_' ? '相手（因縁）' : who, t]);
+      if (typeof CROWD !== 'undefined') (CROWD.lines || []).forEach(t => r.push(['人だかり', t]));
       if (typeof twLine === 'function' && typeof TW_CUE_WORD !== 'undefined') { const keep = S;
         try { for (const c of Object.keys(TW_CUE_WORD).concat(['?'])) for (const [w, v] of [[1, 1], [2, 1], [1, 2], [2, 2], [1, 0], [2, 0], [0, 1], [0, 2]]) { S = { tw: { won: w, saved: v, cue: { [c]: 1 } } }; const t = twLine(); if (t && !r.some(x => x[1] === t)) r.push(['ジン', t]) } } finally { S = keep } }
     } catch (e) {} return r }));
