@@ -135,6 +135,26 @@ async function run({ browser, file }) {
   } catch (e) {   // 途中で落ちても、それまでの結果は残し、どこで落ちたかを書く
     items.push({ id: 'livelook:error', title: 'ライブポーカーらしい見た目の検査', status: 'fail', detail: `${stage}) の途中で: ${String(e && e.message || e).slice(0, 160)}`, closed: /closed|crash/i.test(String(e && e.message)) });
   }
+  // 卓の因縁（改善提案 2026-10-15b 案3）：打ち方が変わるのは、その卓の最初の5ハンドだけ。
+  //   フリー6人の自分の番で、相手全員に「あなたに降ろされた」記録を入れ、あなたが5BB賭けた形にして各相手の判断を呼ぶ（乱数 0）。ハンド番号だけ 3 と 6 に変えて比べる
+  try {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 40, seed: 11, storage: H.UNLOCKED });
+    try {
+      await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
+      if (!(await toStreet(page, 'flop'))) add('morefun:grudge', '卓の因縁：打ち方が変わるのは卓の最初の5ハンドだけ', 'フロップまで進めなかった', '', true);
+      else {
+        const g = await page.evaluate(() => {
+          const keep = { hn: S.handNo, cb: S.currentBet, ag: S.aggr, gr: S.grudge, r: LT.rand }, out = {};
+          S.grudge = Object.fromEntries(S.players.filter(p => !p.human).map(p => [p.name, 'bluffed'])); LT.rand = () => 0;
+          try { for (const hn of [3, 6]) { S.handNo = hn; S.grudgeHits = []; S.aggr = 0; S.currentBet = S.players[0].bet + BB() * 5;
+              S.players.forEach((p, i) => { if (!p.human && inHand(p)) for (let k = 0; k < 6; k++) try { cpuDecide(i) } catch (e) {} }); out[hn] = S.grudgeHits.length } }
+          finally { S.handNo = keep.hn; S.currentBet = keep.cb; S.aggr = keep.ag; S.grudge = keep.gr; LT.rand = keep.r; S.grudgeHits = [] }
+          return out });
+        add('morefun:grudge', '卓の因縁：打ち方が変わるのは卓の最初の5ハンドだけ', g[6] ? `6ハンド目でも判断が変わった（${g[6]}回）` : !g[3] ? '3ハンド目で一度も変わらなかった（降りる手の相手がいなかったかも）' : '',
+          `同じ場面で、3ハンド目は ${g[3]}回変わり、6ハンド目は 0回`, !g[6]);
+      }
+    } finally { await ctx.close() }
+  } catch (e) { add('morefun:grudge', '卓の因縁：打ち方が変わるのは卓の最初の5ハンドだけ', '検査そのものが失敗：' + String(e.message).slice(0, 120), '', true) }
   return { name: 'ライブポーカーらしい見た目', items };
 }
 module.exports = { run };

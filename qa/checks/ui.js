@@ -39,6 +39,9 @@ const SCENES = [
   // 改善提案 2026-10-15b 案5：章クリアの「この章の読み」（読み勝ちの見返し）。札・名前・クセが画面に収まるか（v87 レビュー）
   { key: '読み勝ちの見返し', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 3400,
     after: `(MF_REPLAY.ms=1e7,(()=>{const o=S.players.find(p=>!p.human&&!p.out&&p.hand&&p.hand.length);mfReplay({pot:1,name:o.name,cue:'smile',act:'call',hand:o.hand.slice(),board:S.board.slice(),hand2:S.players[0].hand.slice()})})())` },
+  // 改善提案 2026-10-15b 案4：人だかり（オールインがコールされたとき）。影と「おお……」の声が札・名札・ボタンに重ならないか
+  { key: 'フリー6人_人だかり', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', settle: 1400,
+    after: `(S.runout=true,render(),S.runout=false,(()=>{const c=document.querySelector('#table .ltcrowd');if(c){c.querySelector('b').textContent=CROWD.lines[1];c.classList.add('cr-say')}})())` },
   { key: 'はじめての箱', prep: `$('btnStory').click()`, fresh: true, waitFor: `!!$('novDlg')&&!$('novDlg').hidden` },
   { key: '回想の判断', prep: `startFlashback(()=>{},'seki')`, settle: 2500,
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
