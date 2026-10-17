@@ -1,0 +1,4 @@
+/* 案3：降りた人は椅子の背にもたれて小さく、残っている人は前に出て大きく */
+.n6 .bust{transition:scale .5s ease-out,filter .2s}
+.n6 .bust:not(.folded):not(.out){scale:1.18;z-index:2}
+.n6 .bust.folded,.n6 .bust.out{scale:.78}

@@ -1,7 +1,7 @@
 /* ---------- ディーラーの声・演出 ---------- */
 let dcallT=0;
 function dealerSay(text){
-  const d=$('dcall');d.textContent=text;d.style.animationDuration=(1.3*SPEED())+'s';d.classList.remove('go');void d.offsetWidth;d.classList.add('go');
+  const d=$('dcall');d.textContent=text;d.style.animationDuration=(1.3*SPEED())+'s';d.classList.remove('go');void d.offsetWidth;d.classList.add('go');try{if(typeof dcallPlace==='function'){dcallPlace();setTimeout(()=>{try{if(d.classList.contains('go'))dcallPlace()}catch(e){}},250*SPEED())}}catch(e){}
   clearTimeout(dcallT);dcallT=setTimeout(()=>d.classList.remove('go'),1300*SPEED());
 }
 /* ポットのチップを勝った人の席へすべらせる */
@@ -82,7 +82,8 @@ addEventListener('resize',()=>{if(S)potSignPlace()});
 let potCountT=0;
 function potCount(to,ms){const pv=$('potSign').querySelector('.pv');if(!pv)return;const P=S.potPile||{};const from=P.shown||0;cancelAnimationFrame(potCountT);
   if(reducedMotion()||!ms||from===to){pv.textContent=fmt(to);P.shown=to;return}
-  const t0=performance.now(),d=ms*SPEED();const f=now=>{const k=Math.min(1,(now-t0)/d);const q=Math.floor((1-Math.pow(1-k,3))*5)/5;pv.textContent=fmt(k>=1?to:from+Math.round((to-from)*q/1000)*1000);if(k<1)potCountT=requestAnimationFrame(f);else P.shown=to};potCountT=requestAnimationFrame(f)}
+  const t0=performance.now(),d=ms*SPEED();const f=now=>{const k=Math.min(1,(now-t0)/d);const q=Math.floor((1-Math.pow(1-k,3))*5)/5,v=k>=1?to:from+Math.round((to-from)*q/1000)*1000;P.shown=v;   // 数え上げ中に .pv が作り直されても、新しい方に書く（v71 レビュー）
+    const el=$('potSign').querySelector('.pv');if(el)el.textContent=fmt(v);if(k<1)potCountT=requestAnimationFrame(f)};potCountT=requestAnimationFrame(f)}
 // 配当：山ごと勝った人へ押し出す（分けるときは、山を交互に分けて飛ばす）
 // 案3：山は名札へ飛ばして消すのではなく、勝った人の前のチップ（.mystack）の手前に残す。
 //   山の中身は勝った額ちょうどのチップ（崩れたまま）。塔はその分を引いて描くので、数えれば持ち点に合う。

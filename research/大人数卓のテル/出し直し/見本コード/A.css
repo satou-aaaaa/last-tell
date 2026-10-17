@@ -1,0 +1,11 @@
+/* 新案A：肩から上を大きく。胸から下は卓の縁の向こうへ、隣の人と肩が重なる（並び・人数はそのまま） */
+.n6 .bust{max-width:none!important}
+.n6 #bust1{left:13%!important}.n6 #bust5{left:87%!important}
+.n6 #bust3{width:33%!important;bottom:calc(100% - 38.5%)!important;z-index:1}
+.n6 #bust2,.n6 #bust4{width:34%!important;bottom:calc(100% - 39%)!important;z-index:2}
+.n6 #bust1,.n6 #bust5{width:35%!important;bottom:calc(100% - 39.5%)!important;z-index:3}
+@media (orientation:landscape) and (max-height:520px){
+ .n6 #bust3{width:26%!important;bottom:calc(100% - 41%)!important}
+ .n6 #bust2,.n6 #bust4{width:27%!important;bottom:calc(100% - 41.5%)!important}
+ .n6 #bust1,.n6 #bust5{width:28%!important;bottom:calc(100% - 42%)!important}
+}

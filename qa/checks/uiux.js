@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const H = require('../lib/harness');
+const { pool } = require('../lib/pool');
 const { VIEWPORTS, SCENES } = require('./ui');
 
 // ページの中で測る
@@ -109,7 +110,7 @@ const GAME = /自分の番|レイズを開く|ハンドの終わり/;
 async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const jobs = []; for (const s of SCENES) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
-  for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => measure(browser, file, s, v))));
+  res.push(...await pool(jobs.map(([s, v]) => () => measure(browser, file, s, v)), parallel));   // 1つ終わったらすぐ次（CIの高速化 案2）
   fs.writeFileSync(path.join(outDir, 'uiux.json'), JSON.stringify(res, null, 1));
   const base = (baseline && baseline.uiux) || {}, out = {}, items = [];
   for (const M of METRICS) {
@@ -118,13 +119,17 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     // 合計（max の項目は一番悪い値）を前の版と比べる
     const now = M.max ? Math.max(0, ...rows.map(val)) : rows.reduce((a, r) => a + val(r), 0);
     out[M.key] = now;
-    const was = base[M.key];
+    // v72：場面ごとの数も残し、前の版にある場面どうしで比べる（新しい場面が増えただけで「悪くなった」にしない）
+    const per = {}; rows.forEach(r => { per[r.scene + '|' + r.vp] = val(r); }); out[M.key + 'By'] = per;
+    const bp = base[M.key + 'By'];
+    let was = base[M.key], cmp = now;
+    if (bp && !M.max) { const ks = Object.keys(per).filter(k => k in bp); was = ks.reduce((a, k) => a + bp[k], 0); cmp = ks.reduce((a, k) => a + per[k], 0); }
     const bad = rows.filter(r => !M.target(val(r)));
-    const worse = was !== undefined && now > was + (M.key === 'screens' ? .05 : M.key === 'buttons' ? 2 : M.max ? 0 : Math.max(2, Math.ceil(was * .05)));  // 配られる札で少し揺れるので、合計は5%か2個までは同じとみなす
+    const worse = was !== undefined && cmp > was + (M.key === 'screens' ? .05 : M.key === 'buttons' ? 2 : M.max ? 0 : Math.max(2, Math.ceil(was * .05)));  // 配られる札で少し揺れるので、合計は5%か2個までは同じとみなす
     const status = worse ? 'warn' : bad.length ? 'known' : 'ok';
     const top = bad.sort((a, b) => val(b) - val(a)).slice(0, 3).map(r => `${r.scene}（${r.vp.split('_')[0]}）${val(r)}${M.unit}${M.list && r.m[M.list].length ? '：' + r.m[M.list].slice(0, 3).join('、') : ''}`);
     items.push({ id: 'uiux:' + M.key, title: M.title, status,
-      detail: `${M.max ? '一番多い' : '合計'} ${now}${was !== undefined ? `（前の版 ${was}）` : ''}${worse ? '。前の版より悪くなった' : ''}${top.length ? '。' + top.join('／') : ''}` });
+      detail: `${M.max ? '一番多い' : '合計'} ${now}${was !== undefined ? (cmp !== now ? `（前の版にある場面どうしで ${cmp}、前の版 ${was}）` : `（前の版 ${was}）`) : ''}${worse ? '。前の版より悪くなった' : ''}${top.length ? '。' + top.join('／') : ''}` });
   }
   const errs = res.filter(r => r.err);
   if (errs.length) items.push({ id: 'uiux:err', title: '使いやすさを測れなかった場面', status: 'warn', detail: errs.map(r => `${r.scene}（${r.vp}）${r.err}`).slice(0, 4).join('、') });

@@ -27,6 +27,6 @@ EN_TPL.push(
 ["ポットは{0}と{1}と{2}と{3}へ","Pot goes to {0}, {1}, {2} and {3}"]);
 // v67：タケルの仕草（名乗る前は見た目の呼び名が入る）
 EN_TPL.push(
-["{0}が、手で「少し待って」と合図した","{0} signals with a hand: \"one moment.\""],
+["{0}が、手で「少し待って」と合図した","{0} signals with a hand: “one moment.”"],
 ["{0}が、カードを静かに前に出した","{0} quietly slides the cards forward."],
 ["{0}が、小さく頭を下げた","{0} gives a small bow."]);

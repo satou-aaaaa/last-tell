@@ -1,0 +1,190 @@
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+          <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
+          <linearGradient id="shadeBody" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+        </defs></svg>
+
+<div class="wrap">
+
+  <div class="toast gtoast" id="toast2" hidden aria-live="polite"></div>
+  <div class="help" id="help" hidden role="dialog" aria-label="遊び方"></div>
+  <div class="help" id="daily" hidden role="dialog" aria-label="今日の1ハンド"></div>
+  <div class="help" id="share" hidden role="dialog" aria-label="画像の保存と共有"></div>
+  <div class="tour" id="tour" hidden role="dialog" aria-label="操作の案内"></div>
+  <div class="mdlg" id="moreDlg" hidden role="dialog" aria-modal="true" aria-labelledby="mdlgH"><div class="mdlgin" id="moreDlgIn"></div></div>
+  <!-- タイトル -->
+  <section id="title">
+    <div class="logo">
+      <button id="btnLang" class="langbtn" data-noi18n></button><div class="eyebrow">TEXAS HOLD'EM STORY</div>
+      <h1 lang="en">LAS<span class="fl">T</span><br><span>TELL</span></h1>
+      <div class="subtitle">最後のテル</div>
+      <p>港のバーで出会った老人は、昔姿を消した伝説のプレイヤーだった。教えを受けながら、街のクラブを一軒ずつ制していこう。</p>
+      <div class="tacts">
+        <div class="row tmain"><button class="primary" id="btnStory">ストーリー</button></div>
+        <div class="tpick" id="tPick" hidden><button class="tlink" id="btnPick">最初から選ぶ</button></div>
+        <div class="row tsub"><button id="btnFree">フリー対戦</button><button id="btnDaily" class="tsm" hidden>今日の1ハンド</button><button id="btnRun" class="tsm" hidden>はしご</button><button id="btnMore" class="ghost">その他</button></div>
+      </div>
+      <div class="fnotice" id="firstNotice" role="note" hidden><p>このゲームは、ポーカーを題材にした1人用のゲームです。チップは点数で、現金や景品とは交換できません。実際のお金を賭けることを勧めるものではありません。</p><button class="ghost small" id="btnNoticeClose">閉じる</button></div>
+      <div class="mdlg fsetup" id="freeSetup" hidden role="dialog" aria-modal="true" aria-labelledby="fsH"><div class="mdlgin">
+        <h3 id="fsH">フリー対戦</h3>
+        <label class="rulepick">フリー対戦の店ルール
+        <select id="freeRule"><option value="">なし</option><option value="straddle">ストラドル</option><option value="bomb">ボムポット</option><option value="seven2">7-2ゲーム</option><option value="twice">2回めくり</option></select>
+      </label>
+        <label class="rulepick">フリー対戦の人数
+        <select id="freeSize"><option value="4">4人</option><option value="6">6人（6max）</option></select>
+      </label>
+        <label class="rulepick"><input type="checkbox" id="freeRude"> 感じの悪い客を入れる</label>
+        <div class="mbtns"><button class="ghost" id="btnFreeBack">戻る</button><button class="primary" id="btnFreeGo">この設定で始める</button></div>
+      </div></div>
+      <div hidden id="nickHold"><label class="rulepick">呼び名（常連になると呼ばれる）<input id="nick" maxlength="8" placeholder="なし" style="width:8em;background:#15151c;color:inherit;border:1px solid #ffffff33;border-radius:6px;padding:4px 6px;font:inherit"></label></div>
+    </div>
+    <div class="hero" id="hero"><span class="tagname">師匠ジン ★★★★★</span></div>
+  </section>
+
+  <!-- その他 -->
+  <section id="more" hidden aria-labelledby="moreH">
+    <div class="top"><h2 id="moreH">その他</h2><button class="ghost small" id="btnMoreBack">タイトルへ</button></div>
+    <div class="mgrid">
+      <div class="mgroup"><h3>遊び方</h3>
+        <button class="mrow" id="btnHow"><b>遊び方・役の一覧</b><small>ゲームの流れ・役・操作の案内</small></button>
+      </div>
+      <div class="mgroup"><h3>設定</h3>
+        <button class="mrow" id="mSet"><b>設定</b><small>音・会話・演出の速さなど</small></button>
+        <button class="mrow" id="mInstall"><b>ホーム画面に追加</b><small>アプリのように、すぐ開けるようになります</small></button>
+      </div>
+      <div class="mgroup"><h3>データ</h3>
+        <button class="mrow" id="mExport"><b>引き継ぎコードを出す</b><small>機種変更やアプリ版への引き継ぎに</small></button>
+        <button class="mrow" id="mImport"><b>引き継ぎコードを入れる</b></button>
+        <button class="mrow" id="mSaveFile"><b>セーブをファイルに保存</b><small>バックアップに</small></button>
+        <button class="mrow" id="mLoadFile"><b>ファイルから読み込む</b></button>
+        <button class="mrow mdanger" id="mDelete"><b>セーブを消す</b></button>
+        <input type="file" id="mFile" accept=".json,application/json" hidden>
+        <p class="mstat" id="mStat" aria-live="polite"></p>
+        <p class="mnote" id="mWebNote">ブラウザのデータを消すとセーブも消えます。ときどきファイルに保存しておくと安心です。</p>
+      </div>
+      <div class="mgroup"><h3>情報</h3>
+        <button class="mrow mlink" data-link="privacy"><b>プライバシーポリシー</b></button>
+        <button class="mrow mlink" data-link="terms"><b>利用規約</b></button>
+        <button class="mrow mlink" data-link="support"><b>お問い合わせ</b></button>
+        <button class="mrow" id="mCredits"><b>クレジットとライセンス</b></button>
+        <button class="mrow" id="mPrivOpt" hidden><b>プライバシー設定</b><small>広告と計測の同意を選び直す</small></button>
+      </div>
+    </div>
+    <p class="mfoot"><span class="mver" id="mVer" data-noi18n>LAST TELL</span><span>チップは点数です。現金や景品とは交換できません。</span></p>
+  </section>
+
+  <!-- 章選択 -->
+  <section id="chapters" hidden>
+    <div class="top">
+      <h2>章を選ぶ</h2>
+      <button class="ghost small" data-home>タイトルへ</button>
+    </div>
+    <div class="chtools"><button id="btnNote">ジンのノート</button><span class="exnote" id="answerNote"></span></div>
+    <ul class="chapters" id="chList"></ul>
+    <section class="p2box" id="p2Box" hidden><h3 class="p2head"><span>第二部</span><b>師匠</b></h3><p class="exnote" id="p2Note"></p><ul class="chapters" id="chList2"></ul></section>
+    <div class="extras">
+      <section class="exbox" id="uraBox" hidden><h3>裏の卓</h3><p class="exnote">各章のボスと、縛りつきで再戦します。勝つと段位が上がり、縛りが重なります（最大8段）。本編には影響しません。</p><ul class="uralist" id="uraList"></ul></section>
+      <section class="exbox" id="protBox"><h3>カードプロテクター</h3><p class="exnote">章をクリアするともらえるお守りです。手札の上に置きます（見た目だけ）。</p><div class="prot" id="protList"></div></section>
+      <section class="exbox" id="titleBox"><h3>あるある称号</h3><ul class="titles" id="titleList"></ul></section>
+    </div>
+  </section>
+
+  <!-- ジンのノート -->
+  <section id="notebook" hidden>
+    <div class="top"><h2>ジンのノート</h2><button class="ghost small" id="btnNoteBack">章を選ぶ</button></div>
+    <div class="ntabs" id="noteTabs"></div>
+    <div class="nbody" id="noteBody"></div>
+  </section>
+
+  <!-- 会話 -->
+  <section id="scene" hidden>
+    <div class="venue" id="venue"></div>
+    <div class="stage" id="stage"></div>
+    <div class="box" id="box" role="button" tabindex="0" aria-label="次へ進む"></div>
+    <div class="row scene-btns">
+      <button class="ghost small" id="btnSkip">スキップ</button>
+      <button class="primary" id="btnAdv">次へ</button>
+    </div>
+  </section>
+
+  <!-- 卓 -->
+  <section id="game" hidden>
+    <div class="szoom" id="stackZoom" hidden role="dialog" aria-label="相手のチップ"></div>
+    <div class="gwrap">
+      <div class="vs" id="vs" hidden role="dialog" aria-label="対戦相手の紹介"></div><div class="mieta" id="mieta" hidden aria-live="polite"></div>
+      <header class="g">
+        <h1 id="gTitle"></h1>
+        <span class="ghead"><button class="ghost small" id="btnHelp" aria-label="遊び方と役の一覧">？ 役の一覧</button><button class="ghost small" id="btnSet" aria-label="設定">⚙<span class="sl"> 設定</span></button><button class="ghost small" id="btnQuit">やめる</button></span>
+      </header>
+      <div class="goalcard" id="goal" aria-live="polite"></div>
+      <div class="meta" id="meta"></div>
+      <section class="t3d" id="table" aria-label="ポーカーテーブル">
+        <div class="room"></div><div class="nextlamp" id="nextLamp" aria-hidden="true"><i></i></div><div class="lamp"></div><div class="dcall" id="dcall" aria-live="polite"></div><div class="toast" id="toast" hidden aria-live="polite"></div><div class="nextv" id="nextv" aria-live="polite"><span>NEXT TABLE</span><b></b></div>
+        <div class="busts" id="busts"></div><div class="quiz" id="quiz" hidden role="dialog" aria-label="フロアのルールクイズ"></div>
+        <div class="felt-wrap"><div class="felt" id="felt"><div class="rail" aria-hidden="true"></div>
+          <div class="boardspot"><div class="cards5" id="boardCards"></div><div class="cards5 run2" id="board2" hidden aria-label="2回目の場札"></div><div class="potzone"><div class="potchips mess" id="potChips"></div></div></div>
+          <div class="dbtn" id="dbtn">D</div>
+        </div></div>
+        <div class="plates" id="plates"></div>
+        <div class="hud"><div class="street" id="street"></div><div class="msg" id="msg" aria-live="polite"></div></div>
+        <div class="potsign slim" id="potSign" hidden></div>
+        <div class="mine" id="mine"></div><div class="mytell" id="myTell" hidden></div>
+        <div class="needlerow"><div class="needlemenu" id="needleMenu" hidden></div><div class="askrow" id="askRow" hidden role="group" aria-label="答え方"></div><button id="btnNeedle" class="needle" hidden aria-expanded="false">💬 揺さぶる</button><button id="btnStraddle" class="needle" hidden></button></div>
+        <div class="rdline" id="rdLine" hidden></div><div class="foolstamp" id="foolStamp" hidden aria-hidden="true">引っかけた</div><div class="camband" id="camBand" hidden aria-hidden="true"><div class="word"><b></b><small></small></div></div>
+        <div class="cutin" id="cutin" hidden><div class="band"><div class="cav"></div><div class="ctext"></div></div></div>
+      </section>
+      <div class="sensei" id="sensei" hidden><div class="ava" id="senseiAva"></div><p id="senseiText"></p></div>
+      <div class="actionbar" id="controls">
+        <div class="clock" id="clock" hidden role="timer" aria-live="off"><i></i><span></span></div>
+        <div class="raisepanel" id="raisePanel" hidden>
+          <div class="amtrow">
+            <button class="step" id="btnMinus" aria-label="減らす">−</button>
+            <div class="amt"><small id="raiseWord">レイズ額</small><output id="raiseAmt">0</output><span class="amtsub" id="raiseSub"></span></div>
+            <button class="step" id="btnPlus" aria-label="増やす">＋</button>
+          </div>
+          <div class="rangewrap"><input type="range" id="raiseRange" step="1000" aria-label="レイズ額"><div class="rangelbl"><span id="rMin"></span><span id="rMax"></span></div></div>
+          <div class="presets">
+            <button data-q="min">最小</button>
+            <button data-q="half">½ポット</button>
+            <button data-q="threeq">¾ポット</button>
+            <button data-q="pot">ポット</button>
+            <button data-q="all">全額</button>
+          </div>
+        </div>
+        <div class="declrow" id="declRow" hidden><span>読みを宣言</span><button data-dg="0" aria-pressed="false">役なし</button><button data-dg="1" aria-pressed="false">ワンペア</button><button data-dg="2" aria-pressed="false">ツーペア以上</button></div>
+        <div class="quick" id="quick" hidden></div>
+        <div class="acts" id="acts">
+          <button id="btnFold" class="act fold"><b>フォールド</b><small>降りる</small><kbd class="k">F</kbd></button>
+          <button id="btnCall" class="act call"><b>チェック</b><small></small><kbd class="k">C</kbd></button>
+          <button id="btnRaise" class="act raise"><b>レイズ</b><small></small><kbd class="k">R</kbd></button>
+        </div>
+        <div class="waitrow" id="waitrow" hidden><div class="waiting" id="waiting"></div>
+          <div class="prerow" id="prerow" hidden><button id="preCF" aria-pressed="false">チェック/フォールド</button><button id="preCall" aria-pressed="false">コール</button></div></div>
+      </div>
+      <div class="actionbar" id="between" hidden>
+        <div class="betweenrow">
+          <span class="result" id="resultText"></span>
+          <span class="hint" id="betweenHint"></span>
+        </div>
+        <div class="review" id="review" hidden></div>
+        <div class="showbox" id="showBox" hidden><span>手を見せる？</span><button class="mini" id="btnShowYes">見せる</button><button class="mini" id="btnShowNo">見せない</button></div>
+        <div class="showbox" id="whatBox" hidden><button class="mini" id="btnWhat">何持ってた？</button></div>
+        <div class="tauntbox" id="tauntBox" hidden><span>言い返す？</span><button class="mini" id="btnIgnore">無視する</button><button class="mini" id="btnNice">ナイスハンド</button></div>
+        <div class="acts">
+          <button id="btnAlt" class="act" hidden></button>
+          <button id="btnShot" class="act" hidden>名場面を画像にする</button>
+          <button id="btnPen" class="act" hidden>赤ペンを見る</button>
+          <button id="btnRefill" class="act" hidden>動画を見て続ける</button>
+          <button id="btnNext" class="act raise">次のハンドへ</button>
+        </div>
+      </div>
+      <details class="logbox" id="logBox"><summary>ハンドの記録</summary><ul class="log" id="log"></ul></details>
+      <details class="logbox" id="notesBox"><summary>相手メモ（クセの答え合わせ）</summary><ul class="log" id="notes"></ul></details>
+      <div class="runov" id="runBox" hidden role="dialog" aria-label="はしご"></div>
+      <div class="setpanel" id="setPanel" hidden role="dialog" aria-label="設定"><div class="setin" id="setIn"><div class="sethead"><h2>設定</h2><button class="ghost small" id="btnSetClose">閉じる</button></div></div></div>
+      <div class="settings"><button id="btnPeek" class="mini"></button><button id="btnSound" class="mini"></button><button id="btnSpeed" class="mini"></button><button id="btnDepth" class="mini"></button><button id="btnClock" class="mini"></button><button id="btnMuck" class="mini"></button><button id="btnCount" class="mini"></button><button id="btnCam" class="mini"></button><button id="btnQuiz" class="mini"></button><button id="btnNextv" class="mini"></button></div>
+    </div>
+  </section>
+</div>
+
+<script>

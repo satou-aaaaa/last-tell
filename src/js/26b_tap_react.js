@@ -28,7 +28,7 @@ TAP_REACT['老人']=TAP_REACT['ジン'];
 // 名前の無い相手（店の常連・船の客など）は型で分ける
 const TAP_TYPE={
   cool:{a:'look',l:['……','何か？',null],nh:'どうも',lost:'……',greet:'（軽く会釈）'},
-  easy:{a:'nod',l:['どうも','何か？','……見すぎだよ'],nh:'ありがとう',lost:'今のは参った',greet:'よろしく'},
+  easy:{a:'nod',l:['どうも','何か？','……見すぎだよ'],nh:'ありがとう',lost:'今のはまいった',greet:'よろしく'},
   rough:{a:'glare',l:['あ？','見てんじゃねえよ',null],nh:'ふん',lost:'……チッ',greet:'……'}
 };
 const TAP_NH='ナイスハンド';

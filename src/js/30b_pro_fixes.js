@@ -24,10 +24,7 @@ function beatRest(){
   if(typeof CFG==='undefined'||!CFG||!CFG.ch||!CFG.ch.beats||!CFG.beatsOn||!S)return[];
   const d=beatDoneMap(),bs=CFG.ch.beats.filter(b=>!d[b.after]);
   beatMark(bs);return[].concat(...bs.map(b=>b.lines))}
-// 初めての第1章：扉は少し待って自動で進む（タップしてもよい）
-{const o=renderLine;renderLine=function(){const r=o.apply(this,arguments);
-  try{const l=SC&&SC.lines[SC.i];if(l&&l.door===1&&SC.ch&&SC.ch.no===1&&!SC.ch.p2&&!loadCleared()){const sc=SC,i=SC.i;setTimeout(()=>{if(SC===sc&&SC.i===i)advance()},1800)}}catch(e){}
-  return r}}
+// 初めての第1章の扉の自動送りは 18_scene.js の doorAuto（v83 で1本にまとめた）
 
 // ---------- S2：その場で1行の案内 ----------
 function guideGet(){try{const o=JSON.parse(localStorage.getItem(HELP_KEY));return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return{}}}
@@ -81,10 +78,17 @@ setInterval(()=>{try{if(typeof S==='undefined'||!S||!S.players||!S.handOver||S.h
   if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.ch.no!==1||CFG.ch.p2||CFG.flashback)return;const g=guideGet();if(g.novice!==true||g.handsShown)return;
   if(['vs','quiz','help','setPanel','cutin','mieta','tour'].some(id=>$(id)&&!$(id).hidden))return;guideSet({handsShown:1});showHelp('hands')}catch(e){}},600);
 // 「ポーカーは初めて？」：タイトルの「ストーリー」から初めて始めるときだけ（1回だけ聞く）
-function askNovice(go){if(guideGet().novice!==undefined)return go();
+// 改善提案 第5回 §1：最初の注意書き（#firstNotice の文をそのまま）も、この箱の上に一緒に出す。only=true は注意書きだけ（フリー対戦などから始める人）
+function askNovice(go,only){const seen=!!SETTINGS.seenNotice,ask=!only&&guideGet().novice===undefined;if(!ask&&seen)return go();
   let d=$('novDlg');if(!d){d=document.createElement('div');d.id='novDlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
-    d.innerHTML=`<div class="novbox"><b>ポーカーを遊んだことは？</b><div class="novbtns"><button class="primary" id="nvNew">はじめて</button><button class="ghost" id="nvYes">ある</button></div><p>あとで設定（くわしい設定）から変えられます</p></div>`;document.body.appendChild(d)}
-  d.hidden=false;const done=v=>{guideSet({novice:v});d.hidden=true;try{novLab()}catch(e){}go()};$('nvNew').onclick=()=>done(true);$('nvYes').onclick=()=>done(false);setTimeout(()=>$('nvNew').focus({preventScroll:true}),0)}
+    d.innerHTML=`<div class="novbox"><p class="novnote" id="nvNote"></p><b id="nvQ">ポーカーを遊んだことは？</b><div class="novbtns"><button class="primary" id="nvNew">はじめて</button><button class="ghost" id="nvYes">ある</button><button class="primary" id="nvOk">閉じる</button></div><p id="nvSub">あとで設定（くわしい設定）から変えられます</p></div>`;document.body.appendChild(d)}
+  $('nvNote').textContent=$('firstNotice').querySelector('p').textContent;$('nvNote').hidden=seen;
+  ['nvQ','nvNew','nvYes','nvSub'].forEach(id=>$(id).hidden=!ask);$('nvOk').hidden=ask;
+  d.hidden=false;const done=v=>{if(v!==undefined)guideSet({novice:v});if(!SETTINGS.seenNotice){SETTINGS.seenNotice=true;saveSettings()}d.hidden=true;try{novLab()}catch(e){}go()};
+  $('nvNew').onclick=()=>done(true);$('nvYes').onclick=()=>done(false);$('nvOk').onclick=()=>done();setTimeout(()=>$(ask?'nvNew':'nvOk').focus({preventScroll:true}),0)}
+// ストーリー以外（フリー対戦・今日の1ハンド・はしご）から始める人にも、始める前に注意書きを1回だけ
+document.addEventListener('click',e=>{if(SETTINGS.seenNotice)return;const b=e.target.closest&&e.target.closest('#btnFree,#btnDaily,#btnRun');if(!b)return;
+  e.stopPropagation();e.preventDefault();askNovice(()=>b.click(),true)},true);
 {const det=document.querySelector('#setIn .setmore');if(det){const r=document.createElement('div');r.className='setrow';
   r.innerHTML=`<div><b>初めての人向けの案内</b><p>ルールの1行の案内を、初めての場面ごとに出します</p></div><button id="btnNovice" class="mini"></button>`;det.appendChild(r);
   $('btnNovice').onclick=()=>{guideSet({novice:!novice()});novLab()};novLab()}}
@@ -114,7 +118,7 @@ function resumeLoad(){try{const R=JSON.parse(localStorage.getItem(RESUME_KEY));
   else if(R.kind!=='free'&&R.kind!=='store')return null;
   return R}catch(e){return null}}
 function resumeLabel(R){const h=(+R.S.handNo||0)+1;return R.kind==='ch'?`続きから（第${R.ch}章・${h}ハンド目）`:`続きから（フリー対戦・${h}ハンド目）`}
-const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。盗むのは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。AAで負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、盗むのは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
+const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。スチールは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。AAで負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、スチールは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
 function recapLine(R){if(!R||R.kind!=='ch'||!(Date.now()-(+R.at||0)>6*3600e3))return null;const c=CHAPTERS[R.ch-1];const t=c&&RECAP[c.no];if(!t)return null;
   const g=c.goal||{},st=R.S||{},n=g.type==='steal'?st.steals:g.type==='bluff'?st.bluffs:g.type==='readcall'?st.reads:null;
   const left=g.n&&n!=null?Math.max(1,g.n-(+n||0)):R.P.filter(p=>!p.out&&(+p.chips||0)>0).length;

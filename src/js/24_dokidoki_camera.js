@@ -141,7 +141,7 @@ function proceed(){
     if(!S.autoMe)requestAnimationFrame(keepMine);
     if(!S.autoMe&&!CFG.flashback&&preAct&&preAllowed()){const k=S.myTurnKey;setTimeout(()=>{if(S===s0&&S.toAct===0&&S.myTurnKey===k&&!S.handOver)runPre()},250*SPEED())}
     else if(!S.autoMe)turnCue()}
-  if(p.human&&S.autoMe){render();return setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===0)act(0,'call')},1600*SPEED())}
+  if(p.human&&S.autoMe){render();return setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===0&&S.autoMe)act(0,'call')},1600*SPEED())}
   if(p.human&&bigSpotForMe()&&!S.finalHand){Clock.start(S.myTurnKey);if(approxOn()&&!S.countNoted){S.countNoted=true;jinNote('迷ったら数えさせろ。恥ずかしいことじゃない',0)}}
   if(!p.human){
     const d=(S.scriptAI&&S.scriptAI(i))||cpuDecide(i);p.lastState=d.state;
@@ -195,14 +195,12 @@ function act(i,type,to){
     const prev=S.currentBet;
     post(p,to-p.bet);
     if(p.bet>prev){
-      const inc=p.bet-prev;
-      const full=inc>=S.minRaise;if(full)S.minRaise=inc;
+      const rr=Rules.raise(prev,S.minRaise,p.bet),full=rr.full;S.minRaise=rr.minRaise;   // 決まりは 19b_rules.js
       S.currentBet=p.bet;S.raises++;S.aggr=i;if(S.street==='river')S.riverAggr=i;S.lastCalled=-1;
       if(p.human&&S.street!=='preflop')S.myPostAggro=true;
       if(S.street==='preflop')p.raisedPre=true;else if(S.street==='flop'&&prev===0)p.cbetFlop=true;
       // 足りないオールインは、すでに話した人にレイズの権利を戻さない（コールかフォールドだけ）
-      if(full)S.players.forEach(q=>{if(q!==p)q.acted=false});
-      else S.players.forEach(q=>{if(q!==p&&q.acted&&q.actBet!=null&&S.currentBet-q.actBet>=S.minRaise)q.acted=false}); // R-10
+      Rules.reopen(S.players,i,full,S.currentBet,S.minRaise).forEach(j=>{S.players[j].acted=false}); // R-10 も含む
       p.lastAct=p.allIn?`オールイン ${fmt(p.bet)}`:`${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}`;p.lastType='raise';log(`${p.name}：${prev===0?'ベット':'レイズ'} ${fmt(p.bet)}${p.allIn?'（オールイン）':''}`);
       dealerSay(p.allIn?'オールイン':`${prev===0?'ベット':'レイズ'}、${fmt(p.bet)}`);
     }else{p.lastAct='コール';p.lastType='call';log(`${p.name}：コール${p.allIn?'（オールイン）':''}`)}
@@ -227,7 +225,7 @@ function afterAct(i,type,toCall){
   if(p.tell&&p.tell.cue==='talk'&&p.tell.street===S.street&&kind!=='fold')line=lineFor(p.name,'talk');
   else if(S.needle===S.street&&!p.answered&&!(p.name==='タケル'&&S.needleStyle!=='stare')&&(p.faked===S.street||Math.random()<.7)){line=p.faked===S.street?FAKE_LINE[p.name]:needledLine(p);p.answered=true}
   else if(line=speechPick(p,kind)){}
-  else if(Math.random()<talkRate(p.name)||kind==='allin')line=lineFor(p.name,(kind==='raise'||kind==='allin')?kind+st:kind);
+  else if(Math.random()<talkRate(p.name)*(kind==='fold'?.25:1)||kind==='allin')line=lineFor(p.name,(kind==='raise'||kind==='allin')?kind+st:kind);
   if(S.angleHand===S.handNo&&S.angleActing===i){S.angleActing=-1;line=''}
   p.say={seq:(S.saySeq=(S.saySeq||0)+1),act:p.lastAct,line};
   const boss=rankOf(p.name)>=3||(CFG.ch&&i===1);
@@ -311,7 +309,7 @@ function fitScene(){const sc=$('scene'),st=$('stage'),adv=$('btnAdv');if(!sc||sc
 addEventListener('resize',fitScene);
 function camXform(W,H,px,py,z,ay,minTy){let tx=W/2-px*z,ty=H*ay-py*z;tx=Math.min(0,Math.max(W-W*z,tx));ty=Math.min(H*.1,Math.max(H-H*z,ty));if(minTy!=null)ty=Math.max(ty,minTy);return`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${z})`}
 function camTo(i,kind){
-  const c=$('cam'),t=$('table');if(!c)return;if(typeof sayWake==='function')sayWake();
+  const c=$('cam'),t=$('table');if(!c)return;if(typeof sayWake==='function')sayWake(800);
   if(camSet()==='off'||kind==='wide'||i<0){c.style.transform='none';c.classList.remove('snapin');t.classList.remove('focusing');camState={i:-1,kind:'wide',seq:camState.seq,t0:0};camPlate(-1);return}
   if((kind==='tell'||kind==='me')&&camSet()!=='strong')kind='mid';
   const g=camGeom(i);if(!g)return;const v=camView(),p=S.players[i];
@@ -329,11 +327,14 @@ function camTo(i,kind){
 // クローズのときは、その人の名札を薄くしてクセを見せる
 function camPlate(i){document.querySelectorAll('#plates .plate').forEach(pl=>{const on=pl.id==='plate'+i;pl.style.opacity=on?'.12':'';pl.style.transition='opacity .2s'})}
 // render のたびに：CPUの番ならその人へ、あなたの番・ショーダウン・ハンドの終わりは全体へ
+// 顔アップの重さ 案A（2026-10-14 決定）：寄るのはテルが出た番と、大きな賭けの前にじっと見る番だけ
+function camWorth(i){const p=S.players[i];if(!p)return false;const tl=p.tell;return !!(tl&&tl.street===S.street&&!p.folded)||S.stare===i}
 function camUpdate(force){
   if(!S||!S.players||$('game').hidden)return;
   const i=S.toAct,p=i>=0?S.players[i]:null,cpu=p&&!p.human&&!S.handOver&&!S.reveal&&S.street!=='showdown'&&!S.autoMe;
   if(!cpu){clearTimeout(camBackT);if(camState.kind!=='wide'||force)camTo(-1,'wide');if(!$('camBand').hidden){clearTimeout(camBandT);camBandT=setTimeout(()=>{$('camBand').hidden=true},700*SPEED())}return}
   if(S.camSkip===i){if(camState.kind!=='wide')camTo(-1,'wide');return}
+  if(!camWorth(i)){clearTimeout(camBackT);if(camState.kind!=='wide')camTo(-1,'wide');return}   // 顔アップの重さ 案A：普段の番は寄らない
   if(camState.i!==i){clearTimeout(camBackT);camTo(i,'mid');camState.t0=performance.now()}
   // テルが出た瞬間だけ寄り直す（出ていないときは寄り直さない）
   const tl=p.tell,on=tl&&tl.street===S.street&&!p.folded;
@@ -353,7 +354,7 @@ function camBand(kind,amt){
 function cutIn(name,line,release){$('camBand').hidden=true;
   const c=$('cutin');
   c.querySelector('.cav').innerHTML=avatar(name,'confident');
-  c.querySelector('.ctext').innerHTML=release?`<b>${esc(name)}</b><span>最後のクセ</span><p>${typeof release==='string'?esc(release):'ジンの指が、顎の傷から離れた。'}</p>`:`<b>${esc(name)}</b><span>オールイン</span><p>「${esc(line)}」</p>`;
+  c.querySelector('.ctext').innerHTML=release?`<b>${esc(name)}</b><span>最後のクセ</span><p>${typeof release==='string'?esc(release):'ジンの指が、あごの傷から離れた。'}</p>`:`<b>${esc(name)}</b><span>オールイン</span><p>「${esc(line)}」</p>`;
   c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');
   S.hold=1700;
   setTimeout(()=>{c.hidden=true},1800);
@@ -378,15 +379,15 @@ function nextStreet(){
 }
 // コールされなかった賭けを本人へ返す（いちばん多く出した人の、2番目との差）。ほかに誰も出していないときは返さない（ポットが空にならないように）
 const betOf=p=>p.total-(p.ante||0); // アンティを除いた、賭けた額
-function refundUncalled(){const c=S.players.filter(p=>p.total>0).sort((a,b)=>betOf(b)-betOf(a));if(!c.length)return;
-  if(!c[1])return;const ex=betOf(c[0])-betOf(c[1]);if(ex<=0)return;const p=c[0];p.total-=ex;p.chips+=ex;p.refund=ex;if(p.chips>0)p.allIn=false;log(`${p.name}に、コールされなかった ${fmt(ex)} を返した`)}
+function refundUncalled(){const u=Rules.uncalled(S.players);if(!u)return;   // 額の決め方は 19b_rules.js
+  const p=S.players[u.i],ex=u.amt;p.total-=ex;p.chips+=ex;p.refund=ex;if(p.chips>0)p.allIn=false;log(`${p.name}に、コールされなかった ${fmt(ex)} を返した`)}
 function winUncontested(p){
   const pr=potRect();refundUncalled();
   const pot=potTotal();p.chips+=pot;p.won=pot;
   S.handOver=true;S.toAct=-1;
   S.msg=`${p.name}の勝ち（+${fmt(pot)}）`;
   log(`${p.name}がポット ${fmt(pot)} を獲得`);
-  if(p.human&&S.street==='preflop'&&S.aggr===0){S.steals++;if(isLatePos())S.lateSteals=(S.lateSteals||0)+1;if(CFG.goal.type==='steal')S.msg=`ブラインドを盗んだ！（+${fmt(pot)}）`}
+  if(p.human&&S.street==='preflop'&&S.aggr===0){S.steals++;if(isLatePos())S.lateSteals=(S.lateSteals||0)+1;if(CFG.goal.type==='steal')S.msg=`ブラインドスチール成功！（+${fmt(pot)}）`}
   if(p.human&&S.street!=='preflop'&&S.myPostAggro&&isWeak(p.hand,S.board)){S.bluffs++;if(CFG.goal.type==='bluff')S.msg=`ブラフ成功！（+${fmt(pot)}）`}
   if(p.human)S.showOffer=true;
   else if(CFG.tells&&(mannerOf(p)||p.style===STYLES.liar||p.style===STYLES.liar2)&&weakNow(p.hand)&&Math.random()<.2){
@@ -402,32 +403,18 @@ function showdown(){
   S.street='showdown';
   const cont=S.players.filter(inHand);
   cont.forEach(p=>{p.show=true;p.score=bestN(p.hand.concat(S.board));p.hname=handName(p.score)});
-  const contrib=S.players.filter(p=>p.total>0);
-  const levels=[...new Set(contrib.map(betOf))].sort((a,b)=>a-b),anteSum=contrib.reduce((a,p)=>a+(p.ante||0),0);
-  let prev=0;
   // 案8：2回めくりなら、2回目の場札を配って、ポットを半分ずつ分ける（端数は1回目へ）
   if(S.twice&&S.twiceBase){S.board2=S.twiceBase.slice();while(S.board2.length<5)S.board2.push(S.deck.pop());log(`2回目：${S.board2.slice(S.twiceBase.length).map(cardStr).join(' ')}`)}
   const runs=S.board2?[[S.board,0],[S.board2,1]]:[[S.board,-1]];
   for(const [bd,ri] of runs){
-  const sc=new Map(cont.map(p=>[p,ri===1?bestN(p.hand.concat(bd)):p.score]));prev=0;
-  for(const L of levels){
-    let amt=L===levels[0]?anteSum:0;contrib.forEach(p=>{amt+=Math.min(betOf(p),L)-Math.min(betOf(p),prev)});
-    if(ri>=0){const half=Math.floor(amt/2/100)*100;amt=ri===0?amt-half:half}
-    let elig=cont.filter(p=>betOf(p)>=L);
-    if(!elig.length)elig=cont;
-    const top=elig.reduce((a,b)=>cmp(sc.get(a),sc.get(b))>=0?a:b);
-    const seat=p=>(S.players.indexOf(p)-S.dealer-1+N())%N();
-    const winners=elig.filter(p=>cmp(sc.get(p),sc.get(top))===0).sort((a,b)=>seat(a)-seat(b)); // 端数はボタンの左から
-    const share=Math.floor(amt/winners.length/100)*100;
-    let rem=amt-share*winners.length;
-    winners.forEach((w,k)=>{const g=share+(k<Math.floor(rem/100)?100:0)+(k===0?rem%100:0);w.chips+=g;w.won+=g;if(ri>=0&&g>0){(w.runWon=w.runWon||[0,0])[ri]+=g}});
-    prev=L;
-  }
-  if(ri===1)cont.forEach(p=>{p.hname2=handName(sc.get(p))});
+  // サイドポット・引き分け・端数の分け方は 19b_rules.js（Rules.awards）
+  const sc=S.players.map(p=>inHand(p)?(ri===1?bestN(p.hand.concat(bd)):p.score):null);
+  Rules.awards(S.players,sc,S.dealer,ri).forEach((g,j)=>{if(!g)return;const w=S.players[j];w.chips+=g;w.won+=g;if(ri>=0)(w.runWon=w.runWon||[0,0])[ri]+=g});
+  if(ri===1)cont.forEach(p=>{p.hname2=handName(sc[S.players.indexOf(p)])});
   }
   if(muckOn())cont.forEach(p=>{if(p.human||p.won>0||p.allIn||S.players.indexOf(p)===S.riverAggr)return;if(p.muckPlan){p.show=false;p.mucked=true}});
   const contS=cont.filter(p=>!p.mucked||p.human);
-  cont.forEach(p=>log(p.mucked&&!p.human?`${p.name}は手を伏せて捨てた`:`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname}）`));
+  cont.forEach(p=>log(p.mucked&&!p.human?`${p.name}は手を見せずに伏せた`:`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname}）`));
   judgeDeclare();selfLearn();talkSD(contS);
   {const me=S.players[0];if(cont.includes(me)&&!(!me.won&&S.riverAggr!==0&&!S.runout&&SETTINGS.muck))selfFoolCheck()}
   {const me=S.players[0];if(S.stat&&jinAdviceOn()&&cont.includes(me)){if(me.won>0)S.stat.sdWin++;else S.stat.sdLoss++}}
@@ -462,7 +449,8 @@ function showdown(){
     }
   }
   if(me.show&&!me.won&&cont.includes(me))S.sdLoss=true;
-  if(me.show&&!me.won&&S.riverAggr!==0&&!S.runout&&SETTINGS.muck){me.mucked=true;log('あなたは手を伏せて捨てた')}
+  if(me.show&&!me.won&&S.riverAggr!==0&&!S.runout&&!me.allIn&&SETTINGS.muck){   // オールインした手は伏せずに見せる（v89 レビュー：飛んだハンドで自分の2枚が見えなかった）
+    me.mucked=true;log('あなたは手を見せずに伏せた')}
   payHouse72();
   S.handOver=true;S.toAct=-1;
   if(S.slowrolled>0){const sp=S.players[S.slowrolled];grantTitle('slowrolled');taunt(sp,'gloat');
@@ -472,7 +460,7 @@ function showdown(){
   potPush();potCall();
 }
 function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
-  if(CFG.ch&&CFG.ch.script==='badbeat'&&S.autoMe){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
+  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
     S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？'};render()}},1400*SPEED())}
   {const me=S.players[0];if(penOn()&&(S.myActs||[]).length&&(hasLesson('pen')?me.total-me.won>0:me.total-me.won>=BB()*10&&(S.penCount||0)<3))S.penReady=S.handNo}
   if(S.finalHand&&CFG.ch&&CFG.ch.p2)p2FinalEnd();
@@ -502,7 +490,11 @@ function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
   if(S.mietaNow){const m=S.mietaNow;S.mietaNow=null;mieta(m.name,m.cue,m.big)}
   if(S.gloveHand===S.handNo&&me.won>0){const cr=S.players.find(q=>q.name==='クロウ');if(cr&&cr.total>0){grantTitle('realtell');S.realtell=true}}
   if(g.type==='flash'){S.result='flash';S.msg='';render();return}
+  // 相手役の最後のチップをほかの客（extras）が取ったときは、自分の勝ちにしない。相手役はチップを買い足して残る（satou 2026-10-18 録画 #4：降りたのに目標達成になった）
+  const byOther=me.won<=0&&g.type!=='bust'&&g.type!=='free'&&!CFG.flashback&&S.players.some(p=>p.extra&&p.chips>0)&&opps.some(p=>p.chips<=0&&p.total>0);
+  if(byOther)S.rebuyMain=true;
   if(me.chips<=0)S.result='lose';
+  else if(byOther){}
   else if(opps.every(p=>p.chips<=0)&&duelGate59()){S.result='win';if(g.type!=='bust'&&g.type!=='free')S.msg=`相手のチップを全部取った！ ${S.msg}`}
   else if(g.type==='steal'&&S.steals>=g.n)S.result='win';
   else if(g.type==='bluff'&&S.bluffs>=g.n)S.result='win';

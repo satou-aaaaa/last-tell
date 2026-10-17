@@ -11,7 +11,7 @@
 Object.assign(EN_DICT,{"目標":"Goal","くわしい設定":"More settings","よく使う":"Quick settings","いくらにする？":"How much?","メニュー":"Menu",
   "今の賭け":"Current bet","出す":"Pay","残り":"Left","この店で遊ぶ":"Play at this club","すべて":"Everything","少なめ":"Less",
   "めくって見る（第1・2章は表）":"Flip to see (face up in Ch.1-2)","常連度":"Regular","その他の項目":"More options","壁の写真・手に入れた服":"Wall photo / outfits",
-  "メニューを閉じる":"Close menu","目標を見る":"Show goal","ポットの内訳":"Pot breakdown","卓":"Table","賭け":"Bets",
+  "メニューを閉じる":"Close menu","目標を見る":"Show goal","ポットの内訳":"Pot breakdown","テーブル":"Table","賭け":"Bets",
   "揺さぶる・ストラドル":"Needle / straddle","揺さぶる":"Needle","会話の頻度":"Chat frequency","演出の速さ":"Animation speed","カメラ演出":"Camera","手札":"Your cards","音":"Sound",
   "負けた手":"Losing hands","相手の持ち点":"Opponent chips","ふつう":"Normal","強め":"Strong","控えめ":"Subtle","オフ":"Off","オン":"On","効果音だけ":"Effects only",
   "めくって見る":"Flip to see","いつも表":"Always face up","見せる":"Show","伏せる":"Muck","だいたい":"Rough","正確":"Exact","速い":"Fast",
@@ -69,7 +69,7 @@ addEventListener('keydown',e=>{const d=$('menuDrawer');if(d&&!d.hidden&&inGame()
 // バーの数字（1,000/2,000　#12）
 function tbMetaSync(){const m=$('tbMeta');if(!m||!S||!S.players)return;let t='';try{t=`${fmt(SB())}/${fmt(BB())}　#${S.handNo}`}catch(e){}if(m.textContent!==t)m.textContent=t;
   // v71（v70 レビュー）：数字だけだと何の額か分からないので、触れたとき・読み上げで「ブラインド」と出す（英語は Blinds）
-  try{const l=(typeof I18N!=='undefined'&&I18N.lang==='en'?'Blinds ':'ブラインド ')+fmt(SB())+'/'+fmt(BB()),al=l+'　#'+S.handNo;if(m.title!==l)m.title=l;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}catch(e){}
+  try{const l=(typeof I18N!=='undefined'&&I18N.lang==='en'?'Blinds ':'ブラインド ')+fmt(SB())+'/'+fmt(BB()),al=l+(I18N.lang==='en'?' #':'　#')+S.handNo;if(m.title!==l)m.title=l;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}catch(e){}
   const fb=!!(typeof CFG!=='undefined'&&CFG&&CFG.flashback);m.hidden=fb}
 
 // ---------- §A-1：吹き出しは1つずつ・顔の横 ----------
@@ -79,7 +79,9 @@ function sayPlace(sy){const i=+sy.id.replace('say',''),f=faceBox(i),L=$('sayLaye
   if(!sy.dataset.x)sy.dataset.x=sy.style.left;if(sy.dataset.mw===undefined)sy.dataset.mw=sy.style.maxWidth||'';const mwBack=()=>{sy.style.removeProperty('max-width');if(sy.dataset.mw)sy.style.maxWidth=sy.dataset.mw};mwBack();if(!f||!L)return;
   const W=L.clientWidth,H=L.clientHeight,bw=sy.offsetWidth+10,bh=sy.offsetHeight,tp=(()=>{try{return sayTopPad()}catch(e){return 4}})();
   const faces=S.players.map((p,k)=>k>0&&!p.out?faceBox(k):null).filter(Boolean);
-  const hit=(x,y)=>faces.some(q=>x<q.r&&q.l<x+bw&&y<q.b&&q.t<y+bh);
+  // v75 レビュー 1：6人卓の縦では、横の席の吹き出しが奥の席の名札にかからないように、名札もよける
+  const lr=L.getBoundingClientRect(),pls=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent&&e.id!=='plate'+i).map(e=>{const r=e.getBoundingClientRect();return{l:r.left-lr.left,r:r.right-lr.left,t:r.top-lr.top,b:r.bottom-lr.top}}).filter(q=>q.r>q.l);
+  const hit=(x,y)=>faces.concat(pls).some(q=>x<q.r&&q.l<x+bw&&y<q.b&&q.t<y+bh);
   const y=Math.max(tp,f.t+f.h*.04),cand=f.cx<W*.48?['r','l']:['l','r'];
   for(const s of cand){const x=s==='r'?f.r+4:f.l-4-bw;if(x<4||x+bw>W-4||y+bh>H*.6||hit(x,y))continue;
     sy.classList.add('side',s==='r'?'sr':'sl');sy.style.left=x.toFixed(1)+'px';sy.style.top=y.toFixed(1)+'px';return}
@@ -139,10 +141,14 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   const bar=[$('controls'),$('between')].find(b=>b&&!b.hidden&&b.getClientRects().length);const h=bar?Math.round(bar.getBoundingClientRect().height):0;
   if(gw.dataset.ab!==String(h)){gw.dataset.ab=String(h);gw.style.setProperty('--ab',h+'px')}
   const se=$('sensei'),seh=se&&!se.hidden&&!se.classList.contains('mwait')&&se.getClientRects().length?Math.round(se.getBoundingClientRect().height):0,land=LAND64();
-  const sh=land?seh:0,sb=land?0:seh;
+  let sh=land?seh:0,sb=land?0:seh;
+  // v74：帯が「あなたのチップ」の列より上にあるとき（小さい画面）は、帯の高さでは足りないので、かかる分だけ上げる
+  if(sb){try{const mr=document.querySelector('#mine .me-r');if(mr){const t=parseFloat((getComputedStyle(mr).translate.split(' ')[1])||'0')||0,need=Math.ceil(mr.getBoundingClientRect().bottom-t-se.getBoundingClientRect().top+4);if(need>sb)sb=need}}catch(e){}}
   if(gw.dataset.sh!==String(sh)){gw.dataset.sh=String(sh);gw.style.setProperty('--sh',sh+'px')}
   if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}}
-try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'))}catch(e){}
+try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
+// v74：師匠の帯は mwait（待ってから出す）が外れた時にも「あなたのチップ」の列を上げ直す（タイマーで外れるので render が来ないことがある）
+try{new MutationObserver(()=>barSync()).observe($('sensei'),{attributes:true,attributeFilter:['class','hidden']});$('sensei').addEventListener('animationend',()=>barSync())}catch(e){}
 // 動作の重さの改善 案3：0.25秒ごとの見回りはやめ、位置合わせ（36_layout_pass）で呼ぶ
 
 // ---------- §B-6：自分の番に卓へ自動スクロールしない（1画面に収まっている） ----------
@@ -165,7 +171,7 @@ const SET64_SEL={
   btnMuck:[['見せる',()=>!SETTINGS.muck],['伏せる',()=>!!SETTINGS.muck]],
   btnCount:[['だいたい',()=>SETTINGS.count!=='exact'],['正確',()=>SETTINGS.count==='exact']],
   btnTalk:[['オン',()=>talkSet()==='on'],['少なめ',()=>talkSet()==='less'],['オフ',()=>talkSet()==='off']]};
-const SET64_SW={btnDepth:()=>!!SETTINGS.depth,btnClock:()=>!!SETTINGS.clock,btnQuiz:()=>!!SETTINGS.quiz,btnAllin:()=>SETTINGS.allinConfirm!==false,
+const SET64_SW={btnDepth:()=>!!SETTINGS.depth,btnClock:()=>!!SETTINGS.clock,btnQuiz:()=>!!SETTINGS.quiz,btnAllin:()=>SETTINGS.allinConfirm!==false,btnFoldFast:()=>SETTINGS.foldFast!==false,
   btnNovice:()=>{try{return novice()}catch(e){return true}},btnFont:()=>SETTINGS.font==='big',btnC4:()=>!!SETTINGS.c4,btnVib:()=>SETTINGS.vib!==false,btnNextv:()=>SETTINGS.nextv!==false};
 (function(){const box=$('setIn');if(!box)return;const det=box.querySelector('.setmore')||(()=>{const d=document.createElement('details');d.className='setmore';d.innerHTML='<summary>くわしい設定</summary>';box.appendChild(d);return d})();
   const rowOf=id=>{const b=$(id);return b&&b.closest('.setrow')};

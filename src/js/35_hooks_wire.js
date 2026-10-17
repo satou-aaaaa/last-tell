@@ -10,3 +10,7 @@ playScene=LT.wrap('playScene',playScene);
 advance=LT.wrap('advance',advance);
 show=LT.wrap('show',show);
 renderTalk=LT.wrap('renderTalk',renderTalk);
+nextStreet=LT.wrap('nextStreet',nextStreet);
+askQuiz=LT.wrap('askQuiz',askQuiz);
+showVersus=LT.wrap('showVersus',showVersus);
+renderLine=LT.wrap('renderLine',renderLine);

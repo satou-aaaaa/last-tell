@@ -83,7 +83,7 @@ const eqWeak=(h,b)=>b.length<3?preTier(h)===0:isWeak(h,b)&&!drawOf(h,b);
 const OPEN_LINE={レイカ:.9,ハヤト:.9};
 function proAdj(p,d,x){
   // v71（S2）：読める相手（ジン・クロウ）は、リバーでポットの1.5倍以上を賭けられたら、強い手（st.hi 以上）でなければ降りる（コールが4〜5割で揺れていた）
-  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.hi)return{type:'fold',state:'none'};
+  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.mid*(typeof S2_LINE!=='undefined'&&S2_LINE[p.name]||.8))return{type:'fold',state:'none'};
   if(S.street!=='preflop'||x.toCall<=0)return d;
   const st=x.st;
   // A1：強キャラは、自分から最初に入るときリンプしない（レイズ2.5〜3BB か、降りる）。BBのチェックはそのまま
@@ -476,22 +476,23 @@ function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot
   const on=(a,dx,dy,os,m)=>os.some(o=>a.left+dx<o.right+m&&o.left-m<a.right+dx&&a.top+dy<o.bottom+m&&o.top-m<a.bottom+dy);
   const pot=[...document.querySelectorAll('#potChips .chip,#potSign')].map(R).filter(vis);
   const parts=w=>w.id==='dbtn'?[w]:[...w.querySelectorAll(w.classList.contains('hand')?'.card':'.chip')];
-  const ws=[...document.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack,#mine .mybet .chipwrap,#mine .mystack'+(N()===2?',.felt .spot .hand:not(.folded):not(.muck),#dbtn':''))].map(w=>{const cs=parts(w).map(R).filter(vis);return cs.length?[w,box(cs)]:null}).filter(x=>x&&on(x[1],0,0,bc,1));
+  const ws=[...document.querySelectorAll('.felt .spot .chipwrap,.felt .spot .mystack,#mine .mybet .chipwrap,#mine .mystack,#dbtn'+(N()===2?',.felt .spot .hand:not(.folded):not(.muck)':''))].map(w=>{const cs=parts(w).map(R).filter(vis);return cs.length?[w,box(cs)]:null}).filter(x=>x&&on(x[1],0,0,bc,1));
+  // v77：WebKit で場札にチップが残る件の切り分け用の印（data-ca：hit＝かかっていた、nobest＝置き場が無かった、f＝動かした倍率）
+  document.querySelectorAll('.felt .spot .mystack,.felt .spot .chipwrap').forEach(e=>{e.dataset.ca='ok'});ws.forEach(([w])=>{w.dataset.ca='hit'});
   const out=[];ws.forEach(([w,a])=>{const sp=w.id==='dbtn'?w:w.closest('.spot')||$('mine'),sr=R(sp),kx=sr.width/(sp.offsetWidth||1)||1,ky=sr.height/(sp.offsetHeight||1)||1;
-    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn')].filter(e=>e!==w).map(R).filter(vis)),obs=bc.concat(pot);
+    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn,#mine .me-r .lbl2,#mine .me-r .chp')].filter(e=>e!==w).map(R).filter(vis)),obs=bc.concat(pot);
     let ux=sr.left+sr.width/2-bx,uy=sr.top+sr.height/2-by;const n=Math.hypot(ux,uy)||1;ux/=n;uy/=n;const sx=ux<0?-1:1,fw=document.querySelector('.felt-wrap'),top=sp.id==='mine'||!fw||parts(w)[0]===w||w.classList.contains('hand')?tb.top:Math.max(tb.top,R(fw).top);   // 席のチップは卓の縁より奥（相手の体の前）へは出さない（伏せ札・D の札は今までどおり）
     // まず席の札・名札にもかからない所。無ければ（狭い卓）場札とポットにかからないことだけを守る。卓の真ん中（席と反対）へ寄せるのは最後（ポットの山に見えるため）
     let best=null;for(const soft of [1,0])if(!best)for(const [vx,vy,pen] of [[ux,uy,1],[sx,0,1],[-sx,0,1],[0,uy<0?-1:1,1],[0,uy<0?1:-1,2.5]])for(let t=4;t<=Math.max(150,tb.width*.5);t+=4){const dx=vx*t,dy=vy*t;
       if(a.left+dx<tb.left+2||a.right+dx>tb.right-2||a.top+dy<top+2||a.bottom+dy>tb.bottom-2)break;
       if(!on(a,dx,dy,obs,2)&&!(soft&&on(a,dx,dy,own,0))){if(!best||t*pen<best[2])best=[dx,dy,t*pen];break}}
-    if(!best)return;const [x0,y0]=(w.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
+    if(!best){w.dataset.ca='nobest';return}const [x0,y0]=(w.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
     out.push([w,x0,y0,best[0]/kx,best[1]/ky])});
   // 卓の傾き（奥ほど小さく見える）で、動いた量が足りない・出すぎることがある。場札にまだかかっていれば少し大きく（2回まで）、卓の外へ出たら少しずつ戻す
   const tr=(w,x0,y0,mx,my,f)=>{w.style.translate=`${(x0+mx*f).toFixed(1)}px ${(y0+my*f).toFixed(1)}px`},bx_=w=>{const cs=parts(w).map(R).filter(vis);return cs.length?box(cs):null};
   const outT=b=>b&&(b.left<tb.left||b.right>tb.right||b.bottom>tb.bottom),onB=b=>b&&on(b,0,0,bc,1);
   out.forEach(o=>tr(...o,1));
   out.forEach(([w,x0,y0,mx,my])=>{let f=1;for(let k=0;k<2&&onB(bx_(w));k++){f+=.3;tr(w,x0,y0,mx,my,f);if(outT(bx_(w))){f-=.3;tr(w,x0,y0,mx,my,f);break}}
-    for(;f>.45&&outT(bx_(w));){f-=.15;tr(w,x0,y0,mx,my,f)}})}
+    for(;f>.45&&outT(bx_(w));){f-=.15;tr(w,x0,y0,mx,my,f)}w.dataset.ca='f'+f.toFixed(2)+(onB(bx_(w))?' still':'')})}
 $('askRow').addEventListener('click',e=>{const x=e.target.closest('[data-bk]');if(x){e.stopPropagation();bAnswer(+x.dataset.bk)}});
-
 function cpuAct(i){if(S.handOver||S.toAct!==i)return;const d=cpuDecide(i);act(i,d.type,d.to)}

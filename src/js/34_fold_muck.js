@@ -19,8 +19,8 @@ const FOLD_STYLE={
 const foldStyle=name=>FOLD_STYLE[name]||FOLD_BY_RANK[rankOf(name)]||FOLD_BY_RANK[3];
 const FOLD_MS={slide:380,place:820,flick:460,push:320,sweep:700,gather:800};
 const MUCK_MESS=[[-1.2,-.8,-14],[1,.6,22],[-.4,1.2,6],[1.4,-1,-30],[-1.6,.9,38],[.6,-1.4,-4],[.2,.3,15],[-.9,-.2,-24]];
-const FOLD_GONE={ja:'捨てた手',en:'Folded'};
-Object.assign(EN_DICT,{'降り！':'I\'m out!','降ります':'I fold.','捨てた手':'Folded','伏せた':'Mucked'});
+const FOLD_GONE={ja:'降りた手',en:'Folded'};
+Object.assign(EN_DICT,{'降り！':'I\'m out!','降ります':'I fold.','捨てた手':'Folded','降りた手':'Folded','伏せた':'Mucked'});
 
 let muckHand=-1,muckN=0;const muckDone={};
 // 捨て札の山は場札の左隣（卓の奥のディーラーの手元。ポットとあなたの手元から離す）

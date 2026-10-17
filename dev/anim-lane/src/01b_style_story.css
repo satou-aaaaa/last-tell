@@ -1,0 +1,3 @@
+/* 回想（第2・3・4・6章）：判断のときは「降りる・受ける」だけ（ストーリーレーン） */
+#controls.fbchoice #btnRaise,#controls.fbchoice #quick,#controls.fbchoice #btnNeedle{display:none!important}
+#game.storyfinal #quick,#game.storyfinal #declRow,#game.storyfinal #btnNeedle,#game.storyfinal #btnStraddle,#game.storyfinal #askRow,#game.storyfinal #needleMenu{display:none!important}

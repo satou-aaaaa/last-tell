@@ -1,0 +1,31 @@
+/* 名札が顔にかからないように（2026-10-10 satou「顔にチップの表示がかぶっている」）
+   名札は卓のふちから上へ伸びるので、行が増えるほど口・鼻・目が隠れていた。
+   - 地の色と角の切り欠きは ::before に移す（D をはみ出して置けるように）
+   - 端の席でも名札が細くならないよう、幅は中身に合わせる（細いと行が増えて顔にかかる）
+   - D は名札の上の角（卓の真ん中に近い側）に小さく重ねる（1行使わない。端の席でも卓の外に出ない）
+   - 行は「名前・チップ・ようす1行」まで。勝率が出ている間はアクションを、役名が出たら負けた側の古いアクションを隠す
+   - 4人以上の卓：名前・星・言葉を1行に。アクションの額は卓のチップの札にも出ているので名札では省く。
+     勝った人は「勝ち +額」と役名を出し、そのハンドの間だけチップの行を休む */
+.plate{clip-path:none;background:transparent;isolation:isolate;width:max-content}
+.plate::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(8,9,12,.88);
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.plate.turn{background:transparent;box-shadow:none}
+.plate.turn::before{background:rgba(60,46,14,.95);box-shadow:inset 0 0 0 2px var(--gold)}
+.plate.flash{animation:none}
+.plate.flash::before{animation:flash .7s ease-out}
+.plate .dbadge{position:absolute;left:-7px;right:auto;top:-7px;z-index:1;width:17px;height:17px;font-size:.6rem;box-shadow:0 1px 0 #9c9482,0 2px 4px rgba(0,0,0,.6)}
+/* 左半分の席（1人め、4人以上なら2人めも）は右上の角に */
+.plate:nth-of-type(1):not(:only-of-type) .dbadge,.plate:nth-of-type(2):nth-last-of-type(n+3) .dbadge{left:auto;right:-7px}
+/* v67：6人卓の細い名札では D が「約8万」の頭や隣の名札の名前にかかったので、D は名札の角の上（肩の位置）に出す */
+.n6 .plate .dbadge{top:-17px}
+.plate:has(.eqb) .tag:not(.win),.plate:has(.handname) .tag:not(.win),.plate:has(.handname) .eqb{display:none}
+.t3d:has(#plate3) .plate .nm{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline;justify-content:center}
+.t3d:has(#plate3) .plate .nm .lang{margin-left:0;padding:0 3px}
+.t3d:has(#plate3) .plate .nm .stars{letter-spacing:-.08em}
+.t3d:has(#plate3) .plate .tag b{display:none}
+.t3d:has(#plate3) .plate:has(.tag.win):has(.handname) .chp{display:none}
+.n6 .plate .tag.win{letter-spacing:-.03em}
+.n6 .plate .eqb{font-size:.62rem;padding:0 3px;line-height:1.2}
+/* スマホ縦の4〜5人卓：隣の名札と重ならないよう、6人卓と同じく星を省いて幅を詰める */
+@media (max-width:620px){.t3d:has(#plate3) .plate .nm .stars{display:none}.t3d:has(#plate3) .plate{max-width:33%}}
+@media (prefers-reduced-motion:reduce){.plate.flash::before{animation:none}}

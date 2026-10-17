@@ -1,0 +1,3 @@
+/* 新案C：テルが出た人の頭の上に、卓のランプの光が少し当たる（大きさ・位置は変えない） */
+.n6 .bust::after{content:"";position:absolute;left:-8%;right:-8%;top:-12%;height:85%;background:radial-gradient(closest-side,rgba(255,214,140,.30),rgba(255,214,140,.10) 55%,transparent);z-index:-1;opacity:0;transition:opacity .5s;pointer-events:none}
+.n6 .bust[class*="cue-"]::after{opacity:1}

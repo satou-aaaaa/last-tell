@@ -1,0 +1,7 @@
+/* 顔アップの重さ 案B（提案 2026-10-11）：寄っている間、ほかの人と卓を「ぼかす＋暗くする」フィルターをやめる。
+   ほかの人は半透明（暗い背景に沈む）、卓は上に暗い幕を1枚かける。ぼかしは無くなる。01b_style_perf.css の後に読む */
+.t3d.focusing .bust:not(.turn),.t3d.focusing .felt,.t3d.focusing.noblur .bust:not(.turn),.t3d.focusing.noblur .felt,.t3d.focusing.camme .felt{filter:none}
+.t3d .felt,.t3d .bust{transition:opacity .5s}
+.t3d.focusing .bust:not(.turn){opacity:.58}
+.t3d .felt-wrap::after{content:"";position:absolute;inset:0;background:#000;opacity:0;transition:opacity .4s;pointer-events:none}
+.t3d.focusing .felt-wrap::after{opacity:.4}

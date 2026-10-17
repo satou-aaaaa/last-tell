@@ -85,16 +85,16 @@ function showVersus(done){
   if(CFG.nanori&&NANORI[boss]&&!CFG.nanoriShown){CFG.nanoriShown=true;return showNanori(boss,()=>showVersus(done))}
   const v=$('vs'),opps=S.players.filter(p=>!p.human);
   v.innerHTML=`<div class="vsin">
-    <div class="vshead"><span class="vsv">VS</span><span class="vst">${esc(CFG.title)}</span></div>
+    <div class="vshead"><span class="vsv">${esc(opps.length>1?'お待たせしました。席へご案内します':'お待たせしました。テーブルへどうぞ')}</span><span class="vst">${esc(CFG.title)}</span></div>
     <div class="vsopps n${opps.length}" style="--vn:${opps.length}">${opps.map((p,k)=>{const r=rankOf(p.name),it=INTRO[p.name]||['','']; return`
-      <div class="vscard ${r>=3?'cool':'cute'}" style="animation-delay:${(k*.18).toFixed(2)}s">
+      <div class="vscard ${r>=3?'cool':'cute'}${r>=4?' rk4':''}" style="animation-delay:${(k*.18).toFixed(2)}s">
         <div class="vsava">${avatar(p.name,r>=3?'confident':'normal')}</div>
         <div class="vsname">${esc(p.name)}<span class="stars">${stars(r)}</span></div>
         <div class="vsrole">${esc(it[0])}${p.label?`<span>${esc(p.label)}</span>`:''}</div>
         <div class="vsq">「${esc(it[1])}」</div>
-        <div class="vschips">持ち点 ${fmt(p.chips)}</div></div>`}).join('')}</div>
+        <div class="vschips">持ち点 ${approxOn()?'約'+approx(p.chips):fmt(p.chips)}</div></div>`}).join('')}</div>
     <div class="vsgoal"><span>勝利条件</span>${esc(CFG.goal.type==='free'?'最後の一人になる':CFG.goalText||CFG.ch.goalText)}</div>
-    <button class="primary" id="vsGo">勝負開始</button></div>`;
+    <button class="primary" id="vsGo">座る</button></div>`;
   v.hidden=false;
   let closed=false;const close=()=>{if(closed)return;closed=true;v.hidden=true;done()};
   $('vsGo').onclick=()=>{Depth.ask();close()};$('vsGo').focus({preventScroll:true});
@@ -113,7 +113,7 @@ function buildSeats(){
     }
     const x=xs[i-1],r=rankOf(p.name),solo=N()===2;
     const w=(solo?52:N()===3?36:N()>=6?23:28)+r*(solo?3:N()>=6?1:2);
-    $('busts').insertAdjacentHTML('beforeend',`<div class="bust ${r>=3?'cool':'cute'}" id="bust${i}" style="left:${x}%;width:${w}%"><div class="body" style="animation-delay:-${(i*1.1).toFixed(1)}s">${avatar(p.name)}</div></div>`);
+    $('busts').insertAdjacentHTML('beforeend',`<div class="bust ${r>=3?'cool':'cute'}${r>=4?' rk4':''}" id="bust${i}" style="left:${x}%;width:${w}%"><div class="body" style="animation-delay:-${(i*1.1).toFixed(1)}s">${avatar(p.name)}</div></div>`);
     $('sayLayer').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()>=6?30:N()===4?31:44}%"></div>`);
     $('plates').insertAdjacentHTML('beforeend',`<div class="plate" id="plate${i}" style="left:${x}%"></div>`);
     const sp=document.createElement('div');sp.className='spot';sp.id='spot'+i;

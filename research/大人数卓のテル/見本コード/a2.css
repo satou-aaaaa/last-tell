@@ -1,0 +1,3 @@
+/* 案2：テルが出た人だけ、身を乗り出して大きく見える（カメラは動かさない） */
+.n6 .bust{transition:scale .35s ease-out,filter .2s}
+.n6 .bust[class*="cue-"]{scale:1.35;z-index:3}

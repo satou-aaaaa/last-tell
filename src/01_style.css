@@ -515,6 +515,8 @@ button.act:disabled{opacity:.3}
   font:800 .95rem/1 var(--display,serif);letter-spacing:.12em;color:#f6ead0;background:rgba(6,7,10,.78);padding:7px 16px;
   border-top:1px solid var(--gold,#e2b65b);border-bottom:1px solid var(--gold,#e2b65b)}
 .dcall.go{animation:dcall 1.3s ease-out forwards}
+.dcall.dleft{left:10px;right:auto}
+.dcall.dwrap{white-space:normal;line-height:1.25;box-sizing:border-box}
 @keyframes dcall{0%{opacity:0;transform:translateX(-12px)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
 .potfly{position:absolute;z-index:7;pointer-events:none}
 .spot .hand.muck{animation:muck .6s ease-in forwards}
@@ -604,7 +606,7 @@ button.act:disabled{opacity:.3}
 .titles li{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:4px 8px;background:#15161d;color:var(--muted)}
 .titles li.got{color:var(--ink)}.titles li.got b{color:var(--gold)}
 .titles li span{text-align:right}
-.ch .photo{display:block;width:fit-content;white-space:nowrap;margin-top:3px;font-size:.66rem;padding:0 6px;border:1px solid var(--gold);color:var(--gold)}
+.ch .photo{display:block;width:fit-content;white-space:nowrap;margin-top:3px;font-size:.75rem;padding:0 6px;border:1px solid var(--gold);color:var(--gold)}
 @media (prefers-reduced-motion:reduce){.toast.go{animation:none}.mine .hold.squeeze .card{transition:none}}
 .plate .dbadge{position:static;width:20px;height:20px;font-size:.72rem;box-shadow:0 2px 0 #9c9482}
 
@@ -627,7 +629,7 @@ button.act:disabled{opacity:.3}
 .vs[hidden]{display:none}
 .vsin{margin:auto;width:min(100%,720px);display:grid;gap:14px;justify-items:center;text-align:center}
 .vshead{display:grid;justify-items:center}
-.vsv{font-family:var(--display);font-weight:800;font-size:3rem;line-height:1;color:var(--crimson);letter-spacing:.1em;text-shadow:0 0 18px rgba(215,38,61,.6)}
+.vsv{font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--gold);letter-spacing:.06em}
 .vst{font-size:.85rem;color:var(--gold);letter-spacing:.12em}
 .vsopps{display:grid;gap:10px;width:100%}
 .vsopps.n1{grid-template-columns:minmax(0,260px);justify-content:center}
@@ -649,14 +651,14 @@ button.act:disabled{opacity:.3}
 .vsopps.n4 .vsava,.vsopps.n5 .vsava{width:min(100%,96px)}.vsopps.n5 .vsq{font-size:.7rem}
 @media (max-width:700px){.vsopps.n4{grid-template-columns:repeat(2,minmax(0,1fr))}.vsopps.n5{grid-template-columns:repeat(6,minmax(0,1fr))}.vsopps.n5 .vscard{grid-column:span 2}.vsopps.n5 .vscard:nth-child(4){grid-column:2/span 2}
   .vsopps.n4 .vsq,.vsopps.n5 .vsq,.vsopps.n5 .vsrole span{display:none}.vsopps.n4 .vsava,.vsopps.n5 .vsava{width:min(100%,64px)}.vsopps.n4 .vscard,.vsopps.n5 .vscard{padding:6px 4px 8px}.vsopps.n5 .vsname{font-size:.9rem}}
-@media (max-height:500px){.vsin{gap:6px}.vsv{font-size:1.8rem}.vsopps{grid-template-columns:repeat(var(--vn,3),minmax(0,1fr))!important}.vsopps .vscard{grid-column:auto!important;padding:4px 4px 6px}.vsopps .vsava{width:min(100%,52px)}.vsopps .vsq,.vsopps .vsrole span{display:none}.vsname{font-size:.85rem}.vsgoal{font-size:.8rem;padding:4px 10px}}
-@media (max-width:480px){.vsopps.n3 .vsq{display:none}.vsv{font-size:2.4rem}}
+@media (max-height:500px){.vsin{gap:6px}.vsv{font-size:.95rem}.vsopps{grid-template-columns:repeat(var(--vn,3),minmax(0,1fr))!important}.vsopps .vscard{grid-column:auto!important;padding:4px 4px 6px}.vsopps .vsava{width:min(100%,52px)}.vsopps .vsq,.vsopps .vsrole span{display:none}.vsname{font-size:.85rem}.vsgoal{font-size:.8rem;padding:4px 10px}}
+@media (max-width:480px){.vsopps.n3 .vsq{display:none}.vsv{font-size:1rem}}
 @media (prefers-reduced-motion:reduce){.vscard,.goalcard.bump{animation:none}}
 
 /* ---------- ストーリー系の要素 ---------- */
 .chtools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
 .chtools .exnote{margin:0}
-.newep{font-style:normal;margin-left:6px;padding:0 5px;background:var(--crimson);color:#fff;font-size:.62rem}
+.newep{font-style:normal;margin-left:6px;padding:0 5px;background:var(--crimson);color:#fff;font-size:.75rem}
 .mini.on{border-color:var(--gold);color:var(--gold)}
 #notebook{padding:16px}
 .ntabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
@@ -731,6 +733,8 @@ body.en .p2head span,body.en .p2head b{letter-spacing:.06em}
 .partcard.door b{font-size:clamp(1.15rem,5.6vw,1.9rem);letter-spacing:.08em;text-align:center;text-wrap:balance;word-break:auto-phrase;max-width:100%;line-height:1.35}
 .partcard.door em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.2em;font-size:.88rem;font-weight:700;border-top:1px solid var(--line);padding-top:6px;margin-top:2px;text-align:center}
 body.en .partcard.door em,body.en .partcard.door span{letter-spacing:.08em}
+.partcard.door .doorcap{margin:10px 0 0;text-wrap:balance;word-break:auto-phrase;font-size:.95rem;color:#cfd3cc;text-align:center;line-height:1.6;max-width:22em}
+@media (max-height:460px){.partcard.door{gap:2px;padding:2px 0}.partcard.door b{font-size:1.35rem}.partcard.door .doorcap{margin-top:4px;font-size:.85rem}}
 #scene.il{background:linear-gradient(180deg,#2a3440,#12161c 80%)}
 #scene.il .stage{filter:saturate(.6) brightness(.92)}
 #scene.il .stage.cool::before{background:linear-gradient(110deg,transparent 30%,#4d5d70 30% 46%,transparent 46%)}
@@ -1256,8 +1260,8 @@ body.en #game button.act.fold:not(:disabled) small{visibility:hidden}
    linear-gradient(transparent 70%,rgba(255,200,120,.35) 70% 72%,transparent 72%);
   filter:blur(3px);-webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
 #title::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 50% 45% at 72% 30%,rgba(255,190,110,.12),transparent 70%),var(--noise);background-size:auto,160px 160px;opacity:.5;mix-blend-mode:overlay}
-body:has(#title:not([hidden]))::before{opacity:.45}
-body:has(#title:not([hidden]))::after{opacity:.6}
+body.ltTitle::before{opacity:.45}
+body.ltTitle::after{opacity:.6}
 .logo h1{color:#fff4e0;text-shadow:0 0 3px #fff,0 0 12px rgba(255,214,150,.9),0 0 32px rgba(226,182,91,.6)}
 .logo h1 span{color:#ffd9de;text-shadow:0 0 3px #fff,0 0 12px rgba(255,80,100,.95),0 0 32px rgba(215,38,61,.7)}
 .logo h1 .fl{color:inherit;text-shadow:inherit;animation:lflicker 6s steps(1) infinite}
@@ -1297,6 +1301,10 @@ body:has(#title:not([hidden]))::after{opacity:.6}
 #btnShot{white-space:nowrap;letter-spacing:0}@media(max-height:500px){#btnShot{font-size:.8rem;padding-left:.5em;padding-right:.5em}}
 #quiz .qopts button{white-space:nowrap;letter-spacing:0;font-size:clamp(.78rem,3.8vw,1rem)}
 @media (max-height:500px) and (orientation:landscape){#scene .stage{height:min(30vh,360px)}#scene .scene-btns{position:sticky;bottom:6px;z-index:6}}
+/* v82 レビュー：横向きの会話で話し手の顔が小さく、肩が箱に隠れる → 箱を詰めて、顔の段を残りの高さいっぱいにする */
+@media (max-height:460px) and (orientation:landscape){#scene .stage{height:max(120px,calc(100dvh - 236px))}#scene .box{min-height:72px;padding:20px 16px 10px}}
 #scene .venue{z-index:12;text-shadow:0 1px 4px #000,0 0 10px #000}
 @media (max-height:500px) and (orientation:landscape){#scene .lesson p{line-height:1.6;font-size:.9rem;max-width:none}#scene .lesson .lt{font-size:1.1rem}}
 .raisepanel .presets button{white-space:nowrap;letter-spacing:0;font-size:min(.8rem,3.3vw)}
+/* v75 レビュー 2：広い画面では相手紹介の一言を少し大きく */
+@media (min-width:900px) and (min-height:600px){.vsv{font-size:1.35rem}}

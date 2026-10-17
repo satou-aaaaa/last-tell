@@ -1,0 +1,16 @@
+/* 新案C：6人卓では、テルの仕草を体ごとの動きにする（大きさは変えない） */
+.n6 .bust.cue-glance .body svg{animation:bigGlance 1.6s ease-in-out 2}
+@keyframes bigGlance{0%,100%{transform:none}30%,70%{transform:translateY(7%) rotate(-7deg)}}
+.n6 .bust.cue-glance .av.real .pupils{animation:bigPupil 1.6s ease-in-out 2}
+@keyframes bigPupil{0%,100%{transform:none}30%,70%{transform:translateY(4px)}}
+.n6 .bust.cue-smile .body svg{animation:bigSmile 1.6s ease-in-out}
+@keyframes bigSmile{40%{transform:rotate(-4deg) translateY(-3%)}}
+.n6 .bust.cue-talk .body svg{animation:bigTalk .45s ease-in-out 5}
+@keyframes bigTalk{50%{transform:rotate(4deg) translateY(-3%)}}
+.n6 .bust.cue-stare .body svg{animation:bigStare 1.2s ease-out forwards}
+@keyframes bigStare{to{transform:translateY(-5%)}}
+.n6 .bust.cue-still .body{animation-play-state:paused}
+.n6 .bust.cue-still .body svg{animation:bigStill 1.4s ease-out forwards}
+@keyframes bigStill{to{transform:translateY(3%) scale(.985)}}
+.n6 .bust.cue-sweat .body svg{animation:bigSweat .5s ease-in-out 4}
+@keyframes bigSweat{50%{transform:translateX(-2%) rotate(-2deg)}}

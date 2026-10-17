@@ -18,14 +18,14 @@
 .plate:nth-of-type(1):not(:only-of-type) .dbadge,.plate:nth-of-type(2):nth-last-of-type(n+3) .dbadge{left:auto;right:-7px}
 /* v67：6人卓の細い名札では D が「約8万」の頭や隣の名札の名前にかかったので、D は名札の角の上（肩の位置）に出す */
 .n6 .plate .dbadge{top:-17px}
-.plate:has(.eqb) .tag:not(.win),.plate:has(.handname) .tag:not(.win),.plate:has(.handname) .eqb{display:none}
-.t3d:has(#plate3) .plate .nm{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline;justify-content:center}
-.t3d:has(#plate3) .plate .nm .lang{margin-left:0;padding:0 3px}
-.t3d:has(#plate3) .plate .nm .stars{letter-spacing:-.08em}
-.t3d:has(#plate3) .plate .tag b{display:none}
-.t3d:has(#plate3) .plate:has(.tag.win):has(.handname) .chp{display:none}
+.plate.pEqb .tag:not(.win),.plate.pHn .tag:not(.win),.plate.pHn .eqb{display:none}
+.t3d.hasP3 .plate .nm{display:flex;flex-wrap:wrap;gap:0 4px;align-items:baseline;justify-content:center}
+.t3d.hasP3 .plate .nm .lang{margin-left:0;padding:0 3px}
+.t3d.hasP3 .plate .nm .stars{letter-spacing:-.08em}
+.t3d.hasP3 .plate .tag b{display:none}
+.t3d.hasP3 .plate.pWin.pHn .chp{display:none}
 .n6 .plate .tag.win{letter-spacing:-.03em}
 .n6 .plate .eqb{font-size:.62rem;padding:0 3px;line-height:1.2}
 /* スマホ縦の4〜5人卓：隣の名札と重ならないよう、6人卓と同じく星を省いて幅を詰める */
-@media (max-width:620px){.t3d:has(#plate3) .plate .nm .stars{display:none}.t3d:has(#plate3) .plate{max-width:33%}}
+@media (max-width:620px){.t3d.hasP3 .plate .nm .stars{display:none}.t3d.hasP3 .plate{max-width:33%}}
 @media (prefers-reduced-motion:reduce){.plate.flash::before{animation:none}}

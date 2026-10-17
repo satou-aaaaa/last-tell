@@ -29,19 +29,19 @@ if(SETTINGS.look)SETTINGS.look=lookClean(SETTINGS.look);
   for(const a of c1A){const i=at(a,'仕事帰りに覚えたポーカー');if(i>=0){a.splice(i,1,
     ['','倉庫で一日、積み荷の数を数えてきた。数なら、間違えない。'],
     ['','……なのに、仕事帰りに覚えたポーカーでは、今日もまるで勝てずにいる。']);break}}
-  insA('こちらの手札をのぞきこんだ',[['','指が、手元のチップの枚数を数えていた。'],['老人','……数えるな。顔を見ろ']],true);
+  insA('こちらの手札をのぞきこんだ',[['','指が、手元のチップの枚数を数えていた。'],['老人','……チップじゃない。相手を見ろ']],true);
   insA('ジンでいい。',[['ジン','……お前は'],{askName:1},['ゲン','〈主〉か。覚えたぞ！']],true);
   ins(c1.outro,'うちの壁に写真を一枚',[['店主','写真を撮るよ。身なりを整えといで'],{look:1}],true);
   const c2=C(2).outro;
   ins(c2,'銀の扉の看板と',[['ロク','〈主〉、か。……覚えておこう']]);
-  ins(c2,'時計は午前0時を回っている',[['','荷の数なら、いつも合う。今日の負けは、数では説明がつかなかった。']]);
+  ins(c2,'時計は午前0時を回っている',[['','仕事の積み荷なら、数えれば必ず合う。……今日の負けは、数えても分からなかった。']]);
   tail(c2,[{gotFit:2}]);
   const c3=C(3).outro;
   ins(c3,'時計は午前1時',[['ミナ','〈主〉、また来てね']]);
   ins(c3,'ブラフは、降りられる奴にしか',[['','指が、またチップを数えかけた。やめて、相手の顔を見た。']]);
   tail(c3,[{gotFit:3}]);
   const c4=C(4).outro;
-  ins(c4,'これは餞別。天空の羽よ',[['レイカ','〈主〉、だったわね。覚えておくわ']]);
+  ins(c4,'天空の羽よ。縁起かつぎに',[['レイカ','〈主〉、だったわね。覚えておくわ']]);
   ins(c4,'……半人前だが、目はいい',[['','気づけば、賭けた額ではなく、レイカの顔を見ていた。']]);
   tail(c4,[{gotFit:4}]);
   const c5=C(5).outro;
@@ -102,7 +102,7 @@ let LK=null,lookDone=null,lookOm=0,lookFrom='';
   d.innerHTML=`<div class="lookin"><div class="lookhead"><h2 id="lookH">身なり</h2><p class="lookcap" id="lookCap"></p></div>
     <div class="lookbody"><div class="lookpic"><div class="lphoto"><div class="lpic" id="lookPic" role="img" aria-label="選んだ見た目"></div><span>錨亭の壁</span></div></div>
     <div class="lookopts">${row('lkFace','顔立ち')}${row('lkSkin','肌')}${row('lkHs','髪型')}${row('lkHair','髪の色')}${row('lkGl','眼鏡')}${row('lkFit','服')}<p class="lnote" id="lkNote" aria-live="polite"></p></div></div>
-    <div class="lookfoot"><button class="ghost" id="lkOm">おまかせ</button><button class="ghost" id="lkReset">初期のアオに戻す</button><button class="primary" id="lkOk">決める</button></div></div>`;
+    <div class="lookfoot"><button class="ghost" id="lkOm">おまかせ</button><button class="ghost" id="lkReset">最初の見た目に戻す</button><button class="primary" id="lkOk">決定</button></div></div>`;
   document.querySelector('.wrap').appendChild(d);
   const chips=(el,items,key)=>{$(el).innerHTML=items.map(([v,label,col,lock])=>`<button type="button" class="${col?'sw':''}${lock?' lk':''}" ${col?`style="background:${col}"`:''} data-v="${v}" aria-label="${esc(label)}${lock?'（'+esc(lock)+'）':''}" title="${esc(label)}">${col?'':(lock?'🔒 ':'')+esc(label)}</button>`).join('');
     $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;

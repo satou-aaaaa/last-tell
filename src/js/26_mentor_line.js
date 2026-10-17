@@ -32,10 +32,10 @@ function senseiLine(){
     return smallMade(me.hand,S.board)?'小さい役だ。安く見られるなら見ていい。大きく賭けられたら考えろ。':'役ができた。ゲンは降りない。しっかり賭けろ。';
   }
   if(CFG.hint==='position'){
-    if(S.street!=='preflop')return'盗みはプリフロップで決めろ。ここからは手の強さで勝負だ。';
+    if(S.street!=='preflop')return'スチールはプリフロップで決めろ。ここからは手の強さで勝負だ。';
     const nobodyIn=S.currentBet<=BB()&&noLimper();
-    if(isLatePos()&&nobodyIn)return'後ろの席で、誰も参加していない。手が弱くてもレイズで盗め。';
-    if(isLatePos())return'誰かが先に参加した。盗むのはやめて、強い手だけで行け。';
+    if(isLatePos()&&nobodyIn)return'後ろの席で、誰も参加していない。手が弱くても、レイズでスチールしろ。';
+    if(isLatePos())return'誰かが先に参加した。スチールはやめて、強い手だけで行け。';
     return preTier(me.hand)===2?'前の席だが、いい手だ。参加していい。':'前の席は不利だ。強い手以外は降りろ。';
   }
   if(CFG.hint==='tell'){
@@ -44,8 +44,8 @@ function senseiLine(){
     if(t.length){
       const {q}=t[t.length-1];
       if(S.handNo>=8&&S.handNo%3)return'さっきのクセ、意味は覚えているか。自分で読め。';
-      return q.tell.meaning==='strong'?`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。強いぞ。`
-        :`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。ブラフかもしれん。`;
+      return q.tell.meaning==='strong'?`見たか。${typeof who==='function'?who(q.name):q.name}が${CUE_LABEL[q.tell.cue]}。強いぞ。`
+        :`見たか。${typeof who==='function'?who(q.name):q.name}が${CUE_LABEL[q.tell.cue]}。ブラフかもしれん。`;
     }
     if(S.street==='preflop')return'相手の顔を見ろ。賭ける前に、何かが出る。';
     return toCall>0?'相手が賭けてきた。そのとき何が出ていたか思い出せ。':'手がなければ無理するな。チェックで様子を見ろ。';

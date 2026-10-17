@@ -1,0 +1,16 @@
+/* ---------- ベット額と直近の5手（動画のツッコミ A5、js/48_bet_log.js） ---------- */
+/* 行動の語に足す額 */
+.ltact > .bln{margin-left:3px;font-weight:600;color:#e8e4da;font-variant-numeric:tabular-nums}
+/* 直近の5手（上の帯のすぐ下。置けないときは .off で出さない） */
+.vflog{position:fixed;z-index:30;margin:0;padding:4px 7px;list-style:none;pointer-events:none;max-width:200px;
+  border-radius:6px;background:rgba(10,11,14,.72);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+  font-size:12px;line-height:1.4;color:#cfd3d8}
+.vflog[hidden],.vflog.off{display:none}
+.vflog li{display:flex;gap:5px;white-space:nowrap;align-items:baseline}
+.vflog li .nm{max-width:86px;overflow:hidden;text-overflow:ellipsis;color:#b9c4cf}
+.vflog li b{font-weight:700}
+.vflog li.raise b{color:#f08a92}.vflog li.call b{color:#9fd7c4}.vflog li.fold b{color:var(--muted,#9a9a9a);font-weight:400}
+.vflog li i{font-style:normal;font-variant-numeric:tabular-nums;color:#e8e4da}
+.vflog li:last-child{color:#eef0f2}
+/* 縦の画面は幅を細く（真ん中上の吹き出しをよけやすく） */
+@media (max-width:560px){.vflog{font-size:11px;padding:3px 6px;max-width:140px}.vflog li{gap:4px}.vflog li .nm{max-width:52px}}   /* 字は横・PC 12px、縦 11px（v92 レビュー） */

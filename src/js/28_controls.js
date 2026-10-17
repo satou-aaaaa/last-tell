@@ -107,7 +107,7 @@ renderCamBtn();
 (function(){const t=$('table'),c=document.createElement('div');c.className='cam';c.id='cam';t.insertBefore(c,$('busts'));c.appendChild($('busts'));c.appendChild(t.querySelector('.felt-wrap'));c.appendChild($('plates'));const L=document.createElement('div');L.className='plates saylayer';L.id='sayLayer';t.insertBefore(L,c.nextSibling)})();
 renderDepth();
 // ===== 隣の卓の声（案4：ピント送り）。ハンドとハンドの間だけ、6〜8ハンドに1回 =====
-const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさん、昔はジンさんと組んでたって本当か？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["AAが負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
+const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさんは昔、ジンさんと組んでいたんだろ？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["AAが負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
 const NV_REACT={"win": ["今の勝負、向こうの若いのが取ったぞ"], "bluff": ["今の、何も無い手で押し切ったのか？"], "fold": ["あの若いの、ずいぶん我慢してるな"]},NV_SELF={"slow": {"s": "あの新顔、強いときは長く考えるよな", "w": "あの新顔、迷ってるときほど長く考えるな"}, "fast": {"s": "あの新顔、強いときはすぐ動くよな", "w": "あの新顔、手が無いときほど早いよな"}, "big": {"s": "あの新顔、強いときだけ強気に出るよな", "w": "あの新顔、強気に出るときほど怪しいな"}};
 const NV={on:false,tok:0,t:0};
 function nvLamp(){const L=$('nextLamp');if(L)L.classList.toggle('off',storeNo()===7)}
@@ -157,7 +157,7 @@ function nextvShow(kind,text,who){
   if(mode==='full'){const c=$('cam'),W=t.offsetWidth,H=t.offsetHeight,z=big?1.07:1.04,px=W*.75,py=H*.2;
     c.classList.remove('snapin');c.style.transitionDuration=(.5*SPEED())+'s';c.style.transform=`translate(${(px*(1-z)).toFixed(1)}px,${(py*(1-z)).toFixed(1)}px) scale(${z})`}
   if(Sound.murmur)Sound.murmur(kind==='cheer'||big);
-  if(kind==='rumor'&&who){const h=loadRumor(),line='隣の卓で聞いた：'+text;h[who]=h[who]||[];if(!h[who].includes(line))h[who].push(line);
+  if(kind==='rumor'&&who){const h=loadRumor(),line='隣のテーブルで聞いた：'+text;h[who]=h[who]||[];if(!h[who].includes(line))h[who].push(line);
     try{localStorage.setItem(RUMOR_KEY,JSON.stringify({v:1,heard:h}))}catch(e){}log(line)}
   clearTimeout(NV.t);NV.t=setTimeout(()=>{if(NV.tok===tok)nextvClear()},(big?3500:2800)*SPEED())}
 function nextvClear(){clearTimeout(NV.t);const el=$('nextv');if(el)el.classList.remove('on');if(!NV.on)return;NV.on=false;
@@ -168,7 +168,7 @@ function renderLive(){
   $('btnMuck').textContent='負けた手：'+(SETTINGS.muck?'伏せる':'見せる');
   $('btnCount').textContent='相手の持ち点：'+(SETTINGS.count==='exact'?'正確':'だいたい');
   $('btnQuiz').textContent='ルールクイズ：'+(SETTINGS.quiz?'出す':'出さない');
-  $('btnNextv').textContent=SETTINGS.nextv!==false?'隣の卓の声：あり':'隣の卓の声：なし';
+  $('btnNextv').textContent=SETTINGS.nextv!==false?'隣のテーブルの声：あり':'隣のテーブルの声：なし';
 }
 $('btnNextv').onclick=()=>{SETTINGS.nextv=SETTINGS.nextv===false;saveSettings();renderLive();if(SETTINGS.nextv===false)nextvClear()};
 $('btnMuck').onclick=()=>{SETTINGS.muck=!SETTINGS.muck;saveSettings();renderLive()};
@@ -247,13 +247,15 @@ $('btnPen').onclick=()=>{const r=penReview();S.penReady=-1;S.penCount=(S.penCoun
 $('preCF').onclick=()=>{preAct=preAct==='cf'?'':'cf';renderPre()};
 $('preCall').onclick=()=>{if(preAct==='call')preAct='';else{preAct='call';preAmt=+$('preCall').dataset.amt}renderPre()};
 // G：設定パネル
-const SET_ROWS=[['btnCam','カメラ演出','相手の番にその人へ寄ります。強めは、クセが出た瞬間にも寄り直します'],['btnPeek','手札','自分の手札を、指でめくって見るか、いつも表にしておくか'],['btnSound','音','オフ、効果音だけ、音楽もすべて、の3段階。音があるときは、自分の番に短く振動します'],['btnSpeed','演出の速さ','カードを配る速さや、相手が考える時間'],['btnDepth','立体','画面を傾けると卓が少し動きます'],['btnClock','持ち時間','大きな勝負のときに、考える時間の目安を出します'],['btnMuck','負けた手','ショーダウンで負けたとき、手を伏せるか見せるか'],['btnCount','相手の持ち点','相手のチップを、だいたいで出すか、正確に出すか'],['btnQuiz','ルールクイズ','フロアのルールクイズを出すかどうか'],['btnAllin','オールイン確認','オールインのときだけ、もう一度押して確定します'],['btnTalk','会話','相手から話しかけられたり、手と手の間に話したりします。オフでも、物語の場面は出ます']];
+const SET_ROWS=[['btnCam','カメラ演出','相手の番にその人へ寄ります。強めは、クセが出た瞬間にも寄り直します'],['btnPeek','手札','自分の手札を、指でめくって見るか、いつも表にしておくか'],['btnSound','音','オフ、効果音だけ、音楽もすべて、の3段階。音があるときは、自分の番に短く振動します'],['btnSpeed','演出の速さ','カードを配る速さや、相手が考える時間'],['btnFoldFast','降りたら速く回す','自分が降りたハンドは、残りを速く進めます。クセとショーダウンはふつうの速さ'],['btnDepth','立体','画面を傾けるとテーブルが少し動きます'],['btnClock','持ち時間','大きな勝負のときに、考える時間の目安を出します'],['btnMuck','負けた手','ショーダウンで負けたとき、手を伏せるか見せるか'],['btnCount','相手の持ち点','相手のチップを、だいたいで出すか、正確に出すか'],['btnQuiz','ルールクイズ','フロアのルールクイズを出すかどうか'],['btnAllin','オールイン確認','オールインのときだけ、もう一度押して確定します'],['btnTalk','会話','相手から話しかけられたり、手と手の間に話したりします。オフでも、物語の場面は出ます']];
 (function(){const box=$('setIn'),old=document.querySelector('#game .settings');
-  const ab=document.createElement('button');ab.id='btnAllin';ab.className='mini';old.appendChild(ab);const tb=document.createElement('button');tb.id='btnTalk';tb.className='mini';old.appendChild(tb);
+  const ab=document.createElement('button');ab.id='btnAllin';ab.className='mini';old.appendChild(ab);const tb=document.createElement('button');tb.id='btnTalk';tb.className='mini';old.appendChild(tb);const ff=document.createElement('button');ff.id='btnFoldFast';ff.className='mini';old.appendChild(ff);
   SET_ROWS.forEach(([id,name,desc])=>{const b=$(id);if(!b)return;const r=document.createElement('div');r.className='setrow';
     r.innerHTML=`<div><b>${name}</b><p>${desc}</p></div>`;r.appendChild(b);box.appendChild(r)})})();
 function renderAllin(){$('btnAllin').textContent='オールイン確認：'+(SETTINGS.allinConfirm===false?'なし':'あり')}
 $('btnAllin').onclick=()=>{SETTINGS.allinConfirm=SETTINGS.allinConfirm===false;saveSettings();renderAllin()};renderAllin();
+function renderFoldFast(){$('btnFoldFast').textContent='降りたら速く回す：'+(SETTINGS.foldFast===false?'オフ':'オン')}
+$('btnFoldFast').onclick=()=>{SETTINGS.foldFast=SETTINGS.foldFast===false;saveSettings();renderFoldFast()};renderFoldFast();
 function renderTalkSet(){$('btnTalk').textContent='会話：'+({on:'オン',less:'少なめ',off:'オフ'})[talkSet()]}
 $('btnTalk').onclick=()=>{const o=['on','less','off'];SETTINGS.talk=o[(o.indexOf(talkSet())+1)%3];saveSettings();renderTalkSet();if(S&&S.players)render()};renderTalkSet();
 $('btnSet').onclick=()=>{$('setPanel').hidden=false;$('btnSetClose').focus()};
@@ -347,7 +349,7 @@ $('btnQuit').onclick=()=>{
     $('qtNo').onclick=()=>{box.hidden=true;$('btnQuit').focus({preventScroll:true})};$('qtYes').onclick=()=>{box.hidden=true;S.quitOk=true;$('btnQuit').onclick()};$('qtNo').focus({preventScroll:true});return}
   if(!CFG.ch&&!CFG.run&&!CFG.store&&S&&S.stat&&!S.result&&!S.reviewShown&&jinAdviceOn()){const r=reviewLines(S.stat);
     if(r){S.reviewShown=true;saveReview(r);Clock.stop();S.handOver=true;S.toAct=-1;$('vs').hidden=true;$('quiz').hidden=true;
-      const box=$('runBox');box.innerHTML=`<div class="qin runbox"><p class="qq">卓を立った</p><div class="review">${reviewHTML(r)}</div><div class="qopts"><button id="rvOk">タイトルへ</button></div></div>`;box.hidden=false;
+      const box=$('runBox');box.innerHTML=`<div class="qin runbox"><p class="qq">テーブルを立った</p><div class="review">${reviewHTML(r)}</div><div class="qopts"><button id="rvOk">タイトルへ</button></div></div>`;box.hidden=false;
       $('rvOk').onclick=()=>{box.hidden=true;show('title')};return}}
 $('vs').hidden=true;$('quiz').hidden=true;Clock.stop();S.handOver=true;S.toAct=-1;CFG.ch||CFG.store?showChapters():show('title')};
 $('btnStory').onclick=showChapters;

@@ -49,8 +49,12 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 #novDlg .novbtns{display:flex;gap:10px;flex-wrap:wrap}#novDlg p{margin:0;font-size:.78rem;color:var(--muted)}
 /* スマホ縦で終わりのボタンが3つ以上並ぶときは、「先へ進む」を下の段に1つで置く（v63 クリエイターレビュー 4） */
 @media (max-width:560px){
-  #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])){grid-template-columns:1fr 1fr}
-  #between .acts:has(> .act:not([hidden]) ~ .act:not([hidden]) ~ .act:not([hidden])) #btnNext{grid-column:1/-1}
+  #between .acts.acts3{grid-template-columns:1fr 1fr}
+  #between .acts.acts3 #btnNext{grid-column:1/-1}
 }
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
 @media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
+@media (max-width:699px){html.fbig #game #btnFold b{letter-spacing:0!important}html.fbig #game #btnFold small{letter-spacing:-.13em!important}}
+/* 改善提案 第5回 §1：注意書きを「遊んだことは？」の箱に同居 */
+#novDlg .novnote{font-size:.85rem;color:var(--ink);line-height:1.6;padding-bottom:10px;border-bottom:1px solid #ffffff1a}
+#novDlg [hidden]{display:none!important}

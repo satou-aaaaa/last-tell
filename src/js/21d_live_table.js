@@ -30,9 +30,9 @@ try{Object.assign(EN_DICT,{
   'クロック、お願いします':'Clock, please.','すみません、クロックを':'Excuse me, can we get a clock?','そろそろ、クロックで':'Time to call the clock.',
   'フロアです。1分でお願いします':'Floor. You have one minute.','10秒':'Ten seconds.','5、4、3……':'Five, four, three...','時間です':'Time.',
   '……頼む':'...Come on.','来るな、来るなよ':"Don't come, don't come...",'さあ、どうかな':"Let's see.",'チョップです':'Chopped pot.','お客様です':'Action is on you.',
-  'テレビ風の表示':'TV-style info','オールイン中の勝率と、役の名前の札、英語の帯を出します（ライブの卓では出ません）':'Show win odds during all-ins, hand-name labels and the action banner (not shown at a live table).',
+  'テレビ風の表示':'TV-style info','オールイン中の勝率と、役の名前の札、英語の帯を出します（ライブのテーブルでは出ません）':'Show win odds during all-ins, hand-name labels and the action banner (not shown at a live table).',
   'テレビ風：オン':'TV-style: On','テレビ風：オフ':'TV-style: Off','先に選ぶ（オンライン式）':'Pre-select actions (online style)',
-  '自分の番の前に、チェック/フォールドなどを選んでおけます（ライブの卓では順番前の行動は禁止）':'Pick check/fold before your turn (acting out of turn is not allowed at a live table).',
+  '自分の番の前に、チェック/フォールドなどを選んでおけます（ライブのテーブルでは順番前の行動は禁止）':'Pick check/fold before your turn (acting out of turn is not allowed at a live table).',
   '先に選ぶ：オン':'Pre-select: On','先に選ぶ：オフ':'Pre-select: Off','クロック':'Clock','クロック：あり':'Clock: On','クロック：なし':'Clock: Off',
   '長く考えると、ほかの客がクロックを呼びます。呼ばれたら1分です':'If you think too long, another player calls the clock. Then you have one minute.',
   'オフ、効果音だけ、音楽もすべて、の3段階':'Off, effects only, or everything with music.','ポットを数えてもらう':'Ask the dealer to count the pot'});
@@ -120,8 +120,8 @@ turnCue=function(){requestAnimationFrame(keepMine);const a=$('acts');a.classList
 // ---------- 設定 ----------
 {const det=document.querySelector('#setIn .setmore');
   const row=(id,name,desc)=>{const r=document.createElement('div');r.className='setrow';r.innerHTML=`<div><b>${name}</b><p>${desc}</p></div><button id="${id}" class="mini"></button>`;(det||$('setIn')).appendChild(r)};
-  row('btnTv','テレビ風の表示','オールイン中の勝率と、役の名前の札、英語の帯を出します（ライブの卓では出ません）');
-  row('btnPreSet','先に選ぶ（オンライン式）','自分の番の前に、チェック/フォールドなどを選んでおけます（ライブの卓では順番前の行動は禁止）');
+  row('btnTv','テレビ風の表示','オールイン中の勝率と、役の名前の札、英語の帯を出します（ライブのテーブルでは出ません）');
+  row('btnPreSet','先に選ぶ（オンライン式）','自分の番の前に、チェック/フォールドなどを選んでおけます（ライブのテーブルでは順番前の行動は禁止）');
   const lab=()=>{$('btnTv').textContent=tvOn()?'テレビ風：オン':'テレビ風：オフ';$('btnPreSet').textContent=SETTINGS.pre?'先に選ぶ：オン':'先に選ぶ：オフ'};
   $('btnTv').onclick=()=>{SETTINGS.tv=!SETTINGS.tv;saveSettings();lab();liveBody();try{if(S&&S.players&&!$('game').hidden)render()}catch(e){}};
   $('btnPreSet').onclick=()=>{SETTINGS.pre=!SETTINGS.pre;saveSettings();lab();try{if(S&&S.players&&!$('game').hidden)renderPre()}catch(e){}};lab();
@@ -191,4 +191,5 @@ function ltTags(){if(!S||!S.players)return;
 // 上のバー（UI案3）も、ハンド番号を出さずブラインドだけ。大会はレベル
 if(typeof tbMetaSync==='function'){const o=tbMetaSync;tbMetaSync=function(){const r=o.apply(this,arguments);try{const m=$('tbMeta');if(m&&S&&S.players){
   const lv=CFG.levels?Math.min(CFG.levels.length,Math.floor((S.handNo-1)/CFG.levelHands)+1):0,t=`${fmt(SB())}/${fmt(BB())}`+(lv?(I18N.lang==='en'?`　Lv${lv}`:`　レベル${lv}`):'');
-  if(m.textContent!==t)m.textContent=t}}catch(e){}return r}}
+  if(m.textContent!==t)m.textContent=t;
+  const al=(I18N.lang==='en'?'Blinds ':'ブラインド ')+t;if(m.title!==al)m.title=al;if(m.getAttribute('aria-label')!==al)m.setAttribute('aria-label',al)}}catch(e){}return r}}   // v75 レビュー 3：数字だけの欄に「ブラインド」

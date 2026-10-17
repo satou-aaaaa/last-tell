@@ -1,0 +1,128 @@
+<title>LAST TELL 雰囲気の4案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* 縦長の比較：上に4案の卓を横並び、下に案ごとの詳しい行。ゲームと同じ暗い一色の見た目に固定 */
+:root{
+  --bg:#0f0f12; --panel:#18181d; --line:#2c2c34; --ink:#efece6; --muted:#a19f9a; --gold:#e2b65b; --rec:#e2b65b;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.75}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 60px;display:grid;gap:36px}
+h1{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin:0;text-wrap:balance;letter-spacing:.04em}
+h2{font-family:var(--display);font-size:1.35rem;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lead{display:grid;gap:10px}
+.lead .eb{font-size:.78rem;letter-spacing:.25em;color:var(--gold)}
+.note{color:var(--muted);font-size:.86rem}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:inherit;font-weight:700;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:6px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tabs button:focus-visible,.play:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.strip{overflow-x:auto;padding-bottom:6px}
+.row{display:grid;grid-template-columns:repeat(5,minmax(170px,1fr));gap:12px;min-width:880px}
+.shot{display:grid;gap:6px;margin:0}
+.shot img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+.shot figcaption{font-size:.85rem;font-weight:700}
+.shot.rec figcaption::after{content:"おすすめ";margin-left:6px;font-size:.72rem;background:var(--rec);color:#111;padding:1px 7px;border-radius:999px}
+.opts{display:grid;gap:18px}
+.opt{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:22px;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.opt.rec{border-color:var(--rec)}
+.opt img{width:100%;border-radius:8px;display:block}
+.opt .txt{display:grid;gap:10px;min-width:0;align-content:start}
+.opt .hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.tag{font-size:.74rem;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.r{background:var(--rec);color:#111;border-color:var(--rec)}
+.sw{display:flex;gap:6px;flex-wrap:wrap}
+.sw i{width:26px;height:26px;border-radius:6px;border:1px solid #ffffff22;display:block}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:0;font-size:.9rem}
+dt{color:var(--muted);white-space:nowrap}
+dd{margin:0}
+.play{font:inherit;font-weight:700;font-size:.85rem;background:transparent;color:var(--ink);border:1px solid var(--muted);border-radius:999px;padding:4px 14px;cursor:pointer;justify-self:start}
+.play.on{background:var(--ink);color:var(--bg)}
+.three{font-size:.86rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+@media (max-width:640px){.opt{grid-template-columns:1fr}.opt img{max-width:260px}}
+</style>
+
+<div class="wrap">
+  <header class="lead">
+    <span class="eb">LAST TELL ・ 雰囲気を変える提案</span>
+    <h1>ゲームの雰囲気、4つの方向</h1>
+    <p>今のゲームに色と光だけをかぶせて撮りました。キャラ・卓・ボタンの並びはそのままです。いちばん左が今の見た目です。「♪ 聞く」で、その案の音楽の感じを数秒だけ鳴らせます。</p>
+    <p class="note">見本はCSSを上からかぶせただけなので、細部は粗いです。本番では色の値とキャラ絵の色を直接変えます（重さを増やさないため、ぼかしや色フィルターは使いません）。</p>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <div class="tabs" role="group" aria-label="見る画面">
+      <button type="button" id="tabTable" aria-pressed="true" data-v="table">卓（スマホ縦）</button>
+      <button type="button" id="tabTitle" aria-pressed="false" data-v="title">タイトル</button>
+      <button type="button" id="tabPc" aria-pressed="false" data-v="pc">卓（PC）</button>
+    </div>
+    <div class="strip">
+      <div class="row" id="strip"></div>
+    </div>
+  </section>
+
+  <section class="opts" id="opts"></section>
+</div>
+
+<script>
+const OPTS=[
+ {k:'now',name:'今',sub:'夜景のネオンと赤・金',sw:['#0d0e13','#11362f','#d7263d','#e2b65b','#f1ede4'],
+  look:'ぼやけた街の灯り、ビルの影、赤と金のななめ切りボタン、光る看板風のタイトル',
+  music:'今の曲（店ごとのジャズ寄りの曲）',cost:'—',risk:'—',three:''},
+ {k:'a',name:'案1 港の午後',sub:'あたたかいフィルムの色',sw:['#21170f','#3d5a45','#b4532a','#d9a95a','#f6ead6'],
+  look:'窓から差す斜めの日ざし、木の壁、くすんだ緑の卓、生成りの裏面のカード。古い写真のような粒と色あせ',
+  music:'アコースティックギターとウッドベースのゆっくりした曲。港の外の音がうすく入る',
+  cost:'中（色の値の置き換え、背景の描き直し、キャラ絵の色味、楽器の音色の差し替え）',
+  risk:'やわらかくなるぶん「かっこいい」より「なつかしい」寄り。緊張の場面が弱く見えやすい',
+  three:'柱：師弟の物語（思い出の色）／最初の5分：やさしく入れる／1.0：入れるなら全体の色替えとして'},
+ {k:'b',name:'案2 ノワール',sub:'色を絞って、赤だけ残す',sw:['#060606','#232726','#c41e2e','#d8d4cc','#ffffff'],rec:1,
+  look:'黒と灰色の世界。卓の上だけを照らす強いライト、ブラインド越しの光。色はレイズの赤と、裏面の赤い線だけ。キャラは色を7割落として陰影を強く',
+  music:'ピアノ1台とウッドベース、ブラシの静かなジャズ。勝負どころで音が減る',
+  cost:'中（色の値、背景、キャラ絵の色を落とす処理を絵の側に入れる、チップは色でなく模様と明るさで区別）',
+  risk:'チップの色分けが弱くなるので、額の見分けを模様で補う必要がある。キャラの肌の色の違いは残す（完全な白黒にはしない）',
+  three:'柱：テルを読む（顔に目が行く）＋師弟の物語（裏切りの話に合う）／最初の5分：ひと目で「大人のゲーム」とわかる／1.0：入れる'},
+ {k:'c',name:'案3 本物のカードルーム',sub:'明るく、飾らない',sw:['#1e242b','#245482','#e0473c','#f2c14e','#f4f6f8'],
+  look:'天井の明かりで卓全体が明るい。青いラシャ、角の丸い平らなボタン、ゴシック体だけ。実際のポーカールームをそのまま写した感じ',
+  music:'曲はほぼ鳴らさず、チップの音、まわりの話し声、カードを配る音が中心',
+  cost:'小〜中（飾りを減らす作業が中心。音は今の効果音を増やす）',
+  risk:'一番ライブらしいが、物語の盛り上がりや「かっこよさ」は弱くなる。ほかのポーカーアプリと見分けにくい',
+  three:'柱：ライブの空気／最初の5分：わかりやすいが印象は薄い／1.0：入れるなら一部（音の空気だけ）'},
+ {k:'d',name:'案4 和モダン',sub:'漆の黒・朱・金',sw:['#0e0a09','#162036','#c8322a','#c9a24b','#f3ece0'],
+  look:'漆のような黒、藍色の卓、朱と金。青海波の模様、和紙のような質感、明朝体を大きく',
+  music:'琴や尺八の音階を、低い太鼓と今風のリズムに乗せる',
+  cost:'中〜大（模様と質感の描き起こし、曲の作り直し）',
+  risk:'舞台が港のバーや船なので場所と合わない所がある。世界中の多様なキャラとも少しずれる',
+  three:'柱：どれにも直接は効かない（見た目の個性）／最初の5分：目を引く／1.0：見送り（公開後に店ひとつだけ、なら可）'}
+];
+const strip=document.getElementById('strip'),opts=document.getElementById('opts');
+function drawStrip(v){strip.innerHTML=OPTS.map(o=>`<figure class="shot${o.rec?' rec':''}"><img src="img/${o.k}_${v}.jpg" alt="${o.name}の${v==='title'?'タイトル':'卓'}" loading="lazy"><figcaption>${o.name}</figcaption></figure>`).join('')}
+drawStrip('table');
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawStrip(b.dataset.v)}));
+opts.innerHTML=OPTS.filter(o=>o.k!=='now').map(o=>`<article class="opt${o.rec?' rec':''}">
+ <img src="img/${o.k}_table.jpg" alt="${o.name}の卓">
+ <div class="txt">
+  <div class="hd"><h2>${o.name}</h2><span class="tag${o.rec?' r':''}">${o.rec?'おすすめ':o.sub}</span>${o.rec?`<span class="tag">${o.sub}</span>`:''}</div>
+  <div class="sw" aria-label="色">${o.sw.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('')}</div>
+  <dl><dt>見た目</dt><dd>${o.look}</dd><dt>音楽</dt><dd>${o.music}</dd><dt>手間</dt><dd>${o.cost}</dd><dt>気になる所</dt><dd>${o.risk}</dd></dl>
+  <button type="button" class="play" id="play_${o.k}" data-k="${o.k}">♪ 聞く</button>
+  <p class="three">${o.three}</p>
+ </div></article>`).join('');
+
+/* 音楽の感じ（WebAudio で数秒）。本番の曲ではなく雰囲気のメモ */
+let ac,stopAt=0,cur=null;
+function A(){ac=ac||new (window.AudioContext||window.webkitAudioContext)();return ac}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function tone(t,m,d,{type='triangle',vol=.15,att=.005,f=4000}={}){const c=A(),o=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();lp.frequency.value=f;o.type=type;o.frequency.value=hz(m);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(lp);lp.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.05)}
+function noise(t,d,{vol=.08,f=3000,q=1,type='bandpass'}={}){const c=A(),n=c.sampleRate*d,b=c.createBuffer(1,n,c.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=b;fl.type=type;fl.frequency.value=f;fl.Q.value=q;g.gain.value=vol;s.connect(fl);fl.connect(g);g.connect(c.destination);s.start(t)}
+const SK={
+ a(t){const ch=[[57,61,64,68],[54,57,61,64],[52,56,59,62],[57,61,64,68]];ch.forEach((c,i)=>{const b=t+i*1.6;tone(b,c[0]-12,1.4,{vol:.2,f:800});c.forEach((m,j)=>tone(b+.05+j*.07,m,1.3,{vol:.07,f:2500}));c.slice(1).forEach((m,j)=>tone(b+.8+j*.05,m,.7,{vol:.05,f:2500}))});noise(t,6.4,{vol:.015,f:500,type:'lowpass'})},
+ b(t){const ch=[[50,53,57,60],[48,52,55,59],[46,50,53,57],[45,49,52,55]];ch.forEach((c,i)=>{const b=t+i*1.6;tone(b,c[0]-12,1.5,{type:'sine',vol:.3,f:500});c.forEach(m=>tone(b+.02,m+12,1.5,{type:'sine',vol:.05}));if(i%2)tone(b+1,c[3]+24,.9,{type:'sine',vol:.05});for(let k=0;k<4;k++)noise(b+k*.4,.25,{vol:.02,f:6000})})},
+ c(t){noise(t,6.4,{vol:.04,f:350,q:.5});for(let i=0;i<14;i++){const b=t+Math.random()*6;noise(b,.04,{vol:.25,f:4200,q:6});noise(b+.05,.03,{vol:.15,f:5200,q:6})}for(let i=0;i<4;i++)noise(t+1+i*1.3,.12,{vol:.08,f:1800,q:2})},
+ d(t){const sc=[62,63,67,69,70,74,75,79];for(let i=0;i<12;i++){const m=sc[[0,2,4,3,5,7,6,4,3,2,1,0][i]];tone(t+i*.5,m,1.1,{type:'sawtooth',vol:.05,att:.002,f:2200})}for(let i=0;i<4;i++){tone(t+i*1.6,38,.6,{type:'sine',vol:.45,f:300});noise(t+i*1.6+.8,.08,{vol:.05,f:1200})}}
+};
+document.querySelectorAll('.play').forEach(b=>b.addEventListener('click',()=>{try{const c=A();if(c.state==='suspended')c.resume();const t=c.currentTime+.05;SK[b.dataset.k](t);b.classList.add('on');b.textContent='♪ 再生中';setTimeout(()=>{b.classList.remove('on');b.textContent='♪ 聞く'},6600)}catch(e){b.textContent='この画面では音が出せません'}}));
+</script>

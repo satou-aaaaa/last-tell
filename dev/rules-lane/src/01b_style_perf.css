@@ -1,0 +1,14 @@
+/* ---------- 動作の重さの改善 案4（v67）：01b_style_ui64.css の後に読む ---------- */
+/* 揺れ（sway）は番の相手・テルが出ている相手・にらみ中だけ。呼吸（breathe）は残す（テル「じっと」は呼吸を止めて見せるため） */
+.bust:not(.turn):not([class*=cue-]):not(.stare){animation:none}
+/* 降りた人・抜けた人・見ている人は呼吸も止める */
+.bust.folded .body,.bust.out .body,.bust.watch .body{animation:none}
+/* 奥の列のチップ：filter:brightness(.92) をやめ、同じ暗さ（各色を8%黒に寄せた値）を色で書く */
+.stack.tw .trow.back .chip{filter:none;
+  background:radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--c) 70%,#ebebeb) 0 25%,rgba(235,235,235,.9) 27% 31%,var(--c) 33% 37%,transparent 39%),
+  repeating-conic-gradient(from 8deg,#e2dfd5 0 18deg,var(--c) 18deg 45deg);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 1px 1px rgba(235,235,235,.4),0 2px 0 var(--d),0 3.5px 0 color-mix(in srgb,var(--d) 65%,#000),0 4.5px 3px rgba(0,0,0,.45)}
+.stack.tw .trow.back .chip::after{background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(235,235,235,.85) 3px 5px,transparent 5px 8px)}
+.stack.tw .trow.back .chip.c1{--c:#3771c5;--d:#214b84}.stack.tw .trow.back .chip.c0{--c:#d9d4c5;--d:#968f7b}.stack.tw .trow.back .chip.c7{--c:#d5669b;--d:#963c66}.stack.tw .trow.back .chip.c2{--c:#288e56;--d:#195e3b}
+.stack.tw .trow.back .chip.c3{--c:#c62338;--d:#841423}.stack.tw .trow.back .chip.c4{--c:#23242b;--d:#0c0d11}.stack.tw .trow.back .chip.c5{--c:#d0a754;--d:#90702a}.stack.tw .trow.back .chip.c6{--c:#8049c5;--d:#532b88}
+.stack.tw .trow.back .chip.c0{background:radial-gradient(ellipse at 50% 50%,#e0dcd1 0 25%,#2b5793 27% 30%,#d9d4c5 32% 37%,transparent 39%),repeating-conic-gradient(from 8deg,#2b5793 0 14deg,#d9d4c5 14deg 45deg)}

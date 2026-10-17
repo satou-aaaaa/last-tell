@@ -1,0 +1,4 @@
+/* テルのアップを軽く（2026-10-10、satou 案1）：寄っている間は、キャラ絵の 9px のぼかし影を外す（輪郭の光は残す）。暗くした席は影なし。
+   2.7倍に拡大したまま影を毎コマ描き直すのがスマホで重かった。引いた画面の見た目は今のまま */
+.t3d.focusing .bust .body svg{filter:drop-shadow(1.4px -1.2px 0 color-mix(in srgb,var(--lamp,#e2b65b) 75%,transparent)) drop-shadow(-1px -.5px 0 rgba(255,255,255,.14))}
+.t3d.focusing .bust:not(.turn) .body svg{filter:none}

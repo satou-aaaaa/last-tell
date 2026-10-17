@@ -1,0 +1,168 @@
+<title>誰が何をしたか 見本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Oswald:wght@500;600&display=swap">
+<style>
+/* layout: 卓の見本を横に並べ、同じ1ハンドを同時に流す。狭い画面では縦に1列 */
+:root{
+  --bg:#0c0e12; --panel:#14171d; --line:#262a33; --fg:#e9e6df; --muted:#9a9890;
+  --gold:#e2b65b; --crimson:#b8323e; --felt:#1f5a43; --felt2:#143d2e;
+  --jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --num:"Oswald","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--jp);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px;line-height:1.6}
+header{max-width:1000px;margin:0 auto 18px}
+h1{font-size:1.35rem;font-weight:900;margin:0 0 4px;text-wrap:balance;letter-spacing:.02em}
+header p{margin:0;color:var(--muted);font-size:.9rem;max-width:62ch}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ctrl button{font:inherit;font-size:.82rem;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 12px;cursor:pointer}
+.ctrl button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.step{font-size:.82rem;color:var(--gold);align-self:center;font-variant-numeric:tabular-nums}
+.grid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.card.rec{border-color:rgba(226,182,91,.55)}
+.card h2{font-size:.98rem;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h2 small{font-size:.72rem;color:var(--gold);border:1px solid rgba(226,182,91,.5);padding:0 6px;border-radius:3px}
+.card p{margin:0;font-size:.8rem;color:var(--muted)}
+.tbl{position:relative;width:100%;aspect-ratio:10/11;max-width:100%;border-radius:8px;overflow:hidden;background:#0a0b0e}
+.felt{position:absolute;left:6%;right:6%;top:24%;bottom:14%;border-radius:46% 46% 40% 40%/40% 40% 34% 34%;background:radial-gradient(ellipse at 50% 45%,var(--felt),var(--felt2) 75%);box-shadow:inset 0 0 0 5px #2b1d14,inset 0 0 0 7px #4a3322,0 6px 14px rgba(0,0,0,.6)}
+.pot{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);font:600 12px var(--num);color:rgba(255,255,255,.75);text-shadow:0 1px 2px #000;white-space:nowrap}
+.pot b{color:var(--gold);font-family:var(--jp);font-size:10px;margin-right:4px}
+.seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;transition:filter .3s,opacity .3s;z-index:3}
+.face{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 50% 62%,#e4c3a6 0 34%,transparent 35%),radial-gradient(circle at 50% 30%,var(--hair) 0 46%,transparent 47%),var(--cloth);box-shadow:0 0 0 2px #0a0b0e,0 0 0 3px var(--cloth)}
+.nm{font-size:9.5px;line-height:1.2;background:rgba(10,11,14,.82);padding:1px 5px;border-radius:2px;white-space:nowrap;transition:box-shadow .25s,background .25s}
+.seat.flash .nm{box-shadow:0 0 0 1px var(--gold),0 0 10px rgba(226,182,91,.7)}
+.seat.out{filter:brightness(.38) grayscale(.5)}
+.cards{position:absolute;display:flex;gap:1px;transform:translate(-50%,-50%);transition:opacity .35s,transform .45s;z-index:2}
+.cards i{width:9px;height:13px;border-radius:1.5px;background:repeating-linear-gradient(45deg,#8d1f2a 0 2px,#a4303a 2px 4px);box-shadow:0 0 0 1px #f2eee6}
+.cards.gone{opacity:0;transform:translate(-50%,-50%) translate(var(--mx),var(--my)) scale(.6)}
+.chips{position:absolute;transform:translate(-50%,-50%);display:flex;gap:1px;align-items:flex-end;opacity:0;transition:opacity .25s;z-index:2}
+.chips.on{opacity:1}
+.chips u{display:block;width:11px;border-radius:2px;background:repeating-linear-gradient(180deg,var(--c) 0 2px,rgba(0,0,0,.35) 2px 3px);box-shadow:0 1px 1px #000}
+.me{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);display:flex;gap:4px;align-items:center;z-index:3}
+.me .mc{width:20px;height:28px;border-radius:2px;background:#f4f1ea;color:#111;font:600 11px/28px var(--num);text-align:center;box-shadow:0 1px 3px #000}
+.me .mc.r{color:var(--crimson)}
+.me .lab{font-size:9px;color:var(--muted);margin-left:4px}
+.me.turn .lab{color:var(--gold)}
+.dealer{position:absolute;left:50%;top:41%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;background:rgba(8,9,12,.88);border:1px solid rgba(226,182,91,.45);color:var(--fg);padding:3px 9px;border-radius:2px;white-space:nowrap;opacity:0;transition:opacity .2s;z-index:6}
+.dealer.on{opacity:1}
+.dealer .sn{display:inline-block;width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(226,182,91,.6);color:var(--gold);font:600 9px/14px var(--num);text-align:center;margin-right:5px;vertical-align:1px}
+.sno{position:absolute;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(226,182,91,.35);color:rgba(226,182,91,.75);background:rgba(10,12,16,.7);font:600 8px/13px var(--num);text-align:center;z-index:2}
+/* 案1 */
+.act{font-size:9.5px;background:rgba(10,11,14,.6);padding:0 4px;border-radius:2px;font-weight:700;letter-spacing:.06em;line-height:1.2;color:rgba(233,230,223,.9);text-shadow:0 1px 2px #000;min-height:12px;transition:opacity .25s}
+.act.raise{color:#f08a92}.act.call{color:#9fd7c4}.act.fold{color:var(--muted);font-weight:400}
+.act.new{animation:pop .5s}
+@keyframes pop{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+/* 案3 */
+.seat .glow{position:absolute;left:50%;top:22px;width:70px;height:46px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,160,.33),transparent);opacity:0;transition:opacity .35s;z-index:-1}
+.seat.last .glow{opacity:1}
+.seat.agg .nm{box-shadow:inset 0 -2px 0 var(--crimson)}
+/* 案4 */
+.recap{position:absolute;left:4%;right:4%;bottom:15%;font-size:10px;line-height:1.45;background:rgba(8,9,12,.9);border-left:2px solid var(--gold);padding:4px 7px;opacity:0;transition:opacity .3s;z-index:7}
+.recap.on{opacity:1}
+.recap .r{color:#f08a92;font-weight:700}.recap .c{color:#9fd7c4;font-weight:700}.recap .f{color:var(--muted)}
+.notes{max-width:1000px;margin:22px auto 0;font-size:.85rem;color:var(--muted)}
+.notes h3{color:var(--fg);font-size:.95rem;margin:0 0 6px}
+.notes ul{margin:0;padding-left:1.2em}
+@media (prefers-reduced-motion:reduce){.act.new{animation:none}.cards,.seat,.chips{transition:none}}
+</style>
+
+<header>
+  <h1>誰が何をしたか、卓の見え方 5パターン</h1>
+  <p>第4章の6人卓で、同じ1ハンド（黒シャツ降り → レイカ レイズ → ソウ コール → 赤い上着・青緑のスカーフ降り → あなたの番）を同時に流しています。左上が今のゲームです。</p>
+  <div class="ctrl"><button id="bPause" type="button">止める</button><button id="bRe" type="button">最初から</button><span class="step" id="stepTxt"></span></div>
+</header>
+<div class="grid" id="grid"></div>
+<div class="notes">
+  <h3>どの案でも守ること</h3>
+  <ul>
+    <li>額の数字は名札に戻さない（額は置かれたチップとディーラーの声で分かる）。</li>
+    <li>ボタンは増やさない。第1〜3章の難しさ、CPUの考える時間、第7章のジンのテルには触れない。</li>
+    <li>文字や光は表示だけ。CPUの打ち方は変えない。</li>
+  </ul>
+</div>
+
+<script>
+const SEATS=[
+ {n:'黒シャツ',x:13,y:44,cloth:'#22252b',hair:'#1b1712'},
+ {n:'レイカ',x:24,y:20,cloth:'#5a1d2a',hair:'#141014'},
+ {n:'ソウ',x:50,y:12,cloth:'#3a2f4f',hair:'#9b8dd6'},
+ {n:'赤い上着',x:76,y:20,cloth:'#8a2a2a',hair:'#c9a46b'},
+ {n:'青緑のスカーフ',x:86,y:44,cloth:'#1f6a66',hair:'#2a2420'}];
+const CHIP_C={raise:['#a8323a','#a8323a','#2a5aa0'],call:['#a8323a','#a8323a','#2a5aa0'],blind:['#e8e3d6']};
+const SEQ=[ // t: ms
+ {t:600,s:0,a:'fold'},
+ {t:2000,s:1,a:'raise',amt:'13,000'},
+ {t:3600,s:2,a:'call',amt:'13,000'},
+ {t:5000,s:3,a:'fold'},
+ {t:6200,s:4,a:'fold'},
+ {t:7200,turn:true}];
+const LOOP=11500;
+const WORD={fold:'フォールド',raise:'レイズ',call:'コール',check:'チェック',bet:'ベット'};
+const V=[
+ {k:'now',t:'今のゲーム',d:'動いた瞬間に名札が0.7秒光るだけ。声はベット・レイズのときだけで、誰かは言わない。降りた人は顔が暗くなる。'},
+ {k:'a1',t:'案1 席の前に小さく行動の文字',d:'名札の下に「レイズ」「コール」「フォールド」を、色の箱なしの細い文字で、そのストリートの間ずっと残す。額は出さない。',rec:1},
+ {k:'a2',t:'案2 ディーラーが名前と行動を言う',d:'ディーラーが「レイカさん、レイズ 13,000」「ソウさん、コール」と、誰が何をしたかを毎回言う。卓の席番号も添える。',rec:1},
+ {k:'a3',t:'案3 最後に動いた人に手元の灯り',d:'動いた人の手元が、次の人が動くまでほんのり明るいまま。いちばん強く賭けた人の名札の下に赤い細線が残る。'},
+ {k:'a4',t:'案4 自分の番で「ここまでの流れ」',d:'あなたの番になったら、下の案内の欄に「レイカ レイズ 13,000 → ソウ コール → 3人降り」と1行で出す。'},
+];
+const grid=document.getElementById('grid');
+function lerp(a,b,f){return a+(b-a)*f}
+const panels=V.map(v=>{
+  const c=document.createElement('section');c.className='card'+(v.rec?' rec':'');
+  c.innerHTML=`<h2>${v.t}${v.rec?'<small>おすすめ</small>':''}</h2><div class="tbl"><div class="felt"></div><div class="pot"><b>ポット</b><span class="pv">1,500</span></div><div class="dealer"></div><div class="recap"></div>
+  <div class="me"><span class="mc">A</span><span class="mc r">J</span><span class="lab">あなた</span></div></div><p>${v.d}</p>`;
+  grid.appendChild(c);
+  const tb=c.querySelector('.tbl');
+  const seats=SEATS.map((s,i)=>{
+    const el=document.createElement('div');el.className='seat';el.style.left=s.x+'%';el.style.top=s.y+'%';
+    el.innerHTML=`<span class="glow"></span><span class="face" style="--cloth:${s.cloth};--hair:${s.hair}"></span><span class="nm">${s.n}</span>${v.k==='a1'?'<span class="act"></span>':''}`;
+    tb.appendChild(el);
+    const cx=lerp(s.x,50,.32),cy=lerp(s.y,55,.38)+6;
+    const cd=document.createElement('div');cd.className='cards';cd.style.left=cx+'%';cd.style.top=cy+'%';cd.innerHTML='<i></i><i></i>';
+    cd.style.setProperty('--mx',((40-cx)*2.4)+'px');cd.style.setProperty('--my',((52-cy)*2.4)+'px');tb.appendChild(cd);
+    const ch=document.createElement('div');ch.className='chips';ch.style.left=lerp(s.x,50,.5)+'%';ch.style.top=(lerp(s.y,55,.55)+5)+'%';tb.appendChild(ch);
+    if(v.k==='a2'){const sn=document.createElement('div');sn.className='sno';sn.style.left=lerp(s.x,50,.18)+'%';sn.style.top=(lerp(s.y,55,.2)+9)+'%';sn.textContent=i+2;tb.appendChild(sn)}
+    return{el,cd,ch,act:el.querySelector('.act')};
+  });
+  return{v,tb,seats,dealer:tb.querySelector('.dealer'),recap:tb.querySelector('.recap'),pv:tb.querySelector('.pv'),me:tb.querySelector('.me')};
+});
+let dTimers=[];
+function reset(){
+  dTimers.forEach(clearTimeout);dTimers=[];
+  panels.forEach(P=>{P.seats.forEach(S=>{S.el.className='seat';S.cd.classList.remove('gone');S.ch.classList.remove('on');S.ch.innerHTML='';if(S.act){S.act.textContent='';S.act.className='act'}});
+    P.dealer.classList.remove('on');P.recap.classList.remove('on');P.pv.textContent='1,500';P.me.classList.remove('turn')});
+}
+function say(P,html){P.dealer.innerHTML=html;P.dealer.classList.add('on');dTimers.push(setTimeout(()=>P.dealer.classList.remove('on'),1300))}
+let pot=1500;
+function apply(ev){
+  if(ev.turn){
+    panels.forEach(P=>{P.me.classList.add('turn');
+      if(P.v.k==='a4'){P.recap.innerHTML='<span class="r">レイカ レイズ 13,000</span> → <span class="c">ソウ コール</span> → <span class="f">3人降り</span><br>あなたの番：13,000 で続けるか、降りるか';P.recap.classList.add('on')}});
+    stepTxt.textContent='あなたの番';return}
+  const s=SEATS[ev.s];
+  if(ev.amt)pot+=13000;
+  stepTxt.textContent=`${s.n}：${WORD[ev.a]}${ev.amt?' '+ev.amt:''}`;
+  panels.forEach(P=>{const S=P.seats[ev.s],k=P.v.k;
+    if(ev.a==='fold'){S.cd.classList.add('gone');dTimers.push(setTimeout(()=>S.el.classList.add('out'),350))}
+    else{S.ch.innerHTML=CHIP_C[ev.a].map((c,i)=>`<u style="--c:${c};height:${[10,7,5][i]}px"></u>`).join('');S.ch.classList.add('on');P.pv.textContent=pot.toLocaleString()}
+    // 今：一瞬光る
+    S.el.classList.add('flash');dTimers.push(setTimeout(()=>S.el.classList.remove('flash'),700));
+    if(k==='now'&&ev.a==='raise')say(P,`レイズ、${ev.amt}`);
+    if(k==='a1'){S.act.textContent=WORD[ev.a];S.act.className='act '+ev.a+' new'}
+    if(k==='a2'){const who=s.n.length>3?s.n+'の方':s.n+'さん';say(P,`<span class="sn">${ev.s+2}</span>${who}、${WORD[ev.a]}${ev.amt&&ev.a==='raise'?' '+ev.amt:''}`)}
+    if(k==='a3'){P.seats.forEach(x=>x.el.classList.remove('last'));if(ev.a!=='fold')S.el.classList.add('last');else S.el.classList.add('last');
+      if(ev.a==='raise'){P.seats.forEach(x=>x.el.classList.remove('agg'));S.el.classList.add('agg')}}
+  });
+}
+let t0=performance.now(),paused=false,pausedAt=0,idx=0;
+const stepTxt=document.getElementById('stepTxt');
+function tick(now){
+  if(!paused){const t=now-t0;
+    while(idx<SEQ.length&&t>=SEQ[idx].t){apply(SEQ[idx]);idx++}
+    if(t>=LOOP){t0=now;idx=0;pot=1500;reset();stepTxt.textContent='配り終わり（プリフロップ）'}}
+  requestAnimationFrame(tick)}
+reset();stepTxt.textContent='配り終わり（プリフロップ）';requestAnimationFrame(tick);
+document.getElementById('bPause').onclick=e=>{paused=!paused;if(paused){pausedAt=performance.now()}else{t0+=performance.now()-pausedAt}e.target.textContent=paused?'再生':'止める'};
+document.getElementById('bRe').onclick=()=>{t0=performance.now();idx=0;pot=1500;reset();stepTxt.textContent='配り終わり（プリフロップ）'};
+</script>

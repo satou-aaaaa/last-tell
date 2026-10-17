@@ -50,7 +50,7 @@
       </div>
       <div class="mgroup"><h3>設定</h3>
         <button class="mrow" id="mSet"><b>設定</b><small>音・会話・演出の速さなど</small></button>
-        <button class="mrow" id="mInstall"><b>ホーム画面に追加</b><small>アプリのように、すぐ開けるようになります</small></button>
+        <button class="mrow" id="mInstall"><b>ホーム画面に追加</b><small>ホーム画面のアイコンから、すぐ続きを遊べます</small></button>
       </div>
       <div class="mgroup"><h3>データ</h3>
         <button class="mrow" id="mExport"><b>引き継ぎコードを出す</b><small>機種変更やアプリ版への引き継ぎに</small></button>
@@ -83,7 +83,7 @@
     <ul class="chapters" id="chList"></ul>
     <section class="p2box" id="p2Box" hidden><h3 class="p2head"><span>第二部</span><b>師匠</b></h3><p class="exnote" id="p2Note"></p><ul class="chapters" id="chList2"></ul></section>
     <div class="extras">
-      <section class="exbox" id="uraBox" hidden><h3>裏の卓</h3><p class="exnote">各章のボスと、縛りつきで再戦します。勝つと段位が上がり、縛りが重なります（最大8段）。本編には影響しません。</p><ul class="uralist" id="uraList"></ul></section>
+      <section class="exbox" id="uraBox" hidden><h3>裏のテーブル</h3><p class="exnote">各章のボスと、縛りつきで再戦します。勝つと段位が上がり、縛りが重なります（最大8段）。本編には影響しません。</p><ul class="uralist" id="uraList"></ul></section>
       <section class="exbox" id="protBox"><h3>カードプロテクター</h3><p class="exnote">章をクリアするともらえるお守りです。手札の上に置きます（見た目だけ）。</p><div class="prot" id="protList"></div></section>
       <section class="exbox" id="titleBox"><h3>あるある称号</h3><ul class="titles" id="titleList"></ul></section>
     </div>
@@ -100,7 +100,7 @@
   <section id="scene" hidden>
     <div class="venue" id="venue"></div>
     <div class="stage" id="stage"></div>
-    <div class="box" id="box" role="button" tabindex="0" aria-label="次へ進む"></div>
+    <div class="box" id="box" aria-live="polite" aria-atomic="true"></div>
     <div class="row scene-btns">
       <button class="ghost small" id="btnSkip">スキップ</button>
       <button class="primary" id="btnAdv">次へ</button>
@@ -151,7 +151,7 @@
             <button data-q="all">全額</button>
           </div>
         </div>
-        <div class="declrow" id="declRow" hidden><span>読みを宣言</span><button data-dg="0" aria-pressed="false">役なし</button><button data-dg="1" aria-pressed="false">ワンペア</button><button data-dg="2" aria-pressed="false">ツーペア以上</button></div>
+        <div class="declrow" id="declRow" hidden><span>コールで読みを宣言</span><button data-dg="0" aria-pressed="false">役なし</button><button data-dg="1" aria-pressed="false">ワンペア</button><button data-dg="2" aria-pressed="false">ツーペア以上</button></div>
         <div class="quick" id="quick" hidden></div>
         <div class="acts" id="acts">
           <button id="btnFold" class="act fold"><b>フォールド</b><small>降りる</small><kbd class="k">F</kbd></button>

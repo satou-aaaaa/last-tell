@@ -19,7 +19,7 @@
 テストサイト：https://satou-aaaaa.github.io/last-tell/ （リポジトリ satou-aaaaa/last-tell、公開。src/ は置かない）
 
 ## 守ること
-- 第1〜3章の難しさを変えない。第7章のジンの本物のテルに触れない。
+- 第7章のジンの本物のテルに触れない。（「第1〜3章の難しさを変えない」は 2026-10-17 に satou さんが外した：全体を易しくする）
 - 「夜」を題名・名前に使わない。「あの夜」ではなく「あの日」。
 - キャラのセリフにお金の話を入れない。チップを現金で売らない。
 - 見た目は「かっこいい・クール」。強いキャラほどかっこよく、弱いキャラほどかわいく。
@@ -29,6 +29,6 @@
 ## ゲームの変え方
 - 2026-10-10 から：ソースは `src/`（ファイルの一覧と順番は `src/order.json`）。`python3 dev/tools/build.py src story/shisho.html` で1枚に組み立てる。リポジトリは使わない。
 - 誰がどのファイルを触るか・進め方は [並行作業の分担.md](dev/並行作業の分担.md)。取り込み・公開はゲーム担当（本線）だけ。
-- 検査：`sh qa/run_all.sh`。結果は `qa/reports/_runs/` の新しいフォルダ。`qa/reports/v<版>/` に書く `--official` は本線だけ（[qa/README.md](qa/README.md)）。
+- 検査：GitHub の CI で回す（2026-10-14）。途中は `sh qa/ci_check.sh <作った.html> <名前>`、結果は `sh qa/ci_result.sh <PR番号>`。手元の `sh qa/run_all.sh` は CI が使えないときだけ（[qa/README.md](qa/README.md)）。
 - 版ごとの控え：`dev/snapshots/vNN.tar.gz`（`dev/tools/snapshot.py`）。
 - 組み立てると自動で文法と書き方を確かめる（`dev/tools/lint/`）。新しいコードの書き方（合図 `LT.on`・保存 `saveGet`・乱数 `LT.rand`）は [並行作業の分担.md](dev/並行作業の分担.md) の「ベストプラクティス」の節。

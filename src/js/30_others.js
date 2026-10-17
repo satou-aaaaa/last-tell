@@ -116,7 +116,8 @@ document.querySelector('.wrap').appendChild($('setPanel'));
 $('btnSound').addEventListener('click',()=>{if($('game').hidden)Sound.stop()});
 addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('moreDlg').hidden){e.preventDefault();mDlgClose()}else if(!$('setPanel').hidden&&$('game').hidden){e.preventDefault();$('btnSetClose').click()}});
 // --- 初回だけの注意（B-5） ---
-$('firstNotice').hidden=!!SETTINGS.seenNotice;
+// 改善提案 第5回 §1：タイトルには出さない。ストーリーは「遊んだことは？」の箱で、ほかの始め方は始める前に1回だけ箱で出す（askNovice）
+$('firstNotice').hidden=true;
 $('btnNoticeClose').onclick=()=>{SETTINGS.seenNotice=true;saveSettings();$('firstNotice').hidden=true;$('btnStory').focus({preventScroll:true})};
 // --- ブラウザに消されにくくする（B-2c） ---
 try{const st=navigator.storage;if(st&&st.persist)Promise.resolve(st.persisted?st.persisted():false).then(p=>p||st.persist()).catch(()=>{})}catch(e){}

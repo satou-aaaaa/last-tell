@@ -186,12 +186,14 @@ function renderLine(){
    else if(SC.ilOn){SC.ilOn=0;if(SC.vh)$('venue').innerHTML=SC.vh}}
   if(l&&!Array.isArray(l)&&p2Line(l)){}
   else if(l&&l.part){setStage(null);$('stage').className='stage part';
-    $('box').innerHTML=`<div class="partcard"><span>${esc(l.part)}</span><b>${esc(l.title)}</b></div>`}
+    $('box').innerHTML=`<div class="partcard"><span>${esc(l.part)}</span><b>${esc(l.title)}</b>${l.sub?`<em>${esc(l.sub)}</em>`:''}</div>`}
   else if(l&&l.preview){const pv=PREVIEW[l.preview],nc=CHAPTERS[l.preview-1];
     $('stage').className='stage preview';$('stage').innerHTML=`<div class="portrait sil">${avatar(pv.boss)}</div><div class="sign">${esc(pv.sign)}</div>`;
     $('box').innerHTML=`<span class="lesson-tag">次回</span><div class="lesson"><div class="lt">第${nc.no}章　${esc(nc.title)}</div><p>「${esc(pv.line)}」</p></div>`}
   else if(l&&l.door){setStage(null);$('stage').className='stage part';const c=CHAPTERS[l.door-1],dd=DOOR_DAYS[l.door];
-    $('box').innerHTML=`<div class="partcard door"><span>第${l.door}章</span><b>${esc(c.title)}</b>${dd?`<em>${esc(dd)}</em>`:''}</div>`}
+    $('box').innerHTML=`<div class="partcard door"><span>第${l.door}章</span><b>${esc(c.title)}</b>${dd?`<em>${esc(dd)}</em>`:''}${l.cap?`<p class="doorcap">${esc(l.cap)}</p>`:''}</div>`;
+    // 改善提案 第5回 §1：はじめての第1章の扉だけ自動で次へ（押せばすぐ進む）。添え文を読む時間を取るので SPEED では縮めない（v82 レビュー）
+    clearTimeout(SC._dt);if(doorAuto(l)){const at=SC.i,me=SC;SC._dt=setTimeout(()=>{if(SC===me&&SC.i===at&&!$('scene').hidden)advance()},l.cap?3500:1800)}}
   else if(l&&l.choice){$('box').innerHTML=`<div class="line narr">${esc(TEMPT.ask)}</div><div class="tchoice">${TEMPT.choices.map(c=>`<button class="ghost" data-tc="${c.id}">${esc(c.label)}</button>`).join('')}</div>`;
     $('box').querySelectorAll('[data-tc]').forEach(b=>b.onclick=e=>{e.stopPropagation();temptPick(b.dataset.tc)})}
   else if(l&&l.epilogue){setStage(null);
@@ -209,12 +211,13 @@ function renderLine(){
     $('box').innerHTML=`${who?`<span class="nametag${cute?' cute':''}">${esc(who==='師匠'?mentorName():who)}${l[2]&&l[2].voice?`<small class="voice">（${esc(l[2].voice)}）</small>`:''}${CHARS[who]&&!(l[2]&&l[2].voice)?`<span class="stars">${stars(rankOf(who))}</span>`:''}</span>`:''}<div class="line${who?'':' narr'}">${who?'「'+esc(text)+'」':esc(text)}</div>${mark}`;
   }
   p2After(l);
-  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
+  $('btnAdv').textContent=SC.i===SC.lines.length-1?'進む':'次へ';$('btnAdv').hidden=!!(l&&l.choice&&!SC.picked)||doorAuto(l);$('scene').classList.toggle('epil',!!(l&&l.epilogue));
 }
+function doorAuto(l){try{return !!(l&&l.door===1&&SC.ch&&SC.ch.no===1&&!SC.ch.p2&&!loadCleared())}catch(e){return false}}
 function setStage(who){
   const st=$('stage');
   if(!who){st.className='stage';st.innerHTML='';return}
-  st.className='stage '+(rankOf(who)>=3?'cool':'cute');
+  st.className='stage '+(rankOf(who)>=3?'cool':'cute')+(rankOf(who)>=4?' rk4':'');
   st.innerHTML=`<div class="portrait">${avatar(who)}</div>`;
 }
 function advance(){setTimeout(fitScene,0);if(!SC)return;{const c=SC.lines[SC.i];if(c&&c.choice&&!SC.picked){temptPick('silent');return}}SC.i++;while(SC.i<SC.lines.length&&lineOff(SC.lines[SC.i]))SC.i++;if(SC.i>=SC.lines.length){const d=SC.done;SC=null;d();return}
@@ -233,7 +236,7 @@ const RUMORS={
   4:[['ソウ','レイカさん、強いときは自分のチップをちらっと見るんです。……たぶん','true'],['ソウ','長く打っていると、レイカさんのクセは逆になるって、先輩が言ってました','true'],['常連','レイカは汗をかいたら勝負手だってさ','old']],
   5:[['テツ','ハヤトの口数が急に増えたら、要注意だ','true'],['テツ','あいつが急に黙って動かなくなったら、たいてい嘘だ','true'],['常連','ハヤトは絶対にブラフしないって話だぜ','old']],
   6:[['カオル','クロウさん、汗をかいたら勝負手だって噂よ','plant'],['カオル','クロウさんが笑ったら……どうだったかしら。誰も確かめたことがないの','true'],['常連','本当に迷ったときだけ、白い手袋に触るって聞いたことがある','true']],
-  7:[['店主','ジンさんの顎の傷のこと、誰も聞けないんだよ','flavor'],['ゲン','ジンさんはな、降りるときだけ、ちょっと笑うんだ','old'],['店主','昔のジンさんを知ってる人は、みんな同じことを言うよ。「手を見るな、顔を見ろ」ってね','flavor']]};
+  7:[['店主','ジンさんのあごの傷のこと、誰も聞けないんだよ','flavor'],['ゲン','ジンさんはな、降りるときだけ、ちょっと笑うんだ','old'],['店主','昔のジンさんを知ってる人は、みんな同じことを言うよ。「手を見るな、顔を見ろ」ってね','flavor']]};
 const RUMOR_KEY='shisho-rumor';
 function loadRumor(){try{const o=JSON.parse(localStorage.getItem(RUMOR_KEY))||{};return o.heard&&typeof o.heard==='object'?o.heard:{}}catch(e){return{}}}
 function rumorScene(ch,go){
@@ -266,7 +269,7 @@ function startStore(ch,skipEp){
 }
 function startFree(){
   ltTrack('free_start',{size:+$('freeSize').value||4});
-  startGame({ch:null,title:'フリー対戦'+($('freeSize').value==='6'?'（6人卓）':'')+(HOUSE[$('freeRule').value]?'（'+HOUSE[$('freeRule').value].name+'）':''),blinds:[1000,2000],goal:{type:'free'},hint:null,refill:false,tells:true,house:$('freeRule').value||null,lamp:'#e2b65b',bgm:0,
+  startGame({ch:null,title:'フリー対戦'+($('freeSize').value==='6'?'（6人テーブル）':'')+(HOUSE[$('freeRule').value]?'（'+HOUSE[$('freeRule').value].name+'）':''),blinds:[1000,2000],goal:{type:'free'},hint:null,refill:false,tells:true,house:$('freeRule').value||null,lamp:'#e2b65b',bgm:0,
     seats:[{name:'あなた',chips:100000,human:true},{name:'ケンジ',style:'normal',chips:100000},{name:'ミサキ',style:'normal',chips:100000}].concat(freeSeats())});
 }
 // 残りの席：クリアした店の常連＋タロウ（6人卓はテツ・ソウも）から毎回ランダム。第3章クリア後は、空いた席の1つに今日の船の客（6人卓は必ず、4人卓は2回に1回）

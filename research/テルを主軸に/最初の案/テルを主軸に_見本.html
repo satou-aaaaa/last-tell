@@ -1,0 +1,238 @@
+<title>テルを主軸に 見本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: 港のバーの卓。濃紺の夜気＋琥珀のランプ。4案を同じ大きさの卓で並べる */
+:root{
+  --bg:#0b1118; --felt:#0f2a26; --felt2:#0a1d1b; --ink:#e7e2d6; --mute:#9aa6a8;
+  --lamp:#ffb15a; --line:#24343a; --hit:#7fe0a8; --miss:#ff8a7a;
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,4vw,38px);margin:0;letter-spacing:.04em;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--mute);max-width:68ch}
+.now{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;max-width:820px}
+.now b{color:var(--lamp);font-size:12px;letter-spacing:.12em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:22px}
+.opt{display:grid;gap:10px;min-width:0}
+.opt h2{font-family:var(--disp);font-size:21px;margin:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.opt h2 small{font-family:var(--body);font-size:12px;color:var(--mute);font-weight:400}
+.tag{font-family:var(--body);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--lamp);color:var(--lamp);letter-spacing:.08em}
+.tag.post{border-color:var(--mute);color:var(--mute)}
+.opt>p{margin:0;color:var(--mute);font-size:13px}
+.table{position:relative;border-radius:18px;padding:16px;min-height:330px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,177,90,.16),transparent 55%),radial-gradient(ellipse at 50% 70%,var(--felt),var(--felt2));
+  border:1px solid var(--line);display:grid;grid-template-rows:auto 1fr auto;gap:10px}
+.top{display:flex;gap:14px;align-items:center}
+.face{width:96px;height:110px;flex:none;position:relative;transition:transform .5s}
+.face svg{width:100%;height:100%;display:block}
+.who{font-size:13px;color:var(--mute)} .who b{color:var(--ink);font-size:15px;display:block}
+.cue{display:inline-block;margin-top:6px;font-size:12px;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.45);border:1px solid rgba(255,177,90,.5);color:#ffe0b8;opacity:0;transition:opacity .25s}
+.cue.on{opacity:1}
+.cue.known{outline:1.5px solid var(--lamp);outline-offset:2px}
+.mid{display:grid;place-items:center;gap:8px;text-align:center}
+.cards{display:flex;gap:5px;justify-content:center}
+.c{width:30px;height:42px;border-radius:4px;background:#f4f1ea;color:#111;font:700 13px/42px var(--body);text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.c.r{color:#b3262b} .c.back{background:repeating-linear-gradient(45deg,#203a5a 0 4px,#16304d 4px 8px);color:transparent}
+.msg{font-size:13px;min-height:2.6em;max-width:44ch}
+.msg .hit{color:var(--hit)} .msg .miss{color:var(--miss)}
+.bet{font-size:12px;color:#ffe0b8}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{font:700 13px var(--body);color:var(--ink);background:#1b2a30;border:1px solid #38505a;border-radius:9px;padding:9px 12px;cursor:pointer;min-height:40px}
+button:hover{border-color:var(--lamp)} button:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+button.read{background:linear-gradient(#25363c,#17252a)}
+button.read small{display:block;font-weight:400;font-size:11px;color:var(--mute)}
+button.ghost{background:transparent;color:var(--mute);font-weight:400}
+button:disabled{opacity:.35;cursor:default}
+.oldrow{display:flex;gap:6px;justify-content:center;opacity:.45;font-size:11px;flex-wrap:wrap}
+.oldrow span{border:1px dashed #4a5d64;border-radius:6px;padding:2px 7px}
+.score{position:absolute;right:14px;top:12px;font-size:12px;color:var(--mute)} .score b{color:var(--lamp);font-size:16px}
+.streets{display:flex;gap:6px;justify-content:center;font-size:11px;color:var(--mute)}
+.streets span{padding:2px 8px;border-radius:99px;border:1px solid #33464d;transition:all .3s}
+.streets span.done{color:var(--ink);border-color:#5d7b84}
+.streets span.now{color:#111;background:var(--lamp);border-color:var(--lamp)}
+.zoom .face{transform:scale(1.22)}
+.book{width:100%;max-width:400px;justify-self:center;background:#f1ece0;color:#2a2a2a;border-radius:6px;padding:10px 12px;font-size:12.5px;display:grid;gap:4px;position:relative}
+.book h3{margin:0;font-family:var(--disp);font-size:14px}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border-bottom:1px dotted #b9b2a2;padding:3px 0;position:relative}
+.row .t{font-variant-numeric:tabular-nums;color:#555}
+.stamp{font-family:var(--disp);color:#b3262b;border:2px solid #b3262b;border-radius:4px;padding:0 5px;font-size:11px;transform:rotate(-8deg);opacity:0;transition:opacity .3s}
+.stamp.on{opacity:1}
+.story{font-size:12px;color:#5a4a2a;border-top:1px solid #b9b2a2;padding-top:4px;display:none}
+.story.on{display:block}
+.tapface{cursor:pointer;border-radius:12px}
+.tapface:focus-visible{outline:2px solid var(--lamp)}
+.flash{position:absolute;inset:-4px;border-radius:12px;pointer-events:none}
+.three{font-size:12.5px;color:var(--mute);border-top:1px solid var(--line);padding-top:6px}
+.foot{color:var(--mute);font-size:13px;max-width:80ch}
+@keyframes talk{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1.4)}}
+@keyframes drop{0%{transform:translateY(-4px);opacity:0}30%{opacity:1}100%{transform:translateY(14px);opacity:0}}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}
+.mouth.talk{animation:talk .22s infinite;transform-origin:48px 80px}
+.sweat{opacity:0} .sweat.on{animation:drop 1s infinite}
+.head{animation:breathe 3.2s infinite}
+.face.still .head{animation:none}
+@media (prefers-reduced-motion:reduce){.mouth.talk,.sweat.on,.head{animation:none}.sweat.on{opacity:1}.zoom .face{transform:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>テルを主軸に</h1>
+  <p>4つの案を、同じ相手（セキ）で試せる見本です。セキのクセは「強いとき：自分のチップをちらっと見る」「ブラフのとき：口数が多い」。当たる確率は7割で、ときどき逆の仕草や、何も出ないこともあります。</p>
+</header>
+
+<div class="now">
+  <b>いまの作り（v0.73.0）</b>
+  <span>手番はいつも「降りる／コール／レイズ＋額」の4択。テルは見てもいい情報で、読んだことは操作に表れない。だから遊んでいる感覚がポーカーのままになる。</span>
+</div>
+
+<div class="grid">
+
+<!-- 案1 -->
+<section class="opt" id="o1">
+  <h2>案1 読みで答える <span class="tag">おすすめ・1.0</span></h2>
+  <p>相手に賭けられて、テルが出ていたら、ボタンが「読み」の言葉に変わる。1回押すと読みと動きが同時に決まる。額は自動。</p>
+  <div class="table">
+    <div class="score">眼 <b id="e1">0</b></div>
+    <div class="top"><div class="face" id="f1"></div><div class="who"><b>セキ</b><span class="bet" id="b1">リバーでベットした</span><br><span class="cue" id="c1"></span></div></div>
+    <div class="mid"><div class="cards" id="bd1"></div><div class="msg" id="m1"></div></div>
+    <div style="display:grid;gap:8px">
+      <div class="oldrow" aria-hidden="true">いま：<span>降りる</span><span>コール</span><span>レイズ</span><span>額 ━━●━━</span></div>
+      <div class="acts" id="a1"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 案2 -->
+<section class="opt" id="o2">
+  <h2>案2 勝負どころだけ打つ <span class="tag post">公開後・別モード</span></h2>
+  <p>ハンドの途中は自動で進み、相手が大きく賭けた瞬間だけ手番が来る。顔に寄って、受けるか降りるかの2択。</p>
+  <div class="table" id="t2">
+    <div class="score">対決 <b id="e2">0</b>/10　当たり <b id="h2">0</b></div>
+    <div class="top"><div class="face" id="f2"></div><div class="who"><b>セキ</b><span class="bet" id="b2"></span><br><span class="cue" id="c2"></span></div></div>
+    <div class="mid"><div class="streets" id="s2"><span>配る</span><span>フロップ</span><span>ターン</span><span>勝負どころ</span></div><div class="msg" id="m2"></div></div>
+    <div class="acts" id="a2"></div>
+  </div>
+</section>
+
+<!-- 案3 -->
+<section class="opt" id="o3">
+  <h2>案3 クセ帳を埋める <span class="tag">判子と縁取りは1.0</span></h2>
+  <p>テルを見て、ショーダウンで答え合わせできたら帳が埋まる。2回当たったら「見抜いた」。以後その仕草には縁取りが付く。全部埋まると昔話が読める。</p>
+  <div class="table">
+    <div class="top"><div class="face" id="f3"></div><div class="who"><b>セキ</b><span class="bet" id="b3"></span><br><span class="cue" id="c3"></span></div></div>
+    <div class="mid">
+      <div class="book">
+        <h3>クセ帳　セキ</h3>
+        <div class="row"><span>自分のチップをちらっと見た</span><span class="t" id="r3a">？</span><span class="stamp" id="st3a">見抜いた</span></div>
+        <div class="row"><span>いつもより口数が多い</span><span class="t" id="r3b">？</span><span class="stamp" id="st3b">見抜いた</span></div>
+        <div class="story" id="sty3">セキの話：「昔、この港で荷を数えてた。数えてるとき、口が止まらなくてな。……嘘をつくときも、同じだ」</div>
+      </div>
+      <div class="msg" id="m3"></div>
+    </div>
+    <div class="acts"><button id="go3">1ハンド見る</button><button class="ghost" id="rs3">最初から</button></div>
+  </div>
+</section>
+
+<!-- 案4 -->
+<section class="opt" id="o4">
+  <h2>案4 一瞬を見逃さない <span class="tag post">公開後</span></h2>
+  <p>テルは札ではなく、約1秒だけの本物の仕草。その瞬間に顔をタップすると「見た」になる。見逃すと「何か動いた気がする」だけ。</p>
+  <div class="table">
+    <div class="score">見た <b id="e4">0</b>　見逃し <b id="x4">0</b></div>
+    <div class="top"><div class="face tapface" id="f4" tabindex="0" role="button" aria-label="セキの顔を見る"></div><div class="who"><b>セキ</b><span class="bet">考えている…</span><br><span class="cue" id="c4"></span></div></div>
+    <div class="mid"><div class="msg" id="m4">顔をよく見て、動いたらタップ（キーボードは Enter）。</div></div>
+    <div class="acts"><button id="go4">始める</button><button class="ghost" id="sl4">速さ：ふつう</button></div>
+  </div>
+</section>
+
+</div>
+
+<div class="three"><b style="color:var(--ink)">クリエイター目線の3行</b><br>
+柱：テルを読む（主）、師弟の物語（案1の第7章、案3の昔話）。<br>
+最初の5分：変わらない（第1〜3章はテルなしのまま）。第4章の最初の手番から「読みで答える」になる。<br>
+1.0：案1と、案3の判子と縁取り。案2（別モード）、案3の昔話、案4は公開後。</div>
+<p class="foot">第7章：案1では、最後のリバーで「本物だ（降りる）」を押すことが、そのまま「ジンのクセを読み切る」になります。判定の作りは触りません。ジンの本物のテルはクセ帳にも載せません。</p>
+</div>
+
+<script>
+const TELL={strong:{cue:'glance',txt:'自分のチップをちらっと見た'},bluff:{cue:'talk',txt:'いつもより口数が多い'}};
+const R=()=>Math.random();
+function faceSVG(){return `<svg viewBox="0 0 96 110" aria-hidden="true"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c99a78"/><stop offset="1" stop-color="#9c6f55"/></linearGradient></defs>
+<path d="M8 110 C10 88 30 82 48 82 C66 82 86 88 88 110Z" fill="#1d2228"/><path d="M38 84 L48 100 L58 84Z" fill="#d8d2c4"/>
+<g class="head"><ellipse cx="48" cy="52" rx="25" ry="30" fill="url(#sk)"/><path d="M22 44 C22 20 74 18 74 44 C70 32 60 28 48 28 C36 28 26 32 22 44Z" fill="#20252b"/>
+<path d="M33 45 l10 -1 M53 44 l10 1" stroke="#20252b" stroke-width="2.2" stroke-linecap="round"/>
+<g class="eyes"><ellipse cx="38" cy="52" rx="3" ry="2.2" fill="#15181c"/><ellipse cx="58" cy="52" rx="3" ry="2.2" fill="#15181c"/></g>
+<path d="M48 54 l-3 10 h5" fill="none" stroke="#7a5442" stroke-width="1.4"/>
+<path class="mouth" d="M40 72 Q48 75 56 72" fill="none" stroke="#5a3428" stroke-width="2.2" stroke-linecap="round"/>
+<path class="sweat" d="M72 40 q3 5 0 7 q-3 -2 0 -7Z" fill="#bfe6ff"/></g></svg>`}
+function mount(id){const f=document.getElementById(id);f.innerHTML=faceSVG();return f}
+function showCue(f,cue){const e=f.querySelector('.eyes'),m=f.querySelector('.mouth');
+  e.setAttribute('transform','');m.classList.remove('talk');
+  if(cue==='glance')e.setAttribute('transform','translate(-3,4)');
+  if(cue==='talk')m.classList.add('talk');}
+function roll(){const truth=R()<.5?'strong':'bluff',x=R();
+  const shown=x<.7?truth:x<.88?(truth==='strong'?'bluff':'strong'):null;return{truth,shown}}
+const SUITS=[['♠',''],['♥','r'],['♦','r'],['♣','']],RK='23456789TJQKA';
+function card(){const s=SUITS[Math.floor(R()*4)];return `<span class="c ${s[1]}">${RK[Math.floor(R()*13)].replace('T','10')}${s[0]}</span>`}
+function board(n){return Array.from({length:n},card).join('')}
+
+/* 案1 */
+(()=>{const f=mount('f1'),c=document.getElementById('c1'),m=document.getElementById('m1'),a=document.getElementById('a1'),bd=document.getElementById('bd1');let eyes=0,h;
+  function deal(){h=roll();bd.innerHTML=board(5);showCue(f,null);c.classList.remove('on');m.textContent='';
+    if(h.shown){setTimeout(()=>{showCue(f,TELL[h.shown].cue);c.textContent=TELL[h.shown].txt;c.classList.add('on')},400);
+      a.innerHTML=`<button class="read" data-r="bluff" data-act="call">嘘だ<small>受ける</small></button><button class="read" data-r="strong" data-act="fold">本物だ<small>降りる</small></button><button class="read" data-r="bluff" data-act="raise">嘘だ、返す<small>レイズ・額は自動</small></button>`}
+    else a.innerHTML=`<span style="font-size:12px;color:var(--mute);width:100%;text-align:center">テルが出ていない手番は、いつものボタン</span><button data-act="fold">降りる</button><button data-act="call">コール</button><button data-act="raise">レイズ</button>`;
+    a.querySelectorAll('button').forEach(b=>b.onclick=()=>answer(b.dataset.act,b.dataset.r))}
+  function answer(act,r){a.innerHTML='';
+    if(act==='fold'){m.innerHTML='セキは黙ってチップを集めた。降りた手は見えない。<br>答えは、わからないまま。'}
+    else{const ok=r?h.truth===r:null;if(ok)eyes++;document.getElementById('e1').textContent=eyes;
+      m.innerHTML=`セキが開いた：<b>${h.truth==='bluff'?'ブラフ（役なし）':'強い手'}</b><br>`+(r?(ok?'<span class="hit">読み的中。眼がひとつ増えた</span>':'<span class="miss">読みは外れた</span>　ジン「手を見るな、顔を見ろ」'):'（テルが出ていない手番だった）')}
+    const n=document.createElement('button');n.className='ghost';n.textContent='次のハンド';n.onclick=deal;a.appendChild(n)}
+  deal()})();
+
+/* 案2 */
+(()=>{const t=document.getElementById('t2'),f=mount('f2'),c=document.getElementById('c2'),m=document.getElementById('m2'),a=document.getElementById('a2'),b=document.getElementById('b2'),ss=[...document.querySelectorAll('#s2 span')];let n=0,hits=0,h,tm=[];
+  function run(){if(n>=10){n=0;hits=0}tm.forEach(clearTimeout);tm=[];t.classList.remove('zoom');c.classList.remove('on');showCue(f,null);a.innerHTML='';b.textContent='';m.textContent='自動で進めています…';h=roll();
+    ss.forEach(s=>s.className='');
+    [0,1,2].forEach(i=>tm.push(setTimeout(()=>{ss.forEach((s,j)=>s.className=j<i?'done':j===i?'now':'')},i*520)));
+    tm.push(setTimeout(()=>{ss.forEach((s,j)=>s.className=j<3?'done':'now');t.classList.add('zoom');b.textContent='ポットの倍を賭けてきた';m.textContent='勝負どころ。顔を見て、決める。';
+      if(h.shown){showCue(f,TELL[h.shown].cue);c.textContent=TELL[h.shown].txt;c.classList.add('on')}
+      a.innerHTML='<button class="read" data-r="bluff">受ける<small>嘘だと読む</small></button><button class="read" data-r="strong">降りる<small>本物だと読む</small></button>';
+      a.querySelectorAll('button').forEach(x=>x.onclick=()=>pick(x.dataset.r))},1650))}
+  function pick(r){n++;a.innerHTML='';const ok=h.truth===r;if(ok)hits++;
+    m.innerHTML=(r==='bluff'?`セキが開いた：<b>${h.truth==='bluff'?'ブラフ':'強い手'}</b>　`:'降りた。')+(r==='bluff'?(ok?'<span class="hit">読み勝ち</span>':'<span class="miss">読み負け</span>'):'（デモでは答えも表示：'+(h.truth==='bluff'?'ブラフだった':'本物だった')+'）');
+    document.getElementById('e2').textContent=n;document.getElementById('h2').textContent=hits;
+    const x=document.createElement('button');x.className='ghost';x.textContent=n>=10?'もう一度（10回終わり）':'次の勝負どころへ';x.onclick=run;a.appendChild(x)}
+  a.innerHTML='<button id="st2">始める</button>';document.getElementById('st2').onclick=run})();
+
+/* 案3 */
+(()=>{const f=mount('f3'),c=document.getElementById('c3'),m=document.getElementById('m3'),b=document.getElementById('b3');
+  let tally={strong:{h:0,t:0},bluff:{h:0,t:0}};
+  const rows={strong:['r3a','st3a'],bluff:['r3b','st3b']},known=k=>tally[k].h>=2;
+  function draw(){['strong','bluff'].forEach(k=>{const v=tally[k];document.getElementById(rows[k][0]).textContent=v.t?`${v.h}/${v.t} 当たり`:'？';document.getElementById(rows[k][1]).classList.toggle('on',known(k))});
+    document.getElementById('sty3').classList.toggle('on',known('strong')&&known('bluff'))}
+  document.getElementById('go3').onclick=()=>{const h=roll();showCue(f,null);c.classList.remove('on','known');
+    if(!h.shown){b.textContent='';m.textContent='このハンドは、何も出なかった。';return}
+    showCue(f,TELL[h.shown].cue);c.textContent=TELL[h.shown].txt;c.classList.add('on');c.classList.toggle('known',known(h.shown));b.textContent='ベットした → ショーダウン';
+    const ok=h.truth===h.shown,v=tally[h.shown];v.t++;if(ok)v.h++;
+    m.innerHTML=`開いた手：<b>${h.truth==='bluff'?'ブラフ':'強い手'}</b>　`+(ok?'<span class="hit">帳に1行つけた</span>':'<span class="miss">この仕草は、今回は関係なかった</span>');draw()};
+  document.getElementById('rs3').onclick=()=>{tally={strong:{h:0,t:0},bluff:{h:0,t:0}};m.textContent='';c.classList.remove('on','known');showCue(f,null);draw()};
+  draw()})();
+
+/* 案4 */
+(()=>{const f=mount('f4'),c=document.getElementById('c4'),m=document.getElementById('m4');let on=false,live=null,seen=0,miss=0,slow=false,tm=null;
+  f.classList.add('still');
+  function next(){clearTimeout(tm);tm=setTimeout(fire,1800+R()*2200)}
+  function fire(){if(!on)return;const k=R()<.5?'strong':'bluff';live=k;showCue(f,TELL[k].cue);
+    tm=setTimeout(()=>{if(live){miss++;document.getElementById('x4').textContent=miss;m.textContent='何か動いた気がする…';}live=null;showCue(f,null);next()},slow?2000:1100)}
+  function tap(){if(!on)return;if(live){seen++;document.getElementById('e4').textContent=seen;c.textContent='見た：'+TELL[live].txt;c.classList.add('on');m.innerHTML='<span class="hit">見逃さなかった。</span>相手メモに残る。';live=null;showCue(f,null);clearTimeout(tm);setTimeout(()=>c.classList.remove('on'),1400);next()}else m.textContent='まだ何も動いていない。'}
+  f.onclick=tap;f.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tap()}};
+  document.getElementById('go4').onclick=e=>{on=!on;e.target.textContent=on?'止める':'始める';f.classList.toggle('still',!on);if(on){m.textContent='顔をよく見て、動いたらタップ。';next()}else{clearTimeout(tm);live=null;showCue(f,null)}};
+  document.getElementById('sl4').onclick=e=>{slow=!slow;e.target.textContent='速さ：'+(slow?'ゆっくり':'ふつう')}})();
+</script>

@@ -20,7 +20,7 @@ const I18N=(()=>{
     if(lang!=='en'||typeof s!=='string'||!JP.test(s))return s;
     if(cache.has(s))return cache.get(s);
     const lead=s.match(/^\s*/)[0],tail=s.match(/\s*$/)[0],n=norm(s);let out=core(n,0);
-    out=lead+out.trim()+(tail&&out.trim()?tail:'');cache.set(s,out);return out}
+    out=lead+out.trim()+(tail&&out.trim()?tail:'');if(cache.size>2000)cache.clear();cache.set(s,out);return out}
   function core(n,d){
     if(!n)return n;
     if(EN_DICT[n]!==undefined)return EN_DICT[n];

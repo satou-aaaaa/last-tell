@@ -1,3 +1,4 @@
+// @unit-begin deck_eval（qa/unit/ が Node から読む。ここには画面やゲームの状態を読むコードを入れない）
 /* ---------- 山札・役判定 ---------- */
 function fullDeck(){const d=[];for(let s=0;s<4;s++)for(let r=2;r<=14;r++)d.push({r,s});return d}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(LT.rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -79,3 +80,4 @@ function preTier(h){
   if(a===14&&b>=9)return 1;
   return 0;
 }
+// @unit-end deck_eval

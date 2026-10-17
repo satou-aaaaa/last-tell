@@ -40,10 +40,10 @@ function showHelp(tab){
       <dt>ベット／レイズ</dt><dd>賭ける、または賭け額を上げます。1回押すと額を選ぶ画面が開き、もう1回押すと確定です。「½ポット」「ポット」などのボタンで、よく使う額を選べます。</dd>
       <dt>オールイン</dt><dd>持っているチップを全部賭けます。</dd>
       <dt>手札をめくる</dt><dd>伏せた手札をタップすると、自分にだけ見えます（設定で「いつも表」にもできます）。</dd>
-      <dt>ジンの助言</dt><dd>卓の下に、ジンのひとことが出ます。第1〜4章では、何をすればよいかを教えてくれます。</dd>
+      <dt>ジンの助言</dt><dd>テーブルの下に、ジンのひとことが出ます。第1〜4章では、何をすればよいかを教えてくれます。</dd>
       <dt>相手のクセ</dt><dd>第4章からは、相手の頭の上に「ニヤ」「タラ…」などのクセが出ます。強い手のときに出るのか、ブラフのときに出るのかを読みましょう。</dd>
       <dt>名札をタップ</dt><dd>相手の前に積んだチップが大きく見えます。色ごとの額は決まっていて、数えて足すと正確な持ち点になります。持ち点が「約○万」のときは、ディーラーに数えてもらうこともできます。</dd>
-    </dl><button class="mini" id="btnTour" ${inGame?'':'disabled'}>卓の上で案内を見る${inGame?'':'（対戦中に使えます）'}</button>`;
+    </dl><button class="mini" id="btnTour" ${inGame?'':'disabled'}>テーブルの上で案内を見る${inGame?'':'（対戦中に使えます）'}</button>`;
   }
   const h=$('help');
   h.innerHTML=`<div class="helpin" role="document"><div class="helphead"><h2>遊び方</h2><button class="ghost small" id="btnHelpClose">閉じる</button></div>

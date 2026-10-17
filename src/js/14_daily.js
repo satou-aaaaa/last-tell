@@ -6,7 +6,7 @@ const DAILY=[
   {opp:'ロク',hand:'A♣ 5♣',board:'K♦ 9♠ 4♥ 2♣',pot:10000,bet:6000,tell:'still',sit:'ロクが6,000を賭けた。賭ける前に、ぴたりと動かなくなった。',answer:'fold',why:'ロクが固まった。あいつが動かなくなるのは、強いときだ。Aだけで付き合う理由はない。'},
   {opp:'レイカ',hand:'Q♠ Q♥',board:'J♦ 8♣ 3♠ 5♦ 2♥',pot:20000,bet:16000,tell:'talk',sit:'レイカが16,000を賭けた。いつもより口数が多い。',answer:'call',why:'しゃべりすぎるのは、ブラフのときのクセだ。QQなら十分に受けられる。'},
   {opp:'ミナ',hand:'9♥ 8♥',board:'A♥ K♥ 4♣',pot:10000,bet:2000,tell:null,sit:'ミナが小さく2,000だけ賭けた。あなたはハートがあと1枚でフラッシュ。',answer:'call',why:'2,000で12,000を取りに行ける。フラッシュになる見込みは3回に1回以上ある。安い賭けなら付き合え。'},
-  {opp:'ロク',hand:'K♣ 7♦',board:'',pot:3000,bet:2000,tell:null,sit:'あなたはディーラーボタン。前の人は全員降りた。残りはロクとハル（どちらも慎重）。',answer:'raise',why:'後ろの席で、誰も参加していない。相手は慎重だ。手が弱くても、レイズで盗め。'},
+  {opp:'ロク',hand:'K♣ 7♦',board:'',pot:3000,bet:2000,tell:null,sit:'あなたはディーラーボタン。前の人は全員降りた。残りはロクとハル（どちらも慎重）。',answer:'raise',why:'後ろの席で、誰も参加していない。相手は慎重だ。手が弱くても、レイズでスチールしろ。'},
   {opp:'セキ',hand:'7♣ 6♣',board:'A♠ Q♦ 8♣ 4♠ 2♥',pot:12000,bet:0,tell:null,sit:'最後のカードが出た。セキはチェックした。あなたの手は何もできていない。',answer:'raise',why:'セキは少しでも怪しいと降りる。何もないなら、ここで賭けてみろ。チェックでは絶対に勝てん。'},
   {opp:'ゲン',hand:'A♦ J♠',board:'J♥ 9♥ 6♣ 9♦',pot:14000,bet:14000,tell:'smile',sit:'ゲンが14,000を賭けた。口元が緩んでいる。',answer:'fold',why:'ゲンがニヤけた。あいつが笑うときは本物だ。Jのペアでは足りん。'},
   {opp:'クロウ',hand:'A♠ K♠',board:'A♦ 10♣ 5♥ 3♠ 8♦',pot:30000,bet:30000,tell:'smile',sit:'クロウが30,000を賭けた。かすかに笑っている。',answer:'call',why:'クロウのクセは全部わざとだ。強いときに焦って見せ、ブラフのときに笑う。笑ったなら、受けろ。'},
@@ -15,7 +15,7 @@ const DAILY=[
   {opp:'カオル',hand:'A♣ 9♣',board:'',pot:9000,bet:6000,tell:null,sit:'トーナメント終盤。あなたの持ち点はビッグブラインド8回分しかない。前は全員降りた。',answer:'raise',why:'チップが少ないときは、待ちすぎるな。このくらいの手なら、全部賭けて勝負しろ。'},
   {opp:'ロク',hand:'Q♥ J♣',board:'',pot:16000,bet:12000,tell:null,sit:'あなたのレイズに、慎重なロクがさらに大きくレイズしてきた。',answer:'fold',why:'慎重な奴が2回目のレイズをしたら、強い手だ。QJで付き合うと高くつく。'},
   {opp:'ソウ',hand:'10♠ 10♦',board:'A♣ 9♦ 4♠ 2♣ K♥',pot:16000,bet:12000,tell:'sweat',sit:'ソウが12,000を賭けた。汗をかいている。',answer:'call',why:'ソウの汗は、ブラフのときのクセだ。場にAとKがあっても、10のペアで受けていい。'},
-  {opp:'ジン',hand:'K♦ K♣',board:'Q♠ 8♥ 3♦ 6♣ 2♠',pot:24000,bet:20000,tell:'scar',sit:'ジンが20,000を賭けた。いつものように、顎の傷に触れている。',answer:'call',why:'傷に触れているのは、迷っているときだ。いつも通りなら、KKで受けていい。……傷から手を離したときは、別だがな。'},
+  {opp:'ジン',hand:'K♦ K♣',board:'Q♠ 8♥ 3♦ 6♣ 2♠',pot:24000,bet:20000,tell:'scar',sit:'ジンが20,000を賭けた。いつものように、あごの傷に触れている。',answer:'call',why:'傷に触れているのは、迷っているときだ。いつも通りなら、KKで受けていい。……傷から手を離したときは、別だがな。'},
 ];
 const DAILY_KEY='shisho-daily';
 const todayKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -112,7 +112,7 @@ function noteHighlight(){
   else if(me.won>=BB()*5&&me.allIn&&me.show)head=`オールインで勝ち残った +${fmt(me.won)}`;
   else if(me.won>=BB()*15)head=`大きなポットを取った +${fmt(me.won)}`;
   if(!head){S.hl=null;return}
-  S.hl={hand:S.handNo,head,sub:where,board:S.board.slice(),hand2:me.hand.slice(),quote:S.result==='win'&&CFG.ch?'ジン「'+['','弱い手で突っ込まなくなった。それだけのことだ','今のが最後だ。……盗み方は、覚えたな','……少しは、わかってきたな','……半人前だが、目はいい','……お前は、焦るな','……あと一つだ','一人前だ'][CFG.ch.no]+'」':''};if(CFG.ch&&CFG.ch.p2&&S.hl.quote)S.hl.quote=p2Quote(CFG.ch);
+  S.hl={hand:S.handNo,head,sub:where,board:S.board.slice(),hand2:me.hand.slice(),quote:S.result==='win'&&CFG.ch?'ジン「'+['','弱い手で突っ込まなくなった。それだけのことだ','今のが最後だ。……スチールは、覚えたな','……少しは、わかってきたな','……半人前だが、目はいい','……お前は、焦るな','……あと一つだ','一人前だ'][CFG.ch.no]+'」':''};if(CFG.ch&&CFG.ch.p2&&S.hl.quote)S.hl.quote=p2Quote(CFG.ch);
 }
 /* カードプロテクター：章クリアでもらえる見た目だけのお守り */
 const PROTECTORS=[
@@ -130,7 +130,7 @@ function protectorSVG(id){
   if(id==='anchor')return coin('#3a3f4a','#b98c3f','<g fill="none" stroke="#e8d3a0" stroke-width="3" stroke-linecap="round"><circle cx="30" cy="15" r="3.5"/><path d="M30 19v22M22 25h16M17 33q3 10 13 10q10 0 13-10"/></g>');
   if(id==='key')return coin('#cfd6e2','#8d97a8','<g fill="none" stroke="#4d5668" stroke-width="3" stroke-linecap="round"><circle cx="22" cy="29" r="6"/><path d="M28 29h15M38 29v6M43 29v5"/></g>');
   if(id==='moon')return coin('#e6c66c','#a67d2a','<path d="M35 13a16 16 0 1 0 0 32a13 13 0 1 1 0-32z" fill="#fff6d6" stroke="#8a6620" stroke-width="1.5"/>');
-  if(id==='feather')return coin('#f4efe4','#d7263d','<path d="M40 14q-18 4-20 26l-4 6M20 40q12-2 18-16M22 33l8-2M25 26l8-2" fill="none" stroke="#c8213a" stroke-width="2.6" stroke-linecap="round"/>');
+  if(id==='feather')return coin('#e3e7ee','#8d96a6','<path d="M40 14q-18 4-20 26l-4 6M20 40q12-2 18-16M22 33l8-2M25 26l8-2" fill="none" stroke="#c8213a" stroke-width="2.6" stroke-linecap="round"/>');
   if(id==='lastchip')return coin('#2f6f5f','#1b3d33','<circle cx="30" cy="29" r="13" fill="none" stroke="#c9f2dc" stroke-width="3" stroke-dasharray="4 3"/><text x="30" y="34" text-anchor="middle" font-size="13" font-weight="800" fill="#c9f2dc">1</text>');
   if(id==='crown')return coin('#2b1f3d','#c9a0ff','<path d="M17 38l-2-16 9 8 6-12 6 12 9-8-2 16z" fill="#e2b65b" stroke="#7a5a1a" stroke-width="1.5"/>');
   if(id==='photo')return coin('#3a2f26','#ffb15a','<rect x="15" y="18" width="13" height="17" fill="#f2e6cf" transform="rotate(-8 21 26)"/><rect x="31" y="19" width="13" height="17" fill="#f2e6cf" transform="rotate(7 37 27)"/>');
@@ -139,8 +139,8 @@ function protectorSVG(id){
 /* ハンドの合間の噂話（勝負とは関係ない雑談） */
 const GOSSIP={
   1:[['店主','ゲンさんは毎晩来て、毎晩負けて帰るんだよ'],['ゲン','このお守りの錨じゃないと勝てねえんだよな'],['店主','名物のカレー、あとで食べていきな'],['店主','腹が減ってちゃ勝てないよ']],
-  2:[['常連','ロクさん、昔はジンさんと組んでたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ'],['ロク','……数えてから言え']],
-  3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、卓が荒れるんだよなあ'],['ミナ','この曲が終わるまでに勝つね']],
+  2:[['常連','ロクさんは昔、ジンさんと組んでいたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ'],['ロク','……数えてから言え']],
+  3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、みんな急に静かになるんだよなあ'],['ミナ','この曲が終わるまでに勝つね']],
   4:[['ソウ','レイカさん、ディーラーのときは絶対に表情を変えないんです'],['常連','このラウンジ、朝まで卓が立つらしいね'],['ソウ','あ、あとワンハンドだけ……']],
   5:[['テツ','ハヤトは勝つとすぐ帰るんだ。今日は珍しく座ってるな'],['テツ','ここは昔、クロウの持ち物だったらしいぜ'],['テツ','地下は電波が入らねえんだよな']],
   6:[['クロダ','当店では、負け方も含めてお客様を見ております'],['カオル','クロウさんの前だと、みんな背筋が伸びるのよ'],['カオル','あの看板、全部で6枚あるんですって']],
@@ -165,7 +165,7 @@ const LINES={
   'クロウ':{rate:.5,raise:['少し上げましょう'],raise_strong:['少し上げましょう'],raise_bluff:['今夜は、手が入る夜でしてね'],call:['拝見しましょう'],check:['どうぞ'],fold:['お譲りします'],allin:['では、すべて'],win:['いい勝負でした']},
   'カオル':{raise:['上げるわ'],call:['いいわよ'],check:['チェック'],fold:['降りるわ'],allin:['全部よ'],win:['ふふ']},
   'ジン':{rate:.4,raise:['上げる'],call:['受ける'],check:['……'],fold:['降りる'],allin:['全部だ'],win:['まだまだだな']},
-  'ハヤト':{rate:.8,raise:['師匠の弟子なら、ついてこいよ'],call:['見てやるよ'],check:['ほらよ'],fold:['今回はくれてやる'],allin:['全部だ。降りろよ'],win:['これが俺の打ち方だ','勝ちは勝ちだ'],gloat:['ジンさんの真似事か？','AAでも負ける。運がないな','勝ちは勝ちだ'],slowroll:['いい手だな。……勝ったと思ったか？'],tilt:['……今のはまぐれだ','……勝ちは、勝ちだろうが'],angleTap:['（トントン）……いや、ベットだ'],angleChip:['（黙って大きいチップを1枚すべらせる）'],caught:['……チッ'],nice:['……ふん']},
+  'ハヤト':{rate:.8,raise:['ジンさんの弟子なら、ついてこいよ'],call:['見てやるよ'],check:['ほらよ'],fold:['今回はくれてやる'],allin:['全部だ。降りろよ'],win:['これが俺の打ち方だ','勝ちは勝ちだ'],gloat:['ジンさんの真似事か？','AAでも負ける。運がないな','勝ちは勝ちだ'],slowroll:['いい手だな。……勝ったと思ったか？'],tilt:['……今のはまぐれだ','……勝ちは、勝ちだろうが'],angleTap:['（トントン）……いや、ベットだ'],angleChip:['（黙って大きいチップを1枚すべらせる）'],caught:['……チッ'],nice:['……ふん']},
   'マツ':{fold:["……降り"],win:["年寄りにも、たまには来る"]},
   'ナギ':{fold:["今日はやめとく……いや、次は見る"],win:["ほら、見てよかった"]},
   'アデ':{fold:["今日はここまで。船が待ってる"],win:["いい航海になりそうだ"]},

@@ -1,0 +1,38 @@
+/* ===== 主人公レーン（2026-10-10）：名乗る欄・身なりの画面・プレイヤーネーム ===== */
+.askname{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.askname .askl{font-size:.8rem;color:var(--muted);letter-spacing:.1em}
+.askname input{flex:1 1 9em;min-width:0;max-width:16em;min-height:44px;font:inherit;font-size:1.05rem;padding:6px 12px;background:#15151c;color:var(--ink);border:1px solid var(--gold);border-radius:6px}
+.askname button{min-height:44px;min-width:6.5em;padding:8px 16px;font-weight:800}
+.heroshot{background:#f2ede2;padding:6px 6px 18px;box-shadow:0 8px 20px #000a;transform:rotate(-2deg);height:auto;max-height:92%;width:auto}
+.heroshot .av{background:#1b1712}
+.ch .fitgot{display:block;width:fit-content;white-space:nowrap;margin-top:3px;font-size:.66rem;padding:0 6px;border:1px solid #ffffff33;color:var(--muted)}
+.exbox h3 small{margin-left:8px;font-size:.75rem;color:var(--muted);font-weight:400}
+.pgreet{margin:6px 0 0;color:var(--gold);font-size:.9rem;letter-spacing:.06em}
+.setrow input.pname{width:9em;min-height:32px;font:inherit;font-size:.85rem;padding:4px 10px;background:#15151c;color:inherit;border:1px solid #ffffff33;border-radius:999px}
+.lookdlg{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:12px;background:rgba(5,6,10,.78)}
+.lookdlg[hidden]{display:none}
+.lookin{width:min(100%,760px);max-height:calc(100dvh - 24px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#12131a;border:1px solid var(--gold);border-radius:10px;overflow:hidden}
+.lookhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:12px 16px 6px}
+.lookhead h2{margin:0;font-family:var(--display);font-size:1.2rem;color:var(--gold)}
+.lookcap{margin:0;font-size:.85rem;color:#cfd3cc}
+.lookbody{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;padding:6px 16px 10px;overflow:auto;min-height:0}
+.lphoto{background:#f2ede2;padding:8px 8px 26px;box-shadow:0 8px 20px #000a;transform:rotate(-2deg);max-width:220px;margin:6px auto;position:relative}
+.lpic{aspect-ratio:1/1;background:#1b1712;overflow:hidden}
+.lpic .av{display:block;width:100%;height:100%}
+.lphoto span{position:absolute;bottom:4px;left:0;right:0;text-align:center;color:#3a332a;font-family:var(--display);font-size:.85rem}
+.lookopts{display:grid;gap:10px;min-width:0;align-content:start}
+.lrow{display:grid;gap:5px}
+.lrow>b{font-size:.75rem;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.lchips{display:flex;flex-wrap:wrap;gap:6px}
+.lchips button{font:inherit;clip-path:none;letter-spacing:.02em;font-weight:700;font-size:.82rem;background:#0d0e13;color:var(--ink);border:1px solid #ffffff2a;border-radius:6px;padding:4px 10px;cursor:pointer;min-height:32px}
+.lchips button.sw{width:44px;min-width:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid #ffffff2a}
+/* 改善提案 第5回 §0-4：スマホでは文字のボタンも指で押しやすい高さ（44px）に */
+@media (max-width:699px){.lchips button{min-height:44px}}
+.lchips button[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.lchips button.lk{opacity:.5}
+.lnote{margin:0;min-height:1.2em;font-size:.78rem;color:var(--gold)}
+.lookfoot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:10px 16px 12px;border-top:1px solid #ffffff14}
+.lookfoot button{min-height:40px;padding:6px 14px}
+.lookfoot .primary{min-width:7em}
+@media (max-width:560px){.lookbody{grid-template-columns:1fr}.lphoto{max-width:150px}}
+@media (max-height:500px) and (orientation:landscape){.lookbody{grid-template-columns:minmax(0,150px) minmax(0,1fr)}.lphoto{max-width:140px}.lookhead{padding:8px 14px 2px}.lookfoot{padding:6px 14px 8px}}

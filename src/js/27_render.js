@@ -52,7 +52,9 @@ function chipStack(amount,label,big,small,seed){
   let bb=0;try{bb=BB()}catch(e){bb=0}
   const k=amount+'|'+label+'|'+big+'|'+small+'|'+seed+'|'+(VW_NARROW)+'|'+bb+'|'+(typeof I18N!=='undefined'?I18N.lang:'');
   let v=CHIPSTACK_MEMO.get(k);
-  if(v===undefined){v=chipStackRaw(amount,label,big,small,seed);if(CHIPSTACK_MEMO.size>3000)CHIPSTACK_MEMO.clear();CHIPSTACK_MEMO.set(k,v)}
+  // 改善提案 第5回 §0-2：1つ数KBあるので、覚えるのは最近使った200個まで（古いものから捨てる。3000個だと長く遊ぶとメモリが増え続けた）
+  if(v===undefined){v=chipStackRaw(amount,label,big,small,seed);if(CHIPSTACK_MEMO.size>=200)CHIPSTACK_MEMO.delete(CHIPSTACK_MEMO.keys().next().value)}else CHIPSTACK_MEMO.delete(k);
+  CHIPSTACK_MEMO.set(k,v);
   return v}
 // 案2(b)：書く前に前回の文字列と比べ、同じなら書かない（書いた後に中身を動かす処理は、今のまま残っていてよいものだけ）
 function setHTMLIfChanged(el,h,key){key=key===undefined?h:key;if(el._h===key&&el.firstChild)return false;el._h=key;el.innerHTML=h;return true}
@@ -74,7 +76,7 @@ function renderGoal(){
   if(!g||!S||!S.players||!S.players.length)return;   // はしごの卓を作る前の仮の状態
   let main,cnt=null,sub='';
   if(g.type==='free'){main='最後の一人になる';sub='相手全員のチップを取ったら優勝'}
-  else if(g.type==='flash'){main='15年前の決勝卓';sub='この手の結末は、もう決まっている'}
+  else if(g.type==='flash'){main='15年前の決勝テーブル';sub='この手の結末は、もう決まっている'}
   else{main=CFG.goalText||CFG.ch.goalText;
     if(g.type==='reach')sub=`今の持ち点 ${fmt(S.players[0].chips)}　／　または、相手全員のチップを取る`;
     else if(g.type==='final')sub=P2ON()?'または、師匠のチップを全部取る':'または、ジンのチップを全部取る';
@@ -90,7 +92,7 @@ function renderGoal(){
 function goalLabel(){
   const g=CFG.goal;
   if(g.type==='free')return'最後の一人になる';
-  if(g.type==='flash')return'15年前の決勝卓';
+  if(g.type==='flash')return'15年前の決勝テーブル';
   if(g.type==='bust'||g.type==='reach'||g.type==='final'||g.type==='boss')return'目標：'+(CFG.goalText||CFG.ch.goalText);
   const n=g.type==='steal'?S.steals:g.type==='readcall'?(S.reads||0):S.bluffs;
   return`目標：${CFG.ch.goalText}（${Math.min(n,g.n)}/${g.n}）`;
@@ -129,7 +131,7 @@ function render(){
       return;
     }
     const b=$('bust'+i),m=moodOf(p,i),bd=b.querySelector('.body');
-    b.className=`bust ${rankOf(p.name)>=3?'cool':'cute'}${turn?' turn':''}${turn&&!p.human?' think':''}${S.stare===i&&turn?' stare':''}${S.readLook===i?' look':''}${p.folded&&!p.out?' folded':''}${p.out?' out':''}${p.sitOut?' watch':''}`;
+    b.className=`bust ${rankOf(p.name)>=3?'cool':'cute'}${rankOf(p.name)>=4?' rk4':''}${turn?' turn':''}${turn&&!p.human?' think':''}${S.stare===i&&turn?' stare':''}${S.readLook===i?' look':''}${p.folded&&!p.out?' folded':''}${p.out?' out':''}${p.sitOut?' watch':''}`;
     const tc=p.tell&&p.tell.street===S.street&&!S.handOver&&!p.folded?p.tell.cue:'',tl=p.name==='ジン'&&tc==='release'?'strong':p.name==='ハヤト'&&tc==='still'?'strong':p.name==='クロウ'&&tc==='glove'?'hidden':'';
     if(bd.dataset.mood!==m+tl+P2K(p)){bd.innerHTML=avatar(p.name,m,{tell:tl});bd.dataset.mood=m+tl+P2K(p)}
     if(p.actKind&&bd.dataset.seq!==String(p.actSeq)){bd.dataset.seq=String(p.actSeq);motion(bd,p.actKind,rankOf(p.name)>=3)}
@@ -177,7 +179,7 @@ function render(){
   if(!paid&&!S.potLand)potGrow(pot);
   const live=potTotal()-pot;
   if(!S.potPushing){$('potSign').hidden=paid||!potTotal();
-    const ps=live>0&&pot>0?`<span class="ps">卓 ${fmt(pot)}＋賭け ${fmt(live)}</span>`:'';
+    const ps=live>0&&pot>0?`<span class="ps">テーブル ${fmt(pot)}＋賭け ${fmt(live)}</span>`:'';
     if($('potSign').dataset.k!==pk+'|'+ps||!$('potSign').querySelector('.pv')){$('potSign').dataset.k=pk+'|'+ps;$('potSign').innerHTML=`<span class="pl">ポット</span><span class="pv">${fmt(S.potPile.shown||0)}</span>${ps}`}
     if(!paid&&S.potPile.target!==potTotal()){S.potPile.target=potTotal();potCount(potTotal(),520)}potSignSoon()}
   $('msg').textContent=S.handOver?'':(S.msg||'');
@@ -189,8 +191,7 @@ function render(){
 function wonPend(i){const W=S&&S.wonPile;if(!W||W.hand!==S.handNo||!S.handOver)return 0;return W.amt[i]&&!W.done[i]?W.amt[i]:0}
 let raiseOpen=false;
 function raiseBounds(){
-  const me=S.players[0],maxTo=me.bet+me.chips;
-  return{minTo:Math.min(S.currentBet+S.minRaise,maxTo),maxTo};
+  const me=S.players[0];return Rules.raiseBounds(S.currentBet,S.minRaise,me.bet,me.chips);
 }
 function renderControls(){
   const me=S.players[0];
@@ -209,7 +210,7 @@ function renderControls(){
     {const rv=$('review'),on=!!(S.result&&S.review&&!CFG.run);rv.hidden=!on;if(on&&rv.dataset.k!==String(S.handNo)){rv.dataset.k=String(S.handNo);rv.innerHTML=reviewHTML(S.review)}}
     if(S.result==='flash'){}else if(S.result==='win'){
       $('resultText').textContent=CFG.ch||CFG.run?'目標達成！':'あなたの優勝です';
-      $('btnNext').textContent=CFG.run?(CFG.run.t>=4?'結果を見る':'次の卓へ'):CFG.ura?'裏の卓へ戻る':CFG.ch?'先へ進む':'もう一度遊ぶ';
+      $('btnNext').textContent=CFG.run?(CFG.run.t>=4?'結果を見る':'次のテーブルへ'):CFG.ura?'裏のテーブルへ戻る':CFG.ch?'先へ進む':'もう一度遊ぶ';
       alt.hidden=!!CFG.ch||!!CFG.run;alt.textContent='タイトルへ';
       $('betweenHint').textContent=CFG.ura?`${CFG.ura.boss}に${CFG.ura.level}段で勝った`:'';
     }else if(S.result==='lose'){

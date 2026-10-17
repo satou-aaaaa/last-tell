@@ -1,0 +1,17 @@
+/* 第3〜5章の録画から（js/49_play35_fixes.js） */
+/* 隣のテーブルの声：自分のテーブルはぼかさない */
+.t3d.nvfull .busts,.t3d.nvfull .felt-wrap,.t3d.nvfull #plates,.t3d.nvsoft .busts,.t3d.nvsoft .felt-wrap,.t3d.nvsoft #plates{filter:none}
+/* 相手のオールイン：札を赤く */
+#plates .plate.c35allin .tag{background:#b3122e;color:#fff;font-weight:800;border-color:#ff5a6e;box-shadow:0 0 0 1px rgba(255,90,110,.5)}
+/* 第一部 後編の添え書き・扉の日数は2行になってよい */
+.partcard em{font-style:normal;color:#cfd3cc;font-size:.85rem;letter-spacing:.1em;text-align:center}
+.partcard.door em{text-wrap:balance;word-break:auto-phrase;max-width:100%;letter-spacing:.1em;line-height:1.5}
+/* クイズの前置き：いま何があったか */
+#quiz .c35ctx{margin:6px 0 2px;font-size:.82rem;color:var(--gold,#e2b65b);line-height:1.5}
+/* #36 降りた人・見ている人の目線は、打っている人か場札のほうへ（右目は左右反転の中にあるので逆向きに動かす） */
+.bust.c35away:not([class*="cue-"]) .av.real .eyes .pupils{transform:translate(var(--gz,0px),1.1px);transition:transform .4s}
+.bust.c35away:not([class*="cue-"]) .av.real .eyes g[transform*="scale(-1"] .pupils{transform:translate(calc(var(--gz,0px) * -1),1.1px)}
+/* #41 赤い斜めの帯・赤い札は★4つから（★3つは帯なし） */
+.bust.cool:not(.rk4)::before{display:none}
+.stage.cool:not(.rk4):not(.face)::before{opacity:0}
+.vscard.cool:not(.rk4){background:linear-gradient(160deg,#1c1f2a,var(--panel) 60%)}

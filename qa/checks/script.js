@@ -16,25 +16,49 @@ const NEVER = [
 ];
 const LONG = 70; // 吹き出しで3行を超えそうな長さ
 
-async function run({ browser, file, baseline }) {
-  const src = fs.readFileSync(file, 'utf8'), items = [];
+// ゲームのファイルから台詞を全部取り出す：[話す人, 日本語, 英語にしたとき日本語が残るか]（lines_diff.js も使う）
+async function collect(browser, file) {
+  const src = fs.readFileSync(file, 'utf8');
   const { ctx, page } = await H.openGame(browser, file, { storage: H.UNLOCKED, lang: 'en' });
   let speakers, lines;
   try {
-    speakers = await page.evaluate(() => [...new Set([...Object.keys(typeof INTRO !== 'undefined' ? INTRO : {}), 'ジン', '師匠', '店主', 'ディーラー', 'アオ'])]);
+    speakers = await page.evaluate(() => [...new Set([...Object.keys(typeof INTRO !== 'undefined' ? INTRO : {}), 'ジン', '師匠', '店主', 'ディーラー', 'アオ', '老人'])]);
     const set = new Set(speakers);
     const re = /\[\s*(['"])([^'"\]\n]{1,8})\1\s*,\s*(['"])((?:(?!\3)[^\n]){2,400})\3\s*\]/g;
     const raw = []; let m;
     while ((m = re.exec(src))) if (set.has(m[2])) raw.push([m[2], m[4].replace(/\\(['"])/g, '$1')]);
+    // 章の扉の添え文 {door:1,cap:'…'}（改善提案 第5回 §1。v83 で追加）
+    const reCap = /\{\s*door\s*:\s*\d+\s*,\s*cap\s*:\s*(['"])((?:(?!\1)[^\n]){2,200})\1/g;
+    while ((m = reCap.exec(src))) raw.push(['扉の添え文', m[2]]);
     // {"who": "ロク", "ja": "…"} の形（v63 の決着の一手・章の締めの差し替えなど）と、一騎打ちの相手役（boss）の flop/turn/river/lose（交代レビュー v63 で追加）
     const reWho = /\{\s*"who"\s*:\s*"([^"]{1,8})"\s*,\s*"ja"\s*:\s*"((?:[^"\\\n]|\\.){2,400})"/g;
     while ((m = reWho.exec(src))) if (set.has(m[1])) raw.push([m[1], m[2].replace(/\\(['"])/g, '$1')]);
     raw.push(...await page.evaluate(() => { const r = []; if (typeof FINAL_DUEL59 === 'undefined') return r;
       for (const d of Object.values(FINAL_DUEL59)) for (const k of ['flop', 'turn', 'river', 'lose']) if (d && d.boss && d[k] && d[k].ja) r.push([d.boss, d[k].ja]); return r }));
+    // 行動のひとこと（LINES：降りる・上げる・勝ったときなど。交代レビュー v73 で追加。v72 までは読んでいなかった）
+    raw.push(...await page.evaluate(() => { const r = []; if (typeof LINES === 'undefined') return r;
+      for (const [who, o] of Object.entries(LINES)) for (const [k, v] of Object.entries(o || {})) if (Array.isArray(v)) v.forEach(t => { if (typeof t === 'string' && t.length > 1) r.push([who, t]) }); return r }));
+    // テルを主軸に（js/39_tell_win.js）：見せ札の一言（話すのはその時の相手）と、ジンの三行の1行目（twLine。クセの言葉と 1回／複数回の形を全部作る）（改善提案 2026-10-14b §1）
+    raw.push(...await page.evaluate(() => { const r = []; try {
+      if (typeof TW_SHOW_LINES !== 'undefined') TW_SHOW_LINES.forEach(t => r.push(['相手（見せ札）', t]));
+      // より面白く（js/41_more_fun.js）：ジンの一言・アオの心の声（v85 交代レビューで追加）
+      if (typeof MF_LINES !== 'undefined') Object.values(MF_LINES).forEach(t => typeof t === 'string' && r.push(['ジン', t]));
+      if (typeof MF_RECALL !== 'undefined') (function walk(o) { for (const v of Object.values(o || {})) typeof v === 'string' ? r.push(['アオ（心の声）', v]) : Array.isArray(v) ? v.forEach(t => typeof t === 'string' && r.push(['アオ（心の声）', t])) : typeof v === 'object' && walk(v) })(MF_RECALL);
+      if (typeof MF_RECALL_DOUBT === 'string') r.push(['アオ（心の声）', MF_RECALL_DOUBT]);
+      // 卓の因縁（js/43_grudge.js）と人だかりの声（js/43b_crowd.js）（v88 レビューで追加）
+      if (typeof MF_GRUDGE !== 'undefined') for (const [who, o] of Object.entries(MF_GRUDGE)) for (const t of Object.values(o || {})) typeof t === 'string' && r.push([who === '_' ? '相手（因縁）' : who, t]);
+      if (typeof CROWD !== 'undefined') (CROWD.lines || []).forEach(t => r.push(['人だかり', t]));
+      if (typeof twLine === 'function' && typeof TW_CUE_WORD !== 'undefined') { const keep = S;
+        try { for (const c of Object.keys(TW_CUE_WORD).concat(['?'])) for (const [w, v] of [[1, 1], [2, 1], [1, 2], [2, 2], [1, 0], [2, 0], [0, 1], [0, 2]]) { S = { tw: { won: w, saved: v, cue: { [c]: 1 } } }; const t = twLine(); if (t && !r.some(x => x[1] === t)) r.push(['ジン', t]) } } finally { S = keep } }
+    } catch (e) {} return r }));
     // 英語にしたとき、日本語が残る行
     lines = await page.evaluate(raw => raw.map(([who, t]) => { let en = ''; try { en = I18N.tr(t.split('〈主〉').join('Ao').split('〈呼〉').join('Ao')) } catch (e) { en = '' } return [who, t, /[぀-ヿ㐀-鿿]/.test(en)] }), raw);
   } finally { await ctx.close() }
+  return lines;
+}
 
+async function run({ browser, file, baseline }) {
+  const items = [], lines = await collect(browser, file);
   const strip = t => t.replace(/「[^」]*」/g, ''); // かぎかっこの中は、誰かの言葉の引用なので見ない
   const voice = [], never = [], long = [], enMiss = [];
   for (const [who, t, jp] of lines) {
@@ -60,4 +84,4 @@ async function run({ browser, file, baseline }) {
   row('script:en', 'セリフが全部英語に訳せる（訳したあとに日本語が残らない）', enMiss, 'enMiss', `${lines.length}行、全部訳せる`);
   return { name: '台本', items, baselineOut: { script: { voice, never, dupes, long, enMiss } } };
 }
-module.exports = { run };
+module.exports = { run, collect, FIRST, FP, NEVER };

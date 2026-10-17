@@ -1,0 +1,12 @@
+'use strict';const path=require('path'),fs=require('fs');const H=require('/mnt/project-files/qa/lib/harness');
+const [file,cssf,out]=process.argv.slice(2);const css=cssf&&cssf!=='-'?fs.readFileSync(cssf,'utf8'):'';
+(async()=>{const browser=await H.launch();
+const ctx=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block',recordVideo:{dir:out,size:{width:390,height:844}}});
+await ctx.route(/^https?:\/\/(?!localhost)/,r=>r.abort());
+await ctx.addInitScript(`{let a=7;Math.random=()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}try{localStorage.setItem('shisho-settings',JSON.stringify({v:1,talk:'on',speed:'normal',sound:false,quiz:false,lang:'ja',cam:'strong'}));localStorage.setItem('shisho-nv','1')}catch(e){}`);
+const page=await ctx.newPage();const T0=Date.now();await page.goto('file://'+path.resolve(file));if(css)await page.addStyleTag({content:css});await page.waitForTimeout(1200);
+const clickAway=`(()=>{const sb=document.querySelector('.seatbtn');if(sb&&sb.getClientRects().length)sb.click();for(const id of ['vsGo','tourSkip','btnNoticeClose','btnHelpClose','btnDailyClose','askGo','nvNew','lkOk','rvOk','twN','btnShowNo','btnIgnore','qtNo']){const e=document.getElementById(id);if(e&&e.getClientRects().length)e.click()}})()`;
+await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);await page.waitForTimeout(1500);await page.evaluate(clickAway);
+for(let i=0;i<60;i++){await page.evaluate(clickAway);if(await page.evaluate(`!!(S&&S.toAct===0&&!S.handOver&&!document.querySelector('.seatbtn'))`))break;await page.waitForTimeout(500)}await page.waitForTimeout(500);
+fs.writeFileSync(out+'/t.txt',String((Date.now()-T0)/1000));await page.screenshot({path:out+'/shot.png'});
+await page.waitForTimeout(7000);await ctx.close();await browser.close()})();

@@ -1,0 +1,176 @@
+<title>テルを主軸に 見本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: 港のバーの卓。濃紺の夜気＋琥珀のランプ。4案を同じ大きさの卓で並べる */
+:root{
+  --bg:#0b1118; --felt:#0f2a26; --felt2:#0a1d1b; --ink:#e7e2d6; --mute:#9aa6a8;
+  --lamp:#ffb15a; --line:#24343a; --hit:#7fe0a8; --miss:#ff8a7a;
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,4vw,38px);margin:0;letter-spacing:.04em;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--mute);max-width:68ch}
+.now{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;max-width:820px}
+.now b{color:var(--lamp);font-size:12px;letter-spacing:.12em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:22px}
+.opt{display:grid;gap:10px;min-width:0}
+.opt h2{font-family:var(--disp);font-size:21px;margin:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.opt h2 small{font-family:var(--body);font-size:12px;color:var(--mute);font-weight:400}
+.tag{font-family:var(--body);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--lamp);color:var(--lamp);letter-spacing:.08em}
+.tag.post{border-color:var(--mute);color:var(--mute)}
+.opt>p{margin:0;color:var(--mute);font-size:13px}
+.table{position:relative;border-radius:18px;padding:16px;min-height:330px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,177,90,.16),transparent 55%),radial-gradient(ellipse at 50% 70%,var(--felt),var(--felt2));
+  border:1px solid var(--line);display:grid;grid-template-rows:auto 1fr auto;gap:10px}
+.top{display:flex;gap:14px;align-items:center}
+.face{width:96px;height:110px;flex:none;position:relative;transition:transform .5s}
+.face svg{width:100%;height:100%;display:block}
+.who{font-size:13px;color:var(--mute)} .who b{color:var(--ink);font-size:15px;display:block}
+.cue{display:inline-block;margin-top:6px;font-size:12px;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.45);border:1px solid rgba(255,177,90,.5);color:#ffe0b8;opacity:0;transition:opacity .25s}
+.cue.on{opacity:1}
+.cue.known{outline:1.5px solid var(--lamp);outline-offset:2px}
+.mid{display:grid;place-items:center;gap:8px;text-align:center}
+.cards{display:flex;gap:5px;justify-content:center}
+.c{width:30px;height:42px;border-radius:4px;background:#f4f1ea;color:#111;font:700 13px/42px var(--body);text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.c.r{color:#b3262b} .c.back{background:repeating-linear-gradient(45deg,#203a5a 0 4px,#16304d 4px 8px);color:transparent}
+.msg{font-size:13px;min-height:2.6em;max-width:44ch}
+.msg .hit{color:var(--hit)} .msg .miss{color:var(--miss)}
+.bet{font-size:12px;color:#ffe0b8}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{font:700 13px var(--body);color:var(--ink);background:#1b2a30;border:1px solid #38505a;border-radius:9px;padding:9px 12px;cursor:pointer;min-height:40px}
+button:hover{border-color:var(--lamp)} button:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+button.read{background:linear-gradient(#25363c,#17252a)}
+button.read small{display:block;font-weight:400;font-size:11px;color:var(--mute)}
+button.ghost{background:transparent;color:var(--mute);font-weight:400}
+button:disabled{opacity:.35;cursor:default}
+.oldrow{display:flex;gap:6px;justify-content:center;opacity:.45;font-size:11px;flex-wrap:wrap}
+.oldrow span{border:1px dashed #4a5d64;border-radius:6px;padding:2px 7px}
+.score{position:absolute;right:14px;top:12px;font-size:12px;color:var(--mute)} .score b{color:var(--lamp);font-size:16px}
+.streets{display:flex;gap:6px;justify-content:center;font-size:11px;color:var(--mute)}
+.streets span{padding:2px 8px;border-radius:99px;border:1px solid #33464d;transition:all .3s}
+.streets span.done{color:var(--ink);border-color:#5d7b84}
+.streets span.now{color:#111;background:var(--lamp);border-color:var(--lamp)}
+.zoom .face{transform:scale(1.22)}
+.book{width:100%;max-width:400px;justify-self:center;background:#f1ece0;color:#2a2a2a;border-radius:6px;padding:10px 12px;font-size:12.5px;display:grid;gap:4px;position:relative}
+.book h3{margin:0;font-family:var(--disp);font-size:14px}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border-bottom:1px dotted #b9b2a2;padding:3px 0;position:relative}
+.row .t{font-variant-numeric:tabular-nums;color:#555}
+.stamp{font-family:var(--disp);color:#b3262b;border:2px solid #b3262b;border-radius:4px;padding:0 5px;font-size:11px;transform:rotate(-8deg);opacity:0;transition:opacity .3s}
+.stamp.on{opacity:1}
+.story{font-size:12px;color:#5a4a2a;border-top:1px solid #b9b2a2;padding-top:4px;display:none}
+.story.on{display:block}
+.tapface{cursor:pointer;border-radius:12px}
+.tapface:focus-visible{outline:2px solid var(--lamp)}
+.flash{position:absolute;inset:-4px;border-radius:12px;pointer-events:none}
+.three{font-size:12.5px;color:var(--mute);border-top:1px solid var(--line);padding-top:6px}
+.foot{color:var(--mute);font-size:13px;max-width:80ch}
+@keyframes talk{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1.4)}}
+@keyframes drop{0%{transform:translateY(-4px);opacity:0}30%{opacity:1}100%{transform:translateY(14px);opacity:0}}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}
+.mouth.talk{animation:talk .22s infinite;transform-origin:48px 80px}
+.sweat{opacity:0} .sweat.on{animation:drop 1s infinite}
+.head{animation:breathe 3.2s infinite}
+.face.still .head{animation:none}
+@media (prefers-reduced-motion:reduce){.mouth.talk,.sweat.on,.head{animation:none}.sweat.on{opacity:1}.zoom .face{transform:none}}
+
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.pair{grid-template-columns:1fr}}
+.mini{position:relative;border-radius:14px;padding:12px;min-height:250px;border:1px solid var(--line);display:grid;grid-template-rows:auto auto 1fr;gap:6px;overflow:hidden;
+ background:radial-gradient(120% 90% at 50% 0%,rgba(255,177,90,.14),transparent 55%),radial-gradient(ellipse at 50% 70%,var(--felt),var(--felt2))}
+.mini.before{filter:saturate(.55)}
+.lbl{font-size:11px;letter-spacing:.12em;color:var(--mute)} .mini.after .lbl{color:var(--lamp)}
+.mini .face{width:78px;height:90px}
+.street{font-size:11px;color:var(--mute)}
+.log{font-size:12.5px;display:grid;gap:3px;align-content:start}
+.log div{opacity:0;transform:translateY(4px);transition:all .3s} .log div.in{opacity:1;transform:none}
+.log .hit{color:var(--hit)} .log .miss{color:var(--miss)} .log .j{color:#ffe0b8}
+.play{justify-self:start}
+.data{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;max-width:900px}
+.data table{border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;width:100%}
+.data th,.data td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+.data td+td,.data th+th{text-align:right}
+.tw{overflow-x:auto}
+.zoom .face{transform:scale(1.18)}
+</style>
+<div class="wrap">
+<header>
+  <h1>テルを主軸に</h1>
+  <p>出し直し。操作はポーカーのまま（降りる／コール／レイズ）で、テルを読んだ人が勝てるようにする5案です。各案の「再生」で、同じ場面の「いま」と「この案」を並べて流します。相手はセキ（強いとき：チップをちらっと見る／ブラフのとき：口数が多い）。</p>
+</header>
+
+<div class="data">
+  <b style="color:var(--lamp);font-size:12px;letter-spacing:.12em">いまの版で測ったこと（v0.73.0・自動対戦・各章12回）</b>
+  <div class="tw"><table>
+    <tr><th></th><th>第4章</th><th>第5章</th><th>第6章</th></tr>
+    <tr><td>賭けられた手番で、相手にテルが出ていた</td><td>65%</td><td>38%</td><td>35%</td></tr>
+    <tr><td>出たテルが本当だった</td><td>78%</td><td>88%</td><td>83%</td></tr>
+    <tr><td>勝った回数（テルを使わない → 使う）</td><td>3 → 4</td><td>3 → 3</td><td>2 → 2</td></tr>
+    <tr><td>本当のブラフに、クセを見てコールできた</td><td>138手で2回</td><td>58手で0回</td><td>153手で2回</td></tr>
+  </table></div>
+  <span style="color:var(--mute);font-size:13px">テルはよく当たるのに、CPUが大きなブラフをほとんど打たないので、読んで勝つ場面が約90ハンドに1回しか来ません。試作（案1＋2）では約23ハンドに1回になりました。</span>
+</div>
+
+<div class="grid" id="opts"></div>
+
+<div class="three"><b style="color:var(--ink)">クリエイター目線の3行</b><br>
+柱：テルを読む（主）、ライブの空気（案3の見せ）。<br>
+最初の5分：変わらない（第1〜3章はテルなしのまま）。<br>
+1.0：案1・2・3・4。案5は公開後。案2は第4〜6章の手応えが変わります（テルを見ない人には少し難しく、読む人には易しく）。</div>
+</div>
+<script>
+function faceSVG(){return `<svg viewBox="0 0 96 110" aria-hidden="true"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c99a78"/><stop offset="1" stop-color="#9c6f55"/></linearGradient></defs>
+<path d="M8 110 C10 88 30 82 48 82 C66 82 86 88 88 110Z" fill="#1d2228"/><path d="M38 84 L48 100 L58 84Z" fill="#d8d2c4"/>
+<g class="head"><ellipse cx="48" cy="52" rx="25" ry="30" fill="url(#sk)"/><path d="M22 44 C22 20 74 18 74 44 C70 32 60 28 48 28 C36 28 26 32 22 44Z" fill="#20252b"/>
+<path d="M33 45 l10 -1 M53 44 l10 1" stroke="#20252b" stroke-width="2.2" stroke-linecap="round"/>
+<g class="eyes"><ellipse cx="38" cy="52" rx="3" ry="2.2" fill="#15181c"/><ellipse cx="58" cy="52" rx="3" ry="2.2" fill="#15181c"/></g>
+<path d="M48 54 l-3 10 h5" fill="none" stroke="#7a5442" stroke-width="1.4"/>
+<path class="mouth" d="M40 72 Q48 75 56 72" fill="none" stroke="#5a3428" stroke-width="2.2" stroke-linecap="round"/>
+<path class="sweat" d="M72 40 q3 5 0 7 q-3 -2 0 -7Z" fill="#bfe6ff"/></g></svg>`}
+function mount(id){const f=document.getElementById(id);f.innerHTML=faceSVG();return f}
+function showCue(f,cue){const e=f.querySelector('.eyes'),m=f.querySelector('.mouth');
+  e.setAttribute('transform','');m.classList.remove('talk');
+  if(cue==='glance')e.setAttribute('transform','translate(-3,4)');
+  if(cue==='talk')m.classList.add('talk');}
+
+const TXT={talk:'いつもより口数が多い',glance:'自分のチップをちらっと見た',sweat:'汗をかいている'};
+function showCue(f,cue){const e=f.querySelector('.eyes'),m=f.querySelector('.mouth'),s=f.querySelector('.sweat');
+  e.setAttribute('transform','');m.classList.remove('talk');s.classList.remove('on');
+  if(cue==='glance')e.setAttribute('transform','translate(-3,4)');if(cue==='talk')m.classList.add('talk');if(cue==='sweat')s.classList.add('on')}
+const OPTS=[
+ {n:'案1',t:'大事な場面にテルを寄せる',tag:'1.0',d:'テルは相手がフロップ以降で賭けた・上げたときだけ出す。当たる確率は変えない。顔のアップも迷う手番の前だけ。',
+  b:[['プリフロップ','セキがコール','talk'],['フロップ','セキはチェック','glance'],['ターン','セキがベット',null],['','あなたの手番。……さっきのクセは何だった？','',' j']],
+  a:[['プリフロップ','セキがコール',null],['フロップ','セキはチェック',null],['ターン','セキがベット','talk',' z'],['','あなたの手番。今のクセで決められる','',' j']]},
+ {n:'案2',t:'大きなブラフを打つ相手にする',tag:'1.0',d:'第4章から、弱い手のCPUがターン・リバーで、性格に応じた割合で大きく賭けてくる。そのときブラフのクセが出る。',
+  b:[['リバー','セキはチェック（弱い手）',null],['','あなたもチェック',''],['','セキ：役なし。小さいポットを取った','',' hit']],
+  a:[['リバー','セキがポットいっぱいに賭けた','talk',' z'],['','あなた：コール（クセを読んだ）',''],['','セキ：役なし。見抜いた。大きいポットを取った','',' hit']]},
+ {n:'案3',t:'降りても答え合わせができる',tag:'1.0',d:'「何持ってた？」で見せた手も答え合わせに使う。見せたがりのキャラは、聞かなくても3回に1回くらい手を見せる。',
+  b:[['リバー','セキが大きく賭けた','glance',' z'],['','あなた：降りる',''],['','セキは黙ってチップを集めた。答えは分からない','',' miss']],
+  a:[['リバー','セキが大きく賭けた','glance',' z'],['','あなた：降りる',''],['','セキ「見せてやるよ」　K♠K♥。降りて正解','',' hit'],['','相手メモ：「ちらっと見る」＝強い手 ✓','',' j']]},
+ {n:'案4',t:'ジンがテルの勝ちを言葉にする',tag:'1.0・小',d:'卓の終わりのジンの一言に、その卓でクセを読んで取った・守ったことを入れる。数字の表は出さない。',
+  b:[['卓の終わり','ジン「悪くない。だが、まだ早い」','','j']],
+  a:[['卓の終わり','ジン「今日は口元で2回、取ったな」','','j'],['','ジン「降りたのも1回。あれも勝ちだ」','','j']]},
+ {n:'案5',t:'見抜かれた相手は崩れる',tag:'公開後',post:1,d:'ブラフを見抜かれたCPUは、3ハンドほど熱くなる（ブラフとクセが増える）。ジン・クロウ・レイカは崩れない。',
+  b:[['','セキのブラフを見抜いた','',' hit'],['次のハンド','セキはいつもどおり',null]],
+  a:[['','セキのブラフを見抜いた','',' hit'],['次のハンド','セキ「……もう一回だ」','sweat'],['','セキがまた大きく賭けた。口数も多い','talk',' z']]}
+];
+const g=document.getElementById('opts');
+OPTS.forEach((o,k)=>{const s=document.createElement('section');s.className='opt';
+ s.innerHTML=`<h2>${o.n} ${o.t} <span class="tag${o.post?' post':''}">${o.tag}</span></h2><p>${o.d}</p>
+ <div class="pair">${['before','after'].map(w=>`<div class="mini ${w}"><span class="lbl">${w==='before'?'いま':'この案'}</span>
+ <div class="top"><div class="face"></div><div class="who"><b>セキ</b><span class="street"></span><br><span class="cue"></span></div></div><div class="log"></div></div>`).join('')}</div>
+ <button class="play">再生</button>`;g.appendChild(s);
+ const minis=[...s.querySelectorAll('.mini')];minis.forEach(m=>m.querySelector('.face').innerHTML=faceSVG());
+ function play(){[o.b,o.a].forEach((seq,j)=>{const m=minis[j],f=m.querySelector('.face'),c=m.querySelector('.cue'),st=m.querySelector('.street'),lg=m.querySelector('.log');
+   (m._t||[]).forEach(clearTimeout);m._t=[];lg.innerHTML='';c.classList.remove('on');showCue(f,null);m.classList.remove('zoom');st.textContent='';
+   seq.forEach(([street,txt,cue,cls],i)=>m._t.push(setTimeout(()=>{if(street)st.textContent=street;
+     m.classList.toggle('zoom',!!(cls&&cls.includes('z')));
+     if(cue!==''){showCue(f,cue);c.classList.toggle('on',!!cue);if(cue)c.textContent=TXT[cue]}
+     const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls.replace(' z','').trim();lg.appendChild(d);requestAnimationFrame(()=>d.classList.add('in'))},300+i*1300)))})}
+ s.querySelector('.play').onclick=play;play()});
+</script>

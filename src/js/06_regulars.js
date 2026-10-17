@@ -23,11 +23,11 @@ function mobNotes(n,cl){const mo=loadMobAll(),mh=mo.h;
       ${tl?`<details><summary>見抜いたクセ</summary><ul class="tl">${tl}</ul></details>`:''}<p class="rd">${esc(foot)}</p></div></article>`};
   const lock=(sub,t)=>`<article class="pcard mob mlk"><div class="pava" aria-hidden="true">？</div><div class="pbody"><h4>？？？</h4><p class="ms">${esc(sub)}</p><ul><li class="lk">${esc(t)}</li></ul></div></article>`;
   let h=`<h3 class="nhead">店の常連</h3>`+Object.keys(MOBS).sort((a,b)=>MOBS[a].store-MOBS[b].store).map(k=>{const c=+mh[k]||0;
-    if(c<10)return lock(INTRO[k][0],'？？？（同じ卓で10ハンド打つと開く）');
-    return card(k,INTRO[k][0],c>=60,'？？？（同じ卓で60ハンド打つと開く）',`同じ卓で${c}ハンド`)}).join('');
+    if(c<10)return lock(INTRO[k][0],'？？？（同じテーブルで10ハンド打つと開く）');
+    return card(k,INTRO[k][0],c>=60,'？？？（同じテーブルで60ハンド打つと開く）',`同じテーブルで${c}ハンド`)}).join('');
   if(cl>=3||Object.keys(mo.ship).length){
     h+=`<h3 class="nhead">入港した船</h3>`+Object.keys(SHIP).map(k=>{const d=+mo.ship[k]||0,sp=SHIP[k];
-      if(d<1)return lock('入港した船の客','？？？（入港した日に、フリー対戦で同じ卓に座ると開く）');
+      if(d<1)return lock('入港した船の客','？？？（入港した日に、フリー対戦で同じテーブルに座ると開く）');
       return card(k,`${sp.port}・${sp.lang}`,d>=3,'？？？（3日会うと開く）',`会った日：${d}日`)}).join('')}
   return h}
 function renderNotes(){
@@ -59,6 +59,7 @@ function showTell(i,d){
   let shown=null;
   for(const cat of ['strong','bluff']){
     const t=T[cat];let prob=d.state===cat?t.rate:t.false;
+    if(d.state===cat&&typeof mfBigBoost==='function')prob=Math.min(.95,prob+mfBigBoost(p));   // 改善提案 2026-10-15b 案1：大一番（15BB 以上のターン・リバー）ほど正しいクセが出やすい
     if(uraLv()>=2)prob*=.8;if(d.state===cat&&hasLesson('face'))prob=Math.min(.95,prob+.15);
     if(S.needle===S.street)prob=Math.min(.95,prob+needleBoost(p,t.cue));
     if(Math.random()<prob){shown=cat;break}

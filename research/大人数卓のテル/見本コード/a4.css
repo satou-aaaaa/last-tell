@@ -1,0 +1,2 @@
+/* 案4：PCは卓の幅を広げる */
+@media (min-width:1000px) and (min-height:700px){.gwrap{max-width:820px}}

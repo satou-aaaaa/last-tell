@@ -1,0 +1,185 @@
+<title>LAST TELL 面白くする5案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: 1枚の暗いカードルーム。5つの小さな卓を縦に並べ、各卓が同じ周期で動く */
+:root{
+  --room:#0e1412; --felt:#123227; --felt2:#0b2219; --rail:#2b211a;
+  --ink:#e9e4d8; --dim:#9aa59d; --brass:#c9a45c; --tell:#e07a5f; --inner:#8fb8de;
+  --f-disp:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--room);color:var(--ink);font-family:var(--f-body);line-height:1.7}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(26px,5vw,40px);letter-spacing:.04em;margin:0;text-wrap:balance}
+header p{color:var(--dim);margin:.4em 0 0;max-width:62ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:13px;color:var(--dim)}
+.pill{display:inline-block;padding:1px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.06em;border:1px solid}
+.p10{color:var(--brass);border-color:var(--brass)}
+.ppost{color:var(--dim);border-color:#4a554f}
+.list{display:grid;gap:22px;margin-top:28px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:center;padding-top:22px;border-top:1px solid #26302c}
+@media(max-width:720px){.item{grid-template-columns:minmax(0,1fr)}}
+.txt{min-width:0}
+.txt h2{font-family:var(--f-disp);font-size:21px;margin:.2em 0 .3em;text-wrap:balance}
+.txt h2 .rec{color:var(--brass);font-size:15px;margin-left:.4em}
+.txt p{margin:.3em 0;color:var(--ink)}
+.txt .why{color:var(--dim);font-size:13px}
+.no{font-family:var(--f-disp);color:var(--brass);font-size:13px;letter-spacing:.12em}
+
+/* 卓 */
+.stage{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:120px/80px;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0%,var(--felt2) 75%);border:10px solid var(--rail);overflow:hidden}
+.face{position:absolute;left:50%;top:14%;width:84px;height:84px;margin-left:-42px}
+.face svg{width:100%;height:100%}
+.name{position:absolute;left:50%;top:calc(14% + 88px);transform:translateX(-50%);font-size:12px;color:var(--dim);white-space:nowrap}
+.tag{position:absolute;left:calc(50% + 46px);top:16%;background:var(--tell);color:#1a0f0b;font-weight:700;font-size:12px;padding:2px 8px;border-radius:4px;opacity:0;white-space:nowrap}
+.pot{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-family:var(--f-disp);color:var(--brass);font-size:14px;white-space:nowrap}
+.cap{position:absolute;left:8%;right:8%;bottom:6%;text-align:center;font-size:13px;color:var(--inner);opacity:0}
+.say{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:var(--ink);color:#141414;font-size:12.5px;padding:4px 10px;border-radius:10px;white-space:nowrap;opacity:0}
+.mini{position:absolute;top:8px;left:12px;font-size:11px;color:var(--dim);letter-spacing:.08em}
+
+/* 1: 小と大を並べる */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .stage{border-width:7px}
+.duo .face{width:46px;height:46px;margin-left:-23px;top:9%}
+.duo .tag{left:50%;top:auto;bottom:40%;transform:translateX(-50%);font-size:11px}
+.duo .pot{bottom:7%;font-size:12px}
+.duo .mini{display:none}
+.duo .lbl{display:block;text-align:center;font-size:12px;color:var(--dim);margin-top:4px}
+.chips{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end}
+.chips i{display:block;width:14px;background:repeating-linear-gradient(var(--brass) 0 3px,#7a5d2a 3px 4px);border-radius:2px}
+.s1big .chips i{animation:grow 6s infinite}
+.s1big .tag{animation:tagBig 6s infinite}
+.s1small .tag{animation:tagSmall 6s infinite}
+@keyframes grow{0%,10%{height:6px}40%,100%{height:20px}}
+@keyframes tagBig{0%,45%{opacity:0}52%,88%{opacity:1}95%,100%{opacity:0}}
+@keyframes tagSmall{0%,50%{opacity:0}55%,62%{opacity:.55}68%,100%{opacity:0}}
+
+/* 2: 心の声 */
+.s2 .pot{bottom:auto;top:18%;left:12%;transform:none;font-size:12px}
+.s2 .tag{animation:tag2 7s infinite}
+.s2 .cap{animation:cap2 7s infinite}
+@keyframes tag2{0%,15%{opacity:0}20%,80%{opacity:1}88%,100%{opacity:0}}
+@keyframes cap2{0%,30%{opacity:0;transform:translateY(6px)}38%,72%{opacity:1;transform:none}82%,100%{opacity:0}}
+
+/* 3: 因縁 */
+.s3 .door{position:absolute;inset:0;display:grid;place-items:center;background:var(--room);font-family:var(--f-disp);font-size:20px;letter-spacing:.1em;animation:door3 7s infinite}
+.s3 .say{animation:say3 7s infinite}
+@keyframes door3{0%,22%{opacity:1}32%,100%{opacity:0}}
+@keyframes say3{0%,38%{opacity:0;transform:translate(-50%,6px)}46%,85%{opacity:1;transform:translate(-50%,0)}92%,100%{opacity:0}}
+
+/* 4: 人だかり */
+.crowd{position:absolute;top:2%;width:46px;height:70px;opacity:0}
+.crowd svg{width:100%;height:100%}
+.c1{left:10%;animation:crowd 8s infinite}
+.c2{left:22%;animation:crowd 8s infinite .3s}
+.c3{right:12%;animation:crowd 8s infinite .6s}
+.s4 .hush{position:absolute;right:6%;bottom:6%;font-size:12px;color:var(--dim);animation:hush 8s infinite}
+.s4 .oo{position:absolute;left:50%;top:30%;transform:translateX(-50%);font-family:var(--f-disp);font-size:18px;color:var(--ink);opacity:0;animation:oo 8s infinite}
+.s4 .river{position:absolute;left:50%;top:52%;transform:translateX(-50%);display:flex;gap:4px}
+.card{width:24px;height:34px;border-radius:3px;background:var(--ink);color:#1a1a1a;font-size:11px;font-weight:700;display:grid;place-items:center}
+.card.r{color:#a3282a}
+.s4 .river .last{animation:flip 8s infinite;background:#2c3b52}
+@keyframes crowd{0%,12%{opacity:0;transform:translateY(10px)}22%,80%{opacity:.85;transform:none}92%,100%{opacity:0}}
+@keyframes hush{0%,30%{opacity:1}36%,70%{opacity:0}78%,100%{opacity:1}}
+@keyframes oo{0%,62%{opacity:0}68%,82%{opacity:1}90%,100%{opacity:0}}
+@keyframes flip{0%,55%{background:#2c3b52;color:transparent}58%,100%{background:var(--ink);color:#a3282a}}
+
+/* 5: 見返し */
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.fr{aspect-ratio:3/4;border:1px solid #33403a;border-radius:6px;background:var(--felt2);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--dim);padding:4px;opacity:.3}
+.fr b{display:block;color:var(--ink);font-family:var(--f-disp);font-size:14px}
+.f1{animation:fr 8s infinite 0s}.f2{animation:fr 8s infinite 2s}.f3{animation:fr 8s infinite 4s}.f4{animation:fr 8s infinite 6s}
+@keyframes fr{0%{opacity:.3;border-color:#33403a}3%,22%{opacity:1;border-color:var(--brass)}25%,100%{opacity:.3;border-color:#33403a}}
+.jin{margin-top:8px;font-size:13px;color:var(--ink)}
+.jin span{color:var(--brass);font-weight:700;margin-right:.5em}
+
+.summary{margin-top:34px;padding:16px 18px;border:1px solid var(--brass);border-radius:6px}
+.summary h3{font-family:var(--f-disp);margin:0 0 .3em;font-size:18px}
+.summary p{margin:.2em 0}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}.tag,.cap,.say,.crowd,.oo{opacity:1!important}.s3 .door{display:none}.fr{opacity:1}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="head" viewBox="0 0 84 84"><circle cx="42" cy="42" r="40" fill="#1d2622" stroke="#3a4a43"/><ellipse cx="42" cy="38" rx="20" ry="24" fill="#c9a98a"/><path d="M22 30c2-16 38-18 40 0-6-6-32-6-40 0z" fill="#2b2420"/><circle cx="34" cy="38" r="2.2" fill="#222"/><circle cx="50" cy="38" r="2.2" fill="#222"/><path d="M35 50q7 4 14 0" stroke="#6a4a3a" stroke-width="2" fill="none"/><path d="M14 84c4-14 16-20 28-20s24 6 28 20z" fill="#2a3340"/></symbol>
+    <symbol id="shadow" viewBox="0 0 46 70"><circle cx="23" cy="16" r="11" fill="#05090a"/><path d="M4 70c0-22 8-38 19-38s19 16 19 38z" fill="#05090a"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+<header>
+  <h1>LAST TELL をもっと面白く</h1>
+  <p>5つの案を、それぞれ小さな卓で動かした見本です。どれも「読むと勝てる」「卓の上の物語」「ライブの空気」のどれかを強めます。第1〜3章の難しさと、第7章のジンの本物のテルには触れません。</p>
+  <div class="legend"><span><span class="pill p10">1.0</span> 1.0 に推す</span><span><span class="pill ppost">公開後</span> 公開後の更新</span></div>
+</header>
+
+<div class="list">
+
+<section class="item">
+  <div class="txt">
+    <div class="no">案1 <span class="pill p10">1.0</span></div>
+    <h2>大一番ほどクセが濃く出る<span class="rec">★おすすめ</span></h2>
+    <p>第4章から、ターン・リバーでポットが 15BB 以上のとき、相手のクセが出やすくなります。小さいポットは今のまま。</p>
+    <p class="why">いまは第4〜6章で、読んでも読まなくても勝率がほぼ同じ（+8、+8、0）。読みが当たった手が、章の勝ち負けに効くようにします。</p>
+  </div>
+  <div class="duo">
+    <div><div class="stage s1small"><span class="mini">小さいポット</span><div class="face"><svg><use href="#head"/></svg></div><span class="tag">止まった手</span><div class="chips"><i style="height:8px"></i></div><span class="pot">4BB</span></div><span class="lbl">小さいポット：今のまま</span></div>
+    <div><div class="stage s1big"><span class="mini">大きいポット</span><div class="face"><svg><use href="#head"/></svg></div><span class="tag">止まった手</span><div class="chips"><i></i><i></i><i></i></div><span class="pot">22BB</span></div><span class="lbl">大きいポット：出やすい</span></div>
+  </div>
+</section>
+
+<section class="item">
+  <div class="txt">
+    <div class="no">案2 <span class="pill p10">1.0</span></div>
+    <h2>「前にも見た」アオの心の声<span class="rec">★おすすめ</span></h2>
+    <p>相手がクセを見せた瞬間、ノートに同じクセの答え合わせが2回以上あれば、アオが前のことを1行だけ思い出します。数字は出しません。</p>
+    <p class="why">信じるかはプレイヤー次第。レイカやクロウでは思い出が外れることもあり、2回外れると「……前と同じとは限らない」に変わります。</p>
+  </div>
+  <div class="stage s2"><div class="face"><svg><use href="#head"/></svg></div><span class="name">ゲン</span><span class="tag">止まった手</span><span class="pot">ポット 18BB</span><span class="cap">……指が止まった。前に見たときは、強い手だった</span></div>
+</section>
+
+<section class="item">
+  <div class="txt">
+    <div class="no">案3 <span class="pill ppost">公開後</span></div>
+    <h2>卓の因縁</h2>
+    <p>大きな勝負でブラフを通した相手、見抜いた相手、やられた相手を、章をまたいで覚えています。次に同じ卓になると一言あり、最初の5ハンドだけ少し打ち方が変わります。</p>
+    <p class="why">遊んだ人ごとに違う物語が、卓の上で生まれます。全キャラの台詞と打ち方の調整が要るので公開後に。</p>
+  </div>
+  <div class="stage s3"><div class="face"><svg><use href="#head"/></svg></div><span class="name">ゲン</span><span class="say">この前のブラフ、忘れてないからな</span><span class="pot">第5章 最初のハンド</span><div class="door">第5章　銀の扉</div></div>
+</section>
+
+<section class="item">
+  <div class="txt">
+    <div class="no">案4 <span class="pill ppost">公開後</span></div>
+    <h2>人だかり</h2>
+    <p>オールインや 40BB 以上のリバーで、隣の卓の常連が後ろに立って見にきます。隣の卓の声が止み、結果が出ると「おお……」と散っていきます。</p>
+    <p class="why">大きな勝負が「店の出来事」になります。見た目の検査と重さの確認が要るので公開後に。</p>
+  </div>
+  <div class="stage s4"><div class="crowd c1"><svg><use href="#shadow"/></svg></div><div class="crowd c2"><svg><use href="#shadow"/></svg></div><div class="crowd c3"><svg><use href="#shadow"/></svg></div>
+    <div class="river"><span class="card">K♠</span><span class="card r">9♥</span><span class="card">4♣</span><span class="card r">J♦</span><span class="card last">Q♥</span></div>
+    <span class="oo">おお……</span><span class="hush">隣の卓：「レイズ」「……コール」</span></div>
+</section>
+
+<section class="item">
+  <div class="txt">
+    <div class="no">案5 <span class="pill ppost">公開後</span></div>
+    <h2>読み勝ちの見返し</h2>
+    <p>章の終わり、ジンの三行の前に、その章でいちばん大きな「読み勝ち」を4秒で振り返ります。名場面の画像もここから作れます。</p>
+    <p class="why">読みが当たった気持ちよさを、もう一度。カメラ演出と重なるので公開後に。</p>
+  </div>
+  <div>
+    <div class="strip"><div class="fr f1"><span><b>顔</b>ミヤコ</span></div><div class="fr f2"><span><b>クセ</b>笑った</span></div><div class="fr f3"><span><b>判断</b>コール</span></div><div class="fr f4"><span><b>手札</b>7♣ 6♣</span></div></div>
+    <p class="jin"><span>ジン</span>口元で取ったな。あれは運じゃない</p>
+  </div>
+</section>
+
+</div>
+
+<div class="summary">
+  <h3>おすすめ：案1＋案2 を 1.0、案3〜5 は公開後</h3>
+  <p>1.0 には、小さくて「読むと勝てる」に直接効く2つだけを入れます。どちらも今あるファイルに十数行と台詞を足す大きさです。</p>
+</div>
+</div>

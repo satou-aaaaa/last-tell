@@ -25,20 +25,30 @@ async function run({ browser, file }) {
   }
   // S3：章の途中で閉じて開き直すと「続きから」が出る
   {
-    const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: H.UNLOCKED });
-    try {
-      await page.evaluate(() => startChapter(CHAPTERS[1], true));
-      // 'call' だと2ハンドで持ち点が0になって章が終わり（＝続きから が消えるのが正しい）、検査が揺れたので、払わずに済むときだけ進む 'fold' にする
-      await H.startBot(page, { policy: 'fold', maxHands: 2 });
-      await H.runUntilDone(page, { timeoutMs: 60000 });
-      // 重いときは保存が reload に間に合わないので、続きの記録が入るまで待つ（最大5秒）
-      await page.waitForFunction(() => !!localStorage.getItem('shisho-resume'), null, { timeout: 5000 }).catch(() => { });
-      // Chromium は localStorage への書き込みを少し遅れて保存するので、すぐ開き直すと書いたばかりの値が消えることがある（v67 でも10回に1回）。少し待つ
-      await page.waitForTimeout(1500);
-      await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(500);
-      const has = await page.evaluate(() => [...document.querySelectorAll('button')].some(b => b.offsetParent !== null && /続きから|Continue/.test(b.textContent)));
-      items.push({ id: 'ftue:resume', title: '章の途中で閉じても「続きから」で戻れる（クリエイター目線 S3）', status: has ? 'ok' : 'fail', detail: has ? 'タイトルに「続きから」が出た' : '開き直すと「続きから」が出ない' });
-    } finally { await ctx.close() }
+    // 2026-10-14 CIのチェック充実 案1：CI で2回続けて外れた（同じ中身で手元は5/5）。乱数を固定し、開き直しは
+    // 「同じページの reload」（Chromium が localStorage を書き終える前に読み直すことがある）ではなく、保存された中身を持って新しく開く形にする
+    let saved = null, why = '';
+    {
+      const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: H.UNLOCKED, seed: H.seedOf('ftue', 'resume') });
+      try {
+        await page.evaluate(() => startChapter(CHAPTERS[1], true));
+        // 'call' だと2ハンドで持ち点が0になって章が終わり（＝続きから が消えるのが正しい）、検査が揺れたので、払わずに済むときだけ進む 'fold' にする
+        await H.startBot(page, { policy: 'fold', maxHands: 2 });
+        const r = await H.runUntilDone(page, { timeoutMs: 60000 });
+        // 続きの記録が入るまで待つ（最大15秒）
+        const got = await page.waitForFunction(() => !!localStorage.getItem('shisho-resume'), null, { timeout: 15000 }).then(() => true).catch(() => false);
+        if (!got) why = `続きの記録（shisho-resume）が書かれなかった（打った結果: ${r.status}）`;
+        saved = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])));
+      } finally { await ctx.close() }
+    }
+    {
+      const { ctx, page } = await H.openGame(browser, file, { fast: 60, storage: saved });
+      try {
+        await page.waitForTimeout(500);
+        const has = await page.evaluate(() => [...document.querySelectorAll('button')].some(b => b.offsetParent !== null && /続きから|Continue/.test(b.textContent)));
+        items.push({ id: 'ftue:resume', title: '章の途中で閉じても「続きから」で戻れる（クリエイター目線 S3）', status: has ? 'ok' : 'fail', detail: has ? 'タイトルに「続きから」が出た' : '開き直すと「続きから」が出ない' + (why ? '。' + why : '') });
+      } finally { await ctx.close() }
+    }
   }
   // 最初の判断の画面で、相手の顔（#bust1、口より上）が勝利条件の帯（.goaldrop）に隠れていない（v65 クリエイター目線レビュー）
   for (const vp of [{ key: '縦', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, { key: '横', viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true }]) {

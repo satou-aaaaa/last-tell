@@ -1,7 +1,7 @@
 /* ---------- ストーリー系の要素：負けたときの一言・次回予告・名乗り・見えた・回想・ノート・後日談 ---------- */
 const STORY_KEY='shisho-story';
 function loadStory(){const o=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
-  try{const t=JSON.parse(localStorage.getItem(STORY_KEY))||{};return{loses:o(t.loses),brk:o(t.brk),ep:o(t.ep),mieta:+t.mieta||0,alt:!!t.alt,il:o(t.il),deal:o(t.deal),bt:o(t.bt),tempt:t.tempt==='refuse'||t.tempt==='silent'?t.tempt:undefined}}catch(e){return{loses:{},brk:{},ep:{},mieta:0,alt:false,il:{},deal:{},bt:{}}}}
+  try{const t=JSON.parse(localStorage.getItem(STORY_KEY))||{};return{loses:o(t.loses),brk:o(t.brk),ep:o(t.ep),mieta:+t.mieta||0,alt:!!t.alt,il:o(t.il),deal:o(t.deal),bt:o(t.bt),tempt:t.tempt==='refuse'||t.tempt==='silent'?t.tempt:undefined,mfBig:+t.mfBig||0}}catch(e){return{loses:{},brk:{},ep:{},mieta:0,alt:false,il:{},deal:{},bt:{}}}}
 function saveStory(t){try{localStorage.setItem(STORY_KEY,JSON.stringify({v:1,...t}))}catch(e){}}
 // 口癖がいつもと違う場面（全部見ると称号）
 const BREAKS=['hero','jin','hayato','crow','gen','roku','seki','reika','sou','hal','mina','tenshu'];
@@ -167,7 +167,7 @@ const flashOf=()=>{const id=flashId();return id&&id!=='jin'?FLASH[id]:null};
 function startFlashback(done,id){
   const F=FLASH[id];
   if(!F){
-    startGame({ch:null,flashback:true,flash:'jin',onDone:done,title:'15年前　王冠・看板戦の決勝卓',blinds:[1000,2000],goal:{type:'flash'},hint:null,refill:false,tells:false,house:null,lamp:'#c9a0ff',bgm:6,lore:'',
+    startGame({ch:null,flashback:true,flash:'jin',onDone:done,title:'15年前　王冠・看板戦の決勝テーブル',blinds:[1000,2000],goal:{type:'flash'},hint:null,refill:false,tells:false,house:null,lamp:'#c9a0ff',bgm:6,lore:'',
       seats:[{name:'若き日のジン',chips:80000,human:true},{name:'クロウ',style:'crow',chips:100000,label:'王冠の主'}]});
     return}
   startGame({ch:null,flashback:true,flash:id,onDone:done,title:F.title,blinds:[1000,2000],goal:{type:'flash'},hint:null,refill:false,tells:false,house:null,lamp:'#c9a0ff',bgm:6,lore:'',
@@ -179,7 +179,7 @@ function flashTo(){const me=S.players[0],pot=potTotal();
   return Math.min(me.bet+me.chips,S.currentBet+Math.max(BB(),Math.round(pot*.6/1000)*1000))}
 /* ジンのノート */
 const PROFILE={
-  'ジン':{ph:'降りるのも勝負のうちだ',ch:1,lines:[[1,'錨亭で飲んでいる老人。「昔、少しだけカードをやっていた」'],[2,'15年前に、突然姿を消した。ロクの昔の相棒'],[4,'傷に触れるのは、迷っているとき。触れないときは、迷いがない'],[5,'顎の傷は20年前、少年のハヤトをかばってできた'],[5,'クセを漏らしたのがハヤトだと、あの日のうちに気づいていた'],[6,'あの日、ブラフを降りずに負けた。降りることを教えたのは、自分にできなかったからだ'],[7,'最後のクセは本物だった。強い手のとき、傷から手を離す']]},
+  'ジン':{ph:'降りるのも勝負のうちだ',ch:1,lines:[[1,'錨亭で飲んでいる老人。「昔、少しだけカードをやっていた」'],[2,'15年前に、突然姿を消した。ロクの昔の相棒'],[4,'傷に触れるのは、迷っているとき。触れないときは、迷いがない'],[5,'あごの傷は20年前、少年のハヤトをかばってできた'],[5,'クセを漏らしたのがハヤトだと、あの日のうちに気づいていた'],[6,'あの日、ブラフを降りずに負けた。降りることを教えたのは、自分にできなかったからだ'],[7,'最後のクセは本物だった。強い手のとき、傷から手を離す']]},
   'ゲン':{ph:'配られた札は全部勝負！',ch:1,lines:[[1,'港の酔客。毎晩負けて、毎晩笑って帰る'],[1,'元漁師。腰を痛めて船を降りた。錨のお守りは、その日に店主が壁に掛けてくれたもの'],[7,'15年間、毎晩錨亭でジンの隣に座っていた']]},
   '店主':{ph:'腹が減ってちゃ勝てないよ',ch:1,lines:[[1,'錨亭の女主人。名物はカレー。ジンを叱れる、ただ一人の人'],[7,'15年前、行き場のなくなったジンを、何も聞かずに錨亭に置いた']]},
   'ロク':{ph:'……数えてから言え',ch:2,lines:[[2,'銀の扉の主。15年前、ジンの相棒だった'],[2,'チームの金庫番。鍵のお守りは、昔の倉庫の鍵'],[6,'本当は、ジンに「相談してほしかった」と言いたかった']]},
@@ -253,7 +253,7 @@ function showNotebook(tab){
     const got=loadTitles();
     body=CHAPTERS.filter(c=>c.no<=cl).map(c=>{const ws=[].concat(c.intro,...(c.beats||[]).map(b=>b.lines),typeof c.outro==='function'?[]:c.outro).filter(l=>Array.isArray(l)&&l[0]==='ジン'&&l[1].length>=6&&!(l[2]&&l[2].tempt)).map(l=>l[1]);
       return`<article class="rcard"><h4>第${c.no}章　${esc(c.title)}</h4><ul>${ws.map(w=>`<li>「${esc(w)}」</li>`).join('')}</ul></article>`}).join('')
-      +(()=>{const R=loadReview(),it=Object.keys(R.ch).sort((a,b)=>a-b).map(k=>[`第${k}章`,R.ch[k]]).concat(R.free?[['フリー対戦・裏の卓',R.free]]:[]);
+      +(()=>{const R=loadReview(),it=Object.keys(R.ch).sort((a,b)=>a-b).map(k=>[`第${k}章`,R.ch[k]]).concat(R.free?[['フリー対戦・裏のテーブル',R.free]]:[]);
         return it.length?`<article class="rcard"><h4>これまでの三行</h4>${it.map(([h,r])=>`<details><summary>${esc(h)}</summary><ol>${r.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></details>`).join('')}</article>`:''})()
       +`<article class="rcard"><h4>称号をもらったとき</h4><ul>${TITLES.filter(t=>got[t.id]).map(t=>`<li>「${esc(t.jin)}」<small>（${esc(t.name)}）</small></li>`).join('')||'<li class="lk">まだありません</li>'}</ul></article>`;
     if(!cl)body='<p class="lk">第1章をクリアすると、ジンの言葉が書き込まれます。</p>'+body;

@@ -11,7 +11,7 @@
 /* 6人卓は名札が細いので、呼び名は小さめにして言葉の札を省く（隣の名札と重ならないように） */
 .n6 .plate .nm.nm-on{font-size:12px;letter-spacing:-.03em;white-space:nowrap}
 .n6 .plate .nm.nm-on .lang{display:none}
-@media (max-width:620px){.n6 .plate .nm.nm-on{font-size:11px;letter-spacing:-.05em}.t3d:has(#plate3) .plate .nm.nm-on .lang{display:none}}
+@media (max-width:620px){.n6 .plate .nm.nm-on{font-size:11px;letter-spacing:-.05em}.t3d.hasP3 .plate .nm.nm-on .lang{display:none}}
 /* スマホ横は高さが無いので、吹き出しの呼び名は省く（同じ時に名札にも出ている） */
 @media (max-height:500px){.say .nmwho{display:none}}
 /* スマホ縦の6人卓：長い呼び名（銀のネックレス など）が隣の名札に重ならないよう、名札の幅で切って「…」にする（全部はタップや吹き出しで見える） */

@@ -48,7 +48,7 @@ function jinView(){
     if(CFG.ch&&!CFG.ura&&q.styleKey==='crow'&&CFG.ch.no===6)l+='　（ジンはグラスを置いた）';ls.push(l);if(lk)ls.push(lk.view.split('{n}').join(q.name))});
   if(!ls.length)return;S.jinViews=ls;jinNote(ls.join('　／　'),1);log('ジンの見立て：'+ls.join('　／　'));renderNotes()}
 // 案B：今夜の三行
-const REVIEW_WIN_LINE={"1": "ゲンを飛ばした。それで十分だ", "2": "三回、盗んだな。後ろの席の使い方は覚えた", "3": "何もない手で、二回勝った。それが仕掛けだ", "4": "嘘を二回、見抜いた。顔を見ていたな", "5": "少ないチップから戻した。焦らなかったな", "6": "最後の一人だ。……王冠の卓でな", "7": "……読んだな", "11": "ゲンを飛ばした。最初の一歩だ", "12": "よその店で、二回盗んだ。度胸がついたな", "13": "カイに勝った。急がなかったからだ", "14": "看板持ちの卓で、最後の一人だ", "15": "……読んだな"};
+const REVIEW_WIN_LINE={"1": "ゲンを飛ばした。それで十分だ", "2": "三回、スチールを決めたな。後ろの席の使い方は覚えた", "3": "何もない手で、二回勝った。それが仕掛けだ", "4": "嘘を二回、見抜いた。顔を見ていたな", "5": "少ないチップから戻した。焦らなかったな", "6": "最後の一人だ。……王冠の卓でな", "7": "……読んだな", "11": "ゲンを飛ばした。最初の一歩だ", "12": "よその店で、二回スチールを決めた。度胸がついたな", "13": "カイに勝った。急がなかったからだ", "14": "看板持ちの卓で、最後の一人だ", "15": "……読んだな"};
 const REVIEW_LOSE_LINE='……まだ、お前の打ち方は見えてこない';
 function reviewLines(st,ch,result){
   if(!st||st.hands<5)return null;const r=[];
@@ -153,7 +153,7 @@ const URA_KEY='shisho-ura';
 const RUN_TABLES=[1,2,3,4,6],RUN_GOAL=[80000,120000,170000,230000,300000],RUN_BLINDS=[[1000,2000],[1500,3000],[2000,4000],[3000,6000],[4000,8000]];
 const RUN_REG=[{name:'ケンジ',style:'normal'},{name:'ミサキ',style:'normal'},{name:'タロウ',style:'normal'}];
 const LESSONS=[{id:'face',name:'顔を見ろ',desc:'クセの出る確率 +15%'},{id:'foldbb',name:'降りる勇気',desc:'プリフロップで降りたとき、1周に1回だけ、置いたブラインドが戻る'},
-  {id:'seat',name:'後ろの席',desc:'毎卓、最初の席を自分で選べる'},{id:'rumor',name:'噂好き',desc:'卓ごとに噂を1つ聞ける'},
+  {id:'seat',name:'後ろの席',desc:'毎テーブル、最初の席を自分で選べる'},{id:'rumor',name:'噂好き',desc:'テーブルごとに噂を1つ聞ける'},
   {id:'twice',name:'二度めくり',desc:'オールインで手が決まったら、いつも2回めくる'},{id:'pen',name:'赤ペン',desc:'負けたハンドのあと、赤ペンが毎回出る'},{id:'seven2',name:'一杯おごり',desc:'7と2で勝つと、ほかの全員からBBの4倍'}];
 const RUN_KEY='shisho-run';let RUN=null;
 function loadRun(){try{const o=JSON.parse(localStorage.getItem(RUN_KEY))||{};return{best:+o.best||0,pts:+o.pts||0,plays:+o.plays||0}}catch(e){return{best:0,pts:0,plays:0}}}
@@ -171,7 +171,7 @@ function runTable(){
   const pool=ch.opps.map(o=>({name:o.name,style:o.style,label:o.label})).concat(RUN_REG.filter(r=>!ch.opps.some(o=>o.name===r.name)));
   const n=2+(Math.random()<.5?1:0),opps=[pool[0]].concat(shuffle(pool.slice(1)).slice(0,n-1));
   const houses=['','straddle','bomb','seven2'],house=houses[Math.floor(Math.random()*houses.length)]||null,oc=Math.round((40000+t*20000)/1000)*1000;
-  const go=()=>startGame({ch:null,run:{t},title:`はしご　${t+1}卓目　${ch.venue}`,blinds:RUN_BLINDS[t],goal,goalText,hint:null,refill:false,tells:true,house,lamp:ch.lamp,bgm:ch.bgm,
+  const go=()=>startGame({ch:null,run:{t},title:`はしご　${t+1}テーブル目　${ch.venue}`,blinds:RUN_BLINDS[t],goal,goalText,hint:null,refill:false,tells:true,house,lamp:ch.lamp,bgm:ch.bgm,
     seats:[{name:'あなた',chips:RUN.chips,human:true}].concat(opps.map(o=>({...o,chips:oc})))});
   if(!hasLessonRun('rumor'))return go();
   const cand=opps.filter(o=>TELLS[o.name]),o=cand[Math.floor(Math.random()*cand.length)];if(!o)return go();
@@ -182,17 +182,17 @@ function runSave(clear){const r=loadRun(),me=S.players&&S.players[0];r.best=Math
 function runNext(){RUN.chips=S.players[0].chips;RUN.peak=Math.max(RUN.peak||0,RUN.chips);RUN.t++;runSave();
   if(RUN.t>=RUN_TABLES.length)return runOver(true);pickLesson(runTable)}
 function runCanvas(clear){
-  const {cv,ctx}=cvBase('はしご　'+(clear?'朝まで勝ち続けた':`${RUN.t+1}卓目で力尽きた`),`最高 ${fmt(RUN.peak||0)}点　教え：${RUN.lessons.map(id=>LESSONS.find(l=>l.id===id).name).join('、')||'なし'}`);
+  const {cv,ctx}=cvBase('はしご　'+(clear?'朝まで勝ち続けた':`${RUN.t+1}テーブル目で力尽きた`),`最高 ${fmt(RUN.peak||0)}点　教え：${RUN.lessons.map(id=>LESSONS.find(l=>l.id===id).name).join('、')||'なし'}`);
   RUN_TABLES.forEach((no,k)=>{const x=200+k*200,on=k<RUN.t;ctx.beginPath();ctx.arc(x,420,46,0,Math.PI*2);ctx.fillStyle=on?'#e2b65b':'#2a2c36';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#e2b65b';ctx.stroke();
     ctx.fillStyle=on?'#111':'#e2b65b';ctx.font='800 36px sans-serif';ctx.textAlign='center';ctx.fillText(String(k+1),x,433);
     ctx.fillStyle='#fff';ctx.font='600 22px sans-serif';ctx.fillText(CHAPTERS[no-1].venue.replace(/^.*「|」$/g,''),x,510)});
   return cv}
 function runOver(clear){
   const me=S.players&&S.players[0];RUN.peak=Math.max(RUN.peak||0,me?me.chips:0);const r=runSave(clear);if(clear)grantTitle('night');
-  const box=runBox(`<p class="qq">${clear?'五つの卓を勝ち抜いた。外は、もう朝だ':`${RUN.t+1}卓目で、チップがなくなった`}</p>
+  const box=runBox(`<p class="qq">${clear?'五つのテーブルを勝ち抜いた。外は、もう朝だ':`${RUN.t+1}テーブル目で、チップがなくなった`}</p>
     <div class="runmap">${RUN_TABLES.map((x,k)=>`<i class="${k<RUN.t?'on':''}"></i>`).join('')}</div>
     ${(()=>{const r=jinAdviceOn()?reviewLines(RUN.stat):null;return r?`<div class="review">${reviewHTML(r)}</div>`:''})()}
-    <ul><li>回った卓：${RUN.t}/5</li><li>教え：${RUN.lessons.map(id=>esc(LESSONS.find(l=>l.id===id).name)).join('、')||'なし'}</li><li>これまでの最高：${r.best}卓</li></ul>
+    <ul><li>回ったテーブル：${RUN.t}/5</li><li>教え：${RUN.lessons.map(id=>esc(LESSONS.find(l=>l.id===id).name)).join('、')||'なし'}</li><li>これまでの最高：${r.best}テーブル</li></ul>
     <div class="qopts"><button id="runShot">画像にする</button><button id="runAgain">もう一度</button><button id="runHome">タイトルへ</button></div>`);
   $('runShot').onclick=()=>shareImage(runCanvas(clear),'LAST TELL　はしご');
   $('runAgain').onclick=()=>{box.hidden=true;startRun()};$('runHome').onclick=()=>{box.hidden=true;RUN=null;show('title')}}
@@ -204,7 +204,7 @@ function startUra(no){
   const ch=CHAPTERS[no-1],boss=ch.opps[0].name,lv=Math.min(8,(+loadUra().rank[boss]||0)+1);
   const mul=1+(lv>=1?.25:0)+(lv>=8?.5:0),fin=ch.goal.type==='final';
   const goal=fin?{type:'bust'}:ch.goal,goalText=fin?'ジンのチップを全部取る':ch.goalText;
-  startGame({ch:{...ch,script:null,goal,goalText},ura:{boss,level:lv,no},nanori:false,title:`裏の卓　${boss}　${lv}段`,blinds:ch.blinds,
+  startGame({ch:{...ch,script:null,goal,goalText},ura:{boss,level:lv,no},nanori:false,title:`裏のテーブル　${boss}　${lv}段`,blinds:ch.blinds,
     seats:[{name:'あなた',chips:lv>=6?Math.round(ch.you*.8/1000)*1000:ch.you,human:true}].concat(ch.opps.map(o=>({...o,chips:Math.round(o.chips*mul/1000)*1000}))),
     goal,goalText,hint:null,refill:!!ch.refill,tells:true,house:ch.house||null,lamp:ch.lamp,bgm:ch.bgm,lore:'',
     levels:lv>=5?(ch.levels||URA_LEVELS):(ch.levels||null),levelHands:lv>=5?5:(ch.levelHands||0)})}

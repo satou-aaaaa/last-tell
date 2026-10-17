@@ -46,7 +46,7 @@ const TELLS={
   'クロウ':{strong:{cue:'sweat',rate:.7,false:.1},bluff:{cue:'smile',rate:.7,false:.1}},
   'カオル':{strong:{cue:'glance',rate:.65,false:.1},bluff:{cue:'fast',rate:.65,false:.1}},
 };
-const CUE_LABEL={glove:'白い手袋の指先を直した',release:'顎の傷から手を離した',scar:'顎の傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
+const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
   talk:'いつもより口数が多い',fast:'考えずにすぐ賭けた',sweat:'汗をかいている'};
 const CUE_SFX={glove:'スッ',release:'……',scar:'傷',glance:'ちらっ',still:'…',smile:'ニヤ',stare:'じっ',talk:'ペラペラ',fast:'サッ',sweat:'タラ…'};
 const TRUTH_JP={strong:'強い手',bluff:'ブラフ',none:'特に意味なし'};
@@ -54,7 +54,11 @@ const SET_KEY='shisho-settings';
 let SETTINGS={talk:'on',speed:'normal',sound:false,peek:true,peekSet:false,protector:'',depth:true,clock:true,muck:true,count:'approx',quiz:true,nick:'',lang:LANG0,cam:'',nextv:true};
 try{const o=JSON.parse(localStorage.getItem(SET_KEY))||{};delete o.v;Object.assign(SETTINGS,o)}catch(e){}
 function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify({v:1,...SETTINGS}))}catch(e){}}
-const SPEED=()=>SETTINGS.speed==='fast'?.5:1;
+// 改善提案 第3回 §2：自分が降りたら残りを速く回す（クセの札・ショーダウン・第7章・物語の一手・回想は除く）
+const foldFastNow=()=>{try{return SETTINGS.foldFast!==false&&typeof S!=='undefined'&&S&&S.players&&S.players[0]&&S.players[0].folded&&!S.handOver&&!S.reveal
+    &&!S.storyHand&&!(CFG&&CFG.ch&&CFG.ch.no===7&&!CFG.ch.p2)&&!CFG.flashback&&S.street!=='showdown'
+    &&!S.players.some(p=>p.tell&&p.tell.street===S.street&&!p.folded)}catch(e){return false}};
+const SPEED=()=>SETTINGS.speed==='slow'?1.5:SETTINGS.speed==='fast'||foldFastNow()?.5:1;   // ゆっくり（2026-10-17 動画のツッコミ A3）は降りても速くしない
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NOTE_KEY='shisho-notes';
 function loadNotes(){

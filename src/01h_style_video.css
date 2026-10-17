@@ -1,0 +1,47 @@
+/* ---------- 動画のツッコミから（2026-10-17）：js/47_video_fixes.js の見た目 ---------- */
+/* A2：あなたの番（自分の顔の上） */
+.mine .me-l{position:relative}
+.mine .me-l > .vfturn{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px);z-index:5;white-space:nowrap;pointer-events:none;
+  font:800 11px/1.3 var(--display,inherit);color:#1a1408;background:var(--gold,#e2b65b);padding:2px 7px;border-radius:9px;box-shadow:0 0 10px rgba(226,182,91,.55)}
+.mine .me-l > .vfturn[hidden]{display:none}
+/* A4：席のマーク（D と反対の角） */
+.me-ava > .vfpos{position:absolute;right:-8px;top:-8px;z-index:2;min-width:22px;height:18px;padding:0 4px;border-radius:9px;display:grid;place-items:center;
+  font:800 10px/1 var(--display,inherit);color:#111;background:#cfd6de;box-shadow:0 1px 0 #7b838c;pointer-events:auto}
+.me-ava > .vfpos[hidden]{display:none}
+.me-ava > .vfpos.late{background:var(--gold,#e2b65b);box-shadow:0 0 8px rgba(226,182,91,.7)}
+.me-ava > .vfpos.early{background:#5d6470;color:#e8e8e8}
+/* A1：押せるのはオールインだけ */
+#controls.vfone #btnCall{flex:1 1 100%}
+/* A7・A8：勝ち負けの一行（場札の下） */
+.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;
+  padding:4px 12px;border-radius:6px;background:rgba(10,11,14,.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:700 13px/1.3 var(--display,inherit);color:#e8e4da;
+  animation:vfIn .3s ease-out both;transition:opacity .4s}
+.vfres.win{box-shadow:inset 0 0 0 1px var(--gold,#e2b65b)}
+.vfres b{font-weight:800}.vfres.win b{color:var(--gold,#e2b65b)}
+.vfres .h{color:#c9d6e2}.vfres .n{font-variant-numeric:tabular-nums}.vfres.win .n{color:#9fe0b0}
+.vfres.out,.vfcard.out{opacity:0}
+@keyframes vfIn{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
+/* A9・A10：一言の説明 */
+#quiz .vfqwhy{margin:4px 0 0;font-size:11px;line-height:1.4;color:var(--muted,#9a9a9a)}
+.showbox .vfwhy{flex-basis:100%;font-size:10.5px;line-height:1.3;color:var(--muted,#9a9a9a);text-align:center}
+#showBox:not([hidden]){flex-wrap:wrap}
+/* B1：そろえて置く */
+.lt-tidy .muckpile .muckcard{transform:none!important}
+/* 自分の手札の傾きは変えない（WebKit の縦で席番号に重なった。CI 2026-10-17） */
+.lt-tidy .felt .spot .hand .card.back{transform:rotateX(38deg) rotate(-3deg) scale(.8)}
+.lt-tidy .felt .spot .hand .card.back:last-child{transform:rotateX(38deg) rotate(3deg) scale(.8)}
+/* B2：お守りを手札の横へ */
+.mine .hold.vfaside .protector{left:100%;bottom:2px;transform:translateX(2px);width:30px;height:30px;transition:left .25s,width .25s,height .25s}
+/* B6・B7：星の意味 */
+#vs .vfstars{margin:2px 0 0;font-size:11px;line-height:1.4;color:var(--muted,#a8a8a8);text-align:center}
+/* B8・D3・D4：見出し */
+.vfcard{position:fixed;inset:0;z-index:60;display:grid;place-content:center;justify-items:center;gap:6px;background:rgba(6,7,10,.86);color:#eee;text-align:center;padding:16px;
+  animation:vfIn .35s ease-out both;transition:opacity .45s;cursor:pointer}
+.vfcard span{font:700 13px/1.2 var(--display,inherit);letter-spacing:.3em;color:var(--gold,#e2b65b)}
+.vfcard b{font:800 clamp(20px,6vw,32px)/1.3 var(--display,inherit);letter-spacing:.06em}
+.vfcard em{font-style:normal;font-size:13px;color:#b9c4cf}
+/* E3：お守りの絵 */
+.vfprot{display:flex;gap:10px;align-items:center;margin-top:8px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.06)}
+.vfprot .pic{width:40px;height:40px;flex:none}.vfprot .pic svg{width:100%;height:100%}
+.vfprot b{display:block;font-size:13px}.vfprot small{display:block;font-size:11px;line-height:1.4;color:var(--muted,#a8a8a8)}
+@media (prefers-reduced-motion:reduce){.vfres,.vfcard{animation:none}}

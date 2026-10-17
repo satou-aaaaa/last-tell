@@ -1,6 +1,6 @@
 /* ---------- 店ごとのハウスルール ---------- */
 const HOUSE={
-  straddle:{name:'ストラドル',desc:'ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は最後に話せる）'},
+  straddle:{name:'ストラドル',desc:'ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は、プリフロップで最後にアクションできる）'},
   bomb:{name:'ボムポット',desc:'5ハンドに1回、全員がBBの2倍を出し合い、フロップから始める'},
   seven2:{name:'7-2ゲーム',desc:'7と2の手で勝つと、ほかの全員からBBの2倍のボーナス'},
   twice:{name:'2回めくり',desc:'オールインで手が決まったら、残りの場札を2回めくって、ポットを半分ずつ分ける'},
@@ -40,6 +40,7 @@ function post(p,amt){const a=Math.max(0,Math.min(amt,p.chips));p.chips-=a;p.bet+
 
 function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preAct='';readClear();if(S){S.readsHand=[];S.readShow=null;S.myRead=null;S.foolTag=null;S.readLook=-1;S.myActs=[];S.myBetsHand=[];S.myLastBet=null;S.twice=false;S.twiceBase=null;S.board2=null;S.declare=null;S.declGuess=null;if(S.players)S.players.forEach(q=>{q.runWon=null;q.hname2=''})}if(S&&S.players)S.players.forEach(q=>{q.faked=null});quickPick=0;clearArm();
   if(CFG.refill)S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;log(`${p.name}がチップを補充して席に戻った`)}});
+  if(S.rebuyMain){S.rebuyMain=false;S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;S.chipsReset=S.handNo+1;log(`${p.name}がチップを買い足して席に戻った`)}})}   // 相手役がほかの客に飛ばされたとき（endHand の byOther）
   S.players.forEach(p=>{p.out=p.chips<=0||!!p.sitOut});
   S.handNo++;
   // トーナメント：決まったハンド数ごとにブラインドが上がる
@@ -50,6 +51,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   S.showOffer=false;if(S.shownMem&&S.handNo>0&&S.handNo%6===0){S.shownMem.bluff=Math.max(0,S.shownMem.bluff-1);S.shownMem.strong=Math.max(0,S.shownMem.strong-1)}S.taunt=-1;S.slowrolled=-1;S.meSmug=false;S.angleActing=-1;S.players.forEach(p=>{if(p.tilt>0&&S.handNo>0&&p.tiltHand!==S.handNo){p.tiltHand=S.handNo;p.tilt--}});S.needle=null;S.runout=false;S.tease=false;S.reveal=false;S.stare=-1;S.stareKey='';$('table').classList.remove('hush');Sound.hush(false);Clock.stop();S.myPreFold=false;S.myTurnAt=0;S.myTurnKey='';S.deck=shuffle(fullDeck());S.board=[];S.released=false;S.street='preflop';S.handOver=false;S.msg='';S.raises=0;S.aggr=-1;S.riverAggr=-1;S.lastCalled=-1;S.myPostAggro=false;
   S.players.forEach(p=>{Object.assign(p,{hand:p.out?[]:[S.deck.pop(),S.deck.pop()],folded:p.out,allIn:false,
     bet:0,total:0,acted:false,show:false,won:0,refund:0,hname:'',raisedPre:false,cbetFlop:false,leakPend:[],leakFold:'',leakAL:0,lastAct:'',lastType:'',seen:null,actKind:'',say:null,peeked:false,tell:null,tellLog:[],lastState:'',answered:false,hs:p.chips,ante:0,mucked:false,muckPlan:false,shownByChoice:false,counting:false,showN:0,slow:false,eq:null,eqDir:'',seenArr:null})});
+  try{if(typeof dealHelp==='function')dealHelp()}catch(e){}   // 易しくする：自分に弱い手が来にくい（js/49_play35_fixes.js）。台本・決まった札はこの後で上書きされる
   setupScript();
   // ディーラーのミス（第4章以降とフリー対戦）：1ハンドに1.5%、続けては起きない
   let mq='';
@@ -65,13 +67,8 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   }
   const live=p=>!p.out;
   const alive=S.players.filter(live).length;
-  let sb=alive===2?S.dealer:nextIdx(S.dealer,live),bb=nextIdx(sb,live);
-  if(deadBtn){const b2=nextIdx(S.bbSeat,live);
-    if(alive===2){bb=b2;sb=nextIdx(b2,live);S.dealer=sb;S.sbSeat=sb}
-    else{const d2=S.sbSeat>=0?S.sbSeat:S.dealer,s2=S.bbSeat;
-      if(b2!==s2&&b2!==d2){bb=b2;S.sbSeat=s2;S.dealer=d2;sb=live(S.players[s2])?s2:-1}
-      else{S.dealer=nextIdx(S.dealer,live);sb=nextIdx(S.dealer,live);bb=nextIdx(sb,live);S.sbSeat=sb}}}
-  else S.sbSeat=sb;
+  // SB・BB の席の決め方は 19b_rules.js（Rules.seats）
+  const st=Rules.seats(S.players.map(live),S.dealer,deadBtn,S.sbSeat,S.bbSeat),sb=st.sb,bb=st.bb;S.dealer=st.dealer;S.sbSeat=st.sbSeat;
   S.bbSeat=bb;S.sbI=sb;S.bbI=bb;
   log(`ハンド #${S.handNo}`,true);
   if(CFG.tells)$('table').style.setProperty('--night',Math.min(.35,S.handNo*.015).toFixed(3));
@@ -96,14 +93,15 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   {const q=S.players[bb],a=Math.min(BB(),q.chips);if(a>0){q.chips-=a;q.total+=a;q.ante=a;if(q.chips===0)q.allIn=true;log(`${q.name}：BBアンティ ${fmt(a)}`)}}
   S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB();
   S.toAct=nextIdx(bb,needs);
+  S.strdl=0;
   if(CFG.house==='straddle'&&alive>=3){
     const u=S.players[S.toAct];
     const want=u.human?myStraddle:(u.chips>BB()*6&&Math.random()<.35);
-    if(want){post(u,BB()*2);u.lastAct=`ストラドル ${fmt(BB()*2)}`;u.lastType='raise';
+    if(want){post(u,BB()*2);S.strdl=BB()*2;u.lastAct=`ストラドル ${fmt(BB()*2)}`;u.lastType='raise';
       log(`${u.name}：ストラドル ${fmt(BB()*2)}`);S.msg=`${u.name}がストラドル（${fmt(BB()*2)}）`;
       S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB()*2;S.toAct=nextIdx(S.toAct,needs);if(!mq)mq='straddle'}
   }
-  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように顎の傷に触れている……':'ジンは顎の傷に触れている';
+  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように、あごの傷に触れている……':'ジンは、あごの傷に触れている';
   const go=()=>{S.hold=startBanter();proceed()};
   mq?askQuiz(mq,go):go();
 }

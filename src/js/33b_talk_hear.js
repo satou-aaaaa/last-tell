@@ -145,7 +145,7 @@ const PRE_ASK={
      ja:'レイカさんは、長く座るほど読みにくくなるって、よく言われてますよ',en:'People say Reika gets harder to read the longer she sits.',kind:'true',cue:null,cat:null,note:'reverse'},
     {who:'常連',hint:{ja:'話を盛る。古い話も混ざる',en:'Exaggerates. Some stories are old.'},
      ja:'レイカは汗をかいたら勝負手だってさ',en:'Word is, when Reika sweats, she’s got it.',kind:'old',cue:'sweat',cat:'strong'},
-    {who:'アキラ',hint:{ja:'今日の卓の客。大会好き',en:'At your table today. Loves tournaments.'},
+    {who:'アキラ',hint:{ja:'今日のテーブルの客。大会好き',en:'At your table today. Loves tournaments.'},
      ja:'レイカさん、ブラフのときはよくしゃべるよ。大会でも見た',en:'Reika talks a lot when she’s bluffing. Saw it at a tournament.',kind:'true',cue:'talk',cat:'bluff'}]},
   5:{boss:'ハヤト',people:[
     {who:'テツ',hint:{ja:'ハヤトの昔なじみ。口は悪いが正確',en:'Hayato’s old acquaintance. Rough, but accurate.'},
@@ -163,15 +163,15 @@ const PRE_ASK={
      ja:'本当に迷ったときだけ、白い手袋に触るって聞いたことがある',en:'I heard he touches his white glove only when he’s truly unsure.',kind:'true',cue:'glove',cat:null},
     {who:'ソフィア',hint:{ja:'世界の港を回るプロ',en:'A pro who travels the world’s ports.'},
      ja:'クロウ？ 大きな勝負からは降りられない人よ。どの港でも同じ',en:'Crow? He can’t walk away from a big pot. Same in every port.',kind:'true',cue:null,cat:null,leak:'bigPot'},
-    {who:'イオリ',hint:{ja:'クロウと同じ卓になると、先に帰る',en:'Leaves early whenever she draws Crow’s table.'},
+    {who:'イオリ',hint:{ja:'クロウと同じテーブルになると、先に帰る',en:'Leaves early whenever she draws Crow’s table.'},
      ja:'クロウさん、ブラフのときは考えずにすぐ賭けるわよ。……前はそうだった',en:'Crow bets right away when he’s bluffing. …He used to, anyway.',kind:'old',cue:'fast',cat:'bluff'}]},
   7:{boss:'ジン',people:[   // 第7章は flavor と old だけ。本物のテル（release・顎の傷）には誰も触れない
-    {who:'店主',hint:{ja:'錨亭の店主',en:'Owner of the Anchor.'},ja:'ジンさんの顎の傷のこと、誰も聞けないんだよ',en:'Nobody can ask Jin about the scar on his chin.',kind:'flavor'},
+    {who:'店主',hint:{ja:'錨亭の店主',en:'Owner of the Anchor.'},ja:'ジンさんのあごの傷のこと、誰も聞けないんだよ',en:'Nobody can ask Jin about the scar on his chin.',kind:'flavor'},
     {who:'ゲン',hint:{ja:'昔からの常連',en:'A regular from way back.'},ja:'ジンさんはな、降りるときだけ、ちょっと笑うんだ',en:'Jin smiles a little, only when he folds.',kind:'old',cue:'smile',cat:null},
     {who:'マリア',hint:{ja:'ジンの昔を少しだけ知っている',en:'Knows a little of Jin’s past.'},ja:'言葉より、手を見るの。……でも、あの人の手は何も言わない',en:'Watch hands, not words. …But his hands never say anything.',kind:'flavor'},
     {who:'マツ',hint:{ja:'無口な元船長',en:'A quiet former captain.'},ja:'……あの日から、あいつは同じ席にしか座らん',en:'…Since that day, he only sits in the same seat.',kind:'flavor'}]}
 };
-const PRE_ASK_TITLE={ja:'{venue}　あと{k}人に聞ける',en:'{venue} — you can ask {k} more'};
+const PRE_ASK_TITLE={ja:'{venue}　勝負の前に、客から噂を聞ける（あと{k}人。聞いた噂は相手メモに残る）',en:'{venue} — before you sit, ask the regulars ({k} more; rumors go in your notes)'};
 const PRE_ASK_DONE={ja:'もう聞けない',en:'No one else to ask'};
 const PRE_ASK_JIN={ja:'噂は噂だ。誰から聞いたかも、覚えておけ',en:'A rumor is a rumor. Remember who told you, too.'};
 
@@ -201,7 +201,7 @@ const CONFRONT_HIT={  // 当たっていた
 const CONFRONT_MISS={  // 外れていた
   _:      [{ja:'へえ、そんな話になってるんだ',en:'Huh. So that’s the story going around.'},{ja:'ふうん。それ、誰の話？',en:'Hm. Whose story is that?'}]
 };
-const CONFRONT_SEALED={ja:'{n}は、この卓ではもうそのクセを見せなくなった',en:'{n} won’t show that habit again at this table.'};
+const CONFRONT_SEALED={ja:'{n}は、このテーブルではもうそのクセを見せなくなった',en:'{n} won’t show that habit again at this table.'};
 const CONFRONT_JIN={ja:'口で勝とうとするな',en:'Don’t try to win with your mouth.'};
 
 // ===== 案5：話を交換する（公開後） =====

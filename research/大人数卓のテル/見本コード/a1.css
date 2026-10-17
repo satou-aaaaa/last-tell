@@ -1,0 +1,17 @@
+/* 案1：縦画面の6人卓は、卓を囲む並び（奥に3人、左右の手前に2人） */
+@media (orientation:portrait) and (max-width:699px){
+ .n6 #bust2{left:24%!important;width:34%!important}
+ .n6 #bust3{left:50%!important;width:34%!important}
+ .n6 #bust4{left:76%!important;width:34%!important}
+ .n6 #bust1,.n6 #bust5{width:34%!important;max-width:none!important;bottom:calc(100% - 73%)!important;z-index:2}
+ .n6 #bust1{left:11%!important}.n6 #bust5{left:89%!important}
+ .n6 #plate2{left:24%!important}.n6 #plate4{left:76%!important}
+ .n6 #plate1,.n6 #plate5{top:74.5%!important}
+ .n6 #plate1{left:11%!important}.n6 #plate5{left:89%!important}
+ .n6 #say2{left:24%!important}.n6 #say4{left:76%!important}
+}
+@media (orientation:portrait) and (max-width:699px){
+ .busts.side{z-index:2;pointer-events:none}.busts.side .bust{pointer-events:auto}
+ .n6 #bust1,.n6 #bust5{-webkit-mask-image:linear-gradient(#000 78%,transparent 98%);mask-image:linear-gradient(#000 78%,transparent 98%)}
+}
+@media (orientation:portrait) and (max-width:699px){.n6 .felt .boardspot{scale:.8;top:28%}}
