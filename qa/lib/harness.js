@@ -82,10 +82,14 @@ const BOT = `(() => {
             if (!tp) d = { type: 'fold' } }
           // 測るだけ（判断には使わない）：札の当たり外れと、読まない打ち手（cpuDecide）と判断が変わったか
           try { if (p.tell && p.tell.truth === m) B.hits = (B.hits || 0) + 1; const d0 = cpuDecide(0), dd = d || d0, diff = !!(d0 && dd && d0.type !== dd.type);
-            if (!B.rp || B.rp.hand !== S.handNo) B.rp = { hand: S.handNo, start: me.chips + me.total, diff }; else B.rp.diff = B.rp.diff || diff;
+            const left0 = S.players.filter(q => q !== me && q !== p && !q.folded && !q.out && q.hand && q.hand.length).length;
+            if (!B.rp || B.rp.hand !== S.handNo) B.rp = { hand: S.handNo, start: me.chips + me.total, diff, m, left: left0 }; else B.rp.diff = B.rp.diff || diff;
             // 読みの得（v83 レビュー）：判断が変わったとき、相手の本当の札から勝つ見込み eq を出し、EV(コール)=eq×(ポット+払う額)−払う額、降りる=0 として「選んだ手 − 読まない手」を BB で足す（測るだけ）
             if (diff) { const pay = Math.min(toCall, me.chips), pot = S.players.reduce((a, q) => a + q.total, 0), eq = B.eqVs(me.hand, S.board, S.players.filter(q => q !== me && !q.folded && q.hand).map(q => q.hand), 300);
-              const ev = t => t === 'fold' ? 0 : eq * (pot + pay) - pay; B.evGain = (B.evGain || 0) + (ev(dd.type) - ev(d0.type)) / Math.max(1, BB()); B.evN = (B.evN || 0) + 1 }
+              const ev = t => t === 'fold' ? 0 : eq * (pot + pay) - pay; const g = (ev(dd.type) - ev(d0.type)) / Math.max(1, BB()); B.evGain = (B.evGain || 0) + g; B.evN = (B.evN || 0) + 1;
+              // 内訳（改善提案 2026-10-17 §0-1）：賭けた本人のほかに残っている相手の数（0＝1対1）× 札の意味。払う額／ポットも記録
+              const left = S.players.filter(q => q !== me && q !== p && !q.folded && !q.out && q.hand && q.hand.length).length, k = (left ? 'multi' : 'hu') + '_' + m;
+              const e = (B.evBy = B.evBy || {})[k] = B.evBy[k] || { n: 0, bb: 0, pp: 0 }; e.n++; e.bb += g; e.pp += pay / Math.max(1, pot) }
             if (d) return d; if (d0 && d0.type) return d0 } catch (e) { if (d) return d } }
       }
     }
@@ -145,10 +149,12 @@ const BOT = `(() => {
         if (B.lastSum !== null && names === B.lastNames && s !== B.expect && !reset) B.chipErr.push({ hand: S.handNo, before: B.expect, after: s, diff: s - B.expect, log: [...document.querySelectorAll('#log > *')].slice(-12).map(x => x.textContent) });
         // ハンドごとの自分の増減（BB）。読む・読まないを同じ配り札で対にして比べる（改善提案 2026-10-16 §0-2）
         { const me = S.players[0]; if (me && !reset) (B.hb = B.hb || {})[S.handNo] = (me.chips - (B.prevMe != null ? B.prevMe : me.start)) / Math.max(1, BB()); B.prevMe = me ? me.chips : null }
-        if (B.rp && B.rp.hand === S.handNo) { const me = S.players[0]; (B.readRes = B.readRes || []).push({ bb: (me.chips - B.rp.start) / Math.max(1, BB()), diff: B.rp.diff }); B.rp = null }
+        if (B.rp && B.rp.hand === S.handNo) { const me = S.players[0]; (B.readRes = B.readRes || []).push({ bb: (me.chips - B.rp.start) / Math.max(1, BB()), diff: B.rp.diff, m: B.rp.m, left: B.rp.left }); B.rp = null }
         B.lastSum = s; B.lastNames = names;
         // 次のハンドで補充される分
         B.expect = s + (CFG.refill ? S.players.filter(p => !p.human && !p.extra && p.chips <= 0).reduce((a, p) => a + p.start, 0) : 0);
+        // 検査だけの近道（改善提案 2026-10-17 §0-2）：weaken のときは、ハンドの終わりごとに相手のチップを 1BB までに減らす（毎晩の通しで、勝てない章の「勝ったあと」を通すため。ゲームに裏口は作らない）
+        if (B.weaken && !S.result) { S.players.forEach(p => { if (!p.human && p.chips > BB()) p.chips = BB() }); B.lastSum = sum(); B.expect = B.lastSum + (CFG.refill ? S.players.filter(p => !p.human && !p.extra && p.chips <= 0).reduce((a, p) => a + p.start, 0) : 0); B.weakened = (B.weakened || 0) + 1 }
         if (S.result) { B.result = S.result; B.done = true; return }
         if (B.hands >= B.maxHands) { B.result = 'limit'; B.done = true; B.games = B.games || 1; return }
       }

@@ -28,7 +28,8 @@ async function playOnce(browser, file, ch, maxHands, seed, tw, policy = 'cpu', r
     const r = await H.runUntilDone(page, { timeoutMs: maxHands * 8000, stallMs: 20000 });
     const b = await H.botState(page); await twGet();
     if (hb) { try { Object.assign(hb, await page.evaluate(() => __bot.hb || {})) } catch (e) {} }
-    if (rd) { try { const x = await page.evaluate(() => ({ n: __bot.reads || 0, h: __bot.hits || 0, r: __bot.readRes || [], ev: __bot.evGain || 0, en: __bot.evN || 0 })); rd.n += x.n; rd.h += x.h; rd.r.push(...x.r); rd.ev += x.ev; rd.en += x.en } catch (e) {} }
+    if (rd) { try { const x = await page.evaluate(() => ({ n: __bot.reads || 0, h: __bot.hits || 0, r: __bot.readRes || [], ev: __bot.evGain || 0, en: __bot.evN || 0, by: __bot.evBy || {} })); rd.n += x.n; rd.h += x.h; rd.r.push(...x.r); rd.ev += x.ev; rd.en += x.en;
+      const by = rd.by = rd.by || {}; for (const k in x.by) { const a = by[k] = by[k] || { n: 0, bb: 0, pp: 0 }; a.n += x.by[k].n; a.bb += x.by[k].bb; a.pp += x.by[k].pp } } catch (e) {} }
     // 手は進んでいるのに時間切れ → 80ハンドで決着しない回と同じく「決着なし」（負け扱い）。止まった（stalled）ときだけエラー
     return r.status === 'done' ? b.result : r.status === 'timeout' ? 'nodecision' : 'error';
   } catch (e) { return 'error' } finally { await ctx.close() }
@@ -81,8 +82,12 @@ async function run({ browser, file, quick, baseline, chapters, parallel = Math.m
       const judged = ch >= 4 && rd.n >= 5 && dif.length >= 20, low = judged && dm < 0 && dm + 2 * dse < 0;
       const avg = a => a.length ? (a.reduce((x, y) => x + y.bb, 0) / a.length).toFixed(1) : '-';
       const dv = rd.r.filter(x => x.diff), sm = rd.r.filter(x => !x.diff);
+      // 読みの得の内訳（改善提案 2026-10-17 §0-1）：1対1／3人以上 × ブラフの札でコール／強い札で降りた。判定には使わない
+      const byLine = by => { const L = { hu_bluff: '1対1・ブラフの札でコール', hu_strong: '1対1・強い札で降りた', multi_bluff: '3人以上・ブラフの札でコール', multi_strong: '3人以上・強い札で降りた' };
+        const xs = Object.keys(L).filter(k => by && by[k] && by[k].n).map(k => `${L[k]} ${by[k].bb >= 0 ? '+' : ''}${by[k].bb.toFixed(1)}BB（${by[k].n}回、払う額／ポット ${(by[k].pp / by[k].n).toFixed(2)}）`);
+        return xs.length ? '。読みの得の内訳：' + xs.join('、') : '' };
       // 読みの得：判断が変わったときの「選んだ手 − 読まない手」の EV の合計（相手の本当の札で見た勝つ見込みから）。ハンドの結果（BB）は運が大きいので参考
-      const more = `。札の当たり ${rd.n ? Math.round(rd.h / rd.n * 100) : '-'}%（${rd.h}/${rd.n}）、読みの得 ${rd.ev >= 0 ? '+' : ''}${rd.ev.toFixed(1)}BB（判断が変わった ${rd.en}回、1回あたり ${rd.en ? (rd.ev / rd.en).toFixed(2) : '-'}BB）。参考：判断が変わったハンドの結果 平均 ${avg(dv)}BB（${dv.length}回）、変わらなかったハンド ${avg(sm)}BB（${sm.length}回）`;
+      const more = `。札の当たり ${rd.n ? Math.round(rd.h / rd.n * 100) : '-'}%（${rd.h}/${rd.n}）、読みの得 ${rd.ev >= 0 ? '+' : ''}${rd.ev.toFixed(1)}BB（判断が変わった ${rd.en}回、1回あたり ${rd.en ? (rd.ev / rd.en).toFixed(2) : '-'}BB）。参考：判断が変わったハンドの結果 平均 ${avg(dv)}BB（${dv.length}回）、変わらなかったハンド ${avg(sm)}BB（${sm.length}回）` + byLine(rd.by);
       items.push({ id: 'tellgap:ch' + ch, title: `第${ch}章：クセを読むと勝てるか`, status: low ? 'warn' : 'ok',
         detail: `読まない ${Math.round(rate * 100)}%（${ok.length}回）／読む ${Math.round(trate * 100)}%（${tok.length}回、札を読んだ判断 ${rd.n}回）／差 ${gap >= 0 ? '+' : ''}${gap}ポイント` +
           more + (paired ? `。同じ札で対にしたハンドの差（読む − 読まない） 平均 ${dm >= 0 ? '+' : ''}${dm.toFixed(2)}BB ±${Number.isFinite(dse) ? (2 * dse).toFixed(2) : '-'}（${dif.length}ハンド）` : '') +
