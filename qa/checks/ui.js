@@ -44,8 +44,9 @@ const SCENES = [
   { key: 'フリー6人_人だかり', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', settle: 1400,
     after: `(S.runout=true,render(),S.runout=false,crowdSay(CROWD.lines[1]))`, measure: 'inner', sel: '#crowdSay' },
   // アクションのわかりやすさ 案2：ディーラーの声に呼び名と席番号（.sn）。声がほかの部品に重ならないか（v91.2 レビュー）
+  // clearTimeout(dcallT)：速く回すと声が 65ms で消えて元の場所に戻り、見えない #dcall を測っていた（v93 レビューの「#say5 89×3px」）
   { key: 'フリー6人_ディーラーの呼び名', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', settle: 600,
-    after: `(()=>{const i=S.players.findIndex((p,j)=>j&&!p.out&&!p.folded);awCall(i,'call',Math.max(1,S.currentBet));$('dcall').style.animationDuration='600s'})()`, measure: 'inner', sel: '#dcall', callCheck: true },
+    after: `(()=>{const i=S.players.findIndex((p,j)=>j&&!p.out&&!p.folded);awCall(i,'call',Math.max(1,S.currentBet));$('dcall').style.animationDuration='600s';clearTimeout(dcallT)})()`, measure: 'inner', sel: '#dcall', callCheck: true },
   { key: 'はじめての箱', prep: `$('btnStory').click()`, fresh: true, waitFor: `!!$('novDlg')&&!$('novDlg').hidden` },
   { key: '回想の判断', prep: `startFlashback(()=>{},'seki')`, settle: 2500,
     waitFor: `(()=>{if(!$('vs').hidden){$('vsGo').click();return false}return !!(S&&S.fbAsk&&S.toAct===0&&!S.handOver&&!$('controls').hidden)})()` },
@@ -128,6 +129,8 @@ const INSPECT = `(() => {
       // 自分の名札の名前（.nm）にもかからないか（v92.1 レビュー：縦6人卓で上下にずらした語が自分の名前を隠した）
       { const n = el.parentElement.querySelector(':scope > .nm'); if (n && vis(n)) { const c = n.getBoundingClientRect(), w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
         if (w > 2 && h > 2) out.push({ kind: '重なり', el: desc(el), by: '自分の名札の名前 ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
+      // 画面（#game）の左右からはみ出していないか（v93 レビュー：縦6人卓の端の席で「コール 5,0」と切れた）
+      { const g = (document.getElementById('game') || document.body).getBoundingClientRect(), ox = Math.max(g.left - a.left, a.right - g.right); if (ox > 1) out.push({ kind: 'はみ出し', el: desc(el) + '（#game の外へ ' + Math.round(ox) + 'px）', rect: [a.left, a.top, a.width, a.height].map(Math.round) }) }
       for (const { r: c, o, i: fi, nm } of faces) { if (o === el.parentElement || fi === i) continue;
         const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
         if (w > 4 && h > 4) { out.push({ kind: '重なり', el: desc(el), by: 'ほかの席の' + nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } } }
@@ -171,6 +174,12 @@ const INSPECT = `(() => {
       for (const c of bc) { const r = c.getBoundingClientRect(); let n = 0, by = null;
         for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { const x = r.left + r.width * (i + .5) / 8, y = r.top + r.height * (j + .5) / 8, h = ch.find(([, q]) => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom); if (h) { n++; by = h[0] } }
         if (n / 64 >= .15) { const w = by.closest('#potChips, .chipwrap, .mystack, .won-pile, .hand') || by; out.push({ kind: 'チップ重なり', el: '場札', by: desc(c) + ' の ' + Math.round(100 * n / 64) + '% に ' + (w.id ? '#' + w.id : (w.closest('[id]') || {}).id + ' .' + String(w.className).split(' ')[0]) }) } } } }
+  // ポットの塔が、ポットの額（#potSign .pv）と自分の手札に重ならないか（v93 レビュー：スマホ縦で塔が額の字の後ろに立ち、下半分が伏せ札に隠れた）
+  if (!modal) { const cols = [...document.querySelectorAll('#potChips .col')].filter(e => shown(e) && vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
+    const tg = [...document.querySelectorAll('#potSign:not([hidden]) .pv')].filter(e => vis(e)).map(e => [e, 'ポットの額']).concat([...document.querySelectorAll('#mine .card')].filter(e => vis(e)).map(e => [e, '自分の手札']));
+    for (const [e, nm] of tg) { const q = e.getBoundingClientRect(); let w = 0, h = 0;
+      for (const c of cols) { const w1 = Math.min(c.right, q.right) - Math.max(c.left, q.left), h1 = Math.min(c.bottom, q.bottom) - Math.max(c.top, q.top); if (w1 > 2 && h1 > 2 && w1 * h1 > w * h) { w = w1; h = h1 } }
+      if (w > 2 && h > 2) out.push({ kind: '重なり', el: 'ポットの塔（#potChips）', by: nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
   // 横スクロールが出ていないか
   if (document.scrollingElement.scrollWidth > W + 2) out.push({ kind: '横スクロール', el: 'ページ全体 ' + document.scrollingElement.scrollWidth + 'px' });
   return out;
