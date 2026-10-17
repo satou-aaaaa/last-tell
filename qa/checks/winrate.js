@@ -5,6 +5,8 @@
 'use strict';
 const H = require('../lib/harness');
 const os = require('os');
+const { pool } = require('../lib/pool');
+const J = require('../lib/winrate_judge');
 // クセを読むと勝てるか（改善提案 2026-10-15 §2）：第4〜7章・第11〜15章で「読まない」と「読む」（policy 'tell'）を比べる。
 // 2026-10-16 §0-2 から判定は同じ配り札で対にしたハンドの BB の差（勝率の差は参考。章の勝ち負け24回の差はほぼ札の運だった）
 // 回数：第4章から（長い版）は 読まない12回＋読む12回（全体の回数は今の24回のまま）。第1〜3章は基準と比べるので読まない24回のまま、読むのは4回だけ足す（数字だけ、+3分ほど）
@@ -35,69 +37,40 @@ async function playOnce(browser, file, ch, maxHands, seed, tw, policy = 'cpu', r
   } catch (e) { return 'error' } finally { await ctx.close() }
 }
 
+// 1回の対戦にかかるおおよその時間（分、v0.89 の CI から）。組に分けるときの配り方にだけ使う。章が増えたら足す（無い章は 1）
+const COST = { 1: 1.2, 2: 2.0, 3: 1.1, 4: .85, 5: .4, 6: .9, 7: .4, 11: .65, 12: .85, 13: .55, 14: 1.5, 15: .3 };
+const cost = ch => COST[ch] || 1;
+
 // 同時に開く数はCPUの数に合わせる（GitHubの実行機は2〜4コアで、6つ同時だと遅すぎて止まった扱いになる）
-async function run({ browser, file, quick, baseline, chapters, parallel = Math.max(1, Math.min(6, os.cpus().length - 1)) }) {
+// --part k/n（CIの高速化 案1、2026-10-17）：全部の章の対戦を1列に並べて n 個の組に順に配り、組ごとの生の結果（partial）を返す。
+// 判定は「検査のまとめ」が組を混ぜてから lib/winrate_judge.js で行う（種と配り札は i 回目で決まるので、どの組で回しても同じ）
+async function run({ browser, file, quick, baseline, chapters, part = null, parallel = Math.max(1, Math.min(6, os.cpus().length - 1)) }) {
   const N = quick ? 8 : 24, maxHands = 80, items = [], out = {};
   const all = quick ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15];
+  const raws = {}, tasks = [];
   for (const ch of chapters ? all.filter(c => chapters.includes(c)) : all) {
-    const tw = { n: 0, bad: 0, ex: [] };
+    const raw = raws[ch] = J.empty(ch);
     // 第4〜6章は「読む・読まない」の差を確かめるので 24回＋24回（改善提案 2026-10-15b 案1 の「できた」の条件）
     const nN = !quick && ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : N;
     // 第4章から（読み比べを判定する章）は配る札をゲームの ?seed= で決めて、読む方と同じ札で対にする（改善提案 2026-10-16 §0-2）
-    const paired = !quick && ch >= 4, dealOf = i => paired ? ((ch * 1000 + i + 1) * 100003) >>> 0 : null, hbN = [], hbT = [];
-    const jobs = Array.from({ length: nN }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw, 'cpu', null, dealOf(i), hbN[i] = {}));
-    const res = [];
-    for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(f => f())));
-    // 途中で止まった回は1度だけ1つずつやり直す（実行機が混んでいただけのことがある）
-    for (let i = 0; i < res.length; i++) if (res[i] === 'error') res[i] = await playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, tw, 'cpu', null, dealOf(i), hbN[i] = {});
-    const ok = res.filter(r => r !== 'error'), w = ok.filter(r => r === 'win').length;
-    const rate = ok.length ? w / ok.length : 0;
-    out['ch' + ch] = { rate, n: ok.length };
-    const base = baseline && baseline.winrate && baseline.winrate['ch' + ch];
-    let status = 'ok', detail = `勝率 ${Math.round(rate * 100)}%（${w}/${ok.length}、80ハンドで決着しない回は負け扱い）`;
-    const nd = res.filter(r => r === 'nodecision').length;
-    if (nd) detail += `。${nd}回は時間内に決着せず（負け扱い）`;
-    if (res.length - ok.length) { status = 'fail'; detail += `。${res.length - ok.length}回は途中で止まった` }
-    if (base) {
-      // 回数が少ないので、ぶれの幅（標準誤差の2.5倍、最低15ポイント）を超えたときだけ「変わった」とする
-      const se = Math.sqrt(Math.max(base.rate * (1 - base.rate), 0.05) * (1 / base.n + 1 / Math.max(ok.length, 1)));
-      const tol = Math.max(0.15, 2.5 * se);
-      detail += `、基準 ${Math.round(base.rate * 100)}%（許す幅 ±${Math.round(tol * 100)}）`;
-      if (Math.abs(rate - base.rate) > tol && ch <= 3) status = 'fail';
-      else if (Math.abs(rate - base.rate) > tol) status = 'warn';
-    } else detail += '、基準なし（今回の値を基準にする）';
-    items.push({ id: 'winrate:ch' + ch, title: `第${ch}章の勝率`, status, detail, games: res.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
-    if (!quick) {
-      // 同じ章をクセを読む打ち手でも回す。第4章からは読まない方と同じ種・同じ配り札（i 回目どうしを対にする）。第1〜3章は別の並び（+500）
-      const rd = { n: 0, h: 0, r: [], ev: 0, en: 0 }, tj = Array.from({ length: ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : TELL_N13 }, (_, i) => () => playOnce(browser, file, ch, maxHands, ch * 1000 + (paired ? 0 : 500) + i + 1, null, 'tell', rd, dealOf(i), hbT[i] = {}));
-      const tr = [];
-      for (let i = 0; i < tj.length; i += parallel) tr.push(...await Promise.all(tj.slice(i, i + parallel).map(f => f())));
-      const tok = tr.filter(r => r !== 'error'), tw2 = tok.filter(r => r === 'win').length, trate = tok.length ? tw2 / tok.length : 0;
-      const gap = Math.round((trate - rate) * 100);
-      // 読みが5回未満の章は判定しない（第7・15章は決め手の相手が特別なクセなので読む札がほとんど出ない）
-      // 判定：対にしたハンド（同じ回・同じハンド目＝同じ配り札）ごとの「読む − 読まない」の BB の差。平均が 0 未満で、ぶれ（標準誤差の2倍）でも説明できないときだけ ⚠️
-      const dif = [];
-      if (paired) hbT.forEach((t, i) => { const n0 = hbN[i] || {}; for (const k in t) if (k in n0) dif.push(t[k] - n0[k]) });
-      const dm = dif.length ? dif.reduce((a, x) => a + x, 0) / dif.length : 0, dse = dif.length > 1 ? Math.sqrt(dif.reduce((a, x) => a + (x - dm) ** 2, 0) / (dif.length - 1) / dif.length) : Infinity;
-      const judged = ch >= 4 && rd.n >= 5 && dif.length >= 20, low = judged && dm < 0 && dm + 2 * dse < 0;
-      const avg = a => a.length ? (a.reduce((x, y) => x + y.bb, 0) / a.length).toFixed(1) : '-';
-      const dv = rd.r.filter(x => x.diff), sm = rd.r.filter(x => !x.diff);
-      // 読みの得の内訳（改善提案 2026-10-17 §0-1）：1対1／3人以上 × ブラフの札でコール／強い札で降りた。判定には使わない
-      // ブラフの札でのコールは、こちらに役（1ペア以上・A を持つ）があったかで分ける（v88 レビュー）
-      const byLine = by => { const L = { hu_bluff_made: '1対1・ブラフの札でコール（役あり）', hu_bluff_air: '1対1・ブラフの札でコール（役なし）', hu_bluff: '1対1・ブラフの札でコール', hu_strong: '1対1・強い札で降りた', multi_bluff_made: '3人以上・ブラフの札でコール（役あり）', multi_bluff_air: '3人以上・ブラフの札でコール（役なし）', multi_bluff: '3人以上・ブラフの札でコール', multi_strong: '3人以上・強い札で降りた' };
-        const xs = Object.keys(L).filter(k => by && by[k] && by[k].n).map(k => `${L[k]} ${by[k].bb >= 0 ? '+' : ''}${by[k].bb.toFixed(1)}BB（${by[k].n}回、払う額／ポット ${(by[k].pp / by[k].n).toFixed(2)}）`);
-        return xs.length ? '。読みの得の内訳：' + xs.join('、') : '' };
-      // 読みの得：判断が変わったときの「選んだ手 − 読まない手」の EV の合計（相手の本当の札で見た勝つ見込みから）。ハンドの結果（BB）は運が大きいので参考
-      const more = `。札の当たり ${rd.n ? Math.round(rd.h / rd.n * 100) : '-'}%（${rd.h}/${rd.n}）、読みの得 ${rd.ev >= 0 ? '+' : ''}${rd.ev.toFixed(1)}BB（判断が変わった ${rd.en}回、1回あたり ${rd.en ? (rd.ev / rd.en).toFixed(2) : '-'}BB）。参考：判断が変わったハンドの結果 平均 ${avg(dv)}BB（${dv.length}回）、変わらなかったハンド ${avg(sm)}BB（${sm.length}回）` + byLine(rd.by);
-      items.push({ id: 'tellgap:ch' + ch, title: `第${ch}章：クセを読むと勝てるか`, status: low ? 'warn' : 'ok',
-        detail: `読まない ${Math.round(rate * 100)}%（${ok.length}回）／読む ${Math.round(trate * 100)}%（${tok.length}回、札を読んだ判断 ${rd.n}回）／差 ${gap >= 0 ? '+' : ''}${gap}ポイント` +
-          more + (paired ? `。同じ札で対にしたハンドの差（読む − 読まない） 平均 ${dm >= 0 ? '+' : ''}${dm.toFixed(2)}BB ±${Number.isFinite(dse) ? (2 * dse).toFixed(2) : '-'}（${dif.length}ハンド）` : '') +
-          (judged ? (low ? `：第${ch}章はクセを読むと、同じ札で比べて損をしている（ぶれでは説明できない）` : '') : ch < 4 ? '（第1〜3章は数字だけ）' : '（読みが5回未満か、対にしたハンドが20未満なので判定しない）'),
-        games: tr.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
-    }
-    if (tw.n) items.push({ id: 'tellwin:ch' + ch, title: `第${ch}章：クセの札は相手のフロップ以降の賭け・上げのときだけ`, status: tw.bad ? 'fail' : 'ok',
-      detail: `札 ${tw.n}回のうち、それ以外で出たのは ${tw.bad}回` + (tw.ex.length ? '（例：' + tw.ex.slice(0, 3).join('／') + '）' : '') });
+    const paired = !quick && ch >= 4, dealOf = i => paired ? ((ch * 1000 + i + 1) * 100003) >>> 0 : null;
+    const base = i => playOnce(browser, file, ch, maxHands, ch * 1000 + i + 1, raw.tw, 'cpu', null, dealOf(i), raw.hbN[i] = {});
+    for (let i = 0; i < nN; i++) tasks.push({ ch, k: tasks.length, go: async () => {
+      let r = await base(i);
+      // 途中で止まった回は1度だけやり直す（実行機が混んでいただけのことがある）
+      if (r === 'error') r = await base(i);
+      raw.res[i] = r } });
+    // 同じ章をクセを読む打ち手でも回す。第4章からは読まない方と同じ種・同じ配り札（i 回目どうしを対にする）。第1〜3章は別の並び（+500）
+    if (!quick) for (let i = 0, nT = ch >= 4 ? (ch <= 6 ? 24 : TELL_N) : TELL_N13; i < nT; i++)
+      tasks.push({ ch, k: tasks.length, go: async () => { raw.tr[i] = await playOnce(browser, file, ch, maxHands, ch * 1000 + (paired ? 0 : 500) + i + 1, null, 'tell', raw.rd, dealOf(i), raw.hbT[i] = {}) } });
   }
+  // 重い対戦から先に、いちばん軽い組へ1つずつ配る（CIの高速化 案1）。1つ終わったらすぐ次（案2）
+  tasks.sort((x, y) => cost(y.ch) - cost(x.ch) || x.ch - y.ch || x.k - y.k);
+  const load = Array(part ? part.n : 1).fill(0), my = [];
+  for (const t of tasks) { const g = load.indexOf(Math.min(...load)); load[g] += cost(t.ch); if (!part || g === part.k - 1) my.push(t.go) }
+  await pool(my, parallel);
+  if (part) return { name: '勝率', items, partial: Object.values(raws) };
+  for (const raw of Object.values(raws)) { const j = J.judge(raw, { quick, baseline }); items.push(...j.items); out['ch' + raw.ch] = j.out }
   return { name: '勝率', items, baselineOut: { winrate: out } };
 }
 module.exports = { run };

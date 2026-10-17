@@ -29,35 +29,42 @@ concurrency:
   group: qa-${{ github.ref }}
   cancel-in-progress: true
 
-# 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）
+# 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）、CIの高速化 案1（2026-10-17）
 # 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
-# nobrowser: ブラウザを使わない組（Playwright と字体を入れない。数秒で終わる）
+# part: 1つの検査を n 個の組に分けた k 番目（run_all.js --part k/n）。結果は「検査のまとめ」が混ぜる（勝率は混ぜてから判定する）
+#   rules は 1:S1・A2、2:A1、3:S2 に分ける（混ぜて見る検査ごと）。fuzz はモードを、winrate は全部の章の対戦を順に配る
+# GitHub の無料枠は同時に20組まで。長い版で20組、短い版で14組（長い組を先に並べる）
 # browser: webkit の組は iPhone の Safari と同じ WebKit で回す（CIのチェック充実 案3。画面の新しい問題は ⚠️、止まる・エラーは ❌）
 # nightly: ここでは回さない組（通しで遊ぶ。1時間かかるので playthrough.yml が毎晩回す）
-# full: 長い版のときだけ回す組。長い版の勝率は1章24回（約25分）なので、1章ずつ分ける
+# full: 長い版のときだけ回す組。quick: 短い版のときだけ回す組（勝率は短い版が第1〜4章の8回ずつなので4組、長い版は10組）
 # 長い版になるのは、手で「長い版」を選んだときと、公開のブランチ（publish-…）のプルリクエスト
 env:
   QA_GROUPS: >-
     [
-      {"name": "unit（ルールの単体テスト）", "only": "unit", "ch": "", "nobrowser": true},
-      {"name": "text,script,lines,ftue,a11y,perf,save,pages", "only": "text,script,lines,ftue,a11y,perf,save,pages", "ch": ""},
-      {"name": "ui,uiux", "only": "ui,uiux", "ch": ""},
-      {"name": "fuzz", "only": "fuzz", "ch": ""},
-      {"name": "WebKit（iPhone の Safari）ui,fuzz", "only": "ui,fuzz", "ch": "", "browser": "webkit"},
-      {"name": "rules,basics", "only": "rules,basics", "ch": ""},
-      {"name": "公開サイト（オフライン・リンク・Lighthouse）", "only": "site", "ch": ""},
-      {"name": "winrate 第1章", "only": "winrate", "ch": "1"},
-      {"name": "winrate 第2章", "only": "winrate", "ch": "2"},
-      {"name": "winrate 第3章", "only": "winrate", "ch": "3"},
-      {"name": "winrate 第4章", "only": "winrate", "ch": "4"},
-      {"name": "winrate 第5章", "only": "winrate", "ch": "5", "full": true},
-      {"name": "winrate 第6章", "only": "winrate", "ch": "6", "full": true},
-      {"name": "winrate 第7章", "only": "winrate", "ch": "7", "full": true},
-      {"name": "winrate 第11章", "only": "winrate", "ch": "11", "full": true},
-      {"name": "winrate 第12章", "only": "winrate", "ch": "12", "full": true},
-      {"name": "winrate 第13章", "only": "winrate", "ch": "13", "full": true},
-      {"name": "winrate 第14章", "only": "winrate", "ch": "14", "full": true},
-      {"name": "winrate 第15章", "only": "winrate", "ch": "15", "full": true},
+      {"name": "rules 1/3（S1・A2）,basics", "only": "rules,basics", "ch": "", "part": "1/3"},
+      {"name": "rules 2/3（A1）", "only": "rules", "ch": "", "part": "2/3"},
+      {"name": "rules 3/3（S2）", "only": "rules", "ch": "", "part": "3/3"},
+      {"name": "fuzz 1/3", "only": "fuzz", "ch": "", "part": "1/3"},
+      {"name": "fuzz 2/3", "only": "fuzz", "ch": "", "part": "2/3"},
+      {"name": "fuzz 3/3（英語）", "only": "fuzz", "ch": "", "part": "3/3"},
+      {"name": "WebKit（iPhone の Safari）ui", "only": "ui", "ch": "", "browser": "webkit"},
+      {"name": "WebKit（iPhone の Safari）fuzz", "only": "fuzz", "ch": "", "browser": "webkit"},
+      {"name": "winrate 1/10", "only": "winrate", "ch": "", "part": "1/10", "full": true},
+      {"name": "winrate 2/10", "only": "winrate", "ch": "", "part": "2/10", "full": true},
+      {"name": "winrate 3/10", "only": "winrate", "ch": "", "part": "3/10", "full": true},
+      {"name": "winrate 4/10", "only": "winrate", "ch": "", "part": "4/10", "full": true},
+      {"name": "winrate 5/10", "only": "winrate", "ch": "", "part": "5/10", "full": true},
+      {"name": "winrate 6/10", "only": "winrate", "ch": "", "part": "6/10", "full": true},
+      {"name": "winrate 7/10", "only": "winrate", "ch": "", "part": "7/10", "full": true},
+      {"name": "winrate 8/10", "only": "winrate", "ch": "", "part": "8/10", "full": true},
+      {"name": "winrate 9/10", "only": "winrate", "ch": "", "part": "9/10", "full": true},
+      {"name": "winrate 10/10", "only": "winrate", "ch": "", "part": "10/10", "full": true},
+      {"name": "winrate 1/4", "only": "winrate", "ch": "", "part": "1/4", "quick": true},
+      {"name": "winrate 2/4", "only": "winrate", "ch": "", "part": "2/4", "quick": true},
+      {"name": "winrate 3/4", "only": "winrate", "ch": "", "part": "3/4", "quick": true},
+      {"name": "winrate 4/4", "only": "winrate", "ch": "", "part": "4/4", "quick": true},
+      {"name": "unit,text,script,lines,ftue,a11y,perf,save,pages", "only": "unit,text,script,lines,ftue,a11y,perf,save,pages", "ch": ""},
+      {"name": "ui,uiux,公開サイト（オフライン・リンク・Lighthouse）", "only": "ui,uiux,site", "ch": ""},
       {"name": "通しで遊ぶ", "only": "playthrough", "ch": "", "nightly": true}
     ]
 
@@ -103,7 +110,7 @@ jobs:
             exit 1
           fi
           echo "full=$FULL" >> "$GITHUB_OUTPUT"
-          echo "matrix=$(jq -c --argjson full "$FULL" 'map(select(.nightly != true) | select(.full != true or $full))' <<<"$QA_GROUPS")" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c --argjson full "$FULL" 'map(select(.nightly != true) | select(.full != true or $full) | select(.quick != true or ($full | not)))' <<<"$QA_GROUPS")" >> "$GITHUB_OUTPUT"
 
   qa:
     name: ${{ matrix.name }}
@@ -111,7 +118,7 @@ jobs:
     if: ${{ needs.groups.outputs.run == 'true' }}
     # 実行機の版を固定する（ubuntu-latest は 2026-10-19 から Ubuntu 26 になり、字体が変わって画面の判定がずれるため）
     runs-on: ubuntu-24.04
-    # 勝率は1回の上限が「手数×8秒」（80ハンドで約11分）。長い版は1章24回なので、余裕を見て60分
+    # 勝率は1回の上限が「手数×8秒」（80ハンドで約11分）。組に分けたので1組は10分ほどだが、止まりかけたときのため余裕を見て60分
     timeout-minutes: 60
     env:
       QA_BROWSER: ${{ matrix.browser || 'chromium' }}
@@ -166,7 +173,7 @@ jobs:
         continue-on-error: ${{ matrix.browser == 'webkit' }}
         env:
           QA_LIGHTHOUSE: ${{ contains(matrix.only, 'site') && '1' || '' }}
-        run: node qa/run_all.js index.html --only ${{ matrix.only }} ${{ matrix.ch && format('--ch {0}', matrix.ch) || '' }} --out qa-report ${{ needs.groups.outputs.full == 'true' && '--full' || '' }}
+        run: node qa/run_all.js index.html --only ${{ matrix.only }} ${{ matrix.ch && format('--ch {0}', matrix.ch) || '' }} ${{ matrix.part && format('--part {0}', matrix.part) || '' }} --out qa-report ${{ needs.groups.outputs.full == 'true' && '--full' || '' }}
       - name: 画面を見やすくする（JPEG・一覧・前の版との違い）
         if: ${{ always() && contains(matrix.only, 'ui') }}
         run: node qa/tools/ci_shots.js qa-report "$QA_PREV_UI"
@@ -176,7 +183,7 @@ jobs:
       - name: 報告の名前を決める
         if: always()
         id: n
-        run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}-${{ matrix.browser }}' | tr ', ' '--')" >> "$GITHUB_OUTPUT"
+        run: echo "name=qa-report-$(echo '${{ matrix.only }}-${{ matrix.ch }}-${{ matrix.browser }}-${{ matrix.part }}' | tr ', /' '---')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -235,7 +242,8 @@ jobs:
           if [ -n "$PR" ]; then key="pr/$PR"; else key="branch/$HEAD_REF"; fi
           # 公開の版（publish-… のプルリクエスト、main、長い版の手動実行）は v<版>/ にも置く（次の版の画面の比べに使う）
           vkey=""; case "$HEAD_REF" in publish-*|main) vkey="v$ver";; esac
-          [ "$FULL" = true ] && [ -z "$PR" ] && vkey="v$ver"
+          # 長い版の手動実行は main のときだけ v<版>/ に置く（ほかのブランチで試しに回した結果で、公開の版の結果を上書きしない）
+          [ "$FULL" = true ] && [ -z "$PR" ] && [ "$HEAD_REF" = main ] && vkey="v$ver"
           printf 'branch: %s\nsha: %s\nrun: %s/%s/actions/runs/%s\nfull: %s\nat: %s\n' "$HEAD_REF" "${{ github.event.pull_request.head.sha || github.sha }}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$FULL" "$(date -u +%FT%TZ)" > qa-summary/run.txt
           bash qa/tools/publish_results.sh qa-summary "$key" "$vkey"
       - name: 合否
