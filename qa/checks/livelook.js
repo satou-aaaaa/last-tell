@@ -155,6 +155,39 @@ async function run({ browser, file }) {
       }
     } finally { await ctx.close() }
   } catch (e) { add('morefun:grudge', '卓の因縁：打ち方が変わるのは卓の最初の5ハンドだけ', '検査そのものが失敗：' + String(e.message).slice(0, 120), '', true) }
+  // アニメーションの重さ（v89 レビュー）：CI の動きは「ふつう」に固定（harness）。卓の顔のまばたき・ジンの手・少なめでも番とクセの人は動く
+  try {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 1, seed: 12, storage: H.UNLOCKED, lite: false })   // fast 1：まばたきは performance.now で数えるので、時計を速めると7秒待てない;
+    try {
+      const r = await page.evaluate(async () => {
+        const out = { lite0: document.documentElement.classList.contains('ltLite') };
+        $('freeSize').value = '6'; startFree(); await new Promise(r => setTimeout(r, 900));
+        // まばたき：フリー6人の卓で、7秒のあいだに卓の顔のどれかに .blk が付くか（章を続けて開いたあとは顔が描き直され続けて測れないので最初に）
+        out.blink = await new Promise(res => { const t0 = performance.now(); let done = false;
+          const mo = new MutationObserver(ms => { for (const m of ms) if (!done && m.target.matches && m.target.matches('.bust svg.av.blk')) { done = true; mo.disconnect(); res(Math.round(performance.now() - t0)) } });
+          mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+          setTimeout(() => { if (!done) { done = true; mo.disconnect(); res(-1) } }, 7000) });
+        let ch = -1;
+        for (let i = 3; i < CHAPTERS.length && i < 7; i++) { try { startChapter(CHAPTERS[i], true) } catch (e) { continue }
+          await new Promise(r => setTimeout(r, 900)); render(); if (document.querySelector('.bust .av .t-hand')) { ch = i; break } }
+        out.ch = ch + 1;
+        const h = document.querySelector('.bust .av .t-hand'); out.hand = h ? getComputedStyle(h).animationName : '';
+        // 少なめ：番の人とクセの人だけ動く
+        const keep = SETTINGS.motion; SETTINGS.motion = 'less'; motionApply();
+        const bs = [...document.querySelectorAll('.bust')].filter(b => !b.classList.contains('turn') && ![...b.classList].some(c => c.startsWith('cue-')));
+        const b = bs[0], an = () => getComputedStyle(b).animationName;
+        if (b) { out.liteOff = an(); b.classList.add('turn'); out.liteTurn = an(); b.classList.remove('turn'); b.classList.add('cue-qa'); out.liteCue = an(); b.classList.remove('cue-qa') }
+        out.liteHand = h ? getComputedStyle(h).animationName : '';
+        out.lite1 = document.documentElement.classList.contains('ltLite');
+        SETTINGS.motion = keep; motionApply();
+        return out });
+      const T = '動きを減らしても大事な動きは残る';
+      add('anim:full', 'CI の動きの設定が「ふつう」（少なめになっていない）', r.lite0 ? 'html.ltLite が付いていた（CI が少なめで撮っている）' : '', 'ltLite なし');
+      add('anim:blink', '卓の顔が7秒以内にまばたきする', r.blink < 0 ? '7秒のあいだに .blk が一度も付かなかった' : '', `${r.blink}ms で .blk`);
+      add('anim:jinhand', 'ジンの手（顎をなでる）が動く', r.ch < 1 ? 'ジンの手がある章が見つからなかった' : (!r.hand || r.hand === 'none') ? `第${r.ch}章で .t-hand の動きが ${r.hand || 'なし'}` : (!r.liteHand || r.liteHand === 'none') ? `少なめで止まった（${r.liteHand}）` : '', `第${r.ch}章 ${r.hand}（少なめでも ${r.liteHand}）`);
+      add('anim:lite', T + '：少なめでは番の人とクセの人だけ動く', !r.lite1 ? '少なめにしても ltLite が付かない' : (r.liteOff && r.liteOff !== 'none') ? `番でない人が動いている（${r.liteOff}）` : (!r.liteTurn || r.liteTurn === 'none') ? '番の人が止まった' : (!r.liteCue || r.liteCue === 'none') ? 'クセの人が止まった' : '', `ほか ${r.liteOff}／番 ${r.liteTurn}／クセ ${r.liteCue}`);
+    } finally { await ctx.close() }
+  } catch (e) { add('anim:error', '動きの検査', '検査そのものが失敗：' + String(e.message).slice(0, 120), '', true) }
   return { name: 'ライブポーカーらしい見た目', items };
 }
 module.exports = { run };

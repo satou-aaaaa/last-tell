@@ -198,7 +198,8 @@ async function shoot(browser, file, scene, vp, dir) {
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, errors: await page.evaluate(() => __qa.errors) };
+    const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -233,6 +234,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     const bare = d => String(d || '').replace(/「.*$/, '').replace(/\d+/g, '');
     // 何に隠れたか（by）も、配られた札やチップの額で変わるので鍵に入れない
     // 画面の大きさも鍵に入れない（同じ問題が、環境の字の幅しだいで縦かPCのどちらかに出るため）
+    if (r.lite) r.issues.push({ kind: '動き少なめ', el: 'html.ltLite（CI は「ふつう」で撮るはず）' });
     const keys = r.issues.map(x => `${r.scene}|${x.kind}|${bare(x.el)}`);
     all.push(...keys);
     const fresh = r.issues.filter((x, i) => !known.has(keys[i]));
@@ -241,7 +243,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     const status = r.errors.length ? 'fail' : fresh.length ? (isNewScene(r.scene) ? 'warn' : 'fail') : old ? 'known' : 'ok';
     items.push({ id: `ui:${r.scene}:${r.vp}`, title: `画面 ${r.scene}（${r.vp}）`, status,
       detail: (r.errors.length ? 'エラー: ' + r.errors[0] + '。' : '') + (fresh.length && isNewScene(r.scene) ? '（新しく撮り始めた場面なので ⚠️。基準を書き直すと次から ❌）' : '') + (fresh.length ? '新しい問題: ' + fresh.slice(0, 4).map(txt).join('、') + (fresh.length > 4 ? ` ほか${fresh.length - 4}件` : '') : r.issues.length ? `前からある問題 ${old}件（${r.issues.slice(0, 2).map(txt).join('、')}）` : '重なり・はみ出し・隠れなし'),
-      shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues });
+      shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues, lite: r.lite });
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
