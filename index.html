@@ -2272,7 +2272,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.92.1';
+const APP_VERSION='0.92.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11164,7 +11164,7 @@ function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-4-pr.top;
   if(top>=2)d.style.top=Math.round(top)+'px'}
 // クセの札に当たらないときも、吹き出しから 4px 離す（v92 レビュー：PC で #dcall と #say5 が 3px 重なった）。上へ逃がす（顔の上へは下げない）
-function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=4;
+function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=7;   // 7px 離す（v92.1 レビュー：WebKit の PC で 4px では字の幅の差で 3px かかった）
   const says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R)
     .filter(c=>c.width>14&&r.left<c.right+m&&c.left<r.right+m&&r.top<c.bottom+m&&c.top<r.bottom+m);
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r.height-m-pr.top;
@@ -12034,14 +12034,16 @@ function awPlace(){
   // それでも重なるときだけ名札の上を試す（上は最後。v91.2 レビュー：席によって上と下に分かれて読みにくい）
   els.forEach(el=>{const own=el.parentNode,i=String(own.id||'').replace('plate',''),ownB=$('bust'+i);
     const mine=av.filter(o=>o.el!==own&&o.el!==el&&!(ownB&&o.bu===ownB));   // 自分の名札の中の D（.dbadge）は避ける。名札そのものと自分の顔だけ外す
+    // 自分の名札の名前と額の行は重く数える（v92.1 レビュー：縦6人卓で上下にずらした語が自分の名前を隠した）
+    own.querySelectorAll(':scope > .nm, :scope > .chp').forEach(e=>{if(vis(e)){const r=e.getBoundingClientRect();if(r.width>1)mine.push({r,el:e,k:6})}});
     mine.forEach(o=>{if(o.el&&o.el.classList.contains('ltact'))o.r=o.el.getBoundingClientRect()});   // 先に置いたほかの席の語は、動かした後の場所で数える
     const cost=r=>mine.reduce((a,{r:q,k})=>{const w=Math.min(r.right,q.right)-Math.max(r.left,q.left),h=Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top);return a+(w>0&&h>0?w*h*k:0)},0);
     const c0=cost(el.getBoundingClientRect());if(!c0&&!el.classList.contains('up'))return;
     let best={c:Infinity,up:false,dx:0,dy:0};
     // それでもかかるときだけ、少し上下にもずらす（v92.1 CI：残った #say1 に「フォールド」が 5px かかった）。上下は margin（下に付く .up は margin-bottom で同じ向きに動く。transform は blClamp が使う）
-    out:for(const dy of [0,6,-6,10])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36]){if(!dy&&Math.abs(dx)>28)continue;
-      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';el.style.marginTop=dy?dy+'px':'';el.style.marginBottom=dy?-dy+'px':'';
-      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy};if(c<1)break out}
+    out:for(const dy of [0,6,10])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36]){if(!dy&&Math.abs(dx)>28)continue;   // 上下は名札から離れる向きだけ（下の語は下へ、上の語は上へ）
+      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';const yy=up?-dy:dy;el.style.marginTop=yy?yy+'px':'';el.style.marginBottom=yy?-yy+'px':'';
+      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy:yy};if(c<1)break out}
     el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':'';el.style.marginTop=best.dy?best.dy+'px':'';el.style.marginBottom=best.dy?-best.dy+'px':''})}
 LT.on('layout',()=>{try{awPlace()}catch(e){}});
 {const o=actWords;actWords=function(){const r=o.apply(this,arguments);try{if(typeof layoutSoon==='function'&&document.querySelector('#plates .plate > .ltact:not([hidden])'))layoutSoon()}catch(e){}return r}}
