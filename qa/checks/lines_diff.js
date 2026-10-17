@@ -16,6 +16,7 @@ async function run({ browser, file, outDir }) {
   const removed = [...new Map(old.filter(l => !nowSet.has(key(l))).map(l => [key(l), l])).values()];
   // 気をつける印：英語にならない、一人称が早見表と違う、言ってはいけない言い方、長い、お金・「夜」
   const strip = t => t.replace(/「[^」]*」/g, '');
+  const YORU_OK = [/^雨の夜。港のはずれ/];
   const flags = ([who, t, jp]) => {
     const f = [];
     if (jp) f.push('英語なし');
@@ -23,7 +24,8 @@ async function run({ browser, file, outDir }) {
     for (const [w, re, why] of S.NEVER) if (who === w && re.test(strip(t))) f.push(why);
     if (t.length > 70) f.push(`${t.length}字`);
     if (/[0-9０-９一二三四五六七八九十百千]+\s*(万|円|ドル)|負けてる|勝ってる額/.test(t)) f.push('お金？');
-    if (/夜/.test(t)) f.push('「夜」');
+    // 「夜」の決まりは「あの夜」と題・名前。扉の添え文「雨の夜。…」は情景の普通の文なので対象外（v91.2 レビュー）
+    if (/夜/.test(t) && !YORU_OK.some(re => re.test(t))) f.push('「夜」');
     return f;
   };
   const by = list => { const m = {}; for (const l of list) (m[l[0]] = m[l[0]] || []).push(l); return m };
