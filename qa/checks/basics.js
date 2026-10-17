@@ -3,6 +3,7 @@
 //   ショーダウンの配り方は、ゲームとは別に書いた役判定（qa/unit/ref_eval.js）で確かめる
 'use strict';
 const H = require('../lib/harness');
+const { pool } = require('../lib/pool');
 
 // 役の判定（basic:eval）は 2026-10-14 からブラウザを使わない単体テストへ移した：qa/unit/tests/eval.js（別に書いた判定は qa/unit/ref_eval.js）
 const REF = require('../unit/ref_eval');
@@ -117,7 +118,7 @@ async function run({ browser, file, quick }) {
   const jobs = [[F6, 'random', H1], [F6, 'mix', H1], [F4, 'random', H1], ['startChapter(CHAPTERS[0],true)', 'random', H1, { noBlindCheck: true }]];
   if (!quick) jobs.push(['startChapter(CHAPTERS[5],true)', 'random', H1, { noBlindCheck: true }], ['startP2(PART2[3],true)', 'random', H1, { noBlindCheck: true, storage: H.UNLOCKED }]);
   const res = [];
-  for (let i = 0; i < jobs.length; i += 4) res.push(...await Promise.all(jobs.slice(i, i + 4).map(j => session(browser, file, j[0], j[1], j[2], j[3] || {}))));
+  res.push(...await pool(jobs.map(j => () => session(browser, file, j[0], j[1], j[2], j[3] || {})), 4));   // 1つ終わったらすぐ次（CIの高速化 案2）
   const sum = k => res.reduce((a, r) => a + (Array.isArray(r[k]) ? r[k].length : +r[k] || 0), 0), ex = k => res.flatMap(r => r[k]).slice(0, 3).join(' / ');
   const hands = sum('hands'), acts = sum('acts'), raises = sum('raises'), sd = sum('sd');
   const row = (id, title, k, ok) => items.push({ id, title, status: sum(k) ? 'fail' : 'ok', detail: sum(k) ? `${sum(k)}回。例: ${ex(k)}` : ok });

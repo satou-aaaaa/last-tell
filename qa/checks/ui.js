@@ -239,6 +239,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const only = (process.env.QA_SCENES || '').split(',').filter(Boolean);
   const jobs = []; for (const s of SCENES) if (!only.length || only.some(o => s.key.includes(o))) for (const v of VIEWPORTS) jobs.push([s, v]);
   const res = [];
+  // 撮影は前と同じ「3つずつ」のまま（CIの高速化 案2 の pool は WebKit でブラウザが落ちる回が増えたように見えたので、ここだけ戻した。2026-10-17）
   for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
   // ページやブラウザが途中で閉じた場面は、1回だけ撮り直す（WebKit でたまに起きる。ブラウザごと落ちていたら開き直す）
   let own = null;

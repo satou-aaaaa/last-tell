@@ -1,6 +1,7 @@
 // 自動対戦：全モードで止まらないか、エラーが出ないか、チップの合計が合うか
 'use strict';
 const H = require('../lib/harness');
+const { pool } = require('../lib/pool');
 
 function modes(quick) {
   const m = [];
@@ -64,11 +65,22 @@ async function runOne(browser, file, mode, hands, limit) {
   } finally { await ctx.close() }
 }
 
-async function run({ browser, file, quick, baseline, parallel = 4 }) {
+// --part k/n（CIの高速化 案1）：モードを n 個の組に分ける。英語のモードは「英語版に残っている日本語」をまとめて見るので、全部 最後の組に入れる。
+// ほかのモードは、その時いちばん少ない組に1つずつ足す（組ごとの数がそろう）
+function split(list, part) {
+  if (!part) return list;
+  const en = list.filter(m => m.lang === 'en'), cnt = Array(part.n).fill(0), out = [];
+  cnt[part.n - 1] = en.length; if (part.k === part.n) out.push(...en);
+  for (const m of list.filter(m => m.lang !== 'en')) { const g = cnt.indexOf(Math.min(...cnt)); cnt[g]++; if (g === part.k - 1) out.push(m) }
+  return out;
+}
+
+async function run({ browser, file, quick, baseline, parallel = 4, part = null }) {
   // WebKit は Safari だけの崩れ・止まりを見るのが目的なので、いつも短い版で回す（長い版は Chromium だけ）
   if (process.env.QA_BROWSER === 'webkit') quick = true;
-  const list = modes(quick), hands = quick ? 15 : 50, limit = LIMIT(quick), res = [];
-  for (let i = 0; i < list.length; i += parallel) res.push(...await Promise.all(list.slice(i, i + parallel).map(m => runOne(browser, file, m, hands, limit))));
+  const list = split(modes(quick), part), hands = quick ? 15 : 50, limit = LIMIT(quick);
+  const res = await pool(list.map(m => () => runOne(browser, file, m, hands, limit)), parallel);
+  const hasEn = list.some(m => m.lang === 'en');
   const items = [], known = new Set((baseline && baseline.enJapanese) || []);
   const newJp = new Set();
   for (const r of res) {
@@ -87,8 +99,8 @@ async function run({ browser, file, quick, baseline, parallel = 4 }) {
   }
   const allJp = [...new Set(res.flatMap(r => r.jp || []))];
   const oldJp = allJp.filter(t => known.has(t));
-  items.push({ id: 'i18n:en', title: '英語版に残っている日本語', status: newJp.size ? 'warn' : oldJp.length ? 'known' : 'ok',
+  if (hasEn) items.push({ id: 'i18n:en', title: '英語版に残っている日本語', status: newJp.size ? 'warn' : oldJp.length ? 'known' : 'ok',
     detail: newJp.size ? `前回の基準にない日本語 ${newJp.size}件: ` + [...newJp].slice(0, 8).map(t => `「${t}」`).join('、') : oldJp.length ? `前からある ${oldJp.length}件: ` + oldJp.slice(0, 3).map(t => `「${t}」`).join('、') : '画面に日本語は残っていない', list: allJp });
-  return { name: '自動対戦', items, baselineOut: { enJapanese: allJp } };
+  return { name: '自動対戦', items, baselineOut: hasEn ? { enJapanese: allJp } : {} };
 }
 module.exports = { run, modes };

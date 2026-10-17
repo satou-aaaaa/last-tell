@@ -3,6 +3,7 @@
 //   node run_all.js [ゲームのファイル] [--quick|--full] [--only fuzz,ui,...] [--out 出力先]
 //   node run_all.js [ゲームのファイル] --official [--full] [--update-baseline]   ← 版の正式な結果（本線だけ）
 //   node run_all.js --list                                                    ← 検査の一覧
+//   node run_all.js [ゲームのファイル] --only fuzz --part 2/3                    ← GitHub で1つの検査を3つの組に分けた2つ目（CIの高速化 案1）
 // 結果の置き場所（CIの見直し 案1、2026-10-10）：ふだんは qa/reports/_runs/<日時>_<ファイル名>/（毎回別、上書きしない）。
 // qa/reports/v<版>/ と baseline.json に書くのは --official のときだけ。
 'use strict';
@@ -16,7 +17,7 @@ const args = process.argv.slice(2);
 if (args.includes('--list')) { console.log(CHECKS.map(c => c[0]).join('\n')); process.exit(0) }
 const flag = n => args.includes(n);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null };
-const file = path.resolve(args.find(a => !a.startsWith('--') && ![opt('--only'), opt('--out'), opt('--changed'), opt('--src'), opt('--ch')].includes(a)) || path.join(__dirname, '../story/shisho.html'));
+const file = path.resolve(args.find(a => !a.startsWith('--') && ![opt('--only'), opt('--out'), opt('--changed'), opt('--src'), opt('--ch'), opt('--part')].includes(a)) || path.join(__dirname, '../story/shisho.html'));
 const quick = !flag('--full');
 let only = opt('--only') ? opt('--only').split(',') : null;
 // --changed vNN：控え vNN から変わった src のファイルに関係する検査だけ（作業の途中用。公開の前は付けずに全部）
@@ -30,7 +31,9 @@ const src = fs.readFileSync(file, 'utf8');
 const ver = (src.match(/APP_VERSION='([^']+)'/) || [])[1] || 'unknown';
 const label = 'v' + ver.split('.').slice(1, 2).join('') + (quick ? '' : '_full') + (changed ? '_changed' : '');
 const official = flag('--official');
-if (official && (changed || only || opt('--out') || opt('--ch'))) { console.error('--official は全部の検査を回すときだけ使えます（--changed・--only・--out とは一緒に使わない）'); process.exit(2) }
+const part = opt('--part') ? require('./lib/pool').parsePart(opt('--part')) : null;
+if (opt('--part') && !part) { console.error('--part は 2/3 のように書きます'); process.exit(2) }
+if (official && (changed || only || opt('--out') || opt('--ch') || part)) { console.error('--official は全部の検査を回すときだけ使えます（--changed・--only・--out とは一緒に使わない）'); process.exit(2) }
 if (flag('--update-baseline') && !official) { console.error('基準（baseline.json）を書き直すのは --official のときだけです'); process.exit(2) }
 const runsDir = path.join(__dirname, 'reports', '_runs');
 // 1日より前の _runs は消す
@@ -74,9 +77,9 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
     process.stdout.write(`… ${key} `);
     try {
       if (!require(mod).noBrowser) await fresh();
-      const r = await require(mod).run({ browser, file, quick, baseline, outDir, chapters: opt('--ch') ? opt('--ch').split(',').map(Number) : null });
+      const r = await require(mod).run({ browser, file, quick, baseline, outDir, chapters: opt('--ch') ? opt('--ch').split(',').map(Number) : null, part });
       Object.assign(newBase, r.baselineOut || {});
-      groups.push({ key, ...r, secs: Math.round((Date.now() - t) / 1000) });
+      groups.push({ key, ...r, part: part ? `${part.k}/${part.n}` : undefined, secs: Math.round((Date.now() - t) / 1000) });
     } catch (e) {
       groups.push({ key, name: key, items: [{ id: key + ':crash', title: `${key} の検査そのものが失敗`, status: 'fail', detail: String(e.stack || e).slice(0, 300) }] });
     }
@@ -95,7 +98,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
   const mins = Math.round((Date.now() - t0) / 6000) / 10;
   let md = `# 検査の結果 ${label}（${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC）\n\n`;
-  md += `対象: ${path.basename(file)}（APP_VERSION ${ver}）、${quick ? '短い版（毎回）' : '長い版（公開前）'}${changed ? `、変えた所だけ（${only ? only.join(',') : '全部'}）` : ''}、${mins}分\n\n`;
+  md += `対象: ${path.basename(file)}（APP_VERSION ${ver}）、${quick ? '短い版（毎回）' : '長い版（公開前）'}${changed ? `、変えた所だけ（${only ? only.join(',') : '全部'}）` : ''}${part ? `、${part.n}つに分けた${part.k}つ目` : ''}、${mins}分\n\n`;
   md += `**${cnt('fail') ? '❌ 不合格' : '✅ 合格'}**　✅ ${cnt('ok')}　❌ ${cnt('fail')}　⚠️ ${cnt('warn')}　🟡 修正待ち・前からある ${cnt('known')}\n\n`;
   const fails = all.filter(i => i.status === 'fail');
   if (fails.length) { md += `## 直すもの\n\n` + fails.map(i => `- ${i.title}：${i.detail}${i.shot ? `（[画像](${i.shot})）` : ''}`).join('\n') + '\n\n' }
@@ -108,7 +111,7 @@ const known = JSON.parse(fs.readFileSync(path.join(__dirname, 'known.json'), 'ut
   md += `---\n- ✅ 合格　❌ 新しく起きた問題（公開を止める）　⚠️ 気にかけること　🟡 修正待ち（known.json）か、前の版からある問題（baseline.json）\n`;
   md += `- 目で見て判断することは別：大きな変更のときは、変わった所だけテスター・プロ・クリエイター目線で見る（qa/README.md）\n`;
   fs.writeFileSync(path.join(outDir, 'report.md'), md);
-  fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify({ label, ver, quick, groups }, null, 1));
+  fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify({ label, ver, quick, part: part ? `${part.k}/${part.n}` : undefined, groups }, null, 1));
   if (official && (flag('--update-baseline') || !baseline)) { fs.writeFileSync(basePath, JSON.stringify({ ...newBase, madeFrom: ver, madeAt: new Date().toISOString() }, null, 1)); console.log('基準（baseline.json）を書き直した') }
   console.log(`\n${cnt('fail') ? '不合格' : '合格'}  ok ${cnt('ok')} / fail ${cnt('fail')} / warn ${cnt('warn')} / known ${cnt('known')}\n報告: ${path.join(outDir, 'report.md')}`);
   for (const i of fails) console.log('  ❌ ' + i.title + '：' + i.detail);
