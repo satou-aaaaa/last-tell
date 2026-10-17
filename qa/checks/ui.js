@@ -24,7 +24,8 @@ const SCENES = [
   // 1対1（v65 クリエイター目線レビュー：スマホ横で相手の顔が目から上で切れていた）
   { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true, street: 'flop' },
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()` },
-  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true },
+  // deal：配る札を固定（v88.2 レビュー：Chromium と WebKit で結果が違い比べられなかった）。配り 32・CPU の種 1007 は、左の席（相手1）があなたとのショーダウンで勝ち、あなたは残る手（ゲームが終わらない）。手元の Chromium で4回とも同じ勝ち負け
+  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007 },
   // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
   { key: '第2章_ハンドの終わり', prep: `startChapter(CHAPTERS[1],true)`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
@@ -65,7 +66,7 @@ const INSPECT = `(() => {
   const screenEl = ['title', 'chapters', 'scene', 'game', 'notebook', 'more'].map(id => document.getElementById(id)).find(e => e && !e.hidden);
   const root = document;
   // 調べる部品：ボタン、自分の手札、場札、相手の名札。相手の伏せ札・空の札置き場は飾りなので見ない
-  const sel = 'button, #mfReplay .card, #mfReplay .mfr-lab, #mfReplay .mfr-cue, #mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot), [id^=plate]:not(#plates)';
+  const sel = 'button, #mfReplay .card, #mfReplay .mfr-lab, #mfReplay .mfr-cue, #mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot), [id^=plate]:not(#plates), #felt .spot .hand:not(.folded):not(.muck) .card:not(.back):not(.slot)';   // 相手の見せた札（v88.2 レビュー：勝った左の席の札が肩のうしろに隠れた）
   // 窓（相手紹介・設定・はしごなど）が開いているときは、その中だけを見る
   const modal = [...document.querySelectorAll('#vs, #setPanel, #runBox, #quiz, #help, #daily, #share, #moreDlg, #stackZoom, #tour, [role=dialog]')]
     .filter(e => shown(e) && vis(e)).filter(e => { const r = e.getBoundingClientRect(); return r.width * r.height > 0.5 * W * Hh })[0];
@@ -153,7 +154,7 @@ const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '.spot .mystack'
 const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id,tl:e.style.translate||undefined,ca:e.dataset.ca}});if(a.length)o[q]=a}return o})()`;
 
 async function shoot(browser, file, scene, vp, dir) {
-  const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, lang: scene.lang || 'ja', seed: 1000 + SCENES.indexOf(scene),
+  const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
   try {
     await page.evaluate(scene.prep);
@@ -175,6 +176,11 @@ async function shoot(browser, file, scene, vp, dir) {
     for (let last = -1, same = 0, t1 = Date.now(); same < 3 && Date.now() - t1 < 3000; await page.waitForTimeout(100)) {
       const y = await page.evaluate(() => Math.round(scrollY));
       same = y === last ? same + 1 : 0; last = y;
+    }
+    // カメラが止まってから測る（v88.2 レビュー：ハンドの終わりで測った瞬間だけカメラが寄っていて、#felt が1.5倍・場札が y=748 と出た）。#cam・#felt の形が2回続けて同じになるまで、最大3秒
+    for (let last = '', t2 = Date.now(); Date.now() - t2 < 3000; await page.waitForTimeout(150)) {
+      const k = await page.evaluate(() => ['cam', 'felt', 'stage'].map(id => { const e = document.getElementById(id); return e ? getComputedStyle(e).transform : '' }).join('|'));
+      if (k === last) break; last = k;
     }
     const issues = await page.evaluate(INSPECT);
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
