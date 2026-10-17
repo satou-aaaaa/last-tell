@@ -2255,7 +2255,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.91.1';
+const APP_VERSION='0.91.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11554,9 +11554,9 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
-  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body')].filter(vis).map(R);
+  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden])')].filter(vis).map(R);   // 「あなたの番」（v91.1 CI：PC で自分の席番号が重なった）
   const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden])')].filter(vis).map(R);
   const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
@@ -11615,7 +11615,7 @@ function llPlaceAll(){try{llToolsPlace()}catch(e){}try{llCupPlace()}catch(e){}tr
 let llSeatChkAt=0;
 function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden])')].filter(vis).map(R);
   return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
 LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const t=Date.now();if(t-llSeatChkAt>=1000){llSeatChkAt=t;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
 
