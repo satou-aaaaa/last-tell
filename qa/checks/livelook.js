@@ -39,7 +39,7 @@ async function run({ browser, file }) {
   stage = '2';
   // 2) 道具・カップ・伏せ札・札の文字・バーン（フリー6人、縦・横・PC）
   for (const [w, h] of VPS) {
-    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(browser, file, { fast: 20, viewport: { width: w, height: h }, lite: false, storage: H.UNLOCKED, seed: 42, settings: { motion: 'less' } });   // 位置の検査なので動きは少なめ（v0.89.1 で CI の動きを「ふつう」に固定したら、WebKit がここで2回続けて落ちた）
+    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(browser, file, { fast: 20, viewport: { width: w, height: h }, lite: false, storage: H.UNLOCKED, seed: 42 });
     try {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
@@ -157,7 +157,7 @@ async function run({ browser, file }) {
   } catch (e) { add('morefun:grudge', '卓の因縁：打ち方が変わるのは卓の最初の5ハンドだけ', '検査そのものが失敗：' + String(e.message).slice(0, 120), '', true) }
   // アニメーションの重さ（v89 レビュー）：CI の動きは「ふつう」に固定（harness）。卓の顔のまばたき・ジンの手・少なめでも番とクセの人は動く
   try {
-    const { ctx, page } = await H.openGame(browser, file, { fast: 1, seed: 12, storage: H.UNLOCKED, lite: false })   // fast 1：まばたきは performance.now で数えるので、時計を速めると7秒待てない;
+    const { ctx, page } = await H.openGame(browser, file, { fast: 1, seed: 12, storage: H.UNLOCKED, lite: false, settings: { motion: 'full' } })   // fast 1：まばたきは performance.now で数えるので、時計を速めると7秒待てない;
     try {
       const r = await page.evaluate(async () => {
         const out = { lite0: document.documentElement.classList.contains('ltLite') };

@@ -22,7 +22,7 @@ function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {
       window.setInterval = (f, d, ...a) => si(f, Math.max(4, (+d || 0) / F), ...a);
     }
     try {
-      const s = Object.assign({ v: 1, talk: 'on', speed: 'fast', sound: false, quiz: false, motion: 'full', lang: '${lang}' }, ${JSON.stringify(settings)});
+      const s = Object.assign({ v: 1, talk: 'on', speed: 'fast', sound: false, quiz: false, lang: '${lang}' }, ${JSON.stringify(settings)});
       localStorage.setItem('shisho-settings', JSON.stringify(s));
     } catch (e) {}
   })();`;
