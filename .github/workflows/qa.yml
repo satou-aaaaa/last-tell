@@ -242,7 +242,8 @@ jobs:
           if [ -n "$PR" ]; then key="pr/$PR"; else key="branch/$HEAD_REF"; fi
           # 公開の版（publish-… のプルリクエスト、main、長い版の手動実行）は v<版>/ にも置く（次の版の画面の比べに使う）
           vkey=""; case "$HEAD_REF" in publish-*|main) vkey="v$ver";; esac
-          [ "$FULL" = true ] && [ -z "$PR" ] && vkey="v$ver"
+          # 長い版の手動実行は main のときだけ v<版>/ に置く（ほかのブランチで試しに回した結果で、公開の版の結果を上書きしない）
+          [ "$FULL" = true ] && [ -z "$PR" ] && [ "$HEAD_REF" = main ] && vkey="v$ver"
           printf 'branch: %s\nsha: %s\nrun: %s/%s/actions/runs/%s\nfull: %s\nat: %s\n' "$HEAD_REF" "${{ github.event.pull_request.head.sha || github.sha }}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$FULL" "$(date -u +%FT%TZ)" > qa-summary/run.txt
           bash qa/tools/publish_results.sh qa-summary "$key" "$vkey"
       - name: 合否
