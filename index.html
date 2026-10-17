@@ -12037,10 +12037,12 @@ function awPlace(){
     mine.forEach(o=>{if(o.el&&o.el.classList.contains('ltact'))o.r=o.el.getBoundingClientRect()});   // 先に置いたほかの席の語は、動かした後の場所で数える
     const cost=r=>mine.reduce((a,{r:q,k})=>{const w=Math.min(r.right,q.right)-Math.max(r.left,q.left),h=Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top);return a+(w>0&&h>0?w*h*k:0)},0);
     const c0=cost(el.getBoundingClientRect());if(!c0&&!el.classList.contains('up'))return;
-    let best={c:Infinity,up:false,dx:0};
-    out:for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28]){el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';
-      const c=cost(el.getBoundingClientRect())+(up?.5:0);if(c<best.c)best={c,up,dx};if(c<1)break out}
-    el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':''})}
+    let best={c:Infinity,up:false,dx:0,dy:0};
+    // それでもかかるときだけ、少し上下にもずらす（v92.1 CI：残った #say1 に「フォールド」が 5px かかった）。上下は margin（下に付く .up は margin-bottom で同じ向きに動く。transform は blClamp が使う）
+    out:for(const dy of [0,6,-6,10])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36]){if(!dy&&Math.abs(dx)>28)continue;
+      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';el.style.marginTop=dy?dy+'px':'';el.style.marginBottom=dy?-dy+'px':'';
+      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy};if(c<1)break out}
+    el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':'';el.style.marginTop=best.dy?best.dy+'px':'';el.style.marginBottom=best.dy?-best.dy+'px':''})}
 LT.on('layout',()=>{try{awPlace()}catch(e){}});
 {const o=actWords;actWords=function(){const r=o.apply(this,arguments);try{if(typeof layoutSoon==='function'&&document.querySelector('#plates .plate > .ltact:not([hidden])'))layoutSoon()}catch(e){}return r}}
 
