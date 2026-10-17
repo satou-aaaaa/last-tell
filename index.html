@@ -2255,7 +2255,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.91.0';
+const APP_VERSION='0.91.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11611,7 +11611,13 @@ function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .llto
 let llPlaceT=0,llPlaceK='';
 const llKey=()=>S?[S.handNo,S.street,S.handOver?1:0,S.board.length,innerWidth,innerHeight,S.players.length,S.toAct===0?1:0,document.body.classList.contains('en')?1:0,S.players.map(p=>(p.show?1:0)+(p.folded?2:0)+(p.mucked?4:0)).join('')].join('|'):'';   // 見せた札・降りた札で席の札の場所が変わるので、そのときも置き直す（v89.1 CI：WebKit 縦で勝った札に席番号が重なった）
 function llPlaceAll(){try{llToolsPlace()}catch(e){}try{llCupPlace()}catch(e){}try{llSeatsPlace()}catch(e){}}
-LT.on('layout',()=>{const k=llKey();if(k===llPlaceK)return;llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
+// 鍵が同じでも、席番号が D・場札・札に重なっていたら置き直す（1秒に1回まで。v91 CI：WebKit 横で札が後から動いて重なったまま残った）
+let llSeatChkAt=0;
+function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
+  const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card')].filter(vis).map(R);
+  return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
+LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const t=Date.now();if(t-llSeatChkAt>=1000){llSeatChkAt=t;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
 
 // ===== 案2：相手の伏せ札 =====
 // 寝かせた2枚の上に、主なキャラは自分の小物。ほかの人は名前で決まる3人に1人だけチップ1枚。ジンは置かない
