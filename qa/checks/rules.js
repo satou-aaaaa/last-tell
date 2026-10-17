@@ -162,7 +162,8 @@ async function run({ browser, file, quick, part = null }) {
   const judge = {
     L: () => { const r = rowsOf(sum('L').limp, 8); return { r, more: !r.length || r.some(x => x[1] > 10 && unsure(x[3], x[2], .10)) } },
     O: () => { const r = rowsOf(sum('O').faceOpen, 8); return { r, more: !r.length || r.some(x => x[1] > 80 && unsure(x[3], x[2], .80)) } },
-    R: () => { const r = rowsOf(sum('R').rivBig, 6); return { r, more: !r.length || r.some(x => x[1] > 40 && unsure(x[3], x[2], .40)) } },
+    // S2 は打って数える方では合否を決めない（下）ので、回数は足さない
+    R: () => ({ r: rowsOf(sum('R').rivBig, 6), more: false }),
   };
   // 案3：境目の検査だけ、同じ打ち方をもう一回り足す（足した組はまとめて同時に回す）
   const added = fams.filter(f => judge[f] && judge[f]().more);
@@ -195,10 +196,11 @@ async function run({ browser, file, quick, part = null }) {
   // S2 リバーの大きなベット
   if (want('R')) {
     const callStrong = judge.R().r;
-    // 降りすぎ（10%未満）は、打って数えた回数が少なく揺れが大きいので ⚠️ だけ。合否は下の直接の測り方で決める（satou 2026-10-17「直接測定で判断」：v0.89.1 で CPU を変えずにジン 8%（49回）が出た）
+    // 打って数える方は ⚠️ だけ。合否は下の直接の測り方で決める。強い手での正しいコールも数えるので、中くらいの手だけを見る直接の測り方と食い違う
+    // （satou 2026-10-17「直接測定で判断」：降りすぎ＝v0.89.1 でジン 8%（49回）、コールしすぎ＝回数を足すとクロウ 48%（29回））
     const badCall = callStrong.filter(x => x[1] > 40), lowCall = callStrong.filter(x => x[2] >= 30 && x[1] < 10);
-    items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length ? 'warn' : badCall.length ? rateStatus(badCall) : lowCall.length ? 'warn' : 'ok',
-      detail: (callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + `（40%以下で合格。30回以上測れて10%未満なら降りすぎの ⚠️。外れたキャラが${MIN_N}回未満しか測れていなければ ⚠️）` : '測れる回数が足りない') + note('R') });
+    items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length || badCall.length || lowCall.length ? 'warn' : 'ok',
+      detail: (callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + '（40%以下・30回以上なら10%以上で ✅、外れたら ⚠️。合否は直接の測り方 S2-direct で決める）' : '測れる回数が足りない') });
     // S2 の直接の測り方（10%以上40%以下で合格）。境目なら別の種でもう200回ずつ足す（案3）
     let d = await probeS2(browser, file), more = '';
     const rowsD = d => Object.entries(d).map(([n, x]) => [n, Math.round(100 * x.call / Math.max(1, x.n)), x.n, x.lk, x.call]);
