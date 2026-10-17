@@ -161,14 +161,7 @@ const BOT = `(() => {
         if (B.hands >= B.maxHands) { B.result = 'limit'; B.done = true; B.games = B.games || 1; return }
       }
       if (S.twice && !B.twiceSeen.includes(S.handNo)) B.twiceSeen.push(S.handNo);
-      if (!S.handOver && S.toAct === 0 && !S.autoMe && vis($('controls'))) {
-        // 人が押せるボタンがあるか（2026-10-17 第5章の回想で止まった件：「レイズ」が隠れたままで、押せるボタンが1つも無かった。ボットは act を直接呼ぶので気づかなかった）
-        const can = ['btnFold', 'btnCall', 'btnRaise'].some(id => { const b = $(id); return vis(b) && !b.disabled }) || [...document.querySelectorAll('#quick button')].some(b => vis(b) && !b.disabled);
-        if (!can) { const k = S.handNo + '|' + S.street + '|' + S.currentBet + '|' + (CFG.flashback ? 'fb' : '');
-          if (B.nbKey !== k) { B.nbKey = k; B.nbAt = Date.now() }
-          if (Date.now() - B.nbAt < 1500) return;   // 描き直しの途中の一瞬は数えない
-          if (B.nbSaid !== k) { B.nbSaid = k; B.events.push('自分の番なのに押せるボタンが無い（ハンド' + S.handNo + '・' + S.street + (CFG.flashback ? '・回想' : '') + '）') } }
-        if (B.firstDecisionClicks === undefined) B.firstDecisionClicks = B.totalClicks || 0; const d = decide(); B.decisions++; act(0, d.type, d.to); return }
+      if (!S.handOver && S.toAct === 0 && !S.autoMe && vis($('controls'))) { if (B.firstDecisionClicks === undefined) B.firstDecisionClicks = B.totalClicks || 0; const d = decide(); B.decisions++; act(0, d.type, d.to); return }
       const b = clickables(); if (b) press(b);
     } catch (e) { B.events.push('bot: ' + e.message) }
   };
