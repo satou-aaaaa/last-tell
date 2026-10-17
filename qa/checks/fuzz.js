@@ -90,7 +90,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   for (const r of res) {
     const errs = [...new Set([...(r.errors || []), ...(r.pageErrors || []), ...(r.events || [])])];
     const bad = [];
-    if (r.status === 'stalled') { const g = r.gs; bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}${g ? `、ハンド${g.hand}・${g.street}・番${g.toAct}${g.over ? '・終わり' : ''}${g.ctrl ? '・ボタンあり' : ''}・ボットの最後の動き${Math.round(g.sinceTick / 1000)}秒前（${g.ticks}回）・行動 ${g.acted}${g.hidden ? '・裏のタブ' : ''}` : ''}${r.timerMs != null ? `、50ms のタイマー ${r.timerMs < 0 ? '来ない' : r.timerMs + 'ms'}` : ''}${r.lastLog && r.lastLog.length ? '、最後の記録「' + r.lastLog.slice(-2).join('／') + '」' : ''}）`) }
+    if (r.status === 'stalled') { const g = r.gs; bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}${g ? `、ハンド${g.hand}・${g.street}・番${g.toAct}${g.over ? '・終わり' : ''}${g.ctrl ? '・ボタンあり' : ''}・ボットの最後の動き${Math.round(g.sinceTick / 1000)}秒前（${g.ticks}回）・行動 ${g.acted}${g.hidden ? '・裏のタブ' : ''}${g.lt ? '・長い処理 ' + g.lt : ''}${g.sc ? '・場面 ' + g.sc : ''}${g.btns ? '・ボタン ' + g.btns : ''}` : ''}${r.timerMs != null ? `、50ms のタイマー ${r.timerMs < 0 ? '来ない' : r.timerMs + 'ms'}` : ''}${r.lastLog && r.lastLog.length ? '、最後の記録「' + r.lastLog.slice(-2).join('／') + '」' : ''}）`) }
     if (r.status === 'timeout' && !(r.hands >= Math.min(ENOUGH, hands) && !errs.length && !r.chipErr.length && !r.negErr.length)) bad.push(`時間切れ（${r.hands}ハンドまで）`);
     if (r.status === 'crash') bad.push('起動できなかった');
     if (errs.length) bad.push('エラー: ' + errs.slice(0, 3).join(' / '));

@@ -56,6 +56,8 @@ async function openGame(browser, file, { viewport = { width: 1280, height: 800 }
 // policy: 'random'（なんでも押す）, 'cpu'（ゲームのCPUと同じ考え方で打つ）, 'fold'（いつも降りる）
 const BOT = `(() => {
   if (window.__bot) return;
+  // 長い処理（50ms 以上）の回数と合計（止まったときに、ページが重くて回っていなかったかを見る。Chromium だけ）
+  window.__lt = { n: 0, ms: 0, max: 0 }; try { new PerformanceObserver(l => l.getEntries().forEach(e => { __lt.n++; __lt.ms += e.duration; __lt.max = Math.max(__lt.max, e.duration) })).observe({ entryTypes: ['longtask'] }) } catch (e) {}
   const $ = id => document.getElementById(id);
   // offsetParent は position:fixed の部品（スマホ横の操作パネルなど）で null になるので、getClientRects で見る
   const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
@@ -205,7 +207,9 @@ async function botState(page) {
       lastLog: [...document.querySelectorAll('#log > *')].slice(-6).map(x => x.textContent),
       // 止まった場所を調べるため（2026-10-17 WebKit の1ハンド目の止まり）
       gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
-        sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden } : null };
+        sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden,
+        lt: window.__lt ? Math.round(__lt.ms / 1000) + '秒/' + __lt.n + '回（最長' + Math.round(__lt.max) + 'ms）' : '',
+        sc: (typeof SC !== 'undefined' && SC) ? (SC.i + '/' + (SC.lines ? SC.lines.length : '?')) : '', btns: [...document.querySelectorAll('#scene button, #vs button, #between button')].filter(vis).map(b => b.id || b.textContent.trim().slice(0, 6)).slice(0, 5).join('/') } : null };
   });
 }
 
