@@ -108,6 +108,14 @@ const INSPECT = `(() => {
     const w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
     if (w > 0 && h > 0 && w * h > 0.15 * Math.min(a.width * a.height, b.width * b.height)) out.push({ kind: '重なり', el: desc(btn[i]), by: desc(btn[j]) });
   }
+  // 名札の下の行動の語（.ltact、アクションのわかりやすさ 案1）が、席番号・D・チップ・吹き出し・ポットの額・札に重ならないか（その席の伏せ札の上に重ねるのは決めた置き方なので見ない）
+  if (!modal) { const okv = e => { if (!e || e.hidden || e.closest('[hidden]')) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') return false; for (let q = e; q && q !== document.body; q = q.parentElement) { const t = getComputedStyle(q); if (t.display === 'none' || +t.opacity === 0) return false } const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2 };
+    const acts = [...document.querySelectorAll('.ltact, .vfturn, .vfpos, .vfres')].filter(okv);   // .vf*：動画のツッコミの直し（2026-10-17、js/47_video_fixes.js）
+    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres')].filter(okv);
+    for (const el of acts) { const a = el.getBoundingClientRect(); for (const o of others) { if (o === el || o.contains(el) || el.contains(o)) continue; const c = o.getBoundingClientRect();
+      const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+      const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
+      if (w > 4 && h > 4 && (!chip || w * h > .25 * a.width * a.height)) { out.push({ kind: '重なり', el: desc(el), by: desc(o) + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } } }
   // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）
   {const tb = document.getElementById('table'), tr = tb && vis(tb) ? tb.getBoundingClientRect() : { left: 0, right: W, top: 0, bottom: Hh };
     const L = Math.max(0, tr.left), R = Math.min(W, tr.right);
@@ -154,7 +162,7 @@ const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '.spot .mystack'
 const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id,tl:e.style.translate||undefined,ca:e.dataset.ca}});if(a.length)o[q]=a}return o})()`;
 
 async function shoot(browser, file, scene, vp, dir) {
-  const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
+  const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
   try {
     await page.evaluate(scene.prep);
@@ -198,7 +206,8 @@ async function shoot(browser, file, scene, vp, dir) {
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, errors: await page.evaluate(() => __qa.errors) };
+    const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -233,6 +242,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     const bare = d => String(d || '').replace(/「.*$/, '').replace(/\d+/g, '');
     // 何に隠れたか（by）も、配られた札やチップの額で変わるので鍵に入れない
     // 画面の大きさも鍵に入れない（同じ問題が、環境の字の幅しだいで縦かPCのどちらかに出るため）
+    if (r.lite) r.issues.push({ kind: '動き少なめ', el: 'html.ltLite（CI は「ふつう」で撮るはず）' });
     const keys = r.issues.map(x => `${r.scene}|${x.kind}|${bare(x.el)}`);
     all.push(...keys);
     const fresh = r.issues.filter((x, i) => !known.has(keys[i]));
@@ -241,7 +251,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     const status = r.errors.length ? 'fail' : fresh.length ? (isNewScene(r.scene) ? 'warn' : 'fail') : old ? 'known' : 'ok';
     items.push({ id: `ui:${r.scene}:${r.vp}`, title: `画面 ${r.scene}（${r.vp}）`, status,
       detail: (r.errors.length ? 'エラー: ' + r.errors[0] + '。' : '') + (fresh.length && isNewScene(r.scene) ? '（新しく撮り始めた場面なので ⚠️。基準を書き直すと次から ❌）' : '') + (fresh.length ? '新しい問題: ' + fresh.slice(0, 4).map(txt).join('、') + (fresh.length > 4 ? ` ほか${fresh.length - 4}件` : '') : r.issues.length ? `前からある問題 ${old}件（${r.issues.slice(0, 2).map(txt).join('、')}）` : '重なり・はみ出し・隠れなし'),
-      shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues });
+      shot: r.shot ? path.relative(outDir, r.shot) : null, issues: r.issues, lite: r.lite });
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
