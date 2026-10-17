@@ -1996,14 +1996,14 @@ html.ingame #game{height:100%}
 .ltLite .bust:not(.turn):not([class*="cue-"]){animation:none!important}
 .ltLite .bust:not(.turn):not([class*="cue-"]) .body{animation:none!important}
 
-/* 誰が何をしたか 案1（2026-10-17）：名札の下の行動の語。字は 12px・フォールドは 11px（v91.2 レビュー） */
+/* 誰が何をしたか 案1（2026-10-17）：名札の下の行動の語。字は 12px（フォールドも 12px。v91.2・v92 レビュー） */
 /* 名札の中に入れると名札が2行になって顔にかかるので、名札のすぐ下に重ねる（その人の伏せ札の上。読めるよう背景を濃く） */
 #plates .plate > .ltact{position:absolute;left:50%;top:100%;translate:-50% 1px;z-index:2}
 #plates .plate > .ltact,#mine .me-l > .ltact{white-space:nowrap;pointer-events:none;
   font-size:12px;font-weight:700;line-height:1.3;letter-spacing:.02em;padding:0 4px;border-radius:3px;background:rgba(10,11,14,.82);color:#9fd7c4}
 .ltact.raise{color:#f08a92}
 .ltact.call{color:#9fd7c4}
-.ltact.fold{color:var(--muted);font-weight:400;font-size:11px;letter-spacing:0;padding:0 3px}
+.ltact.fold{color:var(--muted);font-weight:400;font-size:12px;letter-spacing:0;padding:0 3px}
 .ltact[hidden]{display:none}
 .ltact.awin{animation:awIn .4s ease-out}
 @keyframes awIn{from{opacity:0}to{opacity:1}}
@@ -2070,7 +2070,7 @@ html.ingame #game{height:100%}
 /* 直近の5手（上の帯のすぐ下。置けないときは .off で出さない） */
 .vflog{position:fixed;z-index:30;margin:0;padding:4px 7px;list-style:none;pointer-events:none;max-width:200px;
   border-radius:6px;background:rgba(10,11,14,.72);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
-  font-size:10.5px;line-height:1.45;color:#cfd3d8}
+  font-size:12px;line-height:1.4;color:#cfd3d8}
 .vflog[hidden],.vflog.off{display:none}
 .vflog li{display:flex;gap:5px;white-space:nowrap;align-items:baseline}
 .vflog li .nm{max-width:86px;overflow:hidden;text-overflow:ellipsis;color:#b9c4cf}
@@ -2079,7 +2079,7 @@ html.ingame #game{height:100%}
 .vflog li i{font-style:normal;font-variant-numeric:tabular-nums;color:#e8e4da}
 .vflog li:last-child{color:#eef0f2}
 /* 縦の画面は幅を細く（真ん中上の吹き出しをよけやすく） */
-@media (max-width:560px){.vflog{font-size:10px;padding:3px 6px;max-width:132px}.vflog li{gap:4px}.vflog li .nm{max-width:58px}}
+@media (max-width:560px){.vflog{font-size:11px;padding:3px 6px;max-width:140px}.vflog li{gap:4px}.vflog li .nm{max-width:52px}}   /* 字は横・PC 12px、縦 11px（v92 レビュー） */
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2272,7 +2272,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.92.0';
+const APP_VERSION='0.92.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11155,14 +11155,23 @@ function potSignPlaceWide(){const s=$('potSign'),p=$('potChips'),t=$('table'),c=
 // v73（改善提案 2026-10-14 §1）：ディーラーの声（#dcall）がクセの札（.cue）に重なるときは、声を左上へ寄せる（札は動かさない）
 function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';return}
   const R=e=>e.getBoundingClientRect(),cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);
-  d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';if(!cs.length)return;
+  d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';if(!cs.length)return dcSayLift(d);
   const hit=r=>c=>{const w=Math.min(r.right,c.right)-Math.max(r.left,c.left),h=Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top);return w>0&&h>0};
-  const r0=R(d);if(!cs.some(hit(r0)))return;
+  const r0=R(d);if(!cs.some(hit(r0)))return dcSayLift(d);
   // 左上へ（札を優先）。左の吹き出し（客の一言）にかかるときは、吹き出しの上へ少し上げる（顔の上へは下げない：顔の奥に隠れるため）
   d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
   const r1=R(d),says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R).filter(r=>r.width>1&&hit(r1)(r));
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-4-pr.top;
   if(top>=2)d.style.top=Math.round(top)+'px'}
+// クセの札に当たらないときも、吹き出しから 4px 離す（v92 レビュー：PC で #dcall と #say5 が 3px 重なった）。上へ逃がす（顔の上へは下げない）
+function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=4;
+  const says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R)
+    .filter(c=>c.width>14&&r.left<c.right+m&&c.left<r.right+m&&r.top<c.bottom+m&&c.top<r.bottom+m);
+  if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r.height-m-pr.top;
+  if(top>=2){d.style.top=Math.round(top)+'px';return}
+  // 上に場所がない（上の帯のすぐ下）ときは、吹き出しの手前で折り返して2行にする（右の吹き出しなら左側に収める）
+  const right=says.filter(c=>c.left>r.left+40);if(!right.length)return;const mw=Math.min(...right.map(c=>c.left))-r.left-m-2;
+  if(mw>110){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}
 function cuePlace(){const P=$('plates');if(!P)return;const cs=[...P.querySelectorAll(':scope > .cue[data-bust]')];if(!cs.length)return;
   // v74 レビュー：#plates はカメラの中で一緒に拡大されるので、画面の上の長さを拡大の分で割る（寄っている間に札が顔から離れていた）
   const pr=P.getBoundingClientRect(),z=pr.width/(P.offsetWidth||pr.width)||1,out=[];
@@ -12255,11 +12264,14 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
   const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
+    .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
   const w=b.offsetWidth,h=b.offsetHeight,y=B.bottom+6;
-  const ok=(x,y)=>x>=4&&x+w<=innerWidth-4&&y+h<=innerHeight-4&&!av.some(q=>x<q.right&&q.left<x+w&&y<q.bottom&&q.top<y+h);
-  const cs=[[B.left+4,y],[B.right-4-w,y],[B.left-10-w,y],[B.right+10,y]];   // PC で縦長の画面の両脇が空いているときは、その脇
+  // 卓の枠（#game）の中だけに置く（v92 レビュー：PC で枠の外の暗い所に出た）
+  const G=vis($('game'))?$('game').getBoundingClientRect():{left:0,right:innerWidth,bottom:innerHeight};
+  const ok=(x,y)=>x>=Math.max(4,G.left+4)&&x+w<=Math.min(innerWidth,G.right)-4&&y+h<=Math.min(innerHeight,G.bottom)-4&&!av.some(q=>x<q.right&&q.left<x+w&&y<q.bottom&&q.top<y+h);
+  const cs=[[B.left+4,y],[B.right-4-w,y]];
   const c=cs.find(([x,y])=>ok(x,y));
   b.classList.toggle('off',!c);b.style.visibility='';
   if(c){b.style.left=Math.round(c[0])+'px';b.style.top=Math.round(c[1])+'px'}}
@@ -12268,7 +12280,7 @@ LT.on('layout',()=>{try{blClamp()}catch(e){}try{if($('vfLog')&&!$('vfLog').hidde
 LT.on('show',()=>{try{const b=$('vfLog');if(b&&$('game')&&$('game').hidden){b.hidden=true}}catch(e){}});
 // 吹き出しが後から出たら置き直す（41_more_fun.js の心の声と同じやり方。rAF は WebKit で止まることがあるので setTimeout）
 // 名札の下の行動の語（46_act_word.js の awPlace）も同じときに置き直す（v92 確認：吹き出しが後から出て語にかかった）
-{let blT=0;const both=()=>{try{const b=$('vfLog');if(b&&!b.hidden)blPlace()}catch(e){}try{if(typeof awPlace==='function')awPlace()}catch(e){}};
+{let blT=0;const both=()=>{try{const b=$('vfLog');if(b&&!b.hidden)blPlace()}catch(e){}try{if(typeof awPlace==='function')awPlace()}catch(e){}try{const d=$('dcall');if(d&&d.classList.contains('go')&&typeof dcallPlace==='function')dcallPlace()}catch(e){}};   // ディーラーの声も、後から出た吹き出しから離す（v92 レビュー）
   const mo=window.MutationObserver&&new MutationObserver(ms=>{if(blT)return;
     if(!ms.some(m=>m.target.classList&&m.target.classList.contains('say')||[...m.addedNodes].some(n=>n.classList&&n.classList.contains('say'))))return;
     both();blT=setTimeout(()=>{blT=0;both()},60);   // すぐに1回（吹き出しが出たそのコマで直近5手をよける）、60ms 後にもう1回
