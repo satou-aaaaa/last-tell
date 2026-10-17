@@ -1996,6 +1996,74 @@ html.ingame #game{height:100%}
 .ltLite .bust:not(.turn):not([class*="cue-"]){animation:none!important}
 .ltLite .bust:not(.turn):not([class*="cue-"]) .body{animation:none!important}
 
+/* 誰が何をしたか 案1（2026-10-17）：名札の下の行動の語。箱なし・額なし */
+/* 名札の中に入れると名札が2行になって顔にかかるので、名札のすぐ下に重ねる（その人の伏せ札の上。読めるよう背景を濃く） */
+#plates .plate > .ltact{position:absolute;left:50%;top:100%;translate:-50% 1px;z-index:2}
+#plates .plate > .ltact,#mine .me-l > .ltact{white-space:nowrap;pointer-events:none;
+  font-size:10px;font-weight:700;line-height:1.35;letter-spacing:.02em;padding:0 4px;border-radius:3px;background:rgba(10,11,14,.82);color:#9fd7c4}
+.ltact.raise{color:#f08a92}
+.ltact.call{color:#9fd7c4}
+.ltact.fold{color:var(--muted);font-weight:400;font-size:9px;letter-spacing:0;padding:0 3px}
+.ltact[hidden]{display:none}
+.ltact.awin{animation:awIn .4s ease-out}
+@keyframes awIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ltact.awin{animation:none}}
+/* 名札がほかに字を持たないとき：名札は隠れたまま（llempty）、語だけ見せる */
+#plates .plate.llempty > .ltact,#plates .plate.awOnly > .ltact{visibility:visible}
+#plates .plate.awOnly:not(.turn){visibility:hidden}
+/* ディーラーの声の頭の席番号 */
+#dcall .sn{display:inline-block;min-width:14px;height:14px;line-height:14px;margin-right:5px;border-radius:50%;font-size:9px;text-align:center;vertical-align:1px;background:rgba(255,255,255,.14);color:inherit;opacity:.85}
+/* チップに重なるときは名札の上へ（46_act_word.js の awPlace） */
+#plates .plate > .ltact.up{top:auto;bottom:100%;translate:-50% -1px}
+
+/* ---------- 動画のツッコミから（2026-10-17）：js/47_video_fixes.js の見た目 ---------- */
+/* A2：あなたの番（自分の顔の上） */
+.mine .me-l{position:relative}
+.mine .me-l > .vfturn{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px);z-index:5;white-space:nowrap;pointer-events:none;
+  font:800 11px/1.3 var(--display,inherit);color:#1a1408;background:var(--gold,#e2b65b);padding:2px 7px;border-radius:9px;box-shadow:0 0 10px rgba(226,182,91,.55)}
+.mine .me-l > .vfturn[hidden]{display:none}
+/* A4：席のマーク（D と反対の角） */
+.me-ava > .vfpos{position:absolute;right:-8px;top:-8px;z-index:2;min-width:22px;height:18px;padding:0 4px;border-radius:9px;display:grid;place-items:center;
+  font:800 10px/1 var(--display,inherit);color:#111;background:#cfd6de;box-shadow:0 1px 0 #7b838c;pointer-events:auto}
+.me-ava > .vfpos[hidden]{display:none}
+.me-ava > .vfpos.late{background:var(--gold,#e2b65b);box-shadow:0 0 8px rgba(226,182,91,.7)}
+.me-ava > .vfpos.early{background:#5d6470;color:#e8e8e8}
+/* A1：押せるのはオールインだけ */
+#controls.vfone #btnCall{flex:1 1 100%}
+/* A7・A8：勝ち負けの一行（場札の下） */
+.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;
+  padding:4px 12px;border-radius:6px;background:rgba(10,11,14,.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:700 13px/1.3 var(--display,inherit);color:#e8e4da;
+  animation:vfIn .3s ease-out both;transition:opacity .4s}
+.vfres.win{box-shadow:inset 0 0 0 1px var(--gold,#e2b65b)}
+.vfres b{font-weight:800}.vfres.win b{color:var(--gold,#e2b65b)}
+.vfres .h{color:#c9d6e2}.vfres .n{font-variant-numeric:tabular-nums}.vfres.win .n{color:#9fe0b0}
+.vfres.out,.vfcard.out{opacity:0}
+@keyframes vfIn{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
+/* A9・A10：一言の説明 */
+#quiz .vfqwhy{margin:4px 0 0;font-size:11px;line-height:1.4;color:var(--muted,#9a9a9a)}
+.showbox .vfwhy{flex-basis:100%;font-size:10.5px;line-height:1.3;color:var(--muted,#9a9a9a);text-align:center}
+#showBox:not([hidden]){flex-wrap:wrap}
+/* B1：そろえて置く */
+.lt-tidy .muckpile .muckcard{transform:none!important}
+/* 自分の手札の傾きは変えない（WebKit の縦で席番号に重なった。CI 2026-10-17） */
+.lt-tidy .felt .spot .hand .card.back{transform:rotateX(38deg) rotate(-3deg) scale(.8)}
+.lt-tidy .felt .spot .hand .card.back:last-child{transform:rotateX(38deg) rotate(3deg) scale(.8)}
+/* B2：お守りを手札の横へ */
+.mine .hold.vfaside .protector{left:100%;bottom:2px;transform:translateX(2px);width:30px;height:30px;transition:left .25s,width .25s,height .25s}
+/* B6・B7：星の意味 */
+#vs .vfstars{margin:2px 0 0;font-size:11px;line-height:1.4;color:var(--muted,#a8a8a8);text-align:center}
+/* B8・D3・D4：見出し */
+.vfcard{position:fixed;inset:0;z-index:60;display:grid;place-content:center;justify-items:center;gap:6px;background:rgba(6,7,10,.86);color:#eee;text-align:center;padding:16px;
+  animation:vfIn .35s ease-out both;transition:opacity .45s;cursor:pointer}
+.vfcard span{font:700 13px/1.2 var(--display,inherit);letter-spacing:.3em;color:var(--gold,#e2b65b)}
+.vfcard b{font:800 clamp(20px,6vw,32px)/1.3 var(--display,inherit);letter-spacing:.06em}
+.vfcard em{font-style:normal;font-size:13px;color:#b9c4cf}
+/* E3：お守りの絵 */
+.vfprot{display:flex;gap:10px;align-items:center;margin-top:8px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.06)}
+.vfprot .pic{width:40px;height:40px;flex:none}.vfprot .pic svg{width:100%;height:100%}
+.vfprot b{display:block;font-size:13px}.vfprot small{display:block;font-size:11px;line-height:1.4;color:var(--muted,#a8a8a8)}
+@media (prefers-reduced-motion:reduce){.vfres,.vfcard{animation:none}}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2048,7 +2116,7 @@ html.ingame #game{height:100%}
       </div>
       <div class="mgroup"><h3>設定</h3>
         <button class="mrow" id="mSet"><b>設定</b><small>音・会話・演出の速さなど</small></button>
-        <button class="mrow" id="mInstall"><b>ホーム画面に追加</b><small>アプリのように、すぐ開けるようになります</small></button>
+        <button class="mrow" id="mInstall"><b>ホーム画面に追加</b><small>ホーム画面のアイコンから、すぐ続きを遊べます</small></button>
       </div>
       <div class="mgroup"><h3>データ</h3>
         <button class="mrow" id="mExport"><b>引き継ぎコードを出す</b><small>機種変更やアプリ版への引き継ぎに</small></button>
@@ -2187,7 +2255,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.89.0';
+const APP_VERSION='0.90.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2400,6 +2468,120 @@ Object.assign(EN_DICT,{
 "少なめにすると、背景や待っている相手の動きを止めて軽くします。自動は、動きが重い端末だけ少なめにします":"Less stops background motion and idle opponents to keep things smooth. Auto reduces it only on devices that struggle."
 });
 
+// 誰が何をしたか（2026-10-17）の英語。名札の語とディーラーの声は 46_act_word.js が英語で作る
+Object.assign(EN_DICT,{"ストラドル":"Straddle"});
+
+// 文言の手直し（2026-10-17 satou のプレイ動画レビュー：師匠の教えの口調・ブラインドスチール・読みにくい漢字など）の英語
+Object.assign(EN_DICT,{
+// 章の扉
+"看板戦の日まで あと十日":"Ten days until the sign match","看板戦の日まで あと七日":"Seven days until the sign match","今日が看板戦の日":"Sign match: today",
+"雨の夜。港のはずれにあるバー「錨亭（いかりてい）」。":"A rainy night. “The Anchor,” a bar at the edge of the harbor.",
+"老人は軽く握った指の背であごの古い傷をなでながら、こちらの手札をのぞきこんだ。":"Rubbing an old scar on his chin with the back of a curled finger, the old man peers at your cards.",
+"……チップじゃない。相手を見ろ":"...Not the chips. Watch the player.",
+// 師匠の教え（ジンの口調）
+"ポーカーは、配られた2枚で勝負に乗るかを決めるゲームだ。ペアや、Aと絵札のような強い2枚なら戦え。弱い2枚なら降りろ。この店では、お前の手の強さを俺が横で言ってやる。":"Poker is deciding whether to play the two cards you're dealt. Strong ones, like a pair or an ace with a face card, you fight with. Weak ones, you fold. Here, I'll tell you how strong your hand is.",
+"ディーラーボタン（D）に近い席ほど、後から動ける。それだけで有利だ。後ろの席から先にレイズすれば、慎重な奴は弱い手を降りる。全員を降ろせば、ブラインドの分のチップはお前のものだ。これを「ブラインドスチール（ブラインドを盗む）」と言う。":"The closer your seat is to the dealer button (D), the later you act. That alone is an edge. Raise first from a late seat and careful players fold their weak hands. Make everyone fold and the blinds are yours. That's called a “blind steal.”",
+"役ができていなくても、強そうに賭ければ相手は降りることがある。それがブラフだ。降りやすい相手に、フロップから先で賭けるのが基本だ。この店では、役なし（ハイカード）のまま賭けて全員を降ろせば、ブラフ成功と数える。":"Even with no hand, bet like you're strong and they may fold. That's a bluff. The basics: bet from the flop on, against players who fold easily. Here, if you bet with no made hand (high card) and everyone folds, it counts as a successful bluff.",
+"ライブのポーカーでは、顔やしぐさから手の強さが漏れる。これを「テル」と言う。強い手のときのクセと、ブラフのときのクセを見分けろ。ただし、クセはいつも出るわけじゃない。当たるのは7割ほどだ。手が見えたら答え合わせをしろ。相手メモに残る。":"In live poker, faces and gestures leak hand strength. That's called a “tell.” Learn to tell the strong-hand tells from the bluff tells. But tells don't always show, and they're right only about 70% of the time. When a hand is shown, check your read. It goes into your notes on that player.",
+"チップが少ないときは、小さく何度も入る余裕はない。強い手を待て。来たら、一気に勝負しろ。相手が熱くなっているなら、なおさら待つ価値がある。":"When you're short on chips, you can't afford to play lots of small pots. Wait for a strong hand. When it comes, go all in on it. If your opponent's on tilt, waiting pays even more.",
+"トーナメントでは、ハンドが進むたびにブラインドが上がる。待ちすぎれば、ブラインドだけで削られる。後半ほど、自分から勝負に行け。最後の一人になれば優勝だ。":"In a tournament, the blinds go up as the hands go by. Wait too long and the blinds alone will grind you down. The later it gets, the more you take the fight to them. Be the last one left and you win.",
+"俺はいつも、あごの傷に触れている。もしこの指が傷から離れたら、それは俺が15年隠してきた「強い手のときのクセ」かもしれん。本物か、罠か。読み切って決めろ。":"I always keep a finger on the scar on my chin. If it ever leaves the scar, that may be the “strong hand tell” I've hidden for 15 years. Real, or a trap? Read it through and decide.",
+// 第1章
+"まいった！お前、急に固くなりやがったな":"I give! You got tight all of a sudden!",
+"この街じゃ、店の卓で勝った人が、その店の看板を預かる決まりでね":"In this town, whoever wins at a house's table gets to keep that house's sign.",
+"看板戦は、また別さ。看板を5枚そろえた人だけが出られる、王冠の大一番だよ":"The sign match is something else. Only someone with five signs can enter. The big one, at the Crown.",
+"今のが最後だ。……降りられる奴だけが、明日も打てる":"That was the last. ...Only those who can fold get to play tomorrow.",
+// 第2章
+"スチールは後ろの席から":"Steal from late position",
+"ブラインドスチールを3回決める":"Steal the blinds 3 times","ブラインドスチールを2回決める":"Steal the blinds twice",
+"慎重な奴ほど、スチールが通る":"The careful ones are the easiest to steal from.",
+"後ろの席で、まだ誰も参加していなかったら仕掛けろ。3回スチールを決めたら、ロクも認める":"In a late seat, if nobody's in yet, make your move. Steal 3 times and even Roku will respect you.",
+"そういえば、さっきもジンさんのことを聞きに来た人がいたよ。若い男の人。錨亭で弟子をとったのは本当か、って":"Oh, someone came asking about Jin a little while ago. A young man. Whether it's true he took a student at the Anchor.",
+"この街には古い決まりがある。街の5つの店の看板をそろえた者だけが、王冠の看板戦に出られる。勝てば6枚目、王冠の看板だ":"This town has an old rule. Only one who holds the signs of the town's five houses may enter the sign match at the Crown. Win it, and the sixth sign, the Crown's, is yours.",
+"次の看板戦は、十日後だ。……あの日から、ちょうど15年目になる":"The next sign match is in ten days. ...Exactly fifteen years since that day.",
+"そう答えるジンの指の背は、あごの傷をなでていた。":"As he answers, Jin rubs the scar on his chin with the back of his finger.",
+"今のが最後だ。……スチールは、覚えたな":"That was the last. ...You've learned how to steal.",
+"前の席で無理をしたな。スチールは後ろの席からだ。":"You forced it from early position. Steal from late seats.",
+"仕事の積み荷なら、数えれば必ず合う。……今日の負けは、数えても分からなかった。":"The cargo at work always adds up if you count it. ...Today's losses, no amount of counting could explain.",
+// 第3章
+"さっきまで、隅の席で一曲だけ聴いていった人がいたの。ジンさんの弟子はもう来たか、って聞かれた":"Someone sat in the corner for just one song a little while ago. Asked me whether Jin's student had come yet.",
+"見事にだまされた。気持ちのいい負けだよ":"Fooled completely. A pleasant way to lose.",
+"ジンの指の背が、あごの傷をなでた。":"Jin rubs the scar on his chin with the back of his finger.",
+// 第4章〜第7章
+"そう言い切ったとき、ジンの指はあごの傷に触れていなかった。":"When he says it, Jin's finger isn't touching the scar.",
+"ジンの指は、最後まで、あごの傷に触れていた。強い手ではない、という合図だ。":"Jin's finger stayed on the scar to the end. The sign of a hand that wasn't strong.",
+"これは餞別（せんべつ）。天空の羽よ。縁起かつぎに、手札の上に置きなさい":"A parting gift. A Skyline feather. Put it on your cards for luck.",
+"三日後の夜。港の外れ、古い倉庫の階段を下りると、使われなくなった賭場（とば）があった。":"Three nights later. Down the stairs of an old warehouse at the edge of the harbor lies an abandoned gambling den.",
+"ジンの指が、あごの傷に触れた。20年前、裏の賭場で少年のハヤトをかばったときの傷だ。":"Jin's finger touches the scar on his chin. He got it 20 years ago in a back-alley den, protecting young Hayato.",
+"クセをうのみにするな。ブラインドが上がる前に、勝負どころを選べ。":"Don't swallow tells whole. Pick your spots before the blinds go up.",
+"ジンはいつものように、あごの傷に指を当てている。":"As always, Jin rests a finger on the scar on his chin.",
+"あごの傷は20年前、少年のハヤトをかばってできた":"Got the chin scar 20 years ago, shielding young Hayato.",
+// 第二部
+"ここからは、お前がタロウだ。隣に座る俺は、第一部のお前だ。第一部での打ち方が、そのまま俺の教え方になった。勝負のあいだ、ときどき口を出すぞ。":"From here, you're Taro. The one sitting next to you is me, you from Part One. The way you played in Part One became the way I teach. I'll speak up now and then during the game.",
+"まいった！ タロウ、お前、急に降りるようになりやがったな":"I give! Taro, you suddenly learned how to fold.",
+"……隣の港、汐見（しおみ）に「舫（もやい）」という古い店がある。行ってこい":"...In the next port over, Shiomi, there's an old place called the Moorings. Go.",
+"慎重な相手ほど、後ろの席からのスチールが通る。俺は、ロクの店でそう教わった":"The more careful they are, the easier to steal from the back seats. I learned that at Roku's place.",
+"ミヤコさんが降りるときの顔を、先に覚えろ。スチールは、そのあとだ":"Learn Miyako's face when she folds. Steal after that.",
+"ディーラーボタン（D）に近い後ろの席から先にレイズすれば、慎重な相手は弱い手を降りる。全員が降りれば、ブラインドスチールだ。この店では、2回決めれば勝ちだ。":"Raise first from a late seat near the dealer button (D), and careful players fold their weak hands. If everyone folds, you've stolen the blinds. Here, do it twice and you win.",
+"ブラインドを持っていかれたね。……二回も":"You took my blinds. ...Twice.",
+"前の席で無理をしたな。スチールは、後ろの席からだ":"You forced it from an early seat. Steal from the back.",
+"相手が速く、大きく賭けてくると、こっちも急ぎたくなる。だが、勝負する手を選ぶのはお前だ。カイのチップを全部取れば勝ちだ。":"When an opponent bets fast and big, you want to hurry too. But you're the one who picks which hands to fight with. Take all of Kai's chips to win.",
+"やあ。今日はスチールさせないよ":"Hello again. No stealing from me today.",
+"6人のトーナメントだ。ハンドが進むと、ブラインドが上がっていく。最後の一人になれば優勝だ。":"A six-player tournament. The blinds rise as the hands go by. Be the last one standing and you win.",
+// 卓の上・ジンの一言
+"スチールはプリフロップで決めろ。ここからは手の強さで勝負だ。":"Steals happen preflop. From here, play your hand strength.",
+"後ろの席で、誰も参加していない。手が弱くても、レイズでスチールしろ。":"Late position, nobody's in. Raise and steal, even with a weak hand.",
+"誰かが先に参加した。スチールはやめて、強い手だけで行け。":"Someone's already in. Forget the steal. Only go with strong hands.",
+"後ろの席で、誰も参加していない。相手は慎重だ。手が弱くても、レイズでスチールしろ。":"Late seat, nobody's in. They're cautious. Even with a weak hand, raise and steal it.",
+"今のはまいった":"That one got me.",
+"ロクさんは昔、ジンさんと組んでいたらしいよ":"They say Roku used to team up with Jin.",
+"ロクさんは昔、ジンさんと組んでいたんだろ？":"Roku used to team up with Jin, right?",
+"ハヤト、ジンという人に習っていたのは本当？":"Hayato, is it true you learned from someone called Jin?",
+// 画面
+"最初の見た目に戻す":"Reset to default","決定":"Done",
+"同じ店で遊ぶほど常連度が上がります。上がると、店の人がいつもの席を覚えて、話してくれることが増えます":"Your regular level rises the more you play at the same club. As it rises, the staff remember your usual seat and tell you more.",
+"ホーム画面のアイコンから、すぐ続きを遊べます":"Jump back into your game from the home screen icon."
+});
+EN_TPL.push(
+["第一部で、俺がいちばん多く相手に読まれたクセは「{0}」だ。そのクセは、まだ直していない。本物か、罠か。読み切って決めろ。","In Part One, the tell opponents read on me most often was “{0}.” I still haven't fixed it. Real, or a trap? Read it through and decide."],
+["ロクの店、銀の扉だ。スチールは後ろの席から。あと{0}回だ","Roku's place, the Silver Door. Steal from the late seats. {0} to go."],
+["汐見の舫だ。よその店でも、スチールは後ろの席から。あと{0}回だ","Moyai, in Shiomi. Even in a strange house, steal from the late seats. {0} to go."]);
+
+// 動画のツッコミから（2026-10-17）：js/47_video_fixes.js の英語
+Object.assign(EN_DICT,{
+ 'AAが来た。いちばん強い手札だ':'Pocket aces. The best starting hand there is.',
+ 'ハヤトのオールイン。AAで受けるか？':'Hayato is all-in. Call with your aces?',
+ 'あなたの番':'Your turn','後ろ':'Late','前':'Early',
+ '後ろの席：あとから動けるので、ブラインドスチールを仕掛けやすい':'Late position: you act after the others, so it is a good spot to steal the blinds',
+ '前の席：あとの人が多いので、強い手だけで':'Early position: many players act after you, so play only strong hands',
+ 'スモールブラインド':'Small blind','ビッグブラインド':'Big blind',
+ 'ゆっくり':'Slow','演出の速さ：ゆっくり':'Pace: Slow',
+ 'フォールド＝降りる。コール＝同じ額を払って続ける。レイズ＝上乗せして勝負する':'Fold = give up the hand. Call = match the bet and stay in. Raise = bet more.',
+ 'あなたの勝ち':'You win','あなたの負け':'You lose','引き分け（ポットを分ける）':'Split pot',
+ '店のルールを覚えるためのクイズです。勝ち負けには関係ありません（設定でオフにできます）':'A quiz to learn house rules. It does not affect the game (you can turn it off in Settings).',
+ '見せなければ、相手に手の内を知られません':'If you don\'t show, they learn nothing about how you play.',
+ 'カードをそろえて置く':'Neat cards','捨て札・手札を整えて置きます。オフにすると、本物の卓のように少し散らばります':'Keeps the muck and your cards neat. Turn off for a messier, real-table look.',
+ 'カードをそろえる：オン':'Neat cards: On','カードをそろえる：オフ':'Neat cards: Off',
+ '★は強さ（5つが最強）。★3つからは赤い札、手ごわい相手です':'★ = strength (5 is the strongest). From ★3 the card turns red: a tough opponent.',
+ 'そのころ':'Meanwhile','15年前':'15 years ago',
+ 'カードプロテクター：自分の手札の上に置くお守り。章の一覧の「カードプロテクター」で選べます':'Card protector: a charm you rest on your hole cards. Choose it under "Card protector" in the chapter list.',
+});
+EN_TPL.push(['{0}として打つ','Play as {0}'],['{0}で、{1}の勝ちです','{1} wins with {0}'],['{0}の勝ち','{0} wins']);
+Object.assign(EN_DICT,{
+ '三回、スチールを決めたな。後ろの席の使い方は覚えた':"Three steals. You've learned how to use a late seat.",
+ 'よその店で、二回スチールを決めた。度胸がついたな':"Two steals in a strange house. You've got nerve now.",
+ 'あごの傷から手を離した':'Let go of the scar on his chin','あごの傷に触れている':'Touching the scar on his chin',
+ 'ジンは、いつものように、あごの傷に触れている……':'Jin touches the scar on his chin, as always...','ジンは、あごの傷に触れている':'Jin touches the scar on his chin',
+ 'ジンさんのあごの傷のこと、誰も聞けないんだよ':'Nobody dares ask Jin about the scar on his chin.',
+ 'ジンの指が、あごの傷から離れた。':"Jin's finger leaves the scar on his chin.",
+ 'ここの常連はな、店の札を手元に置いとくんだ。……ホーム画面に入れておけ。アイコンからすぐ続きを打てるし、記録も消えにくい':'Regulars here keep the house card close. Put us on your home screen: one tap and you are back at the table, and your record is safer there.',
+ 'ここの常連はな、店の札を手元に置いとくんだ。……ホーム画面に入れておけ。アイコンからすぐ続きを打てる':'Regulars here keep the house card close. Put us on your home screen: one tap and you are back at the table.',
+ '（周りの客）おお……':'(Onlookers) Ooh...','（周りの客）……今の、見たか':'(Onlookers) ...Did you see that?','（周りの客）すげえな':'(Onlookers) Wow.',
+});
+EN_TPL.push(['ブラインドスチール成功！（+{0}）','Blinds stolen! (+{0})'],['……{0}のブラインドを、さらっていったか。俺の番は、来なかったな','...You took the blinds off {0}. My turn never came.'],
+ ['スチールできたのは{0}回。あと{1}回だった','You stole {0}. {1} more would have done it.'],['まだ一度もスチールできていない。目標は{0}回だ',"You haven't stolen once yet. The goal is {0}."],
+ ['#{0}、後ろの席で{1}を様子見したな。あそこがスチールのしどころだ','#{0}, you just limped {1} from a late seat. That was the steal.']);
+
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
   try{const l=String((navigator.languages&&navigator.languages[0])||navigator.language||'ja');return/^ja\b/i.test(l)?'ja':'en'}catch(e){return'ja'}})();
@@ -2498,14 +2680,14 @@ const INTERLUDE={
 };
 const ilLines=n=>INTERLUDE[n].lines.map(l=>[l[0],l[1],Object.assign({},l[2]||{},{il:n})]);
 // 章の扉：題名と、看板戦までの日数（第7章は出さない）
-const DOOR_DAYS={"1": "看板戦まで　あと十日", "2": "看板戦まで　あと十日", "3": "看板戦まで　あと十日", "4": "看板戦まで　あと十日", "5": "看板戦まで　あと七日", "6": "看板戦　当日"};
+const DOOR_DAYS={"1": "看板戦の日まで　あと十日", "2": "看板戦の日まで　あと十日", "3": "看板戦の日まで　あと十日", "4": "看板戦の日まで　あと十日", "5": "看板戦の日まで　あと七日", "6": "今日が看板戦の日"};
 const CHAPTERS=[
  {no:1,lamp:'#ffb15a',bgm:1,title:'降りるのも勝負',venue:'港のバー「錨亭」',color:'#cfe6ff',
   goalText:'ゲンのチップを全部取る',goal:{type:'bust'},hint:'hand',
   lore:'この店では昔、7と2の最弱の手で勝つと、卓の全員が一杯おごるという決まりがあったらしい。',
   you:60000,blinds:[1000,2000],opps:[{name:'ゲン',style:'station',chips:60000,label:'何でも参加'}],
   intro:[
-   {door:1,cap:'雨の夜。港のはずれにあるバー「錨亭」。'},
+   {door:1,cap:'雨の夜。港のはずれにあるバー「錨亭（いかりてい）」。'},
    ['ゲン','おう新入り、もう一勝負だ！配られた札は全部勝負、それがポーカーってもんよ！'],
    ['老人','……お前、負け方が下手だな。ゲンは何にでも参加する。お前は、強い手のときだけ戦えばいい。それで勝てる'],
   ],
@@ -2513,14 +2695,14 @@ const CHAPTERS=[
   beats:[
    {after:1,lines:[
      ['','仕事帰りに覚えたポーカー。今日も、まるで勝てずにいる。'],
-     ['','老人は軽く握った指の背で顎の古い傷をなでながら、こちらの手札をのぞきこんだ。',{mark:'傷に触れている。15年ぶりにカードを見て、迷っていた。傷は昔、少年のハヤトをかばったときのものだ'}],
-     /* HOOK:ch1-after1-ao   主人公アオ仕様の2行（「指が、手元のチップの枚数を数えていた。」「……数えるな。顔を見ろ」）はここに足す */
+     ['','老人は軽く握った指の背であごの古い傷をなでながら、こちらの手札をのぞきこんだ。',{mark:'傷に触れている。15年ぶりにカードを見て、迷っていた。傷は昔、少年のハヤトをかばったときのものだ'}],
+     /* HOOK:ch1-after1-ao   主人公アオ仕様の2行（「指が、手元のチップの枚数を数えていた。」「……チップじゃない。相手を見ろ」）はここに足す */
      ['ジン','ジンでいい。昔、少しだけカードをやっていた'],
      /* HOOK:ch1-after1-name 主人公の名前仕様の「名乗る」3行（askName）はここに足す */
      ['店主','ジンさんが人に口を出すなんて、何年ぶりだろうね'],
    ]},
    {after:2,lines:[
-     {lesson:'ハンドの選び方',body:'ポーカーは、配られた2枚で参加するかを決めるゲームです。ペアや、Aと絵札の組み合わせのような強い2枚なら勝負し、弱い2枚なら降ります。この章では、ジンがあなたの手札の強さを教えてくれます。'},
+     {lesson:'ハンドの選び方',body:'ポーカーは、配られた2枚で勝負に乗るかを決めるゲームだ。ペアや、Aと絵札のような強い2枚なら戦え。弱い2枚なら降りろ。この店では、お前の手の強さを俺が横で言ってやる。'},
      ['ジン','いいか。降りるのも勝負のうちだ'],
    ]},
    {after:3,lines:[
@@ -2530,23 +2712,25 @@ const CHAPTERS=[
    ]},
   ],
   outro:[
-   ['ゲン','参った！お前、急に固くなりやがったな'],
+   ['ゲン','まいった！お前、急に固くなりやがったな'],
    ['ジン','弱い手で突っ込まなくなった。それだけのことだ'],
    ['店主','約束だよ、ゲンさん。今夜から錨亭の看板はこの子のものだ'],
    ['ゲン','待て待て、今のは俺のフラッシュだろ！……あ、ハートとダイヤか'],
    ['店主','ゲンさん、カードは見せたとおりに判定するよ。「カードがしゃべる」ってやつだ'],
+   ['店主','この街じゃ、店の卓で勝った人が、その店の看板を預かる決まりでね'],
+   ['店主','看板戦は、また別さ。看板を5枚そろえた人だけが出られる、王冠の大一番だよ'],
    ['','壁に掛かっていた古い錨の札が、こちらに手渡された。店主はそのお守りの錨を手札の上に置けと言う。'],
    ['店主',"上の看板かい？ あれは、この店ができる前からあるんだよ。どこの店のものかは、誰も知らない"],
    ['店主','それと、うちの壁に写真を一枚貼らせておくれ。新しい看板の主だからね'],
    ['ジン','次は「銀の扉」だ。あそこの主はロク。……昔の知り合いだ'],
    ['','帰り道。「あとワンハンドだけ」と言いかけると、ジンが振り向いた。'],
-   ['ジン','今のが最後だ。……降りられる奴は、また来られる'],
+   ['ジン','今のが最後だ。……降りられる奴だけが、明日も打てる'],
    {preview:2},
   ],
   lose:'ゲンに付き合いすぎたな。弱い手は捨てろ。'},
 
- {no:2,lamp:'#b9c6ff',bgm:2,title:'後ろの席から盗め',venue:'古いクラブ「銀の扉」',color:'#e2dcff',
-  goalText:'ブラインドを3回盗む',goal:{type:'steal',n:3},hint:'position',refill:true,
+ {no:2,lamp:'#b9c6ff',bgm:2,title:'スチールは後ろの席から',venue:'古いクラブ「銀の扉」',color:'#e2dcff',
+  goalText:'ブラインドスチールを3回決める',goal:{type:'steal',n:3},hint:'position',refill:true,
   lore:'この店では昔、配る前に倍のブラインドを置く「ストラドル」が流行っていたそうだ。',
   you:80000,blinds:[1000,2000],opps:[{name:'ロク',style:'tight',chips:80000,label:'慎重'},{name:'ハル',style:'tight2',chips:80000,label:'慎重'}],
   intro:[
@@ -2557,21 +2741,21 @@ const CHAPTERS=[
    ['ロク','弟子を連れてくるとはな。うちの客は慎重だ。簡単には崩れんよ'],
    ['ハル','この席、勝てる気がする！'],
    ['ロク','……勝てるかどうかは、数えてから言え'],
-   ['ジン','慎重な奴ほど、盗みやすい'],
-   {lesson:'ポジションとブラインド',body:'ディーラーボタン（D）に近い席ほど、後から動けて有利です。後ろの席から先にレイズすると、慎重な相手は弱い手を降ります。全員を降ろせば、ブラインドの分のチップがあなたのものになります。これを「ブラインドを盗む」と言います。'},
-   ['ジン','後ろの席で、まだ誰も参加していなかったら仕掛けろ。3回盗めたら、ロクも認める'],
+   ['ジン','慎重な奴ほど、スチールが通る'],
+   {lesson:'ポジションとブラインド',body:'ディーラーボタン（D）に近い席ほど、後から動ける。それだけで有利だ。後ろの席から先にレイズすれば、慎重な奴は弱い手を降りる。全員を降ろせば、ブラインドの分のチップはお前のものだ。これを「ブラインドスチール（ブラインドを盗む）」と言う。'},
+   ['ジン','後ろの席で、まだ誰も参加していなかったら仕掛けろ。3回スチールを決めたら、ロクも認める'],
   ],
   outro:[
    ['ロク','……ジンの打ち方、そのままだ。あの日を思い出す'],
    ['ジン','昔話はいい'],
-   ['ハル',"そういえば、さっきもジンさんのこと聞いていった人がいたよ。錨亭で弟子をとったって本当かって。若い男の人"],
+   ['ハル',"そういえば、さっきもジンさんのことを聞きに来た人がいたよ。若い男の人。錨亭で弟子をとったのは本当か、って"],
    ['ロク','弟子よ。こいつがなぜ急に消えたか、聞いたことはあるか'],
-   ['ロク',"この街には古い決まりがある。街の5つの店の看板をそろえた者だけが、6枚目、王冠の看板戦に挑める"],
+   ['ロク',"この街には古い決まりがある。街の5つの店の看板をそろえた者だけが、王冠の看板戦に出られる。勝てば6枚目、王冠の看板だ"],
    ['ロク',"……王冠の先にも、卓はある。だが、それはまだ知らんでいい"],
-   ['ロク',"次の看板戦は十日後だ。……あの日から、ちょうど15年目になる"],
+   ['ロク',"次の看板戦は、十日後だ。……あの日から、ちょうど15年目になる"],
    ['ロク','ジン。まだあの卓に未練があるのか'],
    ['ジン','ない'],
-   ['','そう答えるジンの指の背は、顎の傷をなでていた。',{mark:'「ない」と言いながら、傷に触れていた。本当は、まだ迷っていた'}],
+   ['','そう答えるジンの指の背は、あごの傷をなでていた。',{mark:'「ない」と言いながら、傷に触れていた。本当は、まだ迷っていた'}],
    ['ロク','……一つだけ、昔の話をしてやる'],
    ['','15年前。看板戦の決勝の前、ロクとジンは控え室で一手だけ打った。いつものことだった。'],
    {flashback:'roku'},
@@ -2580,11 +2764,11 @@ const CHAPTERS=[
    ['ジン','行くぞ。次は「月影」だ'],
    ['','銀の扉の看板と、小さな銀の鍵を受け取った。カードの上に置くお守りにちょうどいい。'],
    ['','時計は午前0時を回っている。「あとワンハンドだけ」と言いかけて、ジンににらまれた。'],
-   ['ジン','今のが最後だ。……盗み方は、覚えたな'],
+   ['ジン','今のが最後だ。……スチールは、覚えたな'],
    ...ilLines(2),
    {preview:3},
   ],
-  lose:'前の席で無理をしたな。盗むのは後ろの席からだ。'},
+  lose:'前の席で無理をしたな。スチールは後ろの席からだ。'},
 
  {no:3,lamp:'#ff5fa2',bgm:3,title:'何もない手で勝つ',venue:'ジャズクラブ「月影」',color:'#ffd8e6',
   goalText:'ブラフで2回勝つ',goal:{type:'bluff',n:2},hint:'bluff',refill:true,
@@ -2599,16 +2783,16 @@ const CHAPTERS=[
    ['ジン','この人は、少しでも怪しいと思ったらすぐ降りる'],
    ['セキ','慎重と言ってほしいね。降りるのも紳士のたしなみだよ'],
    ['ミナ','セキさん、また降りる気でしょ。わたしは、この曲が終わるまでに勝つね'],
-   ['ミナ',"さっきまで、隅の席で一曲だけ聴いていった人がいたの。ジンさんの弟子は、もう来たかって"],
-   {lesson:'ブラフ',body:'役ができていなくても、強そうに賭ければ相手が降りることがあります。これがブラフです。降りやすい相手に、フロップ以降で賭けるのが基本です。この章では、役なし（ハイカード）のまま賭けて全員を降ろすと、ブラフ成功として数えます。'},
+   ['ミナ',"さっきまで、隅の席で一曲だけ聴いていった人がいたの。ジンさんの弟子はもう来たか、って聞かれた"],
+   {lesson:'ブラフ',body:'役ができていなくても、強そうに賭ければ相手は降りることがある。それがブラフだ。降りやすい相手に、フロップから先で賭けるのが基本だ。この店では、役なし（ハイカード）のまま賭けて全員を降ろせば、ブラフ成功と数える。'},
    ['ジン','何もない手で2回勝ってみろ。ただし、相手が強く打ち返してきたら引け'],
   ],
   outro:[
-   ['セキ','見事に騙された。気持ちのいい負けだよ'],
+   ['セキ','見事にだまされた。気持ちのいい負けだよ'],
    ['セキ','……ジン君。あの日のことを、この子にはまだ話していないのかね'],
    ['セキ','あの日、ジン君の手は読まれていた。まるで、誰かに答えを教えられていたようにね'],
    ['ジン','いずれ話す'],
-   ['','ジンの指の背が、顎の傷をなでた。',{mark:'あの日の話になると、傷に触れる。ハヤトのことを考えているときのクセだった'}],
+   ['','ジンの指の背が、あごの傷をなでた。',{mark:'あの日の話になると、傷に触れる。ハヤトのことを考えているときのクセだった'}],
    ['セキ','あの日の準決勝で、私はジン君と当たった'],
    {flashback:'seki'},
    ['','セキはそこで敗れ、決勝は観客席から見ることになった。'],
@@ -2634,17 +2818,17 @@ const CHAPTERS=[
    ['ジン','このディーラーは、とにかくよく賭ける。半分は嘘だ'],
    ['ソウ','ぼ、僕はまだ見習いです。よろしくお願いします！'],
    ['レイカ','嘘かどうかなんて、顔を見たってわからないわよ'],
-   {lesson:'テル（相手のクセ）',body:'ライブのポーカーでは、表情やしぐさから手の強さが漏れることがあります。これを「テル」と言います。強い手のときに出るクセと、ブラフのときに出るクセを見分けましょう。ただしクセはいつも出るわけではなく、当たるのは7割ほどです。手が見えたら答え合わせをして、相手メモに記録されます。'},
+   {lesson:'テル（相手のクセ）',body:'ライブのポーカーでは、顔やしぐさから手の強さが漏れる。これを「テル」と言う。強い手のときのクセと、ブラフのときのクセを見分けろ。ただし、クセはいつも出るわけじゃない。当たるのは7割ほどだ。手が見えたら答え合わせをしろ。相手メモに残る。'},
    ['ジン','顔をよく見ておけ。相手のブラフを見抜いてコールし、2回勝ってみろ'],
   ],
   outro:[
    ['レイカ','……見抜かれたのは久しぶり。ジンさんの目を受け継いだのね'],
    ['ジン','まだ半人前だ'],
-   ['','そう言い切ったとき、ジンの指は顎の傷に触れていなかった。',{mark:'傷に触れずに言った。迷いのない、本心の言葉。強い手のときのクセと同じ形だった'}],
+   ['','そう言い切ったとき、ジンの指はあごの傷に触れていなかった。',{mark:'傷に触れずに言った。迷いのない、本心の言葉。強い手のときのクセと同じ形だった'}],
    ['','レイカが一瞬だけ、顔をしかめた。'],
    ['レイカ','あの日の決勝の最後の一手。配ったのは、わたしよ'],
    {flashback:'reika'},
-   ['','ジンの指は、最後まで顎の傷に触れていた。強い手ではない、という合図だ。'],
+   ['','ジンの指は、最後まで、あごの傷に触れていた。強い手ではない、という合図だ。'],
    ['','クロウは、ほとんど迷わずにコールした。まるで、答えを知っているように。'],
    ['レイカ','ジンさんにもクセがあった。誰も知らないはずのね'],
    ['レイカ',"ジンさんは、あの日に勝っていたら、この街にはいなかった人よ"],
@@ -2652,7 +2836,7 @@ const CHAPTERS=[
    ['レイカ','次は地下よ。あそこには、ジンさんの昔のお弟子さんがいる'],
    ['ソウ',"あの……さっき地下の人から連絡があって、あなたが何枚目か、聞かれました"],
    ['ジン','……'],
-   ['レイカ','これは餞別。天空の羽よ。縁起かつぎに、手札の上に置きなさい'],
+   ['レイカ','これは餞別（せんべつ）。天空の羽よ。縁起かつぎに、手札の上に置きなさい'],
    ['','窓の外が、少しだけ白み始めていた。'],
    ['ジン','……半人前だが、目はいい'],
    ...ilLines(4),
@@ -2667,7 +2851,7 @@ const CHAPTERS=[
   intro:[
    {part:'第一部　後編',title:'あの日'},
    {door:5},
-   ['','三日後の夜。港の外れ、古い倉庫の階段を下りると、使われなくなった賭場があった。'],
+   ['','三日後の夜。港の外れ、古い倉庫の階段を下りると、使われなくなった賭場（とば）があった。'],
    ['','奥の卓で、若い男が大きなポットをかき集めている。'],
    ['ジン','この店のルールはストラドルだ。……最初の一手から、荒れるぞ'],
   ],
@@ -2684,7 +2868,7 @@ const CHAPTERS=[
    ]},
    {after:2,lines:[
      ['ジン','気をつけろ。あいつは手を見せるのが遅い。わざとだ'],
-     {lesson:'少ないチップで戦う',body:'チップが少ないときは、小さく何度も参加する余裕がありません。強い手を待ち、来たら一気に勝負しましょう。相手が熱くなっているときは、なおさら待つ価値があります。'},
+     {lesson:'少ないチップで戦う',body:'チップが少ないときは、小さく何度も入る余裕はない。強い手を待て。来たら、一気に勝負しろ。相手が熱くなっているなら、なおさら待つ価値がある。'},
    ]},
   ],
   outro:[
@@ -2701,7 +2885,7 @@ const CHAPTERS=[
    ['ジン','知っていた。15年前から'],
    ['ハヤト','……なぜ、何も言わなかったんですか'],
    ['ジン','お前を半人前と言い続けたのは、俺だ。焦らせたのは、俺だ'],
-   ['','ジンの指が、顎の傷に触れた。20年前、裏の賭場で少年のハヤトをかばったときの傷だ。'],
+   ['','ジンの指が、あごの傷に触れた。20年前、裏の賭場で少年のハヤトをかばったときの傷だ。'],
    ['ハヤト',"降りたのは、俺のほうだ。ジンさんから"],
    ['','長い沈黙のあと、ハヤトはあなたのほうを向いた。'],
    ['ハヤト','一つだけ教えておく。クロウのクセは、全部わざとだ。信じるな'],
@@ -2745,7 +2929,7 @@ const CHAPTERS=[
      ['クロウ','ソウ君、でしたか。いい手つきです。うちの卓に座ってみませんか'],
      ['ソウ','……いえ。僕はレイカさんの卓で、一人前になりたいので',{brk:'sou'}],
      ['ゴウ','おいおい、俺もいるのを忘れんなよ'],
-     {lesson:'トーナメント',body:'トーナメントでは、ハンドが進むたびにブラインドが上がっていきます。待ちすぎるとブラインドだけで削られるので、後半ほど積極的に勝負しましょう。最後の一人になれば優勝です。'},
+     {lesson:'トーナメント',body:'トーナメントでは、ハンドが進むたびにブラインドが上がる。待ちすぎれば、ブラインドだけで削られる。後半ほど、自分から勝負に行け。最後の一人になれば優勝だ。'},
      ['ジン','ハヤトの言葉を忘れるな。クロウのクセは、全部わざとだ'],
    ]},
   ],
@@ -2771,7 +2955,7 @@ const CHAPTERS=[
    ...ilLines(6),
    {preview:7},
   ],
-  lose:'クセを鵜呑みにするな。ブラインドが上がる前に、勝負どころを選べ。'},
+  lose:'クセをうのみにするな。ブラインドが上がる前に、勝負どころを選べ。'},
  {no:7,lamp:'#ffb15a',bgm:7,title:'卒業試験',venue:'錨亭、閉店後',color:'#ffe0b8',
   goalText:'ジンの最後のクセを読み切る',goal:{type:'final'},hint:null,tells:true,script:'final',
   lore:'',
@@ -2788,8 +2972,8 @@ const CHAPTERS=[
    ['ジン',"クロウに誘われたそうだな。黙っていたか。……それでいい",{tempt:'silent'}],
    ['ジン','15年ぶりだ。……卒業試験をやる'],
    ['ジン','ヘッズアップだ。俺と一対一で打つ'],
-   ['','ジンはいつものように、顎の傷に指を当てている。'],
-   {lesson:'最後のクセ',body:'ジンはずっと顎の傷に触れています。もし傷から手を離したら、それはジンが15年間隠してきた「強い手のときのクセ」かもしれません。本物か、罠か。読み切って決めましょう。'},
+   ['','ジンはいつものように、あごの傷に指を当てている。'],
+   {lesson:'最後のクセ',body:'俺はいつも、あごの傷に触れている。もしこの指が傷から離れたら、それは俺が15年隠してきた「強い手のときのクセ」かもしれん。本物か、罠か。読み切って決めろ。'},
    ['ジン','俺の手を読んでみろ'],
   ],
   outro:()=>[].concat(S&&S.finalRead?[
@@ -3169,7 +3353,7 @@ function genParts(c,id,SH,D){
     case 'curly':hb=`<g fill="${HD}">${curls(50,32,16.6,170,370,4.6,12)}</g>`;
       h=`<g fill="${H}"><path d="M33.8 40 Q33.6 18 50 17 Q66.4 18 66.2 40 Q62 31 50 30 Q38 31 33.8 40Z"/>${curls(50,33,15.4,195,345,3.6,10)}</g>`;break;
     case 'afro':hb=`<g fill="${HD}"><ellipse cx="50" cy="31" rx="22.4" ry="19.6"/>${curls(50,31,21,150,390,4.4,18)}</g>`;
-      h=`<g fill="${H}"><path d="M34 40 Q34 24 50 23 Q66 24 66 40 Q62 31.6 50 31 Q38 31.6 34 40Z"/>${curls(50,30,15.6,190,350,3.4,10)}</g>`;break;
+      h=`<g fill="${H}"><path d="M33.4 41 Q32.2 14.6 50 13.8 Q67.8 14.6 66.6 41 Q62 31.6 50 31 Q38 31.6 33.4 41Z"/>${curls(50,28,16.4,185,355,3.6,12)}</g>`;break;   // 2026-10-17 動画のツッコミ B5：前髪が頭の上まで届かず、地肌が帯のように見えていた
     case 'locs':{let s='';for(let i=-5;i<=5;i++){const x=50+i*3.5,len=78+((i*7+11)%5)*2.2;s+=`<rect x="${(x-1.7).toFixed(1)}" y="26" width="3.4" height="${len-26}" rx="1.7"/>`}
       hb=`<g fill="${HD}"><ellipse cx="50" cy="28" rx="18.6" ry="13.6"/>${s}</g>`;
       h=`<g fill="${H}"><path d="M33.8 41 Q33.4 17.6 50 16.6 Q66.6 17.6 66.2 41 Q63 30.4 50 29.6 Q37 30.4 33.8 41Z"/>
@@ -3699,7 +3883,7 @@ const TELLS={
   'クロウ':{strong:{cue:'sweat',rate:.7,false:.1},bluff:{cue:'smile',rate:.7,false:.1}},
   'カオル':{strong:{cue:'glance',rate:.65,false:.1},bluff:{cue:'fast',rate:.65,false:.1}},
 };
-const CUE_LABEL={glove:'白い手袋の指先を直した',release:'顎の傷から手を離した',scar:'顎の傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
+const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
   talk:'いつもより口数が多い',fast:'考えずにすぐ賭けた',sweat:'汗をかいている'};
 const CUE_SFX={glove:'スッ',release:'……',scar:'傷',glance:'ちらっ',still:'…',smile:'ニヤ',stare:'じっ',talk:'ペラペラ',fast:'サッ',sweat:'タラ…'};
 const TRUTH_JP={strong:'強い手',bluff:'ブラフ',none:'特に意味なし'};
@@ -3711,7 +3895,7 @@ function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify({v:1,...
 const foldFastNow=()=>{try{return SETTINGS.foldFast!==false&&typeof S!=='undefined'&&S&&S.players&&S.players[0]&&S.players[0].folded&&!S.handOver&&!S.reveal
     &&!S.storyHand&&!(CFG&&CFG.ch&&CFG.ch.no===7&&!CFG.ch.p2)&&!CFG.flashback&&S.street!=='showdown'
     &&!S.players.some(p=>p.tell&&p.tell.street===S.street&&!p.folded)}catch(e){return false}};
-const SPEED=()=>SETTINGS.speed==='fast'||foldFastNow()?.5:1;
+const SPEED=()=>SETTINGS.speed==='slow'?1.5:SETTINGS.speed==='fast'||foldFastNow()?.5:1;   // ゆっくり（2026-10-17 動画のツッコミ A3）は降りても速くしない
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NOTE_KEY='shisho-notes';
 function loadNotes(){
@@ -3921,7 +4105,7 @@ const BANTER_ANY=[
 {id:'a5-07',l:[['ベン','新しい客か。……こっちに詰めよう'],['テツ','ベンさん、いつもそれやるよな'],['ベン','狭い場所は、詰めればなんとかなる']]},
 {id:'a5-08',l:[['ドク','ハヤト。……肩に力が入っている'],['ハヤト','うるせえ、じいさん'],['ドク','……ジンも、昔そうだった'],['ハヤト','…………']]},
 {id:'a5-09',l:[['テツ','地下は電波が入らねえんだよな'],['ガン','いいじゃん。誰にも邪魔されない'],['テツ','俺は待ってる連絡があるんだよ'],['ハヤト','なら上に行け']]},
-{id:'a5-10',l:[['ミン','ハヤト、ジンって人に習ってたって本当？'],['ハヤト','……誰に聞いた'],['ミン','この店の壁が、そう言ってる'],['テツ','壁がしゃべるかよ']]},
+{id:'a5-10',l:[['ミン','ハヤト、ジンという人に習っていたのは本当？'],['ハヤト','……誰に聞いた'],['ミン','この店の壁が、そう言ってる'],['テツ','壁がしゃべるかよ']]},
 
 // ---- 王冠（クロウ、ゴウ、カオル、レン、イオリ、ソフィア、タケル） ----
 {id:'a6-01',l:[['ゴウ','おい、さっきから何見てんだよ'],['タケル','（メモ）あなたの手。さっきも同じ動き'],['ゴウ','……読むなよ']]},
@@ -4792,7 +4976,7 @@ function jinView(){
     if(CFG.ch&&!CFG.ura&&q.styleKey==='crow'&&CFG.ch.no===6)l+='　（ジンはグラスを置いた）';ls.push(l);if(lk)ls.push(lk.view.split('{n}').join(q.name))});
   if(!ls.length)return;S.jinViews=ls;jinNote(ls.join('　／　'),1);log('ジンの見立て：'+ls.join('　／　'));renderNotes()}
 // 案B：今夜の三行
-const REVIEW_WIN_LINE={"1": "ゲンを飛ばした。それで十分だ", "2": "三回、盗んだな。後ろの席の使い方は覚えた", "3": "何もない手で、二回勝った。それが仕掛けだ", "4": "嘘を二回、見抜いた。顔を見ていたな", "5": "少ないチップから戻した。焦らなかったな", "6": "最後の一人だ。……王冠の卓でな", "7": "……読んだな", "11": "ゲンを飛ばした。最初の一歩だ", "12": "よその店で、二回盗んだ。度胸がついたな", "13": "カイに勝った。急がなかったからだ", "14": "看板持ちの卓で、最後の一人だ", "15": "……読んだな"};
+const REVIEW_WIN_LINE={"1": "ゲンを飛ばした。それで十分だ", "2": "三回、スチールを決めたな。後ろの席の使い方は覚えた", "3": "何もない手で、二回勝った。それが仕掛けだ", "4": "嘘を二回、見抜いた。顔を見ていたな", "5": "少ないチップから戻した。焦らなかったな", "6": "最後の一人だ。……王冠の卓でな", "7": "……読んだな", "11": "ゲンを飛ばした。最初の一歩だ", "12": "よその店で、二回スチールを決めた。度胸がついたな", "13": "カイに勝った。急がなかったからだ", "14": "看板持ちの卓で、最後の一人だ", "15": "……読んだな"};
 const REVIEW_LOSE_LINE='……まだ、お前の打ち方は見えてこない';
 function reviewLines(st,ch,result){
   if(!st||st.hands<5)return null;const r=[];
@@ -5180,7 +5364,7 @@ function flashTo(){const me=S.players[0],pot=potTotal();
   return Math.min(me.bet+me.chips,S.currentBet+Math.max(BB(),Math.round(pot*.6/1000)*1000))}
 /* ジンのノート */
 const PROFILE={
-  'ジン':{ph:'降りるのも勝負のうちだ',ch:1,lines:[[1,'錨亭で飲んでいる老人。「昔、少しだけカードをやっていた」'],[2,'15年前に、突然姿を消した。ロクの昔の相棒'],[4,'傷に触れるのは、迷っているとき。触れないときは、迷いがない'],[5,'顎の傷は20年前、少年のハヤトをかばってできた'],[5,'クセを漏らしたのがハヤトだと、あの日のうちに気づいていた'],[6,'あの日、ブラフを降りずに負けた。降りることを教えたのは、自分にできなかったからだ'],[7,'最後のクセは本物だった。強い手のとき、傷から手を離す']]},
+  'ジン':{ph:'降りるのも勝負のうちだ',ch:1,lines:[[1,'錨亭で飲んでいる老人。「昔、少しだけカードをやっていた」'],[2,'15年前に、突然姿を消した。ロクの昔の相棒'],[4,'傷に触れるのは、迷っているとき。触れないときは、迷いがない'],[5,'あごの傷は20年前、少年のハヤトをかばってできた'],[5,'クセを漏らしたのがハヤトだと、あの日のうちに気づいていた'],[6,'あの日、ブラフを降りずに負けた。降りることを教えたのは、自分にできなかったからだ'],[7,'最後のクセは本物だった。強い手のとき、傷から手を離す']]},
   'ゲン':{ph:'配られた札は全部勝負！',ch:1,lines:[[1,'港の酔客。毎晩負けて、毎晩笑って帰る'],[1,'元漁師。腰を痛めて船を降りた。錨のお守りは、その日に店主が壁に掛けてくれたもの'],[7,'15年間、毎晩錨亭でジンの隣に座っていた']]},
   '店主':{ph:'腹が減ってちゃ勝てないよ',ch:1,lines:[[1,'錨亭の女主人。名物はカレー。ジンを叱れる、ただ一人の人'],[7,'15年前、行き場のなくなったジンを、何も聞かずに錨亭に置いた']]},
   'ロク':{ph:'……数えてから言え',ch:2,lines:[[2,'銀の扉の主。15年前、ジンの相棒だった'],[2,'チームの金庫番。鍵のお守りは、昔の倉庫の鍵'],[6,'本当は、ジンに「相談してほしかった」と言いたかった']]},
@@ -5368,7 +5552,7 @@ const DAILY=[
   {opp:'ロク',hand:'A♣ 5♣',board:'K♦ 9♠ 4♥ 2♣',pot:10000,bet:6000,tell:'still',sit:'ロクが6,000を賭けた。賭ける前に、ぴたりと動かなくなった。',answer:'fold',why:'ロクが固まった。あいつが動かなくなるのは、強いときだ。Aだけで付き合う理由はない。'},
   {opp:'レイカ',hand:'Q♠ Q♥',board:'J♦ 8♣ 3♠ 5♦ 2♥',pot:20000,bet:16000,tell:'talk',sit:'レイカが16,000を賭けた。いつもより口数が多い。',answer:'call',why:'しゃべりすぎるのは、ブラフのときのクセだ。QQなら十分に受けられる。'},
   {opp:'ミナ',hand:'9♥ 8♥',board:'A♥ K♥ 4♣',pot:10000,bet:2000,tell:null,sit:'ミナが小さく2,000だけ賭けた。あなたはハートがあと1枚でフラッシュ。',answer:'call',why:'2,000で12,000を取りに行ける。フラッシュになる見込みは3回に1回以上ある。安い賭けなら付き合え。'},
-  {opp:'ロク',hand:'K♣ 7♦',board:'',pot:3000,bet:2000,tell:null,sit:'あなたはディーラーボタン。前の人は全員降りた。残りはロクとハル（どちらも慎重）。',answer:'raise',why:'後ろの席で、誰も参加していない。相手は慎重だ。手が弱くても、レイズで盗め。'},
+  {opp:'ロク',hand:'K♣ 7♦',board:'',pot:3000,bet:2000,tell:null,sit:'あなたはディーラーボタン。前の人は全員降りた。残りはロクとハル（どちらも慎重）。',answer:'raise',why:'後ろの席で、誰も参加していない。相手は慎重だ。手が弱くても、レイズでスチールしろ。'},
   {opp:'セキ',hand:'7♣ 6♣',board:'A♠ Q♦ 8♣ 4♠ 2♥',pot:12000,bet:0,tell:null,sit:'最後のカードが出た。セキはチェックした。あなたの手は何もできていない。',answer:'raise',why:'セキは少しでも怪しいと降りる。何もないなら、ここで賭けてみろ。チェックでは絶対に勝てん。'},
   {opp:'ゲン',hand:'A♦ J♠',board:'J♥ 9♥ 6♣ 9♦',pot:14000,bet:14000,tell:'smile',sit:'ゲンが14,000を賭けた。口元が緩んでいる。',answer:'fold',why:'ゲンがニヤけた。あいつが笑うときは本物だ。Jのペアでは足りん。'},
   {opp:'クロウ',hand:'A♠ K♠',board:'A♦ 10♣ 5♥ 3♠ 8♦',pot:30000,bet:30000,tell:'smile',sit:'クロウが30,000を賭けた。かすかに笑っている。',answer:'call',why:'クロウのクセは全部わざとだ。強いときに焦って見せ、ブラフのときに笑う。笑ったなら、受けろ。'},
@@ -5377,7 +5561,7 @@ const DAILY=[
   {opp:'カオル',hand:'A♣ 9♣',board:'',pot:9000,bet:6000,tell:null,sit:'トーナメント終盤。あなたの持ち点はビッグブラインド8回分しかない。前は全員降りた。',answer:'raise',why:'チップが少ないときは、待ちすぎるな。このくらいの手なら、全部賭けて勝負しろ。'},
   {opp:'ロク',hand:'Q♥ J♣',board:'',pot:16000,bet:12000,tell:null,sit:'あなたのレイズに、慎重なロクがさらに大きくレイズしてきた。',answer:'fold',why:'慎重な奴が2回目のレイズをしたら、強い手だ。QJで付き合うと高くつく。'},
   {opp:'ソウ',hand:'10♠ 10♦',board:'A♣ 9♦ 4♠ 2♣ K♥',pot:16000,bet:12000,tell:'sweat',sit:'ソウが12,000を賭けた。汗をかいている。',answer:'call',why:'ソウの汗は、ブラフのときのクセだ。場にAとKがあっても、10のペアで受けていい。'},
-  {opp:'ジン',hand:'K♦ K♣',board:'Q♠ 8♥ 3♦ 6♣ 2♠',pot:24000,bet:20000,tell:'scar',sit:'ジンが20,000を賭けた。いつものように、顎の傷に触れている。',answer:'call',why:'傷に触れているのは、迷っているときだ。いつも通りなら、KKで受けていい。……傷から手を離したときは、別だがな。'},
+  {opp:'ジン',hand:'K♦ K♣',board:'Q♠ 8♥ 3♦ 6♣ 2♠',pot:24000,bet:20000,tell:'scar',sit:'ジンが20,000を賭けた。いつものように、あごの傷に触れている。',answer:'call',why:'傷に触れているのは、迷っているときだ。いつも通りなら、KKで受けていい。……傷から手を離したときは、別だがな。'},
 ];
 const DAILY_KEY='shisho-daily';
 const todayKey=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -5474,7 +5658,7 @@ function noteHighlight(){
   else if(me.won>=BB()*5&&me.allIn&&me.show)head=`オールインで勝ち残った +${fmt(me.won)}`;
   else if(me.won>=BB()*15)head=`大きなポットを取った +${fmt(me.won)}`;
   if(!head){S.hl=null;return}
-  S.hl={hand:S.handNo,head,sub:where,board:S.board.slice(),hand2:me.hand.slice(),quote:S.result==='win'&&CFG.ch?'ジン「'+['','弱い手で突っ込まなくなった。それだけのことだ','今のが最後だ。……盗み方は、覚えたな','……少しは、わかってきたな','……半人前だが、目はいい','……お前は、焦るな','……あと一つだ','一人前だ'][CFG.ch.no]+'」':''};if(CFG.ch&&CFG.ch.p2&&S.hl.quote)S.hl.quote=p2Quote(CFG.ch);
+  S.hl={hand:S.handNo,head,sub:where,board:S.board.slice(),hand2:me.hand.slice(),quote:S.result==='win'&&CFG.ch?'ジン「'+['','弱い手で突っ込まなくなった。それだけのことだ','今のが最後だ。……スチールは、覚えたな','……少しは、わかってきたな','……半人前だが、目はいい','……お前は、焦るな','……あと一つだ','一人前だ'][CFG.ch.no]+'」':''};if(CFG.ch&&CFG.ch.p2&&S.hl.quote)S.hl.quote=p2Quote(CFG.ch);
 }
 /* カードプロテクター：章クリアでもらえる見た目だけのお守り */
 const PROTECTORS=[
@@ -5501,7 +5685,7 @@ function protectorSVG(id){
 /* ハンドの合間の噂話（勝負とは関係ない雑談） */
 const GOSSIP={
   1:[['店主','ゲンさんは毎晩来て、毎晩負けて帰るんだよ'],['ゲン','このお守りの錨じゃないと勝てねえんだよな'],['店主','名物のカレー、あとで食べていきな'],['店主','腹が減ってちゃ勝てないよ']],
-  2:[['常連','ロクさん、昔はジンさんと組んでたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ'],['ロク','……数えてから言え']],
+  2:[['常連','ロクさんは昔、ジンさんと組んでいたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ'],['ロク','……数えてから言え']],
   3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、卓が荒れるんだよなあ'],['ミナ','この曲が終わるまでに勝つね']],
   4:[['ソウ','レイカさん、ディーラーのときは絶対に表情を変えないんです'],['常連','このラウンジ、朝まで卓が立つらしいね'],['ソウ','あ、あとワンハンドだけ……']],
   5:[['テツ','ハヤトは勝つとすぐ帰るんだ。今日は珍しく座ってるな'],['テツ','ここは昔、クロウの持ち物だったらしいぜ'],['テツ','地下は電波が入らねえんだよな']],
@@ -5677,7 +5861,7 @@ function showChapters(){
     return`<li class="ch${open?'':' locked'}" style="--chc:${c.color}"><span class="no">${c.no}</span>
       <span class="t">${esc(c.title)}${c.no<=cleared?'<span class="done">クリア</span>':''}${open?`<span class="stars3" aria-label="星 ${sg.reduce((a,b)=>a+b,0)}/3">${sg.map(x=>x?'★':'☆').join('')}</span>`:''}</span>
       <span class="act">${open?`<button class="${c.no===cleared+1?'primary':''}" data-ch="${c.no}">${c.no<=cleared?'もう一度':'はじめる'}</button>`:'<span class="hint">前の章をクリア</span>'}</span>
-      <span class="v">${esc(c.venue)}${c.no<=cleared?`<span class="photo">${esc(hx('壁に〈主〉の写真'))}</span>`:''}${c.no<=cleared&&fitOf(c.no)?`<span class="fitgot">服：${esc(fitOf(c.no).n)}</span>`:''}<span class="reg">常連度 ${'★'.repeat(regLevel(c.no))+'☆'.repeat(2-regLevel(c.no))}</span>${c.no<=cleared?`<button class="mini storebtn" data-store="${c.no}">この店で遊ぶ${nextAfter(c.no)?'<i class="newep">後日談</i>':''}</button><button class="mini storebtn" data-memo="${c.no}">会話を見る</button>`:''}</span>${open?`<details class="stask"><summary>星の課題</summary><ol>${STARS[c.no].map(([n],i)=>`<li class="${sg[i]?'got':''}">${esc(n)}</li>`).join('')}</ol></details>`:''}</li>`;
+      <span class="v">${esc(c.venue)}${c.no<=cleared?`<span class="photo">${esc(hx('壁に〈主〉の写真'))}</span>`:''}${c.no<=cleared&&fitOf(c.no)?`<span class="fitgot">服：${esc(fitOf(c.no).n)}</span>`:''}<span class="reg" title="同じ店で遊ぶほど常連度が上がります。上がると、店の人がいつもの席を覚えて、話してくれることが増えます">常連度 ${'★'.repeat(regLevel(c.no))+'☆'.repeat(2-regLevel(c.no))}</span>${c.no<=cleared?`<button class="mini storebtn" data-store="${c.no}">この店で遊ぶ${nextAfter(c.no)?'<i class="newep">後日談</i>':''}</button><button class="mini storebtn" data-memo="${c.no}">会話を見る</button>`:''}</span>${open?`<details class="stask"><summary>星の課題</summary><ol>${STARS[c.no].map(([n],i)=>`<li class="${sg[i]?'got':''}">${esc(n)}</li>`).join('')}</ol></details>`:''}</li>`;
   }).concat(LOCKED.map(c=>`<li class="ch locked"><span class="no">${c.no}</span><span class="t">${esc(c.title)}</span>
       <span class="act"><span class="hint">準備中</span></span><span class="v">${esc(c.venue)}</span></li>`));
   $('chList').innerHTML=items.join('');
@@ -5965,7 +6149,7 @@ const RUMORS={
   4:[['ソウ','レイカさん、強いときは自分のチップをちらっと見るんです。……たぶん','true'],['ソウ','長く打っていると、レイカさんのクセは逆になるって、先輩が言ってました','true'],['常連','レイカは汗をかいたら勝負手だってさ','old']],
   5:[['テツ','ハヤトの口数が急に増えたら、要注意だ','true'],['テツ','あいつが急に黙って動かなくなったら、たいてい嘘だ','true'],['常連','ハヤトは絶対にブラフしないって話だぜ','old']],
   6:[['カオル','クロウさん、汗をかいたら勝負手だって噂よ','plant'],['カオル','クロウさんが笑ったら……どうだったかしら。誰も確かめたことがないの','true'],['常連','本当に迷ったときだけ、白い手袋に触るって聞いたことがある','true']],
-  7:[['店主','ジンさんの顎の傷のこと、誰も聞けないんだよ','flavor'],['ゲン','ジンさんはな、降りるときだけ、ちょっと笑うんだ','old'],['店主','昔のジンさんを知ってる人は、みんな同じことを言うよ。「手を見るな、顔を見ろ」ってね','flavor']]};
+  7:[['店主','ジンさんのあごの傷のこと、誰も聞けないんだよ','flavor'],['ゲン','ジンさんはな、降りるときだけ、ちょっと笑うんだ','old'],['店主','昔のジンさんを知ってる人は、みんな同じことを言うよ。「手を見るな、顔を見ろ」ってね','flavor']]};
 const RUMOR_KEY='shisho-rumor';
 function loadRumor(){try{const o=JSON.parse(localStorage.getItem(RUMOR_KEY))||{};return o.heard&&typeof o.heard==='object'?o.heard:{}}catch(e){return{}}}
 function rumorScene(ch,go){
@@ -6824,7 +7008,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
       log(`${u.name}：ストラドル ${fmt(BB()*2)}`);S.msg=`${u.name}がストラドル（${fmt(BB()*2)}）`;
       S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB()*2;S.toAct=nextIdx(S.toAct,needs);if(!mq)mq='straddle'}
   }
-  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように顎の傷に触れている……':'ジンは顎の傷に触れている';
+  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように、あごの傷に触れている……':'ジンは、あごの傷に触れている';
   const go=()=>{S.hold=startBanter();proceed()};
   mq?askQuiz(mq,go):go();
 }
@@ -6971,7 +7155,7 @@ function proceed(){
     if(!S.autoMe)requestAnimationFrame(keepMine);
     if(!S.autoMe&&!CFG.flashback&&preAct&&preAllowed()){const k=S.myTurnKey;setTimeout(()=>{if(S===s0&&S.toAct===0&&S.myTurnKey===k&&!S.handOver)runPre()},250*SPEED())}
     else if(!S.autoMe)turnCue()}
-  if(p.human&&S.autoMe){render();return setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===0)act(0,'call')},1600*SPEED())}
+  if(p.human&&S.autoMe){render();return setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===0&&S.autoMe)act(0,'call')},1600*SPEED())}
   if(p.human&&bigSpotForMe()&&!S.finalHand){Clock.start(S.myTurnKey);if(approxOn()&&!S.countNoted){S.countNoted=true;jinNote('迷ったら数えさせろ。恥ずかしいことじゃない',0)}}
   if(!p.human){
     const d=(S.scriptAI&&S.scriptAI(i))||cpuDecide(i);p.lastState=d.state;
@@ -7184,7 +7368,7 @@ function camBand(kind,amt){
 function cutIn(name,line,release){$('camBand').hidden=true;
   const c=$('cutin');
   c.querySelector('.cav').innerHTML=avatar(name,'confident');
-  c.querySelector('.ctext').innerHTML=release?`<b>${esc(name)}</b><span>最後のクセ</span><p>${typeof release==='string'?esc(release):'ジンの指が、顎の傷から離れた。'}</p>`:`<b>${esc(name)}</b><span>オールイン</span><p>「${esc(line)}」</p>`;
+  c.querySelector('.ctext').innerHTML=release?`<b>${esc(name)}</b><span>最後のクセ</span><p>${typeof release==='string'?esc(release):'ジンの指が、あごの傷から離れた。'}</p>`:`<b>${esc(name)}</b><span>オールイン</span><p>「${esc(line)}」</p>`;
   c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');
   S.hold=1700;
   setTimeout(()=>{c.hidden=true},1800);
@@ -7217,7 +7401,7 @@ function winUncontested(p){
   S.handOver=true;S.toAct=-1;
   S.msg=`${p.name}の勝ち（+${fmt(pot)}）`;
   log(`${p.name}がポット ${fmt(pot)} を獲得`);
-  if(p.human&&S.street==='preflop'&&S.aggr===0){S.steals++;if(isLatePos())S.lateSteals=(S.lateSteals||0)+1;if(CFG.goal.type==='steal')S.msg=`ブラインドを盗んだ！（+${fmt(pot)}）`}
+  if(p.human&&S.street==='preflop'&&S.aggr===0){S.steals++;if(isLatePos())S.lateSteals=(S.lateSteals||0)+1;if(CFG.goal.type==='steal')S.msg=`ブラインドスチール成功！（+${fmt(pot)}）`}
   if(p.human&&S.street!=='preflop'&&S.myPostAggro&&isWeak(p.hand,S.board)){S.bluffs++;if(CFG.goal.type==='bluff')S.msg=`ブラフ成功！（+${fmt(pot)}）`}
   if(p.human)S.showOffer=true;
   else if(CFG.tells&&(mannerOf(p)||p.style===STYLES.liar||p.style===STYLES.liar2)&&weakNow(p.hand)&&Math.random()<.2){
@@ -7279,7 +7463,8 @@ function showdown(){
     }
   }
   if(me.show&&!me.won&&cont.includes(me))S.sdLoss=true;
-  if(me.show&&!me.won&&S.riverAggr!==0&&!S.runout&&SETTINGS.muck){me.mucked=true;log('あなたは手を伏せて捨てた')}
+  if(me.show&&!me.won&&S.riverAggr!==0&&!S.runout&&!me.allIn&&SETTINGS.muck){   // オールインした手は伏せずに見せる（v89 レビュー：飛んだハンドで自分の2枚が見えなかった）
+    me.mucked=true;log('あなたは手を伏せて捨てた')}
   payHouse72();
   S.handOver=true;S.toAct=-1;
   if(S.slowrolled>0){const sp=S.players[S.slowrolled];grantTitle('slowrolled');taunt(sp,'gloat');
@@ -7289,7 +7474,7 @@ function showdown(){
   potPush();potCall();
 }
 function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
-  if(CFG.ch&&CFG.ch.script==='badbeat'&&S.autoMe){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
+  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
     S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？'};render()}},1400*SPEED())}
   {const me=S.players[0];if(penOn()&&(S.myActs||[]).length&&(hasLesson('pen')?me.total-me.won>0:me.total-me.won>=BB()*10&&(S.penCount||0)<3))S.penReady=S.handNo}
   if(S.finalHand&&CFG.ch&&CFG.ch.p2)p2FinalEnd();
@@ -7424,7 +7609,7 @@ const eqWeak=(h,b)=>b.length<3?preTier(h)===0:isWeak(h,b)&&!drawOf(h,b);
 const OPEN_LINE={レイカ:.9,ハヤト:.9};
 function proAdj(p,d,x){
   // v71（S2）：読める相手（ジン・クロウ）は、リバーでポットの1.5倍以上を賭けられたら、強い手（st.hi 以上）でなければ降りる（コールが4〜5割で揺れていた）
-  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.mid*.8)return{type:'fold',state:'none'};
+  if(S.street==='river'&&d.type==='call'&&x.toCall>0&&(x.st.read||0)>=.85&&x.toCall>=(potTotal()-x.toCall)*1.5&&x.rel<x.st.mid*(typeof S2_LINE!=='undefined'&&S2_LINE[p.name]||.8))return{type:'fold',state:'none'};
   if(S.street!=='preflop'||x.toCall<=0)return d;
   const st=x.st;
   // A1：強キャラは、自分から最初に入るときリンプしない（レイズ2.5〜3BB か、降りる）。BBのチェックはそのまま
@@ -7872,10 +8057,10 @@ function senseiLine(){
     return smallMade(me.hand,S.board)?'小さい役だ。安く見られるなら見ていい。大きく賭けられたら考えろ。':'役ができた。ゲンは降りない。しっかり賭けろ。';
   }
   if(CFG.hint==='position'){
-    if(S.street!=='preflop')return'盗みはプリフロップで決めろ。ここからは手の強さで勝負だ。';
+    if(S.street!=='preflop')return'スチールはプリフロップで決めろ。ここからは手の強さで勝負だ。';
     const nobodyIn=S.currentBet<=BB()&&noLimper();
-    if(isLatePos()&&nobodyIn)return'後ろの席で、誰も参加していない。手が弱くてもレイズで盗め。';
-    if(isLatePos())return'誰かが先に参加した。盗むのはやめて、強い手だけで行け。';
+    if(isLatePos()&&nobodyIn)return'後ろの席で、誰も参加していない。手が弱くても、レイズでスチールしろ。';
+    if(isLatePos())return'誰かが先に参加した。スチールはやめて、強い手だけで行け。';
     return preTier(me.hand)===2?'前の席だが、いい手だ。参加していい。':'前の席は不利だ。強い手以外は降りろ。';
   }
   if(CFG.hint==='tell'){
@@ -7930,7 +8115,7 @@ TAP_REACT['老人']=TAP_REACT['ジン'];
 // 名前の無い相手（店の常連・船の客など）は型で分ける
 const TAP_TYPE={
   cool:{a:'look',l:['……','何か？',null],nh:'どうも',lost:'……',greet:'（軽く会釈）'},
-  easy:{a:'nod',l:['どうも','何か？','……見すぎだよ'],nh:'ありがとう',lost:'今のは参った',greet:'よろしく'},
+  easy:{a:'nod',l:['どうも','何か？','……見すぎだよ'],nh:'ありがとう',lost:'今のはまいった',greet:'よろしく'},
   rough:{a:'glare',l:['あ？','見てんじゃねえよ',null],nh:'ふん',lost:'……チッ',greet:'……'}
 };
 const TAP_NH='ナイスハンド';
@@ -8386,7 +8571,7 @@ renderCamBtn();
 (function(){const t=$('table'),c=document.createElement('div');c.className='cam';c.id='cam';t.insertBefore(c,$('busts'));c.appendChild($('busts'));c.appendChild(t.querySelector('.felt-wrap'));c.appendChild($('plates'));const L=document.createElement('div');L.className='plates saylayer';L.id='sayLayer';t.insertBefore(L,c.nextSibling)})();
 renderDepth();
 // ===== 隣の卓の声（案4：ピント送り）。ハンドとハンドの間だけ、6〜8ハンドに1回 =====
-const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさん、昔はジンさんと組んでたって本当か？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["AAが負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
+const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさんは昔、ジンさんと組んでいたんだろ？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["AAが負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
 const NV_REACT={"win": ["今の勝負、向こうの若いのが取ったぞ"], "bluff": ["今の、何も無い手で押し切ったのか？"], "fold": ["あの若いの、ずいぶん我慢してるな"]},NV_SELF={"slow": {"s": "あの新顔、強いときは長く考えるよな", "w": "あの新顔、迷ってるときほど長く考えるな"}, "fast": {"s": "あの新顔、強いときはすぐ動くよな", "w": "あの新顔、手が無いときほど早いよな"}, "big": {"s": "あの新顔、強いときだけ強気に出るよな", "w": "あの新顔、強気に出るときほど怪しいな"}};
 const NV={on:false,tok:0,t:0};
 function nvLamp(){const L=$('nextLamp');if(L)L.classList.toggle('off',storeNo()===7)}
@@ -8674,20 +8859,20 @@ const PART2=[
    {fav:true},
    ["","奥の席で、ジンがグラスを置いた。"],
    ["ジン","……教えるのは、打つより難しいぞ"],
-   {lesson:"三代目",body:"第二部では、タロウを操作します。隣に座る師匠は、第一部のあなたです。第一部の打ち方の記録から、師匠の教え方が決まりました。勝負のあいだ、師匠がときどき声をかけます。"},
+   {lesson:"三代目",body:"ここからは、お前がタロウだ。隣に座る俺は、第一部のお前だ。第一部での打ち方が、そのまま俺の教え方になった。勝負のあいだ、ときどき口を出すぞ。"},
    ["ゲン","おう、今度は二人がかりか？ 来い来い！"]],outro:[
-   ["ゲン","参った！ タロウ、お前、急に降りるようになりやがったな"],
+   ["ゲン","まいった！ タロウ、お前、急に降りるようになりやがったな"],
    ["タロウ","もうワンハンドだけ、って言いかけたら、隣でにらまれるんで"],
    ["ミサキ","あはは、ジンさんと同じことしてる"],
    ["","ジンは何も言わずに、グラスの水を一口飲んだ。口の端が、少しだけ上がっていた。"],
    ["店主","三代目だね。写真の場所、空けておくよ"],
    ["師匠","まだ早い"],
    ["店主","ジンさんも、昔そう言ったよ"],
-   ["ジン","……隣の港、汐見に「舫」という古い店がある。行ってこい"],
+   ["ジン","……隣の港、汐見（しおみ）に「舫（もやい）」という古い店がある。行ってこい"],
    ["","帰り道。「もうワンハンドだけ」と言いかけたタロウが、自分で口を閉じた。"],
-   ["師匠","今のが最後だ。……降りられる奴は、また来られる"],
+   ["師匠","今のが最後だ。……降りられる奴だけが、明日も打てる"],
    {p2preview:2}],lose:"弱い手で、ゲンに付き合いすぎたな"},
-{no:12,p2:2,lamp:"#9fd8ff",bgm:2,title:"名前のない看板",venue:"汐見の古い店「舫」",color:"#d6ecff",goalText:"ブラインドを2回盗む",goal:{type:'steal',n:2},refill:true,tells:true,house:"seven2",you:80000,blinds:[1000,2000],opps:[{name:'ミヤコ',style:'tight',chips:80000,label:'慎重'}],extras:[{name:'イネス',style:'normal',chips:80000},{name:'メイ',style:'normal',chips:80000}],seatPlan:['e0','p0','e1'],intro:[
+{no:12,p2:2,lamp:"#9fd8ff",bgm:2,title:"名前のない看板",venue:"汐見の古い店「舫」",color:"#d6ecff",goalText:"ブラインドスチールを2回決める",goal:{type:'steal',n:2},refill:true,tells:true,house:"seven2",you:80000,blinds:[1000,2000],opps:[{name:'ミヤコ',style:'tight',chips:80000,label:'慎重'}],extras:[{name:'イネス',style:'normal',chips:80000},{name:'メイ',style:'normal',chips:80000}],seatPlan:['e0','p0','e1'],intro:[
    {p2door:2},
    ["","朝の連絡船で一時間。となりの港町、汐見。"],
    ["","坂の上に、古い店が一軒。看板には「舫」とある。船をつなぐ綱のことだ。"],
@@ -8700,14 +8885,14 @@ const PART2=[
    ["イネス","港に着いたら、まず一番古い店を探すの。今日はここ"],
    ["メイ","この卓も、ノートに書いておきます"],
    ["ミヤコ","汐見の作法を教えとくよ。7と2で勝ったら、卓の全員がチップを出す。錨亭じゃ、とっくにやめた決まりだろ"],
-   ["師匠","慎重な相手ほど、後ろの席から盗める。俺は、ロクの店でそう教わった",{mt:'guard'}],
+   ["師匠","慎重な相手ほど、後ろの席からのスチールが通る。俺は、ロクの店でそう教わった",{mt:'guard'}],
    ["師匠","後ろの席で、誰も入っていなかったら、先に打て。話を決めるのは、こっちだ",{mt:'attack'}],
-   ["師匠","ミヤコさんが降りるときの顔を、先に覚えろ。盗むのは、そのあとだ",{mt:'read'}],
-   {lesson:"後ろの席から",body:"ディーラーボタン（D）に近い後ろの席から先にレイズすると、慎重な相手は弱い手を降ります。全員が降りれば、ブラインドを盗めます。この章では2回盗めば勝ちです。"},
+   ["師匠","ミヤコさんが降りるときの顔を、先に覚えろ。スチールは、そのあとだ",{mt:'read'}],
+   {lesson:"後ろの席から",body:"ディーラーボタン（D）に近い後ろの席から先にレイズすれば、慎重な相手は弱い手を降りる。全員が降りれば、ブラインドスチールだ。この店では、2回決めれば勝ちだ。"},
    ["ミヤコ","……あんた、よくしゃべるね。あんたの師匠より、ずっと"],
    ["師匠","ジンさんは、教えなかったわけじゃない。言わなかっただけだ"],
    ["ミヤコ","同じことさ。……さ、座りな"]],outro:[
-   ["ミヤコ","盗まれたね。……二回も"],
+   ["ミヤコ","ブラインドを持っていかれたね。……二回も"],
    ["ミヤコ","あんたの師匠は、ジンより教え方がうるさい。でも、うるさい師匠のほうが、弟子は長持ちするもんさ"],
    ["ミヤコ","ジンには、昔ここで一度だけ負けた。ジンは何もしゃべらなかった。勝っても、負けても"],
    ["タロウ","あの看板……どうして、名前が削ってあるんですか"],
@@ -8718,7 +8903,7 @@ const PART2=[
    ["","帰りの連絡船。タロウは、もらった看板を膝の上で何度も見ていた。"],
    ["師匠","……しゃべりすぎたか"],
    ["タロウ","いえ。……全部、覚えてます"],
-   {p2preview:3}],lose:"前の席で無理をしたな。盗むのは、後ろの席からだ"},
+   {p2preview:3}],lose:"前の席で無理をしたな。スチールは、後ろの席からだ"},
 {no:13,p2:3,lamp:"#7fe0a8",bgm:5,title:"もう一人の師匠",venue:"月影から、地下の賭場跡へ",color:"#c9f2dc",goalText:"カイのチップを全部取る",goal:{type:'boss'},tells:true,script:"rush",you:80000,blinds:[1000,2000],opps:[{name:'カイ',style:'kai',chips:80000,label:'速い'},{name:'ハヤト',style:'hayato',chips:80000,label:'荒い'}],intro:[
    {p2door:3},
    ["","ジャズクラブ「月影」。セキの隣の席で、タロウが降りる練習をしている。"],
@@ -8735,7 +8920,7 @@ const PART2=[
    ["師匠","カイは速い。速い相手に、合わせるな。降りて、待て",{mt:'guard'}],
    ["師匠","カイは先に打ってくる。……だから、こっちが打つ場所を選べ",{mt:'attack'}],
    ["師匠","カイは、考える前に賭ける。速さを見ろ。手は、そこに出る",{mt:'read'}],
-   {lesson:"急がない",body:"相手が速く、大きく賭けてくると、こちらも急ぎたくなります。でも、勝負する手を選ぶのはあなたです。カイのチップを全部取れば勝ちです。"},
+   {lesson:"急がない",body:"相手が速く、大きく賭けてくると、こっちも急ぎたくなる。だが、勝負する手を選ぶのはお前だ。カイのチップを全部取れば勝ちだ。"},
    ["","（最初の1ハンドは、自動で進みます）",{rush:1}],
    ["カイ","先に言っとく。俺は、待つのが嫌いだ"]],outro:[
    ["カイ","……くそ。待たれた"],
@@ -8756,7 +8941,7 @@ const PART2=[
    ["","汐見、霧崎、その先の港町からも、古い看板を持った人たちが集まっていた。"],
    ["クロダ","ようこそ。本日は、港の看板持ちによるトーナメントです"],
    ["クロウ","今日は、ただの客です。……誘う側からは、降りましたので"],
-   ["ミヤコ","やあ。今日は盗ませないよ"],
+   ["ミヤコ","やあ。今日はスチールさせないよ"],
    ["カイ","この前の続きだ、タロウ"],
    ["","窓際の席に、白髪の老人が座っていた。霧崎の古い店「鯨波」の主、ソウゲン。"],
    ["ソウゲン","……その座り方。ジンに習ったか"],
@@ -8769,7 +8954,7 @@ const PART2=[
    ["師匠","6人いれば、待つ時間も長い。降りて、ブラインドが上がる前に一度だけ行け",{mt:'guard'}],
    ["師匠","ブラインドが上がったら、先に打った者が残る",{mt:'attack'}],
    ["師匠","6人分の顔がある。……一番よくしゃべる顔から、見ろ",{mt:'read'}],
-   {lesson:"看板持ちの卓",body:"6人のトーナメントです。ハンドが進むと、ブラインドが上がっていきます。最後の一人になれば優勝です。"}],outro:[
+   {lesson:"看板持ちの卓",body:"6人のトーナメントだ。ハンドが進むと、ブラインドが上がっていく。最後の一人になれば優勝だ。"}],outro:[
    ["カイ","……負けた。また、待たれた"],
    ["","観客席の後ろで、ハヤトが立ち上がった。ジンが、その隣に並んだ。"],
    ["ジン","……ハヤト"],
@@ -8899,7 +9084,7 @@ function p2Expand(lines){const t=p2Type(),st=loadP2(),out=[];
       out.push(l[1].includes('〈呼〉')?[l[0],l[1].split('〈呼〉').join(callName()),l[2]]:l);return}
     if(l&&l.fav){const f=st.fav;if(!f)return;const T=TELLS[f],cue=T&&T.strong&&T.strong.cue,nn=P2_NOUN[cue];if(!nn)return;
       out.push(['師匠',`${f}の${nn}は、何度も見た。……顔は、嘘をつけない`]);return}
-    if(l&&l.tellLesson){out.push({lesson:'最後のテル',body:`第一部で、師匠がいちばん多く相手に読まれたクセは「${SELF_WHY[{time:'fast'}[st.tell]||st.tell||'body']}」です。師匠は、そのクセをまだ直していません。本物か、罠か。読み切って決めましょう。`});return}
+    if(l&&l.tellLesson){out.push({lesson:'最後のテル',body:`第一部で、俺がいちばん多く相手に読まれたクセは「${SELF_WHY[{time:'fast'}[st.tell]||st.tell||'body']}」だ。そのクセは、まだ直していない。本物か、罠か。読み切って決めろ。`});return}
     out.push(l)});
   return out}
 // 師匠の顔は、第5章の最後のハンドの直前まで出さない（影だけ）
@@ -8965,7 +9150,7 @@ function p2FinalEnd(){const me=S.players[0];
   const r=_eh.apply(this,arguments);
   if(rl){S.players[0].chips=0;S.rushLost=true;S.autoMe=false;S.msg='タロウの負けだ';render()}
   return r}}
-function p2Quote(ch){return mentorName()+'「'+(typeof ch.outro==='function'?'もう、一人前だ':({1:'今のが最後だ。……降りられる奴は、また来られる',2:'……しゃべりすぎたか',3:'タロウ。……さっきは、悪かった',4:'……錨亭で待つ'})[ch.p2])+'」'}
+function p2Quote(ch){return mentorName()+'「'+(typeof ch.outro==='function'?'もう、一人前だ':({1:'今のが最後だ。……降りられる奴だけが、明日も打てる',2:'……しゃべりすぎたか',3:'タロウ。……さっきは、悪かった',4:'……錨亭で待つ'})[ch.p2])+'」'}
 function p2Win(){const ch=CFG.ch,st=loadP2();st.cleared=Math.max(st.cleared,ch.p2);saveP2(st);
   if(ch.p2===5){P2FACE=true;grantTitle('sandaime');if(S.finalRead)grantTitle('uketsugi');
     const L=loadStory().loses;if(!PART2.some(c=>+L[c.no]))grantTitle('hanninmae')}
@@ -9308,7 +9493,7 @@ function resumeLoad(){try{const R=JSON.parse(localStorage.getItem(RESUME_KEY));
   else if(R.kind!=='free'&&R.kind!=='store')return null;
   return R}catch(e){return null}}
 function resumeLabel(R){const h=(+R.S.handNo||0)+1;return R.kind==='ch'?`続きから（第${R.ch}章・${h}ハンド目）`:`続きから（フリー対戦・${h}ハンド目）`}
-const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。盗むのは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。AAで負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、盗むのは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
+const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。スチールは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。AAで負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、スチールは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
 function recapLine(R){if(!R||R.kind!=='ch'||!(Date.now()-(+R.at||0)>6*3600e3))return null;const c=CHAPTERS[R.ch-1];const t=c&&RECAP[c.no];if(!t)return null;
   const g=c.goal||{},st=R.S||{},n=g.type==='steal'?st.steals:g.type==='bluff'?st.bluffs:g.type==='readcall'?st.reads:null;
   const left=g.n&&n!=null?Math.max(1,g.n-(+n||0)):R.P.filter(p=>!p.out&&(+p.chips||0)>0).length;
@@ -9460,19 +9645,19 @@ if(SETTINGS.look)SETTINGS.look=lookClean(SETTINGS.look);
   for(const a of c1A){const i=at(a,'仕事帰りに覚えたポーカー');if(i>=0){a.splice(i,1,
     ['','倉庫で一日、積み荷の数を数えてきた。数なら、間違えない。'],
     ['','……なのに、仕事帰りに覚えたポーカーでは、今日もまるで勝てずにいる。']);break}}
-  insA('こちらの手札をのぞきこんだ',[['','指が、手元のチップの枚数を数えていた。'],['老人','……数えるな。顔を見ろ']],true);
+  insA('こちらの手札をのぞきこんだ',[['','指が、手元のチップの枚数を数えていた。'],['老人','……チップじゃない。相手を見ろ']],true);
   insA('ジンでいい。',[['ジン','……お前は'],{askName:1},['ゲン','〈主〉か。覚えたぞ！']],true);
   ins(c1.outro,'うちの壁に写真を一枚',[['店主','写真を撮るよ。身なりを整えといで'],{look:1}],true);
   const c2=C(2).outro;
   ins(c2,'銀の扉の看板と',[['ロク','〈主〉、か。……覚えておこう']]);
-  ins(c2,'時計は午前0時を回っている',[['','荷の数なら、いつも合う。今日の負けは、数では説明がつかなかった。']]);
+  ins(c2,'時計は午前0時を回っている',[['','仕事の積み荷なら、数えれば必ず合う。……今日の負けは、数えても分からなかった。']]);
   tail(c2,[{gotFit:2}]);
   const c3=C(3).outro;
   ins(c3,'時計は午前1時',[['ミナ','〈主〉、また来てね']]);
   ins(c3,'ブラフは、降りられる奴にしか',[['','指が、またチップを数えかけた。やめて、相手の顔を見た。']]);
   tail(c3,[{gotFit:3}]);
   const c4=C(4).outro;
-  ins(c4,'これは餞別。天空の羽よ',[['レイカ','〈主〉、だったわね。覚えておくわ']]);
+  ins(c4,'天空の羽よ。縁起かつぎに',[['レイカ','〈主〉、だったわね。覚えておくわ']]);
   ins(c4,'……半人前だが、目はいい',[['','気づけば、賭けた額ではなく、レイカの顔を見ていた。']]);
   tail(c4,[{gotFit:4}]);
   const c5=C(5).outro;
@@ -9533,7 +9718,7 @@ let LK=null,lookDone=null,lookOm=0,lookFrom='';
   d.innerHTML=`<div class="lookin"><div class="lookhead"><h2 id="lookH">身なり</h2><p class="lookcap" id="lookCap"></p></div>
     <div class="lookbody"><div class="lookpic"><div class="lphoto"><div class="lpic" id="lookPic" role="img" aria-label="選んだ見た目"></div><span>錨亭の壁</span></div></div>
     <div class="lookopts">${row('lkFace','顔立ち')}${row('lkSkin','肌')}${row('lkHs','髪型')}${row('lkHair','髪の色')}${row('lkGl','眼鏡')}${row('lkFit','服')}<p class="lnote" id="lkNote" aria-live="polite"></p></div></div>
-    <div class="lookfoot"><button class="ghost" id="lkOm">おまかせ</button><button class="ghost" id="lkReset">初期のアオに戻す</button><button class="primary" id="lkOk">決める</button></div></div>`;
+    <div class="lookfoot"><button class="ghost" id="lkOm">おまかせ</button><button class="ghost" id="lkReset">最初の見た目に戻す</button><button class="primary" id="lkOk">決定</button></div></div>`;
   document.querySelector('.wrap').appendChild(d);
   const chips=(el,items,key)=>{$(el).innerHTML=items.map(([v,label,col,lock])=>`<button type="button" class="${col?'sw':''}${lock?' lk':''}" ${col?`style="background:${col}"`:''} data-v="${v}" aria-label="${esc(label)}${lock?'（'+esc(lock)+'）':''}" title="${esc(label)}">${col?'':(lock?'🔒 ':'')+esc(label)}</button>`).join('');
     $(el).querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;
@@ -9607,11 +9792,11 @@ if($('btnLang'))$('btnLang').addEventListener('click',()=>setTimeout(heroGreet,0
     return _act.apply(this,arguments)};
 }
 const FINAL_DUEL59={"4": {"boss": "レイカ", "start": [{"who": "ソウ", "ja": "……僕は見ています。最後は、レイカさんと"}, {"who": "レイカ", "ja": "最後の一手は、わたしが配って、わたしが打つ"}], "flop": {"ja": "嘘かどうか、まだ決めてないの"}, "turn": {"ja": "あの日も、こうやって配ったのよ"}, "river": {"ja": "……見て。顔じゃなくて、手を"}, "lose": {"ja": "残念。嘘は、もう少し上手につくものよ"}}, "5": {"boss": "ハヤト", "start": [{"who": "テツ", "ja": "おい、見ろよ。ハヤトが一対一だってよ"}, {"who": "ハヤト", "ja": "座れ。一勝負だけ、と言ったはずだ"}], "flop": {"ja": "……昔、ここでよくジンさんと打った"}, "turn": {"ja": "あの人のクセを知ってたのは、俺だけだった"}, "river": null, "lose": {"ja": "まだだな。……焦るな、って言われなかったか"}}};
-const OUTRO_ALT59={"2": {"who": "ロク", "ja": "……{n}から盗んだか。俺の番は、来なかったな"}, "3": {"who": "セキ", "ja": "{n}を騙したね。……私の番は来なかったか。それでも、見事だった"}, "6": {"who": "クロウ", "ja": "……見事です。最後の卓に、私はいませんでしたが"}};
-const REVIEW_GOAL_LINE59={"steal": "盗めたのは{k}回。あと{r}回だった", "bluff": "ブラフで勝てたのは{k}回。あと{r}回だった", "readcall": "嘘を見抜けたのは{k}回。あと{r}回だった", "reach": "目標まで、あと少しのところまで戻した"};
+const OUTRO_ALT59={"2": {"who": "ロク", "ja": "……{n}のブラインドを、さらっていったか。俺の番は、来なかったな"}, "3": {"who": "セキ", "ja": "{n}を騙したね。……私の番は来なかったか。それでも、見事だった"}, "6": {"who": "クロウ", "ja": "……見事です。最後の卓に、私はいませんでしたが"}};
+const REVIEW_GOAL_LINE59={"steal": "スチールできたのは{k}回。あと{r}回だった", "bluff": "ブラフで勝てたのは{k}回。あと{r}回だった", "readcall": "嘘を見抜けたのは{k}回。あと{r}回だった", "reach": "目標まで、あと少しのところまで戻した"};
 // 0回のときは「あと◯回だった」ではなく、目標を言い直す（v63 クリエイターレビュー 7）
-const REVIEW_GOAL_ZERO59={"steal": "まだ一度も盗めていない。目標は{n}回だ", "bluff": "まだ一度もブラフで勝てていない。目標は{n}回だ", "readcall": "まだ一度も嘘を見抜けていない。目標は{n}回だ"};
-const REVIEW_HAND_LINE59={"1": "#{no}、{hand}で最後まで払ったな。あれは降りる手だ", "2": "#{no}、後ろの席で{hand}を様子見したな。あそこが盗みどころだ", "3": "#{no}、{n}が二回チェックしたのに、こっちもチェックしたな。あそこで賭けろ", "4": "#{no}、{n}のクセが出ていたのに降りたな。顔を見ろ", "5": "#{no}、少ないチップで小さく入ったな。来るまで待て", "6": "#{no}、ブラインドが上がる前に動かなかったな。小さくなる前に仕掛けろ", "12": "#{no}、後ろの席で{hand}を様子見したな。あそこが盗みどころだ", "13": "#{no}、カイに合わせて急いだな。急ぐのは向こうだけでいい", "14": "#{no}、ブラインドが上がる前に動かなかったな。小さくなる前に仕掛けろ"};
+const REVIEW_GOAL_ZERO59={"steal": "まだ一度もスチールできていない。目標は{n}回だ", "bluff": "まだ一度もブラフで勝てていない。目標は{n}回だ", "readcall": "まだ一度も嘘を見抜けていない。目標は{n}回だ"};
+const REVIEW_HAND_LINE59={"1": "#{no}、{hand}で最後まで払ったな。あれは降りる手だ", "2": "#{no}、後ろの席で{hand}を様子見したな。あそこがスチールのしどころだ", "3": "#{no}、{n}が二回チェックしたのに、こっちもチェックしたな。あそこで賭けろ", "4": "#{no}、{n}のクセが出ていたのに降りたな。顔を見ろ", "5": "#{no}、少ないチップで小さく入ったな。来るまで待て", "6": "#{no}、ブラインドが上がる前に動かなかったな。小さくなる前に仕掛けろ", "12": "#{no}、後ろの席で{hand}を様子見したな。あそこがスチールのしどころだ", "13": "#{no}、カイに合わせて急いだな。急ぐのは向こうだけでいい", "14": "#{no}、ブラインドが上がる前に動かなかったな。小さくなる前に仕掛けろ"};
 const REVIEW_PEN_BTN59="#{no} を赤ペンで見る";
 
 // ===== §3 決着の一手：第4・5章は相手役との一騎打ち =====
@@ -10276,7 +10461,7 @@ const PRE_ASK={
     {who:'イオリ',hint:{ja:'クロウと同じ卓になると、先に帰る',en:'Leaves early whenever she draws Crow’s table.'},
      ja:'クロウさん、ブラフのときは考えずにすぐ賭けるわよ。……前はそうだった',en:'Crow bets right away when he’s bluffing. …He used to, anyway.',kind:'old',cue:'fast',cat:'bluff'}]},
   7:{boss:'ジン',people:[   // 第7章は flavor と old だけ。本物のテル（release・顎の傷）には誰も触れない
-    {who:'店主',hint:{ja:'錨亭の店主',en:'Owner of the Anchor.'},ja:'ジンさんの顎の傷のこと、誰も聞けないんだよ',en:'Nobody can ask Jin about the scar on his chin.',kind:'flavor'},
+    {who:'店主',hint:{ja:'錨亭の店主',en:'Owner of the Anchor.'},ja:'ジンさんのあごの傷のこと、誰も聞けないんだよ',en:'Nobody can ask Jin about the scar on his chin.',kind:'flavor'},
     {who:'ゲン',hint:{ja:'昔からの常連',en:'A regular from way back.'},ja:'ジンさんはな、降りるときだけ、ちょっと笑うんだ',en:'Jin smiles a little, only when he folds.',kind:'old',cue:'smile',cat:null},
     {who:'マリア',hint:{ja:'ジンの昔を少しだけ知っている',en:'Knows a little of Jin’s past.'},ja:'言葉より、手を見るの。……でも、あの人の手は何も言わない',en:'Watch hands, not words. …But his hands never say anything.',kind:'flavor'},
     {who:'マツ',hint:{ja:'無口な元船長',en:'A quiet former captain.'},ja:'……あの日から、あいつは同じ席にしか座らん',en:'…Since that day, he only sits in the same seat.',kind:'flavor'}]}
@@ -10911,6 +11096,9 @@ advance=LT.wrap('advance',advance);
 show=LT.wrap('show',show);
 renderTalk=LT.wrap('renderTalk',renderTalk);
 nextStreet=LT.wrap('nextStreet',nextStreet);
+askQuiz=LT.wrap('askQuiz',askQuiz);
+showVersus=LT.wrap('showVersus',showVersus);
+renderLine=LT.wrap('renderLine',renderLine);
 
 // ===== 動作の重さの改善 案3：描き直しの後の位置合わせを、次のコマの頭で1回だけ（2026-10-11） =====
 // 今までは render と後付けの処理が「書いてすぐ測る」をくり返し、1回打つたびに画面の形の計算が40回ほど起きていた。
@@ -11136,8 +11324,8 @@ LT.on('show',id=>{if(id==='chapters'||id==='title')cqSoon()});
 function cqDlg(who,line,btns){const id='cq'+Date.now();
   mDlg(`<h3 id="mdlgH" class="cqh"><span class="ava">${avatar(who)}</span>${esc(who)}</h3><p class="cqline">${esc(line)}</p><div class="mbtns">${btns.map((b,i)=>`<button id="${id}_${i}"${i===0?' class="primary"':''}>${esc(b[0])}</button>`).join('')}</div>`);
   btns.forEach((b,i)=>{const e=$(id+'_'+i);if(e)e.onclick=()=>{mDlgClose();try{b[1]&&b[1]()}catch(x){}}});return true}
-const KEEP_LINES={ios1:'ここの常連はな、店の札を手元に置いとくんだ。……ホーム画面に置いておけ。そうすりゃ、記録が消えにくい',
-  inst1:'ここの常連はな、店の札を手元に置いとくんだ。……入れておけ',code3:'念のためだ。引き継ぎの札も控えておけ'};
+const KEEP_LINES={ios1:'ここの常連はな、店の札を手元に置いとくんだ。……ホーム画面に入れておけ。アイコンからすぐ続きを打てるし、記録も消えにくい',
+  inst1:'ここの常連はな、店の札を手元に置いとくんだ。……ホーム画面に入れておけ。アイコンからすぐ続きを打てる',code3:'念のためだ。引き継ぎの札も控えておけ'};
 function keepAsk(n){const k=+SETTINGS.keepAsk||0;if(ltStandalone())return false;
   if(n===1&&k<1){const ios=ltIOS();if(!ios&&!ltInstall)return false;SETTINGS.keepAsk=1;saveSettings();
     return ios?cqDlg('店主',KEEP_LINES.ios1,[['ホーム画面に追加',()=>moreInstallHint('ios')],['あとで']])
@@ -11512,9 +11700,13 @@ function llWinEdge(){
   R.forEach(({t,b,w,small})=>{if(b)b.classList.toggle('llwin',w&&!!small);if(t)t.classList.toggle('llwin',w&&!small)})}
 LT.on('render',()=>{try{llWinEdge()}catch(e){}});
 LT.on('endHand',()=>{try{llWinEdge()}catch(e){}});
+// 名前の行が消えて名札が小さくなったとき（描き直しを待たずに位置合わせだけが走る）も測り直す。ハンドの終わりだけ（v89 レビュー：縦の6人卓で勝った横の席の名札が金の縁だけの四角に）
+LT.on('layout',()=>{try{if(S&&S.handOver)llWinEdge()}catch(e){}});
 
 // 字の無い名札（縦の6人卓の横の席など）は小さな黒い四角に見えるので隠す（番が来ているときは出す。v85.2 レビュー）
-LT.on('render',()=>{try{document.querySelectorAll('#plates .plate').forEach(pl=>pl.classList.toggle('llempty',!pl.textContent.trim()))}catch(e){}});
+LT.on('render',()=>{try{const over=!!(S&&S.handOver);document.querySelectorAll('#plates .plate').forEach(pl=>{const e=!pl.textContent.trim();pl.classList.toggle('llempty',e);
+  // ハンドの終わりは番の人がいないので、名札に残った .turn を外す（v89 レビュー：6人卓・縦の左右の席。最後にオールインした人の名札は、名前が消えると金の縁と光だけの小さな四角になっていた）
+  if(over)pl.classList.remove('turn')})}catch(e){}});
 
 /* ---------- キャラごとの打ち方の上書き（性格の型 STYLES はほかの人と共有なので、その人だけ変える） ---------- */
 // カオル（第14章「慎重」）：v85 交代レビュー S2-direct で、リバーのポット2倍ベットに中くらいの手で 63% コールしていた（ジン 16%・クロウ 26%）。
@@ -11522,6 +11714,9 @@ LT.on('render',()=>{try{document.querySelectorAll('#plates .plate').forEach(pl=>
 const CHAR_STYLE={'カオル':{read:.85}};
 function charStyle(name,key){const b=STYLES[key]||STYLES.normal,o=CHAR_STYLE[name];return o?{...b,...o}:b}
 LT.on('startHand:before',()=>{try{if(S&&S.players)S.players.forEach(p=>{if(!p.human&&CHAR_STYLE[p.name]&&p.styleKey&&p.style===STYLES[p.styleKey])p.style=charStyle(p.name,p.styleKey)})}catch(e){}});
+// クロウ（2026-10-17 CI：rules S2 でクロウがリバーのポット2倍ベットに 48%・23回コール。合格は40%以下）：
+// 降りる線（中くらいの手の強さ st.mid に掛ける数）を、ほかの読める相手の .8 から .9 へ。ジン（13%）は変えない
+const S2_LINE={'クロウ':.9};   // 1.0 だと直接の測り方（S2-direct）で 3% と降りすぎ。.9 で 12%（手元 200回）
 
 /* ---------- 卓の因縁（改善提案 2026-10-15b 案3。satou 2026-10-17「すべて対応」で 1.0 に。research/改善提案_2026-10-15b_実装仕様.md） ---------- */
 // 30BB 以上のポットで「あなたがブラフで降ろした」「相手のブラフをコールで見抜いた」「相手に負けた」を、相手ごとに覚える（shisho-grudge）。
@@ -11601,15 +11796,20 @@ function crowdSay(t){const tb=$('table');if(!tb)return;let v=$('crowdSay');
   if(!v){v=document.createElement('div');v.id='crowdSay';v.className='ltcrowd-say';v.setAttribute('aria-hidden','true');tb.appendChild(v)}
   v.textContent=t;v.hidden=false;v.classList.toggle('still',reducedMotion());v.classList.remove('go');void v.offsetWidth;v.classList.add('go');crowdPlace();clearTimeout(v._p);v._p=setTimeout(()=>{try{crowdPlace()}catch(e){}},450)}   // 吹き出しが後から出たら置き直す
 function crowdPlace(){const v=$('crowdSay'),tb=$('table');if(!v||v.hidden||!tb)return;
-  const T=tb.getBoundingClientRect(),h=v.offsetHeight||22,w=v.offsetWidth,L=T.left+(T.width-w)/2,vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect();
-  const av=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, [id^=plate]:not(#plates), #dcall.go, #mine .card, #potChips .chip, #dbtn, .dbadge, .llseats i, .felt .boardspot > .lltools:not(.off)')].filter(vis).map(R);
+  v.style.left='';v.style.right='';   // 真ん中に戻して幅を測る
+  const T=tb.getBoundingClientRect(),h=v.offsetHeight||22,w=v.offsetWidth,vis=e=>e&&e.getClientRects().length&&e.getBoundingClientRect().width>2&&getComputedStyle(e).visibility!=='hidden',R=e=>e.getBoundingClientRect();
+  const av=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, [id^=plate]:not(#plates), #dcall.go, #mine .card, #potChips .chip, #dbtn, .dbadge, .llseats i, .felt .boardspot > .lltools:not(.off)')].filter(vis).map(e=>{const r=R(e);return{left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2}});
   av.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #potSign')].filter(vis).map(e=>{const r=R(e);return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  // 相手の顔（目と口）も避ける（v89 レビュー：iPhone の横で、真ん中の人の口元にかかっていた）
+  {const L0=$('sayLayer'),lr=L0&&R(L0);if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);if(f)av.push({left:lr.left+f.l,right:lr.left+f.r,top:lr.top+f.t,bottom:lr.top+f.b,k:3})})}
   const bd=$('boardCards'),bb=vis(bd)?R(bd):null,ys=[];
   if(bb){ys.push(bb.top-h-6,bb.bottom+6)}ys.push(T.top+6,T.top+T.height*.45,T.top+T.height*.55);
-  const cost=y=>av.reduce((a,r)=>a+(r.k||1)*Math.max(0,Math.min(L+w,r.right)-Math.max(L,r.left))*Math.max(0,Math.min(y+h,r.bottom)-Math.max(y,r.top)),0);
-  let best=ys[0],bc=Infinity;for(const y of ys){if(y<T.top+2||y+h>T.bottom-2)continue;const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}
-  if(bc>0){const b0=best;for(let d=4;d<=60&&bc>0;d+=4)for(const y of [b0-d,b0+d]){if(y<T.top+2||y+h>T.bottom-2)continue;const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}}
-  v.style.top=(best-T.top).toFixed(0)+'px'}
+  const xs=[T.left+(T.width-w)/2,T.left+T.width*.25-w/2,T.left+T.width*.75-w/2].map(x=>Math.max(T.left+4,Math.min(T.right-4-w,x)));   // 真ん中が埋まっていれば左右も試す
+  const cost=(x,y)=>av.reduce((a,r)=>a+(r.k||1)*Math.max(0,Math.min(x+w,r.right)-Math.max(x,r.left))*Math.max(0,Math.min(y+h,r.bottom)-Math.max(y,r.top)),0);
+  let bx=xs[0],by=ys[0],bc=Infinity;const tryAt=(x,y)=>{if(y<T.top+2||y+h>T.bottom-2)return;const c=cost(x,y);if(c<bc){bc=c;bx=x;by=y}};
+  for(const x of xs){for(const y of ys){tryAt(x,y);if(!bc)break}if(!bc)break}
+  if(bc>0){const x0=bx,y0=by;for(let d=4;d<=60&&bc>0;d+=4)for(const y of [y0-d,y0+d])tryAt(x0,y)}
+  v.style.top=(by-T.top).toFixed(0)+'px';if(Math.abs(bx-xs[0])>1){v.style.left=(bx-T.left).toFixed(0)+'px';v.style.right='auto'}}
 LT.on('layout',()=>{try{crowdPlace()}catch(e){}});
 LT.on('startHand',()=>{try{crowdHide()}catch(e){}});
 LT.on('render',()=>{try{
@@ -11716,6 +11916,218 @@ LT.on('startHand',()=>{try{motionSample()}catch(e){}});
   const dep=$('btnDepth'),after=dep&&dep.closest('.setrow');if(after&&after.parentElement)after.after(r);else det.appendChild(r);
   ['btnSet','mSet'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>{s.value=motionSet()})})})();
 motionApply();
+
+/* ---------- 誰が何をしたか（アクションのわかりやすさ 案1＋案2、satou 2026-10-17 06:16Z） ---------- */
+// 案1：名札の下に、その人の今の行動の語だけ（額なし）。案2：ディーラーが「呼び名さん、レイズ 13,000」と名前つきで言う。
+// 表示だけ。CPU の判断・考える時間・テルの出方は変えない。第7章・物語の一手では出さない（静けさを守る）
+const AW={words:{'チェック':'call','コール':'call','ベット':'raise','レイズ':'raise','フォールド':'fold','ストラドル':'raise'},
+  en:{'チェック':'Check','コール':'Call','ベット':'Bet','レイズ':'Raise','フォールド':'Fold','ストラドル':'Straddle'}};
+const awEn=()=>typeof I18N!=='undefined'&&I18N.lang==='en';
+const awQuiet=()=>!!(S&&(S.storyHand||(CFG&&CFG.ch&&!CFG.ch.p2&&CFG.ch.no===7)))||!!($('game')&&$('game').classList.contains('storyfinal'));
+// 出す語（無ければ ''）。オールイン・勝ち・脱落・見ている は今の札があるので出さない
+function awWord(p,i){
+  if(!p||p.out||p.sitOut||p.allIn||p.won>0||S.handOver||S.toAct===i||!p.lastAct)return null;
+  const w=String(p.lastAct).split(' ')[0];
+  const k=AW.words[w]||(p.lastType==='fold'?'fold':p.lastType==='raise'?'raise':'call');   // ゲン・タロウの癖の語（「降り！」など）もそのまま
+  const t=awEn()?(AW.en[w]||(typeof EN_DICT!=='undefined'&&EN_DICT[w])||w):w;
+  return {t,k};
+}
+function actWords(){if(!S||!S.players)return;const quiet=awQuiet();
+  S.players.forEach((p,i)=>{
+    const box=i===0?document.querySelector('#mine .me-l'):$('plate'+i);if(!box)return;
+    let el=box.querySelector(':scope > .ltact');
+    const a=quiet?null:awWord(p,i);
+    // フォールドの札（.tag.act-fold）が名札に見えているときは重ねて出さない（第4章からはその札は隠れている）
+    const ft=a&&a.k==='fold'&&box.querySelector('.tag.act-fold'),dup=!!ft&&ft.getClientRects().length>0&&getComputedStyle(ft).visibility!=='hidden';
+    if(!a||dup){if(el&&!el.hidden){el.hidden=true;el.dataset.t=''}return}
+    if(!el){el=document.createElement('span');el.className='ltact';box.appendChild(el)}
+    const cls='ltact '+a.k+(el.classList.contains('up')?' up':'');if(el.className!==cls)el.className=cls;   // 置き場所（up）は awPlace が決める。描き直しで外すと一瞬下に戻ってちらつく
+    if(el.dataset.t!==a.t||el.hidden){el.textContent=a.t;el.dataset.t=a.t;el.hidden=false;
+      el.classList.remove('awin');void el.offsetWidth;el.classList.add('awin')}
+    // 名札がほかに字を持たないとき（縦の6人卓の横の席など）は、名札は隠したまま語だけ見せる
+    if(i)box.classList.toggle('awOnly',![...box.childNodes].some(n=>n!==el&&(n.textContent||'').trim()));
+  })}
+{const o=render;render=function(){const r=o.apply(this,arguments);try{actWords()}catch(e){}return r}}
+
+// 案2：ディーラーの声に呼び名と席番号。第7章・物語の一手では今のまま
+function awCall(i,type,toCall){
+  const p=S.players[i];if(!p||p.human||awQuiet())return;
+  const en=awEn(),kind=type==='fold'?'fold':type==='call'?(toCall<=0?'check':'call'):(p.allIn?'allin':'raise');
+  if(type==='raise'&&!p.allIn&&p.bet<=S.currentBet&&p.lastType!=='raise')return;   // 額の足りない上げ（コール扱い）は act の言い方のまま
+  // 同じストリートで続けて降りた2人目からは言わない（名札の語で分かる）
+  const A=S.aw=S.aw&&S.aw.h===S.handNo&&S.aw.st===S.street?S.aw:{h:S.handNo,st:S.street,fold:false};
+  if(kind==='fold'){if(A.fold)return;A.fold=true}else A.fold=false;
+  const known=typeof knownName==='function'?knownName(p.name):true,nm=typeof who==='function'?who(p.name):p.name;
+  const bet=p.lastAct&&/^(ベット|ストラドル)/.test(p.lastAct)?'bet':'raise';
+  let t;
+  if(en){const head=known?((typeof EN_DICT!=='undefined'&&EN_DICT[p.name])||p.name):`Seat ${i+1}`;
+    t=head+', '+{fold:'fold',check:'check',call:'call',allin:'all-in',raise:bet==='bet'?`bet ${fmt(p.bet)}`:`raise to ${fmt(p.bet)}`}[kind]}
+  else{const head=nm+(known||nm===p.name?'さん':'の方');
+    t=head+'、'+{fold:'フォールド',check:'チェック',call:'コール',allin:'オールイン',raise:(bet==='bet'?'ベット ':'レイズ ')+fmt(p.bet)}[kind]}
+  dealerSay(t);
+  // 席番号を小さく頭に（.llseats の番号と同じ）。英語で「Seat 3」と言うときは重なるので付けない
+  try{const d=$('dcall');if(d&&!CFG.flashback&&!(en&&!known)){const sn=document.createElement('span');sn.className='sn';sn.textContent=String(i+1);d.prepend(sn);if(typeof dcallPlace==='function')dcallPlace()}}catch(e){}
+}
+{const o=afterAct;afterAct=function(i,type,toCall){const r=o.apply(this,arguments);try{awCall(i,type,toCall)}catch(e){}return r}}
+
+// 置き場所（v0.90 の確認）：横画面ではチップの山・前に出したチップが名札のすぐ下に来るので、重なるときは名札の上（胸元）へ。
+// どちらも重なるなら、重なりの小さい方。見えている語があるときだけ測る
+function awPlace(){
+  const els=[...document.querySelectorAll('#plates .plate > .ltact:not([hidden])')];if(!els.length)return;
+  const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
+  // チップの山の端に少しかかるのは読めるので軽く、席番号・D・吹き出し・札は重く数える
+  const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue')].filter(vis)
+    .map(e=>{const r=e.getBoundingClientRect();return {r,k:/chipwrap|mystack/.test(e.className)?1:4}}).filter(o=>o.r.width>1);
+  const cost=r=>av.reduce((a,{r:q,k})=>{const w=Math.min(r.right,q.right)-Math.max(r.left,q.left),h=Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top);return a+(w>0&&h>0?w*h*k:0)},0);
+  // 今の場所で重ならなければ動かさない（測り直しを少なく）。重なるときだけ上下を入れ替えて比べる
+  // それでも重なるときは左右に少しずらす（下・上 × 0・±8・±14px で一番重ならない所）
+  els.forEach(el=>{const c0=cost(el.getBoundingClientRect());if(!c0)return;
+    let best={c:c0,up:el.classList.contains('up'),dx:parseFloat(el.style.marginLeft)||0};
+    for(const up of [false,true])for(const dx of [0,-8,8,-14,14]){el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';
+      const c=cost(el.getBoundingClientRect());if(c<best.c)best={c,up,dx};if(!c)break}
+    el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':''})}
+LT.on('layout',()=>{try{awPlace()}catch(e){}});
+{const o=actWords;actWords=function(){const r=o.apply(this,arguments);try{if(typeof layoutSoon==='function'&&document.querySelector('#plates .plate > .ltact:not([hidden])'))layoutSoon()}catch(e){}return r}}
+
+/* ---------- 動画のツッコミから（satou 2026-10-17「LAST TELL 改善案」） ---------- */
+// 対局の分かりやすさ（A）と見た目（B）の小さな直し。CPU の判断・配り札・勝ち負けの決まり方は変えない。
+// 状態は S.vf、保存は 'shisho-vfix'。第7章・物語の一手・回想の静けさは守る（awQuiet と同じ判定）
+SAVE_KEYS.push('shisho-vfix');
+const VF={en:()=>typeof I18N!=='undefined'&&I18N.lang==='en',
+  quiet:()=>{try{return typeof awQuiet==='function'?awQuiet():false}catch(e){return false}},
+  get:()=>saveGet('shisho-vfix',{})||{},put:o=>saveSet('shisho-vfix',Object.assign(VF.get(),o),1)};
+LT.on('startHand:before',()=>{if(S)S.vf={h:S.handNo+1}});
+
+// ===== A1：第5章の AA のハンド。「自動でコールしたことになった」→ 自分で押す =====
+// オールインを受けるかは自分で決める（降りる・上げるは出さない。押せるのは「オールイン」だけ）。手札・場札・勝ち負けは今のまま
+const vfBadbeat=()=>!!(CFG&&CFG.ch&&!CFG.ch.p2&&CFG.ch.script==='badbeat'&&S&&S.handNo===1&&!CFG.flashback);
+LT.on('startHand',()=>{try{if(vfBadbeat()&&S.autoMe)S.msg='AAが来た。いちばん強い手札だ'}catch(e){}});
+LT.on('render',()=>{try{
+  if(!vfBadbeat()||S.handOver)return;const me=S.players[0];
+  if(S.autoMe&&S.toAct===0&&S.currentBet>me.bet&&!S.vf.ask){S.vf.ask=true;S.vf.bb=true;S.autoMe=false;S.msg='ハヤトのオールイン。AAで受けるか？';
+    requestAnimationFrame(()=>{try{render()}catch(e){}})}
+  const ask=!!S.vf.ask&&S.toAct===0;
+  ['btnFold','btnRaise','quick','raisePanel'].forEach(id=>{const b=$(id);if(b&&ask)b.hidden=true});
+  $('controls').classList.toggle('vfone',ask);
+}catch(e){}});
+LT.on('act',i=>{try{if(i===0&&S.vf&&S.vf.ask){S.vf.ask=false;$('controls').classList.remove('vfone')}}catch(e){}});
+
+// ===== A2：あなたの番を名札の上にはっきり =====
+// ===== A4：自分の席のマーク（SB・BB）。ブラインドスチールの章は「後ろの席／前の席」 =====
+function vfMine(){
+  const ava=document.querySelector('#mine .me-ava'),l=document.querySelector('#mine .me-l');if(!ava||!l||!S||!S.players)return;
+  const me=S.players[0],quiet=VF.quiet()||!!CFG.flashback;
+  // 自分の番
+  let t=l.querySelector(':scope > .vfturn');
+  const turn=!quiet&&!S.handOver&&S.toAct===0&&!S.autoMe&&!$('controls').hidden&&!me.folded;
+  if(turn&&!t){t=document.createElement('span');t.className='vfturn';t.textContent='あなたの番';l.prepend(t)}
+  if(t)t.hidden=!turn;
+  // 席のマーク
+  let b=ava.querySelector(':scope > .vfpos');
+  const steal=!!(CFG.goal&&CFG.goal.type==='steal'),sb=S.sbI===0,bb=S.bbI===0;
+  let txt='',cls='';
+  if(!quiet&&!S.handOver&&!me.out){
+    if(steal&&S.street==='preflop'){const late=typeof isLatePos==='function'&&isLatePos();txt=late?'後ろ':(bb?'BB':sb?'SB':'前');cls=late?' late':' early'}
+    else if(S.street==='preflop'&&S.dealer!==0)txt=bb?'BB':sb?'SB':''}
+  if(!txt){if(b)b.hidden=true;return}
+  if(!b){b=document.createElement('span');b.className='vfpos';ava.appendChild(b)}
+  b.hidden=false;if(b.textContent!==txt)b.textContent=txt;const c='vfpos'+cls;if(b.className!==c)b.className=c;
+  b.title=txt==='後ろ'?'後ろの席：あとから動けるので、ブラインドスチールを仕掛けやすい':txt==='前'?'前の席：あとの人が多いので、強い手だけで':txt==='SB'?'スモールブラインド':'ビッグブラインド'}
+LT.on('render',()=>{try{vfMine()}catch(e){}});
+
+// ===== A3：演出の速さに「ゆっくり」 =====
+// SPEED（05_tells.js）は speed==='slow' で 1.5 倍。ゆっくりのときは「降りたら速く回す」も効かない
+function vfSpeedLab(){return SETTINGS.speed==='fast'?'速い':SETTINGS.speed==='slow'?'ゆっくり':'ふつう'}
+renderSpeed=function(){$('btnSpeed').textContent='演出の速さ：'+vfSpeedLab()};
+$('btnSpeed').onclick=()=>{SETTINGS.speed=SETTINGS.speed==='slow'?'fast':SETTINGS.speed==='fast'?'normal':'slow';saveSettings();renderSpeed()};
+{const set=v=>()=>{SETTINGS.speed=v;saveSettings();renderSpeed()};
+  SET64_SEL.btnSpeed=[['ゆっくり',()=>SETTINGS.speed==='slow',set('slow')],['ふつう',()=>SETTINGS.speed!=='fast'&&SETTINGS.speed!=='slow',set('normal')],['速い',()=>SETTINGS.speed==='fast',set('fast')]];
+  const s=$('sel_btnSpeed');if(s){s.innerHTML=SET64_SEL.btnSpeed.map(([t],k)=>`<option value="${k}">${esc(t)}</option>`).join('');try{setSync()}catch(e){}}
+  renderSpeed()}
+
+// ===== A6：最初の自分の番の案内に、3つのボタンの意味 =====
+TIPS.act='フォールド＝降りる。コール＝同じ額を払って続ける。レイズ＝上乗せして勝負する';
+
+// ===== A7・A8：勝ち負けと役を、ディーラーの言葉と卓の上の一行で =====
+// ライブのディーラーは「フラッシュで、○○さんの勝ちです」と言う。テレビ風の大きな札（.wstamp）は出さないまま
+function vfName(p){if(p.human)return VF.en()?'You':'あなた';const n=typeof who==='function'?who(p.name):p.name;
+  if(VF.en())return(typeof EN_DICT!=='undefined'&&EN_DICT[n])||n;return n+((typeof knownName!=='function'||knownName(p.name))?'さん':'の方')}
+function vfHand(p){const h=p.hname||(p.score?handName(p.score):'');return VF.en()?((typeof EN_DICT!=='undefined'&&EN_DICT[h])||h):h}
+potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
+  const sd=S.street==='showdown'&&ws.every(p=>p.show&&p.score&&!p.folded)&&!S.board2,en=VF.en();let t;
+  if(sd&&ws.length===1){const w=ws[0],h=vfHand(w);t=en?`${w.human?'You win':vfName(w)+' wins'} with ${h}`:`${h}で、${vfName(w)}の勝ちです`}
+  else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
+  dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
+function vfResult(){
+  if(!S||!S.handOver||!S.vf||S.vf.res||CFG.flashback||VF.quiet()||$('game').hidden)return;
+  const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;S.vf.res=1;
+  const me=S.players[0],sd=S.street==='showdown'&&!S.board2,iWon=me.won>0,inIt=!me.folded&&!me.out;
+  if(!sd&&!iWon)return;   // ほかの人どうしで決まったハンドは、名札の語とディーラーの声で足りる
+  const en=VF.en(),w=iWon?me:ws.reduce((a,b)=>b.won>a.won?b:a),h=sd?vfHand(w):'';
+  let main,sub='';
+  if(iWon){main=en?'You win':'あなたの勝ち';sub=`+${fmt(me.won)}`}
+  else{main=en?`${vfName(w)} wins`:`${vfName(w)}の勝ち`;if(inIt)sub=en?'You lose':'あなたの負け'}
+  if(ws.length>1){main=en?'Split pot':'引き分け（ポットを分ける）';sub=iWon?`+${fmt(me.won)}`:''}
+  const tb=$('table'),bc=$('boardCards');if(!tb||!bc)return;
+  const old=tb.querySelector('.vfres');if(old)old.remove();
+  const d=document.createElement('div');d.className='vfres'+(iWon?' win':'');d.setAttribute('role','status');
+  d.innerHTML=`<b>${esc(main)}</b>${h?`<span class="h">${esc(h)}</span>`:''}${sub?`<span class="n">${esc(sub)}</span>`:''}`;
+  const place=()=>{const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;d.style.top=Math.round(B.bottom-T.top+6)+'px'};
+  tb.appendChild(d);place();setTimeout(()=>{try{place()}catch(e){}},300);
+  const s0=S;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);
+  LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
+}
+LT.on('render',()=>{try{vfResult()}catch(e){}});
+
+// ===== A9：フロアのクイズは「ルールを覚える」ためと一言。設定でオフにできる =====
+LT.on('askQuiz',()=>{try{const em=document.querySelector('#quiz .qhead em');if(em&&!document.querySelector('#quiz .vfqwhy')){const p=document.createElement('p');p.className='vfqwhy';
+  p.textContent='店のルールを覚えるためのクイズです。勝ち負けには関係ありません（設定でオフにできます）';em.closest('.qhead').after(p)}}catch(e){}});
+
+// ===== A10：手を見せるかの意味 =====
+{const sb=$('showBox');if(sb&&!sb.querySelector('.vfwhy')){const s=document.createElement('small');s.className='vfwhy';s.textContent='見せなければ、相手に手の内を知られません';sb.appendChild(s)}}
+
+// ===== B1：カードとチップをそろえて置く（設定。はじめはオン） =====
+if(SETTINGS.tidy===undefined)SETTINGS.tidy=true;
+const vfTidy=()=>document.body.classList.toggle('lt-tidy',SETTINGS.tidy!==false);vfTidy();
+{const box=$('setIn'),det=box&&box.querySelector('.setmore');
+  if(det&&!$('btnTidy')){const b=document.createElement('button');b.id='btnTidy';b.className='mini sw64';b.setAttribute('role','switch');
+    const r=document.createElement('div');r.className='setrow';r.innerHTML='<div><b>カードをそろえて置く</b><p>捨て札・手札を整えて置きます。オフにすると、本物の卓のように少し散らばります</p></div>';r.appendChild(b);
+    const sp=$('btnSpeed'),after=sp&&sp.closest('.setrow');(after&&after.parentNode===det?after:null)?after.after(r):det.appendChild(r);
+    const lab=()=>{b.textContent='カードをそろえる：'+(SETTINGS.tidy!==false?'オン':'オフ')};lab();
+    b.onclick=()=>{SETTINGS.tidy=SETTINGS.tidy===false;saveSettings();vfTidy();lab();setTimeout(setSync,0)};
+    SET64_SW.btnTidy=()=>SETTINGS.tidy!==false;try{setSync()}catch(e){}}}
+
+// ===== B2：ショーダウン・ハンドの終わりは、お守り（カードプロテクター）を手札の横へよける =====
+LT.on('render',()=>{try{const h=document.querySelector('#mine .hold');if(!h||!S||!S.players)return;const me=S.players[0];
+  h.classList.toggle('vfaside',!!(S.handOver||S.street==='showdown'||S.reveal||S.runout||me.show))}catch(e){}});
+
+// ===== B6・B7：星と赤い札の意味（席の案内で、最初の3回だけ） =====
+LT.on('showVersus',()=>{try{const g=document.querySelector('#vs .vsgoal');if(!g||document.querySelector('#vs .vfstars'))return;
+  const n=+VF.get().stars||0;if(n>=3)return;VF.put({stars:n+1});
+  const p=document.createElement('p');p.className='vfstars';p.textContent='★は強さ（5つが最強）。★3つからは赤い札、手ごわい相手です';g.before(p)}catch(e){}});
+
+// ===== B8・D3・D4：場面が変わるときは、毎回ワイプと見出し =====
+// 回想（15年前）に入るとき：大きく「15年前／○○として打つ」
+const vfTitleCard=(top,big,small)=>{try{lastWipe()}catch(e){}
+  const old=document.querySelector('.vfcard');if(old)old.remove();
+  const d=document.createElement('div');d.className='vfcard';d.setAttribute('role','status');
+  d.innerHTML=`<span>${esc(top)}</span><b>${esc(big)}</b>${small?`<em>${esc(small)}</em>`:''}`;
+  document.body.appendChild(d);const go=()=>{d.classList.add('out');setTimeout(()=>d.remove(),450)};d.onclick=go;setTimeout(go,2600)};
+LT.on('startHand',()=>{try{if(!CFG.flashback||S.handNo!==1)return;const me=S.players[0],nm=me&&me.name||'';
+  const t=String(CFG.title||'15年前').split('　');vfTitleCard(t[0]||'15年前',`${nm}として打つ`,t[1]||'')}catch(e){}});
+// 「そのころ」の場面に入るとき：暗転と見出し
+LT.on('renderLine',()=>{try{if(!SC)return;const l=SC.lines[SC.i],il=Array.isArray(l)&&l[2]&&l[2].il;
+  if(!il){SC.vfIl=0;return}if(SC.vfIl===il||!INTERLUDE[il])return;SC.vfIl=il;vfTitleCard('そのころ',INTERLUDE[il].place,'')}catch(e){}});
+
+// ===== E3：お守り（カードプロテクター）を手に入れた場面に、絵と一言 =====
+LT.on('renderLine',()=>{try{if(!SC)return;const l=SC.lines[SC.i];if(!Array.isArray(l)||typeof l[1]!=='string'||!/お守り/.test(l[1]))return;
+  const no=SC.ch&&SC.ch.no,pr=typeof PROTECTORS!=='undefined'&&PROTECTORS.find(x=>x.ch===no);if(!pr)return;
+  const box=$('box');if(!box||box.querySelector('.vfprot'))return;
+  const d=document.createElement('div');d.className='vfprot';
+  d.innerHTML=`<span class="pic">${protectorSVG(pr.id)}</span><span><b>${esc(pr.name)}</b><small>カードプロテクター：自分の手札の上に置くお守り。章の一覧の「カードプロテクター」で選べます</small></span>`;box.appendChild(d)}catch(e){}});
+
+// ===== D6：人だかりの声は誰の声か分かるように =====
+CROWD.lines=CROWD.lines.map(t=>'（周りの客）'+t);
 
 </script>
 <script>
