@@ -136,6 +136,7 @@ const BOT = `(() => {
     return null;
   }
   B.tick = function () {
+    B.tickN = (B.tickN || 0) + 1; B.tickAt = Date.now();   // 止まったときに、ボットのタイマーが回っていたかを見る
     if (B.done) return;
     try {
       const press = b => { const k = b.id || b.textContent.trim().slice(0, 8); B.clicks[k] = 1 + (B.clicks[k] || 0); B.totalClicks = (B.totalClicks || 0) + 1; b.click() };
@@ -201,7 +202,10 @@ async function botState(page) {
     const overlays = [...document.querySelectorAll('[role=dialog],.qin,.vsin')].filter(vis).map(e => e.id || e.className).slice(0, 5);
     return { result: B.result, games: B.games || 1, wins: B.wins || 0, hands: B.hands, decisions: B.decisions, chipErr: B.chipErr, negErr: B.negErr, events: B.events.slice(0, 10), clicks: B.clicks,
       errors: __qa.errors.slice(0, 10), twice: B.twiceSeen.length, screen, overlays,
-      lastLog: [...document.querySelectorAll('#log > *')].slice(-6).map(x => x.textContent) };
+      lastLog: [...document.querySelectorAll('#log > *')].slice(-6).map(x => x.textContent),
+      // 止まった場所を調べるため（2026-10-17 WebKit の1ハンド目の止まり）
+      gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
+        sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden } : null };
   });
 }
 
