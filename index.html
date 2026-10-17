@@ -2081,6 +2081,17 @@ html.ingame #game{height:100%}
 /* 縦の画面は幅を細く（真ん中上の吹き出しをよけやすく） */
 @media (max-width:560px){.vflog{font-size:11px;padding:3px 6px;max-width:140px}.vflog li{gap:4px}.vflog li .nm{max-width:52px}}   /* 字は横・PC 12px、縦 11px（v92 レビュー） */
 
+/* 第3〜5章の録画から（js/49_play35_fixes.js） */
+/* 隣のテーブルの声：自分のテーブルはぼかさない */
+.t3d.nvfull .busts,.t3d.nvfull .felt-wrap,.t3d.nvfull #plates,.t3d.nvsoft .busts,.t3d.nvsoft .felt-wrap,.t3d.nvsoft #plates{filter:none}
+/* 相手のオールイン：札を赤く */
+#plates .plate.c35allin .tag{background:#b3122e;color:#fff;font-weight:800;border-color:#ff5a6e;box-shadow:0 0 0 1px rgba(255,90,110,.5)}
+/* 第一部 後編の添え書き・扉の日数は2行になってよい */
+.partcard em{font-style:normal;color:#cfd3cc;font-size:.85rem;letter-spacing:.1em;text-align:center}
+.partcard.door em{text-wrap:balance;word-break:auto-phrase;max-width:100%;letter-spacing:.1em;line-height:1.5}
+/* クイズの前置き：いま何があったか */
+#quiz .c35ctx{margin:6px 0 2px;font-size:.82rem;color:var(--gold,#e2b65b);line-height:1.5}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2234,7 +2245,7 @@ html.ingame #game{height:100%}
             <button data-q="all">全額</button>
           </div>
         </div>
-        <div class="declrow" id="declRow" hidden><span>読みを宣言</span><button data-dg="0" aria-pressed="false">役なし</button><button data-dg="1" aria-pressed="false">ワンペア</button><button data-dg="2" aria-pressed="false">ツーペア以上</button></div>
+        <div class="declrow" id="declRow" hidden><span>コールで読みを宣言</span><button data-dg="0" aria-pressed="false">役なし</button><button data-dg="1" aria-pressed="false">ワンペア</button><button data-dg="2" aria-pressed="false">ツーペア以上</button></div>
         <div class="quick" id="quick" hidden></div>
         <div class="acts" id="acts">
           <button id="btnFold" class="act fold"><b>フォールド</b><small>降りる</small><kbd class="k">F</kbd></button>
@@ -2272,7 +2283,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.92.1';
+const APP_VERSION='0.92.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2599,6 +2610,29 @@ EN_TPL.push(['ブラインドスチール成功！（+{0}）','Blinds stolen! (+
  ['スチールできたのは{0}回。あと{1}回だった','You stole {0}. {1} more would have done it.'],['まだ一度もスチールできていない。目標は{0}回だ',"You haven't stolen once yet. The goal is {0}."],
  ['#{0}、後ろの席で{1}を様子見したな。あそこがスチールのしどころだ','#{0}, you just limped {1} from a late seat. That was the steal.']);
 
+// 第3〜5章の録画からの直し（英語）
+Object.assign(EN_DICT,{
+"看板戦の日まで　あと十日（同じ日の二軒目）":"Ten days until the sign match (same day, second club)",
+"看板戦の日まで　あと十日（同じ日の三軒目）":"Ten days until the sign match (same day, third club)",
+"看板戦の日まで　あと十日（同じ日の四軒目）":"Ten days until the sign match (same day, fourth club)",
+"三日後　看板戦の日まで　あと七日":"Three days later — seven days until the sign match",
+"ここから第5章〜第7章":"Chapters 5–7",
+"ガラス張りの部屋。この街一番の店「王冠」の主、クロウが白い手袋の指先を直している。":"A glass-walled room. Crow, master of the Crown, the best card room in town, straightens the fingertips of his white gloves.",
+"ハヤトは配った2枚を見ないまま、表に返した。エースが2枚。そして、黙って降りた。":"Hayato turned his two cards face up without looking. Two aces. Then he quietly folded them.",
+"昔ね、海の向こうから来たお客さんがいたの。ひと言もしゃべらずに座って、セキさんからだけチップを取って帰ったんだって":"Long ago a guest came from across the sea. Never said a word, took chips only from Seki, and left.",
+"あの……さっき地下の店から連絡があって、あなたが看板を何枚持っているか、聞かれました":"Um… the place underground just called. They asked how many signs you have.",
+"ライブポーカーでは、顔やしぐさから手の強さが漏れる。これを「テル」と言う。強い手のときのクセと、ブラフのときのクセを見分けろ。ただし、クセはいつも出るわけじゃないし、外れることもある。手が見えたら答え合わせをしろ。相手メモに残る。":"In live poker, faces and gestures leak hand strength. That's a “tell.” Learn which habits mean strong and which mean bluff. But tells don't always show, and they can be wrong. When you see the cards, check your read. It goes in your notes.",
+"演奏が終わると、みんな急に静かになるんだよなあ":"When the band stops, everyone suddenly goes quiet.",
+"降りた手":"Folded",
+"あなたは手を見せずに伏せた":"You mucked without showing.",
+"ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は、プリフロップで最後にアクションできる）":"The player after the big blind may post 2x BB before the deal (and acts last preflop).",
+"ストラドルを置いた人は、プリフロップでいつアクションする？":"When does the straddler act preflop?",
+"ストラドルは「3枚目のブラインド」なので、プリフロップは最後にアクションします":"A straddle is a “third blind,” so it acts last preflop.",
+"コールで読みを宣言":"Call and name your read",
+"隣のテーブル":"Next table"
+});
+EN_TPL.push(["{0}は手を見せずに伏せた","{0} mucked without showing."],["{0}がチップを買い足して席に戻った","{0} bought more chips and sat back in."]);
+
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
   try{const l=String((navigator.languages&&navigator.languages[0])||navigator.language||'ja');return/^ja\b/i.test(l)?'ja':'en'}catch(e){return'ja'}})();
@@ -2680,10 +2714,10 @@ const INTERLUDE={
     ['',"古い倉庫の地下。客のいない卓で、若い男が一人でカードを配っている。"],
     ['テツ',"ハヤト、聞いたか。錨亭のジンさんが弟子を取ったってよ"],
     ['ハヤト',"……知ってる。今夜、もう三軒目だ"],
-    ['',"ハヤトは配った2枚を見ないまま、表に返した。エースが2枚。そして、黙って捨てた。"],
+    ['',"ハヤトは配った2枚を見ないまま、表に返した。エースが2枚。そして、黙って降りた。"],
     ['ハヤト',"三日後に来る。あの人なら、そうする"]]},
   4:{place:"王冠、最上階",lines:[
-    ['',"ガラス張りの部屋。クロウが白い手袋の指先を直している。"],
+    ['',"ガラス張りの部屋。この街一番の店「王冠」の主、クロウが白い手袋の指先を直している。"],
     ['クロダ',"天空から知らせです。ジンの弟子が、4枚目を取りました"],
     ['クロウ',"錨亭、銀の扉、月影、天空。……15年前と、同じ順番ですね"],
     ['クロダ',"次は地下です。ハヤトが待っています"],
@@ -2697,7 +2731,8 @@ const INTERLUDE={
 };
 const ilLines=n=>INTERLUDE[n].lines.map(l=>[l[0],l[1],Object.assign({},l[2]||{},{il:n})]);
 // 章の扉：題名と、看板戦までの日数（第7章は出さない）
-const DOOR_DAYS={"1": "看板戦の日まで　あと十日", "2": "看板戦の日まで　あと十日", "3": "看板戦の日まで　あと十日", "4": "看板戦の日まで　あと十日", "5": "看板戦の日まで　あと七日", "6": "今日が看板戦の日"};
+// 第1〜4章は同じ日の4軒（3軒目の後の幕間「今夜、もう三軒目だ」）。第5章はその三日後。同じ日だと分かるように添える（satou 2026-10-18 録画 #2）
+const DOOR_DAYS={"1": "看板戦の日まで　あと十日", "2": "看板戦の日まで　あと十日（同じ日の二軒目）", "3": "看板戦の日まで　あと十日（同じ日の三軒目）", "4": "看板戦の日まで　あと十日（同じ日の四軒目）", "5": "三日後　看板戦の日まで　あと七日", "6": "今日が看板戦の日"};
 const CHAPTERS=[
  {no:1,lamp:'#ffb15a',bgm:1,title:'降りるのも勝負',venue:'港のバー「錨亭」',color:'#cfe6ff',
   goalText:'ゲンのチップを全部取る',goal:{type:'bust'},hint:'hand',
@@ -2814,7 +2849,7 @@ const CHAPTERS=[
    {flashback:'seki'},
    ['','セキはそこで敗れ、決勝は観客席から見ることになった。'],
    ['セキ',"私は降りすぎた。ジン君は降りなさすぎた。……どちらも、負けだったね"],
-   ['ミナ',"昔ね、海の向こうから来たお客さんがいたの。誰とも話さないで、セキさんにだけ勝って帰ったんだって"],
+   ['ミナ',"昔ね、海の向こうから来たお客さんがいたの。ひと言もしゃべらずに座って、セキさんからだけチップを取って帰ったんだって"],
    ['セキ','記念にこれを。月の刻まれた古いコインだ。カードの上に置くといい'],
    ['','時計は午前1時。サックスの最後の曲が終わった。'],
    ['','次の店は、ホテル最上階のラウンジ。そこには、ブラフを見抜くディーラーがいるという。'],
@@ -2835,7 +2870,7 @@ const CHAPTERS=[
    ['ジン','このディーラーは、とにかくよく賭ける。半分は嘘だ'],
    ['ソウ','ぼ、僕はまだ見習いです。よろしくお願いします！'],
    ['レイカ','嘘かどうかなんて、顔を見たってわからないわよ'],
-   {lesson:'テル（相手のクセ）',body:'ライブのポーカーでは、顔やしぐさから手の強さが漏れる。これを「テル」と言う。強い手のときのクセと、ブラフのときのクセを見分けろ。ただし、クセはいつも出るわけじゃない。当たるのは7割ほどだ。手が見えたら答え合わせをしろ。相手メモに残る。'},
+   {lesson:'テル（相手のクセ）',body:'ライブポーカーでは、顔やしぐさから手の強さが漏れる。これを「テル」と言う。強い手のときのクセと、ブラフのときのクセを見分けろ。ただし、クセはいつも出るわけじゃないし、外れることもある。手が見えたら答え合わせをしろ。相手メモに残る。'},
    ['ジン','顔をよく見ておけ。相手のブラフを見抜いてコールし、2回勝ってみろ'],
   ],
   outro:[
@@ -2851,7 +2886,7 @@ const CHAPTERS=[
    ['レイカ',"ジンさんは、あの日に勝っていたら、この街にはいなかった人よ"],
    ['レイカ',"降りる人の指は、迷わないの"],
    ['レイカ','次は地下よ。あそこには、ジンさんの昔のお弟子さんがいる'],
-   ['ソウ',"あの……さっき地下の人から連絡があって、あなたが何枚目か、聞かれました"],
+   ['ソウ',"あの……さっき地下の店から連絡があって、あなたが看板を何枚持っているか、聞かれました"],
    ['ジン','……'],
    ['レイカ','これは餞別（せんべつ）。天空の羽よ。縁起かつぎに、手札の上に置きなさい'],
    ['','窓の外が、少しだけ白み始めていた。'],
@@ -2866,7 +2901,7 @@ const CHAPTERS=[
   you:80000,blinds:[1000,2000],opps:[{name:'ハヤト',style:'hayato',chips:50000,label:'荒い'},{name:'テツ',style:'station',chips:80000,label:'何でも参加'}],
   extras:[{name:'ドク',style:'nit',chips:80000},{name:'ベン',style:'nit',chips:80000},{name:'ミン',style:'liar2',chips:80000}],seatPlan:['e0','p0','p1','e1','e2'],
   intro:[
-   {part:'第一部　後編',title:'あの日'},
+   {part:'第一部　後編',title:'あの日',sub:'ここから第5章〜第7章'},
    {door:5},
    ['','三日後の夜。港の外れ、古い倉庫の階段を下りると、使われなくなった賭場（とば）があった。'],
    ['','奥の卓で、若い男が大きなポットをかき集めている。'],
@@ -4798,7 +4833,7 @@ const QUIZ={
   exposed:{q:'配るときにカードが表向きになった。どうする？',opts:['交換する','そのまま使う'],a:0,why:'多くの店では、見えたカードは使わずに交換します'},
   speak:{q:'「ストレートだ」と言ったが、見せた手はワンペアだった。どう判定する？',opts:['見せた手で判定','言った役で判定'],a:0,why:'「カードがしゃべる」。見せた手で判定します'},
   order:{q:'ショーダウン。誰から手を見せる？',opts:['最後にベットした人','ボタンに近い人'],a:0,why:'リバーで最後にベット・レイズした人からです。リバーで誰も賭けていなければ、ボタンの左から'},
-  straddle:{q:'ストラドルを置いた人は、プリフロップでいつ話す？',opts:['最後','最初'],a:0,why:'ストラドルは「3枚目のブラインド」なので、プリフロップは最後に話します'},
+  straddle:{q:'ストラドルを置いた人は、プリフロップでいつアクションする？',opts:['最後','最初'],a:0,why:'ストラドルは「3枚目のブラインド」なので、プリフロップは最後にアクションします'},
   allin:{q:'オールインで勝負が決まった。手札は？',opts:['全員が見せる','見せなくてよい'],a:0,why:'多くの店では、オールインで勝負が決まったら全員が手を見せます'},
 };
 const QUIZ_KEY='shisho-quiz';
@@ -5703,7 +5738,7 @@ function protectorSVG(id){
 const GOSSIP={
   1:[['店主','ゲンさんは毎晩来て、毎晩負けて帰るんだよ'],['ゲン','このお守りの錨じゃないと勝てねえんだよな'],['店主','名物のカレー、あとで食べていきな'],['店主','腹が減ってちゃ勝てないよ']],
   2:[['常連','ロクさんは昔、ジンさんと組んでいたらしいよ'],['ハル','この席、勝てる気がするんだよね'],['常連','あっちの卓、さっきフォーカードが出たってさ'],['ロク','……数えてから言え']],
-  3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、卓が荒れるんだよなあ'],['ミナ','この曲が終わるまでに勝つね']],
+  3:[['常連','セキさんはね、十年前の大会で準優勝したんだって'],['ミナ','このコイン、手札に置くと落ち着くの'],['常連','演奏が終わると、みんな急に静かになるんだよなあ'],['ミナ','この曲が終わるまでに勝つね']],
   4:[['ソウ','レイカさん、ディーラーのときは絶対に表情を変えないんです'],['常連','このラウンジ、朝まで卓が立つらしいね'],['ソウ','あ、あとワンハンドだけ……']],
   5:[['テツ','ハヤトは勝つとすぐ帰るんだ。今日は珍しく座ってるな'],['テツ','ここは昔、クロウの持ち物だったらしいぜ'],['テツ','地下は電波が入らねえんだよな']],
   6:[['クロダ','当店では、負け方も含めてお客様を見ております'],['カオル','クロウさんの前だと、みんな背筋が伸びるのよ'],['カオル','あの看板、全部で6枚あるんですって']],
@@ -6116,7 +6151,7 @@ function renderLine(){
    else if(SC.ilOn){SC.ilOn=0;if(SC.vh)$('venue').innerHTML=SC.vh}}
   if(l&&!Array.isArray(l)&&p2Line(l)){}
   else if(l&&l.part){setStage(null);$('stage').className='stage part';
-    $('box').innerHTML=`<div class="partcard"><span>${esc(l.part)}</span><b>${esc(l.title)}</b></div>`}
+    $('box').innerHTML=`<div class="partcard"><span>${esc(l.part)}</span><b>${esc(l.title)}</b>${l.sub?`<em>${esc(l.sub)}</em>`:''}</div>`}
   else if(l&&l.preview){const pv=PREVIEW[l.preview],nc=CHAPTERS[l.preview-1];
     $('stage').className='stage preview';$('stage').innerHTML=`<div class="portrait sil">${avatar(pv.boss)}</div><div class="sign">${esc(pv.sign)}</div>`;
     $('box').innerHTML=`<span class="lesson-tag">次回</span><div class="lesson"><div class="lt">第${nc.no}章　${esc(nc.title)}</div><p>「${esc(pv.line)}」</p></div>`}
@@ -6927,7 +6962,7 @@ function renderSound(){$('btnSound').textContent='音：'+['オフ','効果音�
 
 /* ---------- 店ごとのハウスルール ---------- */
 const HOUSE={
-  straddle:{name:'ストラドル',desc:'ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は最後に話せる）'},
+  straddle:{name:'ストラドル',desc:'ビッグブラインドの次の人は、配る前にBBの2倍を置いてもよい（置いた人は、プリフロップで最後にアクションできる）'},
   bomb:{name:'ボムポット',desc:'5ハンドに1回、全員がBBの2倍を出し合い、フロップから始める'},
   seven2:{name:'7-2ゲーム',desc:'7と2の手で勝つと、ほかの全員からBBの2倍のボーナス'},
   twice:{name:'2回めくり',desc:'オールインで手が決まったら、残りの場札を2回めくって、ポットを半分ずつ分ける'},
@@ -6967,6 +7002,7 @@ function post(p,amt){const a=Math.max(0,Math.min(amt,p.chips));p.chips-=a;p.bet+
 
 function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preAct='';readClear();if(S){S.readsHand=[];S.readShow=null;S.myRead=null;S.foolTag=null;S.readLook=-1;S.myActs=[];S.myBetsHand=[];S.myLastBet=null;S.twice=false;S.twiceBase=null;S.board2=null;S.declare=null;S.declGuess=null;if(S.players)S.players.forEach(q=>{q.runWon=null;q.hname2=''})}if(S&&S.players)S.players.forEach(q=>{q.faked=null});quickPick=0;clearArm();
   if(CFG.refill)S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;log(`${p.name}がチップを補充して席に戻った`)}});
+  if(S.rebuyMain){S.rebuyMain=false;S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;S.chipsReset=S.handNo+1;log(`${p.name}がチップを買い足して席に戻った`)}})}   // 相手役がほかの客に飛ばされたとき（endHand の byOther）
   S.players.forEach(p=>{p.out=p.chips<=0||!!p.sitOut});
   S.handNo++;
   // トーナメント：決まったハンド数ごとにブラインドが上がる
@@ -6977,6 +7013,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   S.showOffer=false;if(S.shownMem&&S.handNo>0&&S.handNo%6===0){S.shownMem.bluff=Math.max(0,S.shownMem.bluff-1);S.shownMem.strong=Math.max(0,S.shownMem.strong-1)}S.taunt=-1;S.slowrolled=-1;S.meSmug=false;S.angleActing=-1;S.players.forEach(p=>{if(p.tilt>0&&S.handNo>0&&p.tiltHand!==S.handNo){p.tiltHand=S.handNo;p.tilt--}});S.needle=null;S.runout=false;S.tease=false;S.reveal=false;S.stare=-1;S.stareKey='';$('table').classList.remove('hush');Sound.hush(false);Clock.stop();S.myPreFold=false;S.myTurnAt=0;S.myTurnKey='';S.deck=shuffle(fullDeck());S.board=[];S.released=false;S.street='preflop';S.handOver=false;S.msg='';S.raises=0;S.aggr=-1;S.riverAggr=-1;S.lastCalled=-1;S.myPostAggro=false;
   S.players.forEach(p=>{Object.assign(p,{hand:p.out?[]:[S.deck.pop(),S.deck.pop()],folded:p.out,allIn:false,
     bet:0,total:0,acted:false,show:false,won:0,refund:0,hname:'',raisedPre:false,cbetFlop:false,leakPend:[],leakFold:'',leakAL:0,lastAct:'',lastType:'',seen:null,actKind:'',say:null,peeked:false,tell:null,tellLog:[],lastState:'',answered:false,hs:p.chips,ante:0,mucked:false,muckPlan:false,shownByChoice:false,counting:false,showN:0,slow:false,eq:null,eqDir:'',seenArr:null})});
+  try{if(typeof dealHelp==='function')dealHelp()}catch(e){}   // 易しくする：自分に弱い手が来にくい（js/49_play35_fixes.js）。台本・決まった札はこの後で上書きされる
   setupScript();
   // ディーラーのミス（第4章以降とフリー対戦）：1ハンドに1.5%、続けては起きない
   let mq='';
@@ -7018,10 +7055,11 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   {const q=S.players[bb],a=Math.min(BB(),q.chips);if(a>0){q.chips-=a;q.total+=a;q.ante=a;if(q.chips===0)q.allIn=true;log(`${q.name}：BBアンティ ${fmt(a)}`)}}
   S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB();
   S.toAct=nextIdx(bb,needs);
+  S.strdl=0;
   if(CFG.house==='straddle'&&alive>=3){
     const u=S.players[S.toAct];
     const want=u.human?myStraddle:(u.chips>BB()*6&&Math.random()<.35);
-    if(want){post(u,BB()*2);u.lastAct=`ストラドル ${fmt(BB()*2)}`;u.lastType='raise';
+    if(want){post(u,BB()*2);S.strdl=BB()*2;u.lastAct=`ストラドル ${fmt(BB()*2)}`;u.lastType='raise';
       log(`${u.name}：ストラドル ${fmt(BB()*2)}`);S.msg=`${u.name}がストラドル（${fmt(BB()*2)}）`;
       S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB()*2;S.toAct=nextIdx(S.toAct,needs);if(!mq)mq='straddle'}
   }
@@ -7256,7 +7294,7 @@ function afterAct(i,type,toCall){
   if(p.tell&&p.tell.cue==='talk'&&p.tell.street===S.street&&kind!=='fold')line=lineFor(p.name,'talk');
   else if(S.needle===S.street&&!p.answered&&!(p.name==='タケル'&&S.needleStyle!=='stare')&&(p.faked===S.street||Math.random()<.7)){line=p.faked===S.street?FAKE_LINE[p.name]:needledLine(p);p.answered=true}
   else if(line=speechPick(p,kind)){}
-  else if(Math.random()<talkRate(p.name)||kind==='allin')line=lineFor(p.name,(kind==='raise'||kind==='allin')?kind+st:kind);
+  else if(Math.random()<talkRate(p.name)*(kind==='fold'?.25:1)||kind==='allin')line=lineFor(p.name,(kind==='raise'||kind==='allin')?kind+st:kind);
   if(S.angleHand===S.handNo&&S.angleActing===i){S.angleActing=-1;line=''}
   p.say={seq:(S.saySeq=(S.saySeq||0)+1),act:p.lastAct,line};
   const boss=rankOf(p.name)>=3||(CFG.ch&&i===1);
@@ -7445,7 +7483,7 @@ function showdown(){
   }
   if(muckOn())cont.forEach(p=>{if(p.human||p.won>0||p.allIn||S.players.indexOf(p)===S.riverAggr)return;if(p.muckPlan){p.show=false;p.mucked=true}});
   const contS=cont.filter(p=>!p.mucked||p.human);
-  cont.forEach(p=>log(p.mucked&&!p.human?`${p.name}は手を伏せて捨てた`:`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname}）`));
+  cont.forEach(p=>log(p.mucked&&!p.human?`${p.name}は手を見せずに伏せた`:`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname}）`));
   judgeDeclare();selfLearn();talkSD(contS);
   {const me=S.players[0];if(cont.includes(me)&&!(!me.won&&S.riverAggr!==0&&!S.runout&&SETTINGS.muck))selfFoolCheck()}
   {const me=S.players[0];if(S.stat&&jinAdviceOn()&&cont.includes(me)){if(me.won>0)S.stat.sdWin++;else S.stat.sdLoss++}}
@@ -7481,7 +7519,7 @@ function showdown(){
   }
   if(me.show&&!me.won&&cont.includes(me))S.sdLoss=true;
   if(me.show&&!me.won&&S.riverAggr!==0&&!S.runout&&!me.allIn&&SETTINGS.muck){   // オールインした手は伏せずに見せる（v89 レビュー：飛んだハンドで自分の2枚が見えなかった）
-    me.mucked=true;log('あなたは手を伏せて捨てた')}
+    me.mucked=true;log('あなたは手を見せずに伏せた')}
   payHouse72();
   S.handOver=true;S.toAct=-1;
   if(S.slowrolled>0){const sp=S.players[S.slowrolled];grantTitle('slowrolled');taunt(sp,'gloat');
@@ -7521,7 +7559,11 @@ function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
   if(S.mietaNow){const m=S.mietaNow;S.mietaNow=null;mieta(m.name,m.cue,m.big)}
   if(S.gloveHand===S.handNo&&me.won>0){const cr=S.players.find(q=>q.name==='クロウ');if(cr&&cr.total>0){grantTitle('realtell');S.realtell=true}}
   if(g.type==='flash'){S.result='flash';S.msg='';render();return}
+  // 相手役の最後のチップをほかの客（extras）が取ったときは、自分の勝ちにしない。相手役はチップを買い足して残る（satou 2026-10-18 録画 #4：降りたのに目標達成になった）
+  const byOther=me.won<=0&&g.type!=='bust'&&g.type!=='free'&&!CFG.flashback&&S.players.some(p=>p.extra&&p.chips>0)&&opps.some(p=>p.chips<=0&&p.total>0);
+  if(byOther)S.rebuyMain=true;
   if(me.chips<=0)S.result='lose';
+  else if(byOther){}
   else if(opps.every(p=>p.chips<=0)&&duelGate59()){S.result='win';if(g.type!=='bust'&&g.type!=='free')S.msg=`相手のチップを全部取った！ ${S.msg}`}
   else if(g.type==='steal'&&S.steals>=g.n)S.result='win';
   else if(g.type==='bluff'&&S.bluffs>=g.n)S.result='win';
@@ -8086,8 +8128,8 @@ function senseiLine(){
     if(t.length){
       const {q}=t[t.length-1];
       if(S.handNo>=8&&S.handNo%3)return'さっきのクセ、意味は覚えているか。自分で読め。';
-      return q.tell.meaning==='strong'?`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。強いぞ。`
-        :`見たか。${q.name}が${CUE_LABEL[q.tell.cue]}。ブラフかもしれん。`;
+      return q.tell.meaning==='strong'?`見たか。${typeof who==='function'?who(q.name):q.name}が${CUE_LABEL[q.tell.cue]}。強いぞ。`
+        :`見たか。${typeof who==='function'?who(q.name):q.name}が${CUE_LABEL[q.tell.cue]}。ブラフかもしれん。`;
     }
     if(S.street==='preflop')return'相手の顔を見ろ。賭ける前に、何かが出る。';
     return toCall>0?'相手が賭けてきた。そのとき何が出ていたか思い出せ。':'手がなければ無理するな。チェックで様子を見ろ。';
@@ -10483,7 +10525,7 @@ const PRE_ASK={
     {who:'マリア',hint:{ja:'ジンの昔を少しだけ知っている',en:'Knows a little of Jin’s past.'},ja:'言葉より、手を見るの。……でも、あの人の手は何も言わない',en:'Watch hands, not words. …But his hands never say anything.',kind:'flavor'},
     {who:'マツ',hint:{ja:'無口な元船長',en:'A quiet former captain.'},ja:'……あの日から、あいつは同じ席にしか座らん',en:'…Since that day, he only sits in the same seat.',kind:'flavor'}]}
 };
-const PRE_ASK_TITLE={ja:'{venue}　あと{k}人に聞ける',en:'{venue} — you can ask {k} more'};
+const PRE_ASK_TITLE={ja:'{venue}　勝負の前に、客から噂を聞ける（あと{k}人。聞いた噂は相手メモに残る）',en:'{venue} — before you sit, ask the regulars ({k} more; rumors go in your notes)'};
 const PRE_ASK_DONE={ja:'もう聞けない',en:'No one else to ask'};
 const PRE_ASK_JIN={ja:'噂は噂だ。誰から聞いたかも、覚えておけ',en:'A rumor is a rumor. Remember who told you, too.'};
 
@@ -10782,8 +10824,8 @@ const FOLD_STYLE={
 const foldStyle=name=>FOLD_STYLE[name]||FOLD_BY_RANK[rankOf(name)]||FOLD_BY_RANK[3];
 const FOLD_MS={slide:380,place:820,flick:460,push:320,sweep:700,gather:800};
 const MUCK_MESS=[[-1.2,-.8,-14],[1,.6,22],[-.4,1.2,6],[1.4,-1,-30],[-1.6,.9,38],[.6,-1.4,-4],[.2,.3,15],[-.9,-.2,-24]];
-const FOLD_GONE={ja:'捨てた手',en:'Folded'};
-Object.assign(EN_DICT,{'降り！':'I\'m out!','降ります':'I fold.','捨てた手':'Folded','伏せた':'Mucked'});
+const FOLD_GONE={ja:'降りた手',en:'Folded'};
+Object.assign(EN_DICT,{'降り！':'I\'m out!','降ります':'I fold.','捨てた手':'Folded','降りた手':'Folded','伏せた':'Mucked'});
 
 let muckHand=-1,muckN=0;const muckDone={};
 // 捨て札の山は場札の左隣（卓の奥のディーラーの手元。ポットとあなたの手元から離す）
@@ -11164,7 +11206,7 @@ function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-4-pr.top;
   if(top>=2)d.style.top=Math.round(top)+'px'}
 // クセの札に当たらないときも、吹き出しから 4px 離す（v92 レビュー：PC で #dcall と #say5 が 3px 重なった）。上へ逃がす（顔の上へは下げない）
-function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=4;
+function dcSayLift(d){const R=e=>e.getBoundingClientRect(),r=R(d),m=7;   // 7px 離す（v92.1 レビュー：WebKit の PC で 4px では字の幅の差で 3px かかった）
   const says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R)
     .filter(c=>c.width>14&&r.left<c.right+m&&c.left<r.right+m&&r.top<c.bottom+m&&c.top<r.bottom+m);
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r.height-m-pr.top;
@@ -12025,7 +12067,7 @@ function awPlace(){
   const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
   // チップの山の端に少しかかるのは読めるので軽く、席番号・D・吹き出し・札・ほかの席の名札・語と顔は重く数える（v91.2 レビュー：縦で左の席の頭に乗った）
   const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&(!e.classList.contains('say')||+getComputedStyle(e).opacity>.05))
-    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)?1:4,pl,bu}}).filter(o=>o.r.width>1);
+    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)?1:/dbadge/.test(e.className)||e.id==='dbtn'?8:4,pl,bu}}).filter(o=>o.r.width>1);
   // 吹き出しは .go に限らず、見えている物はすべて（v92 CI：出し終わって残った #say1 に「フォールド」がかかった）
   // ほかの席の顔（顔のまわりの空いた所は入れない faceBox。体の箱 .body は隣の席どうしで重なるほど大きいので使わない）
   {const L0=$('sayLayer'),lr=L0&&L0.getBoundingClientRect();if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);
@@ -12034,14 +12076,16 @@ function awPlace(){
   // それでも重なるときだけ名札の上を試す（上は最後。v91.2 レビュー：席によって上と下に分かれて読みにくい）
   els.forEach(el=>{const own=el.parentNode,i=String(own.id||'').replace('plate',''),ownB=$('bust'+i);
     const mine=av.filter(o=>o.el!==own&&o.el!==el&&!(ownB&&o.bu===ownB));   // 自分の名札の中の D（.dbadge）は避ける。名札そのものと自分の顔だけ外す
+    // 自分の名札の名前と額の行は重く数える（v92.1 レビュー：縦6人卓で上下にずらした語が自分の名前を隠した）
+    own.querySelectorAll(':scope > .nm, :scope > .chp').forEach(e=>{if(vis(e)){const r=e.getBoundingClientRect();if(r.width>1)mine.push({r,el:e,k:6})}});
     mine.forEach(o=>{if(o.el&&o.el.classList.contains('ltact'))o.r=o.el.getBoundingClientRect()});   // 先に置いたほかの席の語は、動かした後の場所で数える
     const cost=r=>mine.reduce((a,{r:q,k})=>{const w=Math.min(r.right,q.right)-Math.max(r.left,q.left),h=Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top);return a+(w>0&&h>0?w*h*k:0)},0);
     const c0=cost(el.getBoundingClientRect());if(!c0&&!el.classList.contains('up'))return;
     let best={c:Infinity,up:false,dx:0,dy:0};
     // それでもかかるときだけ、少し上下にもずらす（v92.1 CI：残った #say1 に「フォールド」が 5px かかった）。上下は margin（下に付く .up は margin-bottom で同じ向きに動く。transform は blClamp が使う）
-    out:for(const dy of [0,6,-6,10])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36]){if(!dy&&Math.abs(dx)>28)continue;
-      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';el.style.marginTop=dy?dy+'px':'';el.style.marginBottom=dy?-dy+'px':'';
-      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy};if(c<1)break out}
+    out:for(const dy of [0,6,10,14])for(const up of [false,true])for(const dx of [0,-8,8,-14,14,-20,20,-28,28,-36,36,-44,44]){if(!dy&&Math.abs(dx)>28)continue;   // 上下は名札から離れる向きだけ（下の語は下へ、上の語は上へ）
+      el.classList.toggle('up',up);el.style.marginLeft=dx?dx+'px':'';const yy=up?-dy:dy;el.style.marginTop=yy?yy+'px':'';el.style.marginBottom=yy?-yy+'px':'';
+      const c=cost(el.getBoundingClientRect())+(up?.5:0)+(dy?.3:0);if(c<best.c)best={c,up,dx,dy:yy};if(c<1)break out}
     el.classList.toggle('up',best.up);el.style.marginLeft=best.dx?best.dx+'px':'';el.style.marginTop=best.dy?best.dy+'px':'';el.style.marginBottom=best.dy?-best.dy+'px':''})}
 LT.on('layout',()=>{try{awPlace()}catch(e){}});
 {const o=actWords;actWords=function(){const r=o.apply(this,arguments);try{if(typeof layoutSoon==='function'&&document.querySelector('#plates .plate > .ltact:not([hidden])'))layoutSoon()}catch(e){}return r}}
@@ -12116,7 +12160,7 @@ potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
 function vfResult(){
-  if(!S||!S.handOver||!S.vf||S.vf.res||CFG.flashback||VF.quiet()||$('game').hidden)return;
+  if(!S||!S.handOver||!S.vf||S.vf.res||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
   const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;S.vf.res=1;
   const me=S.players[0],sd=S.street==='showdown'&&!S.board2,iWon=me.won>0,inIt=!me.folded&&!me.out;
   if(!sd&&!iWon)return;   // ほかの人どうしで決まったハンドは、名札の語とディーラーの声で足りる
@@ -12291,6 +12335,51 @@ LT.on('show',()=>{try{const b=$('vfLog');if(b&&$('game')&&$('game').hidden){b.hi
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go()}
 // ディーラーの声が出たら置き直す（声の上に直近の5手が乗らないよう。重なるならその間は .off で隠れ、声が消えたあとの layout で戻る。v92 確認：横で声に重なった）
 {const o=dealerSay;dealerSay=function(){const r=o.apply(this,arguments);try{if($('vfLog')&&!$('vfLog').hidden){blPlace();clearTimeout(blPlace.d);blPlace.d=setTimeout(()=>{try{blPlace()}catch(e){}},300)}}catch(e){}return r}}
+
+/* ---------- 第3〜5章のプレイ録画から（satou 2026-10-18 録画 2026-10-18 00-24-53.mp4） ---------- */
+// 小さな見え方の直しだけ。CPU の判断・配り札・勝ち負けの決まり方は変えない
+// #3 隣のテーブルの声：自分のテーブルをぼかして暗くし、カメラを横に振っていたので「バグった」に見えた
+//    → ぼかし・暗さ・カメラの横振りをやめ、灯りと文字だけにする。見出しも日本語に
+{const o=nextvShow;nextvShow=function(){
+  const c=$('cam'),tr=c?c.style.transform:'',td=c?c.style.transitionDuration:'';
+  const r=o.apply(this,arguments);
+  try{const t=$('table');if(t&&(t.classList.contains('nvfull')||t.classList.contains('nvsoft'))){t.classList.remove('nvfull','nvsoft');t.classList.add('nvlamp');
+      if(c){c.style.transitionDuration=td;c.style.transform=tr}}
+    const sp=$('nextv')&&$('nextv').querySelector('span');if(sp&&sp.textContent==='NEXT TABLE')sp.textContent=I18N.lang==='en'?'Next table':'隣のテーブル'}catch(e){}
+  return r}}
+// #8 相手のオールインに気づけない：オールインの人の札を赤く
+// #18 ストラドルのハンドは上の帯のブラインドに額を足す（1,000/2,000/4,000）
+LT.on('render',()=>{try{if(!S||!S.players)return;
+  S.players.forEach((p,i)=>{if(!i)return;const pl=$('plate'+i);if(pl)pl.classList.toggle('c35allin',!!(p.allIn&&!p.folded&&!p.out&&!S.handOver))});
+  const m=$('tbMeta');if(m&&S.strdl&&!CFG.levels){const t=`${fmt(SB())}/${fmt(BB())}/${fmt(S.strdl)}`;if(m.textContent!==t)m.textContent=t;
+    const al=I18N.lang==='en'?`Blinds ${fmt(SB())}/${fmt(BB())}, straddle ${fmt(S.strdl)}`:`ブラインド ${fmt(SB())}/${fmt(BB())}　ストラドル ${fmt(S.strdl)}`;if(m.title!==al){m.title=al;m.setAttribute('aria-label',al)}}
+}catch(e){}});
+// #20 クイズが急に出る：いま卓で何があったかを、問題の上に一行で
+LT.on('askQuiz',id=>{try{const box=$('quiz'),q=box&&box.querySelector('.qq');if(!q||box.querySelector('.c35ctx')||!S||!S.players)return;
+  const p=S.players[S.toAct],en=I18N.lang==='en';if(!p||p.human)return;
+  const n=typeof who==='function'?who(p.name):p.name;
+  const t=id==='tap'?(en?`Just now, ${n} tapped the table, then said “bet.”`:`いま、${n}がテーブルを叩いてから「ベット」と言いました`)
+    :id==='onechip'?(en?`Just now, ${n} silently put out one big chip.`:`いま、${n}が大きいチップを1枚だけ、黙って出しました`):'';
+  if(!t)return;const d=document.createElement('p');d.className='c35ctx';d.textContent=t;q.before(d)}catch(e){}});
+// 易しくする（satou 2026-10-17 17:13Z のカード：難易度「全体を易しく」、第5章「弱い手を減らす」）
+// ストーリーの章で、自分に弱い2枚（preTier 0）が来たら、ある割合でその2枚を山の底に戻して引き直す（1回だけ）。
+// 第5章は 6割、ほかの章は 3割。回想・裏の卓・はしご・フリー対戦は今のまま。台本・決まった札は後の setupScript が上書きする
+const DEAL_HELP={def:.3,5:.6};
+function dealHelp(){
+  if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return;
+  const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return;
+  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:DEAL_HELP.def;
+  if(LT.rand()>=p||S.deck.length<12)return;
+  S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()]}
+// 設定の初めの値（satou 2026-10-17 17:13Z のカード）：「先に選ぶ」（パスフォールド）は最初からオン、「カードをそろえる」は最初はオフ。
+// 前の版でできた保存（先に選ぶ：オフ、そろえる：オン）は一度だけ新しい値に直す。そのあと設定で変えたものは、そのまま
+SAVE_KEYS.push('shisho-p35');
+{const m=saveGet('shisho-p35',{})||{};if(!m.set1){SETTINGS.pre=true;SETTINGS.tidy=false;saveSettings();saveSet('shisho-p35',Object.assign(m,{set1:1}),1);
+  try{vfTidy()}catch(e){}
+  try{const b=$('btnPreSet');if(b)b.textContent='先に選ぶ：オン';const t=$('btnTidy');if(t)t.textContent='カードをそろえる：オフ';if(typeof setSync==='function')setSync()}catch(e){}}}
+// #19 第5章の AA のハンドで隠したレイズを戻す（スレッド「第5章で進行が止まる」の直しと同じ働き。向こうが入っても二重に戻すだけで害はない）
+LT.on('render',()=>{try{if(!S)return;if(S.vf&&S.vf.ask){S.p35hid=true;return}
+  if(S.p35hid){S.p35hid=false;['btnRaise','btnFold'].forEach(id=>{const b=$(id);if(b)b.hidden=false});renderControls()}}catch(e){}});
 
 </script>
 <script>

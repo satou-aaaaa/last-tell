@@ -125,6 +125,9 @@ const INSPECT = `(() => {
     const faces = [...document.querySelectorAll('#plates .plate')].filter(okv).map(o => ({ r: o.getBoundingClientRect(), o, nm: '名札 ' + desc(o) }));
     if (lr && typeof faceBox === 'function' && typeof S !== 'undefined' && S && S.players) S.players.forEach((p, i) => { if (!i || p.out) return; const f = faceBox(i); if (f) faces.push({ r: { left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, i, nm: '顔 席' + (i + 1) }) });
     for (const el of [...document.querySelectorAll('#plates .plate > .ltact')].filter(okv)) { const a = el.getBoundingClientRect(), i = +(el.parentElement.id || '').replace('plate', '');
+      // 自分の名札の名前（.nm）にもかからないか（v92.1 レビュー：縦6人卓で上下にずらした語が自分の名前を隠した）
+      { const n = el.parentElement.querySelector(':scope > .nm'); if (n && vis(n)) { const c = n.getBoundingClientRect(), w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 2 && h > 2) out.push({ kind: '重なり', el: desc(el), by: '自分の名札の名前 ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
       for (const { r: c, o, i: fi, nm } of faces) { if (o === el.parentElement || fi === i) continue;
         const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
         if (w > 4 && h > 4) { out.push({ kind: '重なり', el: desc(el), by: 'ほかの席の' + nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } } }
