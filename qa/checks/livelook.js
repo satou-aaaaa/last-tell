@@ -57,14 +57,14 @@ async function run({ browser, file }) {
         return {
           toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
           cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
-          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'),
+          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: hit('#potChips .col', '#mine .card'),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
       });
       let r = await measure();
       // 重なりが出たら 1.5秒待って測り直す（WebKit は顔アップや札の動きの途中で測ることがある。v0.86.4 CI）。残ったものだけを問題にする
-      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length) { await page.waitForTimeout(1500); r = await measure() }
+      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length || r.tower.length) { await page.waitForTimeout(1500); r = await measure() }
       add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
       add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
       // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
@@ -74,6 +74,8 @@ async function run({ browser, file }) {
         if (g) add(`livelook:winedge-small:${vp}`, `名札が空の席が勝つと顔の下に金の線（${vp}）`, g.filter(x => !x[1] || x[2]).map(x => `席${x[0] + 1}`).join(', '), `${g.length}席`);
       }
       add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
+      // v95.1 レビュー：縦の大きなポットで、塔の下半分が自分の手札の後ろに隠れていた（ui の場面はポットが小さくて出なかった）
+      add(`livelook:tower:${vp}`, `ポットの塔が自分の手札にかからない（${vp}）`, [...new Set(r.tower)].slice(0, 4).join(', '), '重なりなし');
       add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:backs:${vp}`, `相手の伏せ札が寝ている（${vp}）`, r.flat ? `${r.flat}/${r.backs}枚が立ったまま（${r.flatWho.slice(0, 2).join(' / ')}）` : '', `${r.backs}枚`);
       add(`livelook:burn:${vp}`, `場札を出すたびにバーン（${vp}）`, r.burns !== 3 ? `リバーまでで${r.burns}枚（期待3）` : '', '3枚');
