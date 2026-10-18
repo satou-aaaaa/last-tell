@@ -182,7 +182,12 @@ const INSPECT = `(() => {
     const tg = [...document.querySelectorAll('#potSign:not([hidden]) .pv')].filter(e => vis(e)).map(e => [e, 'ポットの額']).concat([...document.querySelectorAll('#mine .card')].filter(e => vis(e)).map(e => [e, '自分の手札']));
     for (const [e, nm] of tg) { const q = e.getBoundingClientRect(); let w = 0, h = 0;
       for (const c of cols) { const w1 = Math.min(c.right, q.right) - Math.max(c.left, q.left), h1 = Math.min(c.bottom, q.bottom) - Math.max(c.top, q.top); if (w1 > 2 && h1 > 2 && w1 * h1 > w * h) { w = w1; h = h1 } }
-      if (w > 2 && h > 2) out.push({ kind: '重なり', el: 'ポットの塔（#potChips）', by: nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
+      if (w > 2 && h > 2) out.push({ kind: '重なり', el: 'ポットの塔（#potChips）', by: nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) }
+    // v95 レビュー：第6章の縦で、ポットの額が自分の手札の上に乗った（塔×札・塔×額だけでは見つからない）
+    const mc = [...document.querySelectorAll('#mine .card')].filter(e => vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
+    for (const e of [...document.querySelectorAll('#potSign:not([hidden]) .pv')].filter(e => vis(e))) { const q = e.getBoundingClientRect(); let w = 0, h = 0;
+      for (const c of mc) { const w1 = Math.min(c.right, q.right) - Math.max(c.left, q.left), h1 = Math.min(c.bottom, q.bottom) - Math.max(c.top, q.top); if (w1 > 2 && h1 > 2 && w1 * h1 > w * h) { w = w1; h = h1 } }
+      if (w > 2 && h > 2) out.push({ kind: '重なり', el: 'ポットの額（#potSign）', by: '自分の手札 ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
   // クセの読める範囲：印（.rsOnly）は自分を入れて3人以上が残っているときだけ。第7章・回想・物語の決めのハンドでは出ない
   { const rv = [...document.querySelectorAll('#plates .cue .rsOnly')].filter(e => !e.hidden && vis(e));
     if (rv.length && typeof S !== 'undefined' && S && S.players) { const n = S.players.filter(p => !p.out && !p.folded).length;
