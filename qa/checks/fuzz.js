@@ -38,7 +38,7 @@ const ENOUGH = 15;
 
 async function runOne(browser, file, mode, hands, limit) {
   const { ctx, page } = await H.openGame(browser, file, { lang: mode.lang || 'ja', storage: mode.storage, seed: H.seedOf('fuzz', mode.id, mode.lang || 'ja') });
-  const jp = new Set();
+  const jp = new Set(), tks = []; let starved = 0;
   try {
     await page.evaluate(mode.start);
     await H.startBot(page, { policy: 'mix', maxHands: hands });
@@ -47,7 +47,8 @@ async function runOne(browser, file, mode, hands, limit) {
     while (true) {
       await page.waitForTimeout(400);
       if (mode.lang === 'en') (await page.evaluate(JP_SCAN)).forEach(t => jp.add(t));
-      const s = await page.evaluate(() => ({ done: __bot.done, idle: Date.now() - __bot.stuckAt }));
+      const s = await page.evaluate(() => ({ done: __bot.done, idle: Date.now() - __bot.stuckAt, tk: __bot.tickN || 0 }));
+      tks.push([Date.now(), s.tk]); while (tks.length > 2 && tks[1][0] < Date.now() - 20000) tks.shift();
       if (s.done) {
         // 負け・勝ちで終わっても、ハンド数が足りなければもう一度はじめる
         const r = await page.evaluate(() => ({ res: __bot.result, hands: __bot.hands, errs: __qa.errors.length }));
@@ -57,13 +58,15 @@ async function runOne(browser, file, mode, hands, limit) {
         }
         st = 'done'; break
       }
-      if (s.idle > 20000) { st = 'stalled'; break }
+      // ボットのタイマー（4ms ごと）が 20秒で 200回も回っていないときは、ゲームが止まったのではなくページ全体が詰まっている（WebKit の CI で、
+      // PR #80・#82 では 20秒で 31回）。そのときは 60秒まで待ち足す（待ち足した分は starved に残す）
+      if (s.idle > 20000) { const ran = s.tk - tks[0][1]; if (ran < 200 && starved < 60000) { starved += 400; continue } st = 'stalled'; break }
       if (Date.now() - t0 > limit) { st = 'timeout'; break }
     }
     const b = await H.botState(page);
     // 止まったときは、ページのタイマーが動いているかも測る（3秒待って来なければ -1）
     let timerMs = null; if (st === 'stalled') try { timerMs = await page.evaluate(() => new Promise(r => { const t = Date.now(); setTimeout(() => r(Date.now() - t), 50); setTimeout(() => r(-1), 3000) })) } catch (e) {}
-    return { mode: mode.id, status: st, ...b, timerMs, pageErrors: page.__errs || [], jp: [...jp] };
+    return { mode: mode.id, status: st, ...b, timerMs, starved, pageErrors: page.__errs || [], jp: [...jp] };
   } catch (e) {
     return { mode: mode.id, status: 'crash', errors: [String(e.message)], chipErr: [], negErr: [], jp: [...jp] };
   } finally { await ctx.close() }
@@ -83,6 +86,8 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   // WebKit は Safari だけの崩れ・止まりを見るのが目的なので、いつも短い版で回す（長い版は Chromium だけ）
   if (process.env.QA_BROWSER === 'webkit') quick = true;
   const list = split(modes(quick), part), hands = quick ? 15 : 50, limit = LIMIT(quick);
+  // WebKit は4つ同時だと実行機（4コア）でページのタイマーが詰まる（PR #80・#82）。3つにする
+  if (process.env.QA_BROWSER === 'webkit') parallel = Math.min(parallel, 3);
   const res = await pool(list.map(m => () => runOne(browser, file, m, hands, limit)), parallel);
   const hasEn = list.some(m => m.lang === 'en');
   const items = [], known = new Set((baseline && baseline.enJapanese) || []);

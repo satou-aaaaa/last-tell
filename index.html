@@ -2298,7 +2298,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.94.1';
+const APP_VERSION='0.94.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12500,7 +12500,9 @@ function rsMulti(p){const me=S.players[0];return !!me&&inHand(me)&&S.players.som
 // v94 レビュー 2：縦（520px 未満）は印を札と同じ行に並べる（2行だと下へ伸びて本人の目にかかる）。長い呼び名（青緑のスカーフ）は「この人だけ」に縮める
 const rsNarrow=()=>innerWidth<520&&innerHeight>innerWidth;
 function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n&&!(rsNarrow()&&n.length>4)?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
-function rsLine(){if(S.rsSaid)return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
+// v94.1 レビュー：はじめての人の案内（30b の tipShow）が師匠の帯を止めている間は言わない（見たことにもしない）。案内が消えた後の描き直しで言う
+const rsTipHeld=()=>{try{const s=$('sensei');return !!(typeof tipK!=='undefined'&&tipK)||!!(s&&s.classList.contains('mwait'))}catch(e){return false}};
+function rsLine(){if(S.rsSaid||rsTipHeld())return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
   if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
   jinNote(READ_SCOPE_LINE_JA,0);saveSet(RS_KEY,{v:1,seen:true},1);
   // v94 レビュー 1：描き直しの中で決めるので、#senseiText はもう書かれている。もう一度描いて、このハンドのうちに出す（41_more_fun の mfBigFirst と同じ）。
