@@ -2103,6 +2103,9 @@ html.ingame #game{height:100%}
 .plates .cue .rsOnly{display:block;margin-top:2px;font:700 12px/1.1 var(--sans,sans-serif);color:#1a1206;opacity:.85;white-space:nowrap;letter-spacing:0}
 .plates .cue .rsOnly[hidden]{display:none}
 .n6 .plates .cue .rsOnly{font-size:12px}
+/* v94 レビュー 2：縦は札と同じ行に（.rsIn は 50_read_scope.js が付ける） */
+.plates .cue.rsIn .rsOnly{display:inline;margin:0}
+.plates .cue.rsIn .rsOnly::before{content:'・'}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2295,7 +2298,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.94.0';
+const APP_VERSION='0.94.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2650,6 +2653,8 @@ EN_TPL.push(["{0}は手を見せずに伏せた","{0} mucked without showing."],
 // クセの読める範囲（js/50_read_scope.js）の英語
 Object.assign(EN_DICT,{'クセは賭けた本人のことしか教えん。後ろにまだ人がいるぞ':"A tell only speaks for the one who bet. Someone's still behind them.",'この人だけ':'this one only'});
 EN_TPL.push(['{0}だけ','{0} only']);
+// v94 レビュー 5：smile の札「口元が緩んだ」は「レイカが口元が緩んだ」と「が」が重なるので言い換えた
+EN_DICT['にやりと笑った']='Cracked a smile';
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
@@ -3953,7 +3958,7 @@ const TELLS={
   'クロウ':{strong:{cue:'sweat',rate:.7,false:.1},bluff:{cue:'smile',rate:.7,false:.1}},
   'カオル':{strong:{cue:'glance',rate:.65,false:.1},bluff:{cue:'fast',rate:.65,false:.1}},
 };
-const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
+const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'にやりと笑った',stare:'こっちをじっと見ている',
   talk:'いつもより口数が多い',fast:'考えずにすぐ賭けた',sweat:'汗をかいている'};
 const CUE_SFX={glove:'スッ',release:'……',scar:'傷',glance:'ちらっ',still:'…',smile:'ニヤ',stare:'じっ',talk:'ペラペラ',fast:'サッ',sweat:'タラ…'};
 const TRUTH_JP={strong:'強い手',bluff:'ブラフ',none:'特に意味なし'};
@@ -12094,8 +12099,9 @@ function awPlace(){
   const els=[...document.querySelectorAll('#plates .plate > .ltact:not([hidden])')];if(!els.length)return;
   const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
   // チップの山の端に少しかかるのは読めるので軽く、席番号・D・吹き出し・札・ほかの席の名札・語と顔は重く数える（v91.2 レビュー：縦で左の席の頭に乗った）
-  const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&(!e.classList.contains('say')||+getComputedStyle(e).opacity>.05))
-    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)?1:/dbadge/.test(e.className)||e.id==='dbtn'?8:4,pl,bu}}).filter(o=>o.r.width>1);
+  const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #mine .mybet .chipwrap, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&(!e.classList.contains('say')||+getComputedStyle(e).opacity>.05))
+    .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)&&!e.closest('#mine')?1:/dbadge/.test(e.className)||e.id==='dbtn'?8:4,pl,bu}}).filter(o=>o.r.width>1);
+  // 自分が前に出したチップ（#mine .mybet）は重く（v94 レビュー 4：WebKit 横の第1章でゲンの「コール」が下半分隠れた）
   // 吹き出しは .go に限らず、見えている物はすべて（v92 CI：出し終わって残った #say1 に「フォールド」がかかった）
   // ほかの席の顔（顔のまわりの空いた所は入れない faceBox。体の箱 .body は隣の席どうしで重なるほど大きいので使わない）
   {const L0=$('sayLayer'),lr=L0&&L0.getBoundingClientRect();if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);
@@ -12491,18 +12497,32 @@ const rsOff=()=>!CFG||CFG.flashback||(CFG.ch&&(CFG.ch.script==='final'||(!CFG.ch
 // 自分と本人のほかに、降りていない相手が1人以上
 function rsMulti(p){const me=S.players[0];return !!me&&inHand(me)&&S.players.some(o=>o!==p&&!o.human&&inHand(o))}
 // 印の名前は who()（まだ名乗っていない相手は見た目の呼び名。p.name をそのまま出すと名前がばれる）
-function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
+// v94 レビュー 2：縦（520px 未満）は印を札と同じ行に並べる（2行だと下へ伸びて本人の目にかかる）。長い呼び名（青緑のスカーフ）は「この人だけ」に縮める
+const rsNarrow=()=>innerWidth<520&&innerHeight>innerWidth;
+function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n&&!(rsNarrow()&&n.length>4)?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
 function rsLine(){if(S.rsSaid)return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
   if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
-  jinNote(READ_SCOPE_LINE_JA,1);saveSet(RS_KEY,{v:1,seen:true},1)}
+  jinNote(READ_SCOPE_LINE_JA,0);saveSet(RS_KEY,{v:1,seen:true},1);
+  // v94 レビュー 1：描き直しの中で決めるので、#senseiText はもう書かれている。もう一度描いて、このハンドのうちに出す（41_more_fun の mfBigFirst と同じ）。
+  // 0 ハンド：1 にすると第4章のクセの手引きが2ハンド止まる
+  setTimeout(()=>{try{render()}catch(e){}},0)}
 LT.on('render',()=>{try{if(!S||!S.players)return;const off=S.handOver||rsOff();
   S.players.forEach((p,i)=>{const cb=$('cue'+i);if(!cb)return;
     const on=!off&&!!p.tell&&p.tell.meaning!=='none'&&rsMulti(p);   // クロウの手袋（meaning 'none'）には付けない
     let t=cb.querySelector('.rsOnly');   // 27_render は札の seq が変わると textContent を書き直すので、そのたびに付け直す
     if(on&&!t){t=document.createElement('small');t.className='rsOnly';cb.appendChild(t)}
+    cb.classList.toggle('rsIn',on&&rsNarrow());
     if(t){if(t.hidden!==!on)t.hidden=!on;if(on){const x=rsTag(p);if(t.textContent!==x)t.textContent=x}}
     if(on)rsLine()})}catch(e){}});
 LT.on('startHand',()=>{if(S)S.rsSaid=0});
+// v94 レビュー 2：印の付いた札が本人の目の高さ（faceBox の上から 35〜55%）にかかるときは、札を目の上へ上げる（cuePlace の後）
+function rsEyeAvoid(){const P=$('plates'),L=$('sayLayer');if(!P||!L||typeof faceBox!=='function')return;
+  const pr=P.getBoundingClientRect(),z=pr.width/(P.offsetWidth||pr.width)||1,lr=L.getBoundingClientRect();
+  P.querySelectorAll(':scope > .cue[data-bust]').forEach(cb=>{const t=cb.querySelector('.rsOnly');if(!t||t.hidden||!cb.offsetParent)return;
+    const f=faceBox(+cb.dataset.bust);if(!f)return;const r=cb.getBoundingClientRect(),h=f.b-f.t,eT=lr.top+f.t+h*.35,eB=lr.top+f.t+h*.55;
+    if(!(r.left<lr.left+f.r&&lr.left+f.l<r.right&&r.top<eB&&eT<r.bottom))return;
+    const top=parseFloat(cb.style.top)||0;cb.style.top=Math.max(2,top-(r.bottom-eT+2)/z)+'px'})}
+LT.on('layout',()=>{try{if(!$('game').hidden)rsEyeAvoid()}catch(e){}});
 
 </script>
 <script>

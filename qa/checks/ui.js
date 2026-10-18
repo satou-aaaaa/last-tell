@@ -243,13 +243,16 @@ async function shoot(browser, file, scene, vp, dir) {
     const call = scene.callCheck ? await page.evaluate(() => { const d = $('dcall'); if (!d) return null; const sn = d.querySelector('.sn');
       return { go: d.classList.contains('go'), sn: sn ? sn.textContent : '', text: (d.textContent || '').trim().slice(0, 40), name: /(さん|の方)、/.test(d.textContent || '') } }) : null;
     // クセの読める範囲：印（.rsOnly）が出ていて 12px 以上、画面の外へ出ず、クセの札が顔・札・吹き出し・名札に重ならないか。師匠のひとことが1回出て、セーブに残るか
-    const rs = scene.rsCheck ? await page.evaluate(() => { const c = document.querySelector('#plates .cue'), t = c && c.querySelector('.rsOnly'); if (!c || !t || t.hidden) return { has: false };
-      const r = c.getBoundingClientRect(), g = ($('game') || document.body).getBoundingClientRect(), over = [], i = +c.dataset.bust;
+    const rs = scene.rsCheck ? await page.evaluate(() => { const cs = [...document.querySelectorAll('#plates .cue')].filter(e => { const q = e.querySelector('.rsOnly'); return e.offsetParent && q && !q.hidden }); if (!cs.length) return { has: false };
+      // v94 レビュー 3：見えている印の付いた札すべてを測る。本人の顔は目の帯（faceBox の上から 35〜55%）だけ数える
+      const g = ($('game') || document.body).getBoundingClientRect(), over = []; let out = 0, fs = 99, text = '';
+      cs.forEach(c => { const t = c.querySelector('.rsOnly'), r = c.getBoundingClientRect(), i = +c.dataset.bust; text = text || t.textContent; fs = Math.min(fs, parseFloat(getComputedStyle(t).fontSize)); out = Math.max(out, Math.round(Math.max(0, g.left - r.left, r.right - g.right)));
       const hit = (q, nm) => { const w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top); if (w > 2 && h > 2) over.push(nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px') };
-      const L = $('sayLayer'), lr = L && L.getBoundingClientRect(); if (lr && typeof faceBox === 'function') S.players.forEach((p, j) => { if (!j || p.out || j === i) return; const f = faceBox(j); if (f) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
-      document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') });
+      const L = $('sayLayer'), lr = L && L.getBoundingClientRect(); if (lr && typeof faceBox === 'function') S.players.forEach((p, j) => { if (!j || p.out) return; const f = faceBox(j); if (!f) return; const h = f.b - f.t;
+        if (j === i) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t + h * .35, bottom: lr.top + f.t + h * .55 }, '本人の目 席' + (j + 1)); else hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
+      document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
-      return { has: true, text: t.textContent, fs: parseFloat(getComputedStyle(t).fontSize), out: Math.round(Math.max(0, g.left - r.left, r.right - g.right)), over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), seen: !!(sv && sv.seen) } }) : null;
+      return { has: true, n: cs.length, text, fs, out, over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|still behind/.test(($('senseiText') || {}).textContent || ''), seen: !!(sv && sv.seen) } }) : null;
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
@@ -307,7 +310,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`, status: r.face === 0 ? 'ok' : 'warn',
     detail: r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
   for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
-    items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.seen ? 'ok' : 'fail',
+    items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.shown && x.seen ? 'ok' : 'fail',
       detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') });
     items.push({ id: `ui:readscope-over:${r.vp}`, title: `印の付いたクセの札が顔・札・吹き出し・名札に重ならない（${r.vp}）`, status: x.over && x.over.length ? 'warn' : 'ok', detail: x.over && x.over.length ? x.over.slice(0, 4).join('、') : '' }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
