@@ -51,13 +51,20 @@ async function run({ browser, file }) {
       const measure = () => page.evaluate(() => {
         const R = e => e.getBoundingClientRect(), vis = e => e && e.offsetParent && R(e).width > 2, ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
         const hit = (sel, against) => { const out = []; for (const e of document.querySelectorAll(sel)) { if (!vis(e) || e.closest('.off')) continue; const a = R(e); for (const o of document.querySelectorAll(against)) if (vis(o) && !e.contains(o) && !o.contains(e) && ov(a, R(o))) out.push((o.id || o.className).slice(0, 20)) } return out };
+        // 塔×自分の手札は、重なる四角の中の点に塔のチップが本当に描かれているかで見る（WebKit は3Dの卓の上の塔の四角を 40〜70px 大きく返す。PR #98 CI）
+        // 塔は pointer-events:none なので、測る間だけ当たるようにする
+        const towerHit = () => { const pc = document.getElementById('potChips'), out = []; if (!pc) return out; const k = pc.style.pointerEvents; pc.style.pointerEvents = 'auto';
+          try { for (const e of pc.querySelectorAll('.col')) { if (!vis(e) || e.closest('.off')) continue; const a = R(e);
+            for (const o of document.querySelectorAll('#mine .card')) { if (!vis(o)) continue; const q = R(o), l = Math.max(a.left, q.left), rt = Math.min(a.right, q.right), t = Math.max(a.top, q.top), b = Math.min(a.bottom, q.bottom); if (rt - l <= 2 || b - t <= 2) continue;
+              let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) { const els = document.elementsFromPoint(l + (rt - l) * (i + .5) / 6, t + (b - t) * (j + .5) / 6); if (els.some(x => e.contains(x)) && els.some(x => o.contains(x))) n++ }
+              if (n) out.push(`${(o.className).slice(0, 20)} ${Math.round(rt - l)}×${Math.round(b - t)}px（${n}/36点）`) } } } finally { pc.style.pointerEvents = k } return out };
         const tools = document.querySelector('.felt .lltools'), cup = document.querySelector('#table > .cup');
         const backs = [...document.querySelectorAll('.felt .spot .card.back')].filter(vis), flat = backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).length;   // 寝かせる回転（rotateX）が付いているか。卓の遠近で見かけの高さが変わる席があるので、回転が付いていれば良い
         const txt = document.getElementById('table').innerText;
         return {
           toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
           cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
-          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: hit('#potChips .col', '#mine .card'),
+          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: towerHit(),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
