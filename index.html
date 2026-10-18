@@ -12553,8 +12553,11 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
     // v94.5 CI：横で塔の下端が額の上に 3px かかった（Chromium 第1章_自分の番）。額が塔の下にあって重なるときは、額を重なった分だけ下げる
     if(!s||s.hidden){set(s,'marginTop','');return}
     const R=e=>e.getBoundingClientRect(),mt=parseFloat(s.style.marginTop)||0,a0=R(s),a={left:a0.left,right:a0.right,top:a0.top-mt,bottom:a0.bottom-mt};
-    const cs=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1&&r.left<a.right&&a.left<r.right&&r.top<a.bottom&&a.top<r.bottom&&r.top<a.top);
-    const d=cs.length?Math.max(...cs.map(r=>r.bottom))-a.top+2:0;set(s,'marginTop',d>0&&d<a.bottom-a.top?Math.ceil(d)+'px':'');return}
+    // v95 CI：第6章の横では額が塔の上にあり、塔の上端が額の下に 4px かかった。そのときは額を重なった分だけ上げる
+    const hs=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1&&r.left<a.right&&a.left<r.right&&r.top<a.bottom&&a.top<r.bottom),ah=a.bottom-a.top;
+    const up=hs.filter(r=>r.top<a.top),dn=hs.filter(r=>r.top>=a.top);
+    const d=up.length?Math.max(...up.map(r=>r.bottom))-a.top+2:0,u=!up.length&&dn.length?a.bottom-Math.min(...dn.map(r=>r.top))+2:0;
+    set(s,'marginTop',d>0&&d<ah?Math.ceil(d)+'px':u>0&&u<ah?-Math.ceil(u)+'px':'');return}
   // 測るのは、ここで動かした分（top・left）と potClear が下げた分（translate）を除いた元の場所。両方を足して測ると、上げる・下げるが毎回ふくらんでいく
   const R=e=>e.getBoundingClientRect(),k=R(p).height/(p.offsetHeight||1)||1,cur=(parseFloat(p.style.top)||0)+(parseFloat((p.style.translate||'').split(' ')[1])||0),cx=parseFloat(p.style.left)||0;
   const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1).map(r=>({left:r.left-cx*k,right:r.right-cx*k,top:r.top-cur*k,bottom:r.bottom-cur*k}));
