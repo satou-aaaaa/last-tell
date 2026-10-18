@@ -12435,7 +12435,7 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   const bar=$('tbar'),B=vis(bar)?bar.getBoundingClientRect():{left:0,right:innerWidth,bottom:0};
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
-  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
+  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
     .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
@@ -12552,12 +12552,14 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   if(!tight){set(p,'top','');set(p,'left','');set(s,'marginLeft','');
     // v94.5 CI：横で塔の下端が額の上に 3px かかった（Chromium 第1章_自分の番）。額が塔の下にあって重なるときは、額を重なった分だけ下げる
     if(!s||s.hidden){set(s,'marginTop','');return}
-    const R=e=>e.getBoundingClientRect(),mt=parseFloat(s.style.marginTop)||0,a0=R(s),a={left:a0.left,right:a0.right,top:a0.top-mt,bottom:a0.bottom-mt};
-    // v95 CI：第6章の横では額が塔の上にあり、塔の上端が額の下に 4px かかった。そのときは額を重なった分だけ上げる
-    const hs=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1&&r.left<a.right&&a.left<r.right&&r.top<a.bottom&&a.top<r.bottom),ah=a.bottom-a.top;
-    const up=hs.filter(r=>r.top<a.top),dn=hs.filter(r=>r.top>=a.top);
-    const d=up.length?Math.max(...up.map(r=>r.bottom))-a.top+2:0,u=!up.length&&dn.length?a.bottom-Math.min(...dn.map(r=>r.top))+2:0;
-    set(s,'marginTop',d>0&&d<ah?Math.ceil(d)+'px':u>0&&u<ah?-Math.ceil(u)+'px':'');return}
+    // v95 CI：第6章の横では額が塔の上にあり、塔の上端が額の下に 4px かかった。検査と同じく額の数字（.pv）で測り、重ならない一番近いずれ（上下 ±40px）を選ぶ
+    // 額には CSS の margin-top（4px）があるので、いったん外して元の場所と元の余白を測り、その余白に足す（同じフレームの中なのでちらつかない）
+    const R=e=>e.getBoundingClientRect(),keep=s.style.marginTop;s.style.marginTop='';const m0=parseFloat(getComputedStyle(s).marginTop)||0,pv=[...s.querySelectorAll('.pv')].map(R).filter(r=>r.width>2);
+    const tg=(pv.length?pv:[R(s)]).map(r=>({left:r.left,right:r.right,top:r.top,bottom:r.bottom}));s.style.marginTop=keep;
+    const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1);
+    const hit=y=>tg.some(a=>cols.some(r=>Math.min(r.right,a.right)-Math.max(r.left,a.left)>1&&Math.min(r.bottom,a.bottom+y)-Math.max(r.top,a.top+y)>-1));
+    let y=0;if(hit(0)){y=null;for(let k=1;k<=40&&y===null;k++){if(!hit(k))y=k;else if(!hit(-k))y=-k}}
+    const ks=R(s).height/(s.offsetHeight||1)||1;set(s,'marginTop',y?Math.round(m0+y/ks)+'px':'');return}
   // 測るのは、ここで動かした分（top・left）と potClear が下げた分（translate）を除いた元の場所。両方を足して測ると、上げる・下げるが毎回ふくらんでいく
   const R=e=>e.getBoundingClientRect(),k=R(p).height/(p.offsetHeight||1)||1,cur=(parseFloat(p.style.top)||0)+(parseFloat((p.style.translate||'').split(' ')[1])||0),cx=parseFloat(p.style.left)||0;
   const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1).map(r=>({left:r.left-cx*k,right:r.right-cx*k,top:r.top-cur*k,bottom:r.bottom-cur*k}));
@@ -12584,6 +12586,8 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
 // 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
+// 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
+{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{try{c35PotTight()}catch(e){}});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
 let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});
 
 /* ---------- クセの読める範囲（改善提案 2026-10-18 §1 案A「台詞と印」、satou 2026-10-18 02:35Z 決定） ---------- */
