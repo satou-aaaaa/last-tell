@@ -62,8 +62,9 @@ async function run({ browser, file }) {
         const backs = [...document.querySelectorAll('.felt .spot .card.back')].filter(vis), flat = backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).length;   // 寝かせる回転（rotateX）が付いているか。卓の遠近で見かけの高さが変わる席があるので、回転が付いていれば良い
         const txt = document.getElementById('table').innerText;
         return {
-          toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
-          cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
+          // v95.2 レビュー：塔が後から動いて、ラックが塔に・カップがリバーの札に乗った。ラック×塔、カップ×場札・塔も見る
+          toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue, #potChips .chip'),
+          cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go, #boardCards .card, #potChips .chip'),
           seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: towerHit(),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
@@ -71,9 +72,9 @@ async function run({ browser, file }) {
       });
       let r = await measure();
       // 重なりが出たら 1.5秒待って測り直す（WebKit は顔アップや札の動きの途中で測ることがある。v0.86.4 CI）。残ったものだけを問題にする
-      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length || r.tower.length) { await page.waitForTimeout(1500); r = await measure() }
-      add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
-      add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
+      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length || r.tower.length || r.cup.length) { await page.waitForTimeout(1500); r = await measure() }
+      add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・ポットの塔・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
+      add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声・場札・ポットの塔に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
       // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
       if (vp === '390x844') {
         const g = await page.evaluate(() => { const ho = S.handOver, won = S.players.map(p => p.won); const small = S.players.map((p, i) => i && $('plate' + i) && ($('plate' + i).offsetHeight < 16 || $('plate' + i).offsetWidth < 28) ? i : 0).filter(Boolean);

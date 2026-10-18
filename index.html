@@ -2331,7 +2331,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.95.2';
+const APP_VERSION='0.95.3';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12592,6 +12592,16 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   // ずらした額がラック（道具）にかかったら、ラックを置き直す（ラックは額を避けて置く。v0.93.1 CI：WebKit 縦で額がラックに重なった）
   const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
+// v95.2 レビュー：ラックとカップは置いたときの塔・場札をよけるが、そのあと塔が動いた（c35PotTight）・場札がずれたときに置き直していなかった
+// （縦の6人卓のリバーで、ラックが塔に、カップがリバーの札に乗った）。塔を置いた後に毎回確かめ、かかっていれば置き直す。置けなければ今どおり出さない
+function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&getComputedStyle(e).visibility!=='hidden'&&R(e).width>2,
+    hit=(a,bs)=>bs.some(b=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom);
+  const tw=[...document.querySelectorAll('#potChips .chip')].filter(vis).map(R),bc=[...document.querySelectorAll('#boardCards .card')].filter(vis).map(R);
+  const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');
+  if(t&&[...t.querySelectorAll('.dtray,.ddeck')].filter(vis).some(e=>hit(R(e),tw.concat(bc)))&&typeof llToolsPlace==='function')llToolsPlace();
+  const c=document.querySelector('#table > .cup:not(.off)');
+  if(vis(c)&&hit(R(c),bc.concat([...document.querySelectorAll('#potChips .chip')].filter(vis).map(R)))&&typeof llCupPlace==='function')llCupPlace()}
+{const f=c35PotTight;c35PotTight=function(){f();try{c35ToolsChk()}catch(e){}}}
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
 // 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
 // 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
