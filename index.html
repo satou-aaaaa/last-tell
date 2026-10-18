@@ -2298,7 +2298,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.94.5';
+const APP_VERSION='0.94.6';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12541,9 +12541,14 @@ function rsSayAvoid(){const P=$('plates'),L=$('sayLayer');if(!P||!L)return;
     const sh=(x,y)=>({left:r.left+x,right:r.right+x,top:r.top+y,bottom:r.bottom+y}),okB=q=>q.left>=lr.left+2&&q.right<=lr.right-2&&q.top>=lr.top+2&&q.bottom<=lr.bottom-2;
     // v94.4 レビュー：下へ寄せると話し手本人の口元にかかることがあった（横でレイカとソウの両方に印）。話し手の顔もよけ、印の上・顔の下も候補にする
     const i=+(e.id||'').replace(/\D/g,''),f=typeof faceBox==='function'&&i?faceBox(i):null,fr=f?{left:lr.left+f.l,right:lr.left+f.r,top:lr.top+f.t+(f.b-f.t)*.3,bottom:lr.top+f.b}:null;
-    const oth=R.filter((_,j)=>j!==k),free=q=>okB(q)&&!cs.some(z=>ov(q,z))&&!oth.some(z=>ov(q,z))&&!(fr&&ov(q,fr));
-    const C=[[c.right+3-r.left,0],[c.left-3-r.right,0],[0,c.bottom+3-r.top],[0,c.top-3-r.bottom]].concat(fr?[[0,fr.bottom+3-r.top]]:[]).sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
-    const m=C.find(([x,y])=>free(sh(x,y)))||C.find(([x,y])=>okB(sh(x,y)));if(!m)return;
+    // v94.5 レビュー 1：顔の下へ寄せると話し手の名札（「ソウ」）にかかった。名札もよけ、名札の下も候補にする
+    const pl=[...P.querySelectorAll(':scope > .plate[id^=plate]')].filter(x=>x.offsetParent).map(x=>[x.id,x.getBoundingClientRect()]).filter(([,q])=>q.width>1),myPl=(pl.find(([id])=>id==='plate'+i)||[])[1];
+    const oth=R.filter((_,j)=>j!==k),free=q=>okB(q)&&!cs.some(z=>ov(q,z))&&!oth.some(z=>ov(q,z))&&!(fr&&ov(q,fr))&&!pl.some(([,z])=>ov(q,z));
+    const C=[[c.right+3-r.left,0],[c.left-3-r.right,0],[0,c.bottom+3-r.top],[0,c.top-3-r.bottom]].concat(fr?[[0,fr.bottom+3-r.top]]:[],myPl?[[0,Math.max(myPl.bottom,fr?fr.bottom:0)+3-r.top]]:[]).sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
+    const m=C.find(([x,y])=>free(sh(x,y)))||C.find(([x,y])=>okB(sh(x,y)));
+    // v94.5 レビュー 2：出た直後は札が大きくなる途中で、寄せ先が 0.6〜0.8 秒のあいだ上下に動く。出てから 0.8 秒は隠しておき、置き場所が決まってから見せる
+    const age=performance.now()-(e._t||0);if(age<800&&!e._rsHold){e._rsHold=1;e.style.visibility='hidden';setTimeout(()=>{e._rsHold=0;e.style.visibility='';try{rsSayAvoid()}catch(_){}},800-age)}
+    if(!m)return;
     if(m[0])e.style.marginLeft=((parseFloat(e.style.marginLeft)||0)+m[0]).toFixed(1)+'px';if(m[1])e.style.marginTop=((parseFloat(e.style.marginTop)||0)+m[1]).toFixed(1)+'px'})}
 LT.on('layout',()=>{try{if(!$('game').hidden){rsEyeAvoid();rsSayAvoid()}}catch(e){}});
 {const _sf=sayFollow;sayFollow=function(){const on=_sf.apply(this,arguments);if(on)try{rsSayAvoid()}catch(e){}return on}}
