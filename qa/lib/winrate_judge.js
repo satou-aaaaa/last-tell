@@ -40,10 +40,13 @@ function judge(raw, { quick, baseline }) {
     const gap = Math.round((trate - rate) * 100);
     // 読みが5回未満の章は判定しない（第7・15章は決め手の相手が特別なクセなので読む札がほとんど出ない）
     // 判定：対にしたハンド（同じ回・同じハンド目＝同じ配り札）ごとの「読む − 読まない」の BB の差。平均が 0 未満で、ぶれ（標準誤差の2倍）でも説明できないときだけ ⚠️
-    const dif = [];
-    if (paired) Object.entries(hbT).forEach(([i, t]) => { const n0 = hbN[i] || {}; for (const k in t) if (k in n0) dif.push(t[k] - n0[k]) });
-    const dm = dif.length ? dif.reduce((a, x) => a + x, 0) / dif.length : 0, dse = dif.length > 1 ? Math.sqrt(dif.reduce((a, x) => a + (x - dm) ** 2, 0) / (dif.length - 1) / dif.length) : Infinity;
-    const judged = ch >= 4 && rd.n >= 5 && dif.length >= 20, low = judged && dm < 0 && dm + 2 * dse < 0;
+    // ぶれ（標準誤差）は回ごとにまとめて出す（v94 レビュー 7）。同じ種・同じ配り札でも、読まない打ち手どうしで 1〜2 ハンド目から打ち方がずれる
+    // （ゲームの中に時間で決まる乱れがある）ので、同じ回のハンドどうしはつながっていて、ハンドを1つずつ別と数えると幅が狭すぎた（第14章 v92.1〜v94 の ⚠）
+    const dif = [], cl = [];
+    if (paired) Object.entries(hbT).forEach(([i, t]) => { const n0 = hbN[i] || {}; let s = 0, n = 0; for (const k in t) if (k in n0) { dif.push(t[k] - n0[k]); s += t[k] - n0[k]; n++ } if (n) cl.push([s, n]) });
+    const dm = dif.length ? dif.reduce((a, x) => a + x, 0) / dif.length : 0, G = cl.length;
+    const dse = G > 1 ? Math.sqrt(cl.reduce((a, [s, n]) => a + (s - dm * n) ** 2, 0) * G / (G - 1)) / dif.length : Infinity;
+    const judged = ch >= 4 && rd.n >= 5 && dif.length >= 20 && G >= 6, low = judged && dm < 0 && dm + 2 * dse < 0;
     const avg = a => a.length ? (a.reduce((x, y) => x + y.bb, 0) / a.length).toFixed(1) : '-';
     const dv = rd.r.filter(x => x.diff), sm = rd.r.filter(x => !x.diff);
     // 読みの得の内訳（改善提案 2026-10-17 §0-1）：1対1／3人以上 × ブラフの札でコール／強い札で降りた。判定には使わない
@@ -55,7 +58,7 @@ function judge(raw, { quick, baseline }) {
     const more = `。札の当たり ${rd.n ? Math.round(rd.h / rd.n * 100) : '-'}%（${rd.h}/${rd.n}）、読みの得 ${rd.ev >= 0 ? '+' : ''}${rd.ev.toFixed(1)}BB（判断が変わった ${rd.en}回、1回あたり ${rd.en ? (rd.ev / rd.en).toFixed(2) : '-'}BB）。参考：判断が変わったハンドの結果 平均 ${avg(dv)}BB（${dv.length}回）、変わらなかったハンド ${avg(sm)}BB（${sm.length}回）` + byLine(rd.by);
     items.push({ id: 'tellgap:ch' + ch, title: `第${ch}章：クセを読むと勝てるか`, status: low ? 'warn' : 'ok',
       detail: `読まない ${Math.round(rate * 100)}%（${ok.length}回）／読む ${Math.round(trate * 100)}%（${tok.length}回、札を読んだ判断 ${rd.n}回）／差 ${gap >= 0 ? '+' : ''}${gap}ポイント` +
-        more + (paired ? `。同じ札で対にしたハンドの差（読む − 読まない） 平均 ${dm >= 0 ? '+' : ''}${dm.toFixed(2)}BB ±${Number.isFinite(dse) ? (2 * dse).toFixed(2) : '-'}（${dif.length}ハンド）` : '') +
+        more + (paired ? `。同じ札で対にしたハンドの差（読む − 読まない） 平均 ${dm >= 0 ? '+' : ''}${dm.toFixed(2)}BB ±${Number.isFinite(dse) ? (2 * dse).toFixed(2) : '-'}（${dif.length}ハンド、${G}回でまとめたぶれ）` : '') +
         (judged ? (low ? `：第${ch}章はクセを読むと、同じ札で比べて損をしている（ぶれでは説明できない）` : '') : ch < 4 ? '（第1〜3章は数字だけ）' : '（読みが5回未満か、対にしたハンドが20未満なので判定しない）'),
       games: tr.map(r => r === 'win' ? 'W' : r === 'error' ? 'E' : r === 'nodecision' ? 'D' : 'L').join('') });
   }
