@@ -58,6 +58,9 @@ const SCENES = [
   { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true, street: 'flop' },
   { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
   { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en', after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
+  // クセの読める範囲（js/50_read_scope.js、2026-10-18）：第4章で相手2人とも残し、レイカにクセの札を付けて「レイカだけ」の印を撮る（最後に足す：前の場面の seed を変えない）
+  { key: '第4章_クセ3人以上', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 900, rsCheck: true,
+    after: `(()=>{S.players.forEach(p=>{if(!p.out&&p.folded){p.folded=false;p.lastAct='';p.lastType=''}});let i=S.players.findIndex(p=>p.name==='レイカ');if(i<1)i=1;const p=S.players[i];S.tellSeq=(S.tellSeq||0)+1;p.tell={cue:'smile',meaning:'strong',truth:'strong',street:S.street,seq:S.tellSeq};render()})()` },
 ];
 
 // ページの中で、見えている大事な部品を調べる
@@ -180,6 +183,11 @@ const INSPECT = `(() => {
     for (const [e, nm] of tg) { const q = e.getBoundingClientRect(); let w = 0, h = 0;
       for (const c of cols) { const w1 = Math.min(c.right, q.right) - Math.max(c.left, q.left), h1 = Math.min(c.bottom, q.bottom) - Math.max(c.top, q.top); if (w1 > 2 && h1 > 2 && w1 * h1 > w * h) { w = w1; h = h1 } }
       if (w > 2 && h > 2) out.push({ kind: '重なり', el: 'ポットの塔（#potChips）', by: nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) } }
+  // クセの読める範囲：印（.rsOnly）は自分を入れて3人以上が残っているときだけ。第7章・回想・物語の決めのハンドでは出ない
+  { const rv = [...document.querySelectorAll('#plates .cue .rsOnly')].filter(e => !e.hidden && vis(e));
+    if (rv.length && typeof S !== 'undefined' && S && S.players) { const n = S.players.filter(p => !p.out && !p.folded).length;
+      if (n < 3) out.push({ kind: '出てはいけない', el: 'クセの札の印「' + rv[0].textContent + '」', by: '残り ' + n + '人（1対1）' });
+      if (typeof rsOff === 'function' && rsOff()) out.push({ kind: '出てはいけない', el: 'クセの札の印「' + rv[0].textContent + '」', by: '第7章・回想・物語の決めのハンド' }) } }
   // 横スクロールが出ていないか
   if (document.scrollingElement.scrollWidth > W + 2) out.push({ kind: '横スクロール', el: 'ページ全体 ' + document.scrollingElement.scrollWidth + 'px' });
   return out;
@@ -216,7 +224,7 @@ async function shoot(browser, file, scene, vp, dir) {
     }
     // カメラが止まってから測る（v88.2 レビュー：ハンドの終わりで測った瞬間だけカメラが寄っていて、#felt が1.5倍・場札が y=748 と出た）。#cam・#felt の形が2回続けて同じになるまで、最大3秒
     for (let last = '', t2 = Date.now(); Date.now() - t2 < 3000; await page.waitForTimeout(150)) {
-      const k = await page.evaluate(() => ['cam', 'felt', 'stage'].map(id => { const e = document.getElementById(id); return e ? getComputedStyle(e).transform : '' }).join('|'));
+      const k = await page.evaluate(() => ['cam', 'felt', 'stage'].map(id => { const e = document.getElementById(id); return e ? getComputedStyle(e).transform : '' }).concat([...document.querySelectorAll('#boardCards .card')].map(e => getComputedStyle(e).transform)).join('|'));   // 場札を配っている途中も待つ（v93.1 レビュー：WebKit PC で場札が translateY(-20px) のまま撮られた）
       if (k === last) break; last = k;
     }
     const issues = await page.evaluate(INSPECT);
@@ -234,12 +242,20 @@ async function shoot(browser, file, scene, vp, dir) {
     // ディーラーの呼び名：#dcall に席番号（.sn）と「〜さん／〜の方」が入っているか
     const call = scene.callCheck ? await page.evaluate(() => { const d = $('dcall'); if (!d) return null; const sn = d.querySelector('.sn');
       return { go: d.classList.contains('go'), sn: sn ? sn.textContent : '', text: (d.textContent || '').trim().slice(0, 40), name: /(さん|の方)、/.test(d.textContent || '') } }) : null;
+    // クセの読める範囲：印（.rsOnly）が出ていて 12px 以上、画面の外へ出ず、クセの札が顔・札・吹き出し・名札に重ならないか。師匠のひとことが1回出て、セーブに残るか
+    const rs = scene.rsCheck ? await page.evaluate(() => { const c = document.querySelector('#plates .cue'), t = c && c.querySelector('.rsOnly'); if (!c || !t || t.hidden) return { has: false };
+      const r = c.getBoundingClientRect(), g = ($('game') || document.body).getBoundingClientRect(), over = [], i = +c.dataset.bust;
+      const hit = (q, nm) => { const w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top); if (w > 2 && h > 2) over.push(nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px') };
+      const L = $('sayLayer'), lr = L && L.getBoundingClientRect(); if (lr && typeof faceBox === 'function') S.players.forEach((p, j) => { if (!j || p.out || j === i) return; const f = faceBox(j); if (f) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
+      document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') });
+      const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
+      return { has: true, text: t.textContent, fs: parseFloat(getComputedStyle(t).fontSize), out: Math.round(Math.max(0, g.left - r.left, r.right - g.right)), over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), seen: !!(sv && sv.seen) } }) : null;
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -290,6 +306,10 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`, status: r.face === 0 ? 'ok' : 'warn',
     detail: r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
+  for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
+    items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.seen ? 'ok' : 'fail',
+      detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') });
+    items.push({ id: `ui:readscope-over:${r.vp}`, title: `印の付いたクセの札が顔・札・吹き出し・名札に重ならない（${r.vp}）`, status: x.over && x.over.length ? 'warn' : 'ok', detail: x.over && x.over.length ? x.over.slice(0, 4).join('、') : '' }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
     status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
