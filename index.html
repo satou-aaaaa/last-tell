@@ -12564,7 +12564,10 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
     if(over>0){const bc=typeof boardRects==='function'?boardRects():[],bb=bc.length?Math.max(...bc.map(r=>r.bottom)):-1e9;up=Math.max(0,Math.min(over,T-(bb+3)));
       // 上げきれない（場札と伏せ札の間が狭い）ときは、塔を伏せ札の左（入らなければ右）へ寄せる
       if(over-up>0&&card.length){const cl=Math.min(...card.map(r=>r.left)),cr=Math.max(...card.map(r=>r.right)),Lb=Math.min(...cols.map(r=>r.left)),Rb=Math.max(...cols.map(r=>r.right));
-        if(Lb<cr&&cl<Rb){const dl=cl-4-Rb,dr=cr+4-Lb;if(Lb+dl>=g.left+4)sx=dl;else if(Rb+dr<=g.right-4)sx=dr}}}}
+        if(Lb<cr&&cl<Rb){const dl=cl-4-Rb,dr=cr+4-Lb;if(Lb+dl>=g.left+4)sx=dl;else if(Rb+dr<=g.right-4)sx=dr;
+          // v95 CI：手札を表にして大きくなったので、伏せ札の左右どちらにも塔が入りきらない（縦の人だかり）。札1枚ずつと塔の柱1本ずつで見て、かからない一番近いずらしを探す
+          else{const cr1=card.map(r=>({left:r.left,right:r.right,top:r.top+2})),ok=x=>cols.every(q=>{const t=q.top-up,b=q.bottom-up;return cr1.every(c=>!(q.left+x<c.right&&c.left<q.right+x&&c.top<b&&t<c.top+400))});
+            const mx=g.right-4-Rb,mn=g.left+4-Lb;for(let d=2;d<=Math.max(mx,-mn);d+=2){if(d<=mx&&ok(d)){sx=d;break}if(-d>=mn&&ok(-d)){sx=-d;break}}}}}}}
   set(p,'top',up?(-up/k).toFixed(1)+'px':'');set(p,'left',sx?(sx/k).toFixed(1)+'px':'');
   if(!s||s.hidden||!cols.length)return set(s,'marginLeft','');
   const ml=parseFloat(s.style.marginLeft)||0,sr0=R(s),sr={left:sr0.left-ml,right:sr0.right-ml,top:sr0.top,bottom:sr0.bottom};
