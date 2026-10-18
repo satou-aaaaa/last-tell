@@ -12291,7 +12291,7 @@ function vfResult(){
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
   const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
-    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate')].filter(e=>e.offsetParent&&!d.contains(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden])')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2,l=cx-W/2,r=cx+W/2;
     const hit=y=>cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0);
@@ -12576,7 +12576,8 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   // ずらした額がラック（道具）にかかったら、ラックを置き直す（ラックは額を避けて置く。v0.93.1 CI：WebKit 縦で額がラックに重なった）
   const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
-LT.on('layout',()=>{try{c35PotTight()}catch(e){}});
+// v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
+let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});
 
 /* ---------- クセの読める範囲（改善提案 2026-10-18 §1 案A「台詞と印」、satou 2026-10-18 02:35Z 決定） ---------- */
 // 自分を入れて3人以上が残っているハンドでクセの札が出たら、札に小さく「レイカだけ」と印を付ける（クセが教えるのは賭けた本人の手だけ）。
