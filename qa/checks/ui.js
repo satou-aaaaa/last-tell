@@ -252,7 +252,7 @@ async function shoot(browser, file, scene, vp, dir) {
         if (j === i) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t + h * .35, bottom: lr.top + f.t + h * .55 }, '本人の目 席' + (j + 1)); else hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
-      return { has: true, n: cs.length, text, fs, out, over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|still behind/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen) } }) : null;
+      return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|still behind/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen) } }) : null;
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
@@ -312,6 +312,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
     items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.shown && x.seen ? 'ok' : 'fail',
       detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') });
+    // 直近の5手（#vfLog）が、師匠の帯が出ている横画面でも出ているか（v94.2 レビュー）
+    if (/横/.test(r.vp) && x.vf && x.vf.log && x.vf.se) items.push({ id: `ui:vflog-sensei:${r.vp}`, title: `師匠の帯が出ていても直近の5手が出る（${r.vp}）`, status: x.vf.on ? 'ok' : 'warn', detail: x.vf.on ? '' : '#vfLog が .off（置ける所がない）' });
     items.push({ id: `ui:readscope-over:${r.vp}`, title: `印の付いたクセの札が顔・札・吹き出し・名札に重ならない（${r.vp}）`, status: x.over && x.over.length ? 'warn' : 'ok', detail: x.over && x.over.length ? x.over.slice(0, 4).join('、') : '' }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
     status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
