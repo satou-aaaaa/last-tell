@@ -2298,7 +2298,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.94.4';
+const APP_VERSION='0.94.5';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12534,8 +12534,10 @@ function rsSayAvoid(){const P=$('plates'),L=$('sayLayer');if(!P||!L)return;
   const ov=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
   list.forEach((e,k)=>{const r=R[k];const c=cs.find(q=>ov(r,q));if(!c)return;
     const sh=(x,y)=>({left:r.left+x,right:r.right+x,top:r.top+y,bottom:r.bottom+y}),okB=q=>q.left>=lr.left+2&&q.right<=lr.right-2&&q.top>=lr.top+2&&q.bottom<=lr.bottom-2;
-    const oth=R.filter((_,j)=>j!==k),free=q=>okB(q)&&!cs.some(z=>ov(q,z))&&!oth.some(z=>ov(q,z));
-    const C=[[c.right+3-r.left,0],[c.left-3-r.right,0],[0,c.bottom+3-r.top]].sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
+    // v94.4 レビュー：下へ寄せると話し手本人の口元にかかることがあった（横でレイカとソウの両方に印）。話し手の顔もよけ、印の上・顔の下も候補にする
+    const i=+(e.id||'').replace(/\D/g,''),f=typeof faceBox==='function'&&i?faceBox(i):null,fr=f?{left:lr.left+f.l,right:lr.left+f.r,top:lr.top+f.t+(f.b-f.t)*.3,bottom:lr.top+f.b}:null;
+    const oth=R.filter((_,j)=>j!==k),free=q=>okB(q)&&!cs.some(z=>ov(q,z))&&!oth.some(z=>ov(q,z))&&!(fr&&ov(q,fr));
+    const C=[[c.right+3-r.left,0],[c.left-3-r.right,0],[0,c.bottom+3-r.top],[0,c.top-3-r.bottom]].concat(fr?[[0,fr.bottom+3-r.top]]:[]).sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
     const m=C.find(([x,y])=>free(sh(x,y)))||C.find(([x,y])=>okB(sh(x,y)));if(!m)return;
     if(m[0])e.style.marginLeft=((parseFloat(e.style.marginLeft)||0)+m[0]).toFixed(1)+'px';if(m[1])e.style.marginTop=((parseFloat(e.style.marginTop)||0)+m[1]).toFixed(1)+'px'})}
 LT.on('layout',()=>{try{if(!$('game').hidden){rsEyeAvoid();rsSayAvoid()}}catch(e){}});
