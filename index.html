@@ -12533,7 +12533,7 @@ potGrow=function(pot){try{
   // 山を積み直すと金額札が上下に動くので、ラック（道具）が金額札にかかったら置き直す（CI：WebKit 縦で金額札とラックが重なった）
   [150,700].forEach(t=>setTimeout(()=>{try{const k=document.querySelector('.felt .boardspot > .lltools:not(.off)'),g=$('potSign');if(!k||!g||g.hidden)return;
     const a=g.getBoundingClientRect(),hit=[...k.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=e.getBoundingClientRect();return b.width>2&&a.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom});
-    if(hit&&typeof llToolsPlace==='function')llToolsPlace()}catch(e){}},t*SPEED()));
+    if(hit&&typeof llToolsPlace==='function')llToolsPlace()}catch(e){}try{c35PotTight()}catch(e){}},t*SPEED()));
   if(!old&&!reducedMotion())news.forEach((el,i)=>el.animate([{transform:'translateY(-8px)',opacity:0},{transform:'none',opacity:1}],{duration:240*SPEED(),delay:i*20*SPEED(),easing:'ease-out',fill:'backwards'}))}catch(e){}};
 
 // ===== #36：降りた人・見ている人は、こちら（カメラ）ではなく、いま打っている人か場札のほうを見る =====
@@ -12583,6 +12583,7 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
+// 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
 let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});
 
 /* ---------- クセの読める範囲（改善提案 2026-10-18 §1 案A「台詞と印」、satou 2026-10-18 02:35Z 決定） ---------- */
