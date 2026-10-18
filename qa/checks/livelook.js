@@ -51,20 +51,27 @@ async function run({ browser, file }) {
       const measure = () => page.evaluate(() => {
         const R = e => e.getBoundingClientRect(), vis = e => e && e.offsetParent && R(e).width > 2, ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
         const hit = (sel, against) => { const out = []; for (const e of document.querySelectorAll(sel)) { if (!vis(e) || e.closest('.off')) continue; const a = R(e); for (const o of document.querySelectorAll(against)) if (vis(o) && !e.contains(o) && !o.contains(e) && ov(a, R(o))) out.push((o.id || o.className).slice(0, 20)) } return out };
+        // 塔×自分の手札は、重なる四角の中の点に塔のチップが本当に描かれているかで見る（WebKit は3Dの卓の上の塔の四角を 40〜70px 大きく返す。PR #98 CI）
+        // 塔は pointer-events:none なので、測る間だけ当たるようにする
+        const towerHit = () => { const pc = document.getElementById('potChips'), out = []; if (!pc) return out; const k = pc.style.pointerEvents; pc.style.pointerEvents = 'auto';
+          try { for (const e of pc.querySelectorAll('.col')) { if (!vis(e) || e.closest('.off')) continue; const a = R(e);
+            for (const o of document.querySelectorAll('#mine .card')) { if (!vis(o)) continue; const q = R(o), l = Math.max(a.left, q.left), rt = Math.min(a.right, q.right), t = Math.max(a.top, q.top), b = Math.min(a.bottom, q.bottom); if (rt - l <= 2 || b - t <= 2) continue;
+              let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) { const els = document.elementsFromPoint(l + (rt - l) * (i + .5) / 6, t + (b - t) * (j + .5) / 6); if (els.some(x => e.contains(x)) && els.some(x => o.contains(x))) n++ }
+              if (n) out.push(`${(o.className).slice(0, 20)} ${Math.round(rt - l)}×${Math.round(b - t)}px（${n}/36点）`) } } } finally { pc.style.pointerEvents = k } return out };
         const tools = document.querySelector('.felt .lltools'), cup = document.querySelector('#table > .cup');
         const backs = [...document.querySelectorAll('.felt .spot .card.back')].filter(vis), flat = backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).length;   // 寝かせる回転（rotateX）が付いているか。卓の遠近で見かけの高さが変わる席があるので、回転が付いていれば良い
         const txt = document.getElementById('table').innerText;
         return {
           toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
           cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
-          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'),
+          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: towerHit(),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
       });
       let r = await measure();
       // 重なりが出たら 1.5秒待って測り直す（WebKit は顔アップや札の動きの途中で測ることがある。v0.86.4 CI）。残ったものだけを問題にする
-      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length) { await page.waitForTimeout(1500); r = await measure() }
+      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length || r.tower.length) { await page.waitForTimeout(1500); r = await measure() }
       add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
       add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
       // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
@@ -74,6 +81,8 @@ async function run({ browser, file }) {
         if (g) add(`livelook:winedge-small:${vp}`, `名札が空の席が勝つと顔の下に金の線（${vp}）`, g.filter(x => !x[1] || x[2]).map(x => `席${x[0] + 1}`).join(', '), `${g.length}席`);
       }
       add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
+      // v95.1 レビュー：縦の大きなポットで、塔の下半分が自分の手札の後ろに隠れていた（ui の場面はポットが小さくて出なかった）
+      add(`livelook:tower:${vp}`, `ポットの塔が自分の手札にかからない（${vp}）`, [...new Set(r.tower)].slice(0, 4).join(', '), '重なりなし');
       add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:backs:${vp}`, `相手の伏せ札が寝ている（${vp}）`, r.flat ? `${r.flat}/${r.backs}枚が立ったまま（${r.flatWho.slice(0, 2).join(' / ')}）` : '', `${r.backs}枚`);
       add(`livelook:burn:${vp}`, `場札を出すたびにバーン（${vp}）`, r.burns !== 3 ? `リバーまでで${r.burns}枚（期待3）` : '', '3枚');
