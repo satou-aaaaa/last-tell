@@ -12,6 +12,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="LAST TELL">
 <title>LAST TELL（最後のテル）</title>
+<!-- access-counter --><script>
+(function () {
+  if (location.hostname !== 'satou-aaaaa.github.io' || navigator.webdriver) return;
+  window.goatcounter = { path: function (p) { return p.split('?')[0]; } };
+  var gc = document.createElement('script');
+  gc.async = true; gc.src = 'https://gc.zgo.at/count.js';
+  gc.setAttribute('data-goatcounter', 'https://last-tell.goatcounter.com/count');
+  document.head.appendChild(gc);
+})();
+</script>
 <!-- C-6 フォント：アプリ版はこの1行を <link rel="stylesheet" id="fontcss" href="fonts/fonts.css"> に差し替える -->
 <link rel="stylesheet" id="fontcss" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Oswald:wght@500;700&display=swap">
 <style>
