@@ -5,6 +5,7 @@
 - v56 からゲーム本体に doctype・viewport・manifest・アイコン・SW登録が入ったので、そのままコピーする。
 - PWA の行が無い古い shisho.html は受け付けない（頭を二重に足さないため）。
 - 公開のたびに sw.js の VERSION を書き換えて、古い保存版を入れ替えさせる。
+- アクセス計測（GoatCounter）のタグを <title> のすぐ後ろに足す（shisho.html には </head> が無い）（ゲーム本体は変えない。公開サイトのときだけ数える）。
 - 共有フォルダの qa/（変更後の検査）があれば、リポジトリの qa/ にも写す。GitHub の自動実行（.github/workflows/qa.yml）がそれを回す。
 """
 import re, sys, datetime, pathlib, shutil
@@ -14,6 +15,28 @@ src = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')
 
 if 'rel="manifest"' not in src or "register('sw.js')" not in src:
     sys.exit('shisho.html に manifest か SW 登録がありません。v56 以降のファイルを使ってください。')
+
+# アクセス計測（GoatCounter）。Cookie は使わない。数えるのは公開サイト（satou-aaaaa.github.io）で開いたときだけで、
+# 手元・CI の検査（localhost）や自動操作のブラウザ（navigator.webdriver）では読み込まない。
+# ?utm_source=youtube などの付いたURLから来た人は、GoatCounter の画面で「どこから来たか」に分けて出る。
+# 数字は https://last-tell.goatcounter.com で見る。サイトコードを変えたら COUNTER_CODE も変える。
+COUNTER_CODE = 'last-tell'
+COUNTER_MARK = '<!-- access-counter -->'
+COUNTER_TAG = COUNTER_MARK + '''<script>
+(function () {
+  if (location.hostname !== 'satou-aaaaa.github.io' || navigator.webdriver) return;
+  window.goatcounter = { path: function (p) { return p.split('?')[0]; } };
+  var gc = document.createElement('script');
+  gc.async = true; gc.src = 'https://gc.zgo.at/count.js';
+  gc.setAttribute('data-goatcounter', 'https://''' + COUNTER_CODE + '''.goatcounter.com/count');
+  document.head.appendChild(gc);
+})();
+</script>
+'''
+if COUNTER_MARK not in src:
+    if '</title>' not in src:
+        sys.exit('shisho.html に </title> がありません。')
+    src = src.replace('</title>', '</title>\n' + COUNTER_TAG.rstrip('\n'), 1)
 (root / 'index.html').write_text(src, encoding='utf-8')
 
 sw = root / 'sw.js'

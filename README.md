@@ -22,6 +22,11 @@ LAST TELL（最後のテル）のテスト公開用サイト。https://satou-aaa
 `build_index.py` は index.html を作り直し、`sw.js` の版を書き換えます（古い保存版が入れ替わる）。
 shisho.html に manifest か SW 登録が無いとき（v55 以前）は止まります。
 
+## アクセス計測
+- GoatCounter（無料・Cookie なし）で数える。数字は https://last-tell.goatcounter.com （satou さんのアカウント）で見る。
+- タグは `tools/build_index.py` が公開のたびに index.html に足す（ゲーム本体の shisho.html は変えない）。公開サイト（satou-aaaaa.github.io）で開いたときだけ数え、手元・CI の検査や自動操作のブラウザでは数えない。
+- リンクに `?utm_source=youtube&utm_campaign=<動画ID>` を付けると、どこから来たかが分かれて出る。
+
 ## テスターからの報告
 Issues の「不具合の報告」「感想・要望」から書いてもらいます（日本語・英語の両方の欄があります）。
 Issues は誰でも見られるので、個人的な連絡はサポートページへ案内しています。
