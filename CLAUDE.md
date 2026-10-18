@@ -20,6 +20,6 @@ node qa/unit/run.js   # ブラウザを使わない数秒の単体テスト（�
 
 ## 共通のきまり
 
-- PR の作り方・マージの仕方は共通スキル（PR の手順）と、satou-aaaaa/shared-workflows の `routines/common.md` に従う。
+- PR の作り方・マージの仕方は satou-aaaaa/shared-workflows の `routines/pr.md`、全体のきまりは `routines/common.md` に従う。
 - CI の部品（CI失敗Issue・死活監視・ブランチ片付け・自動マージ）は shared-workflows の共通部品を呼ぶ。
   リポジトリ側の .github/workflows には呼び出しと設定値だけを書く。
