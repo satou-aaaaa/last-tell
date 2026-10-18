@@ -38,8 +38,13 @@ async function run({ browser, file }) {
   }
   stage = '2';
   // 2) 道具・カップ・伏せ札・札の文字・バーン（フリー6人、縦・横・PC）
+  // WebKit では、この段（動きを全部つけた6人卓をリバーまで3つの画面で打つ）でブラウザが落ち続けた（PR #79〜#83）。
+  // WebKit は画面ごとに新しいブラウザで開き、動きは少なめ（lite）にする。ここで見るのは置き場所と向きだけで、動きの途中は見ない
+  const WK = process.env.QA_BROWSER === 'webkit'; let wkB = null;
+  try {
   for (const [w, h] of VPS) {
-    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(browser, file, { fast: 20, viewport: { width: w, height: h }, lite: false, storage: H.UNLOCKED, seed: 42 });
+    if (WK) { if (wkB) await wkB.close().catch(() => {}); wkB = await H.launch() }
+    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(WK ? wkB : browser, file, { fast: 20, viewport: { width: w, height: h }, lite: WK, storage: H.UNLOCKED, seed: 42 });
     try {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
@@ -76,6 +81,7 @@ async function run({ browser, file }) {
       add(`livelook:backroom:${vp}`, `店の奥は data: の絵で filter なし（${vp}）`, !r.bg ? '無い' : (!/url\("?data:/.test(r.bg[0]) ? r.bg[0] : r.bg[1] !== 'none' ? 'filter: ' + r.bg[1] : ''), 'OK');
     } finally { await ctx.close() }
   }
+  } finally { if (wkB) await wkB.close().catch(() => {}) }
   stage = '3';
   // 3) ジンの席にプロテクターが出ない・第7章でめくりが出ない（第7章を数ハンド）
   {
