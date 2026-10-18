@@ -2298,7 +2298,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.94.2';
+const APP_VERSION='0.94.3';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12359,6 +12359,8 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   const G=vis($('game'))?$('game').getBoundingClientRect():{left:0,right:innerWidth,bottom:innerHeight};
   const ok=(x,y)=>x>=Math.max(4,G.left+4)&&x+w<=Math.min(innerWidth,G.right)-4&&y+h<=Math.min(innerHeight,G.bottom)-4&&!av.some(q=>x<q.right&&q.left<x+w&&y<q.bottom&&q.top<y+h);
   const cs=[[B.left+4,y],[B.right-4-w,y]];
+  // 師匠の帯（#sensei）が #tbar のすぐ下にあると上の2つはふさがる（v94.2 レビュー：横で直近の5手が消えた）。帯の下の左右も試す
+  {const se=$('sensei');if(se&&!se.hidden&&vis(se)){const r=se.getBoundingClientRect();cs.push([r.left,r.bottom+6],[r.right-w,r.bottom+6])}}
   const c=cs.find(([x,y])=>ok(x,y));
   b.classList.toggle('off',!c);b.style.visibility='';
   if(c){b.style.left=Math.round(c[0])+'px';b.style.top=Math.round(c[1])+'px'}}
