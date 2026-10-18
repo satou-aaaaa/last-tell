@@ -60,7 +60,7 @@ const SCENES = [
   { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en', after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
   // クセの読める範囲（js/50_read_scope.js、2026-10-18）：第4章で相手2人とも残し、レイカにクセの札を付けて「レイカだけ」の印を撮る（最後に足す：前の場面の seed を変えない）
   { key: '第4章_クセ3人以上', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 900, rsCheck: true,
-    after: `(()=>{S.players.forEach(p=>{if(!p.out&&p.folded){p.folded=false;p.lastAct='';p.lastType=''}});let i=S.players.findIndex(p=>p.name==='レイカ');if(i<1)i=1;const p=S.players[i];S.tellSeq=(S.tellSeq||0)+1;p.tell={cue:'smile',meaning:'strong',truth:'strong',street:S.street,seq:S.tellSeq};render()})()` },
+    after: `(()=>{try{const t={};Object.keys(TIPS).forEach(k=>t[k]=1);guideSet({tips:t});tipHide()}catch(e){}S.players.forEach(p=>{if(!p.out&&p.folded){p.folded=false;p.lastAct='';p.lastType=''}});let i=S.players.findIndex(p=>p.name==='レイカ');if(i<1)i=1;const p=S.players[i];S.tellSeq=(S.tellSeq||0)+1;p.tell={cue:'smile',meaning:'strong',truth:'strong',street:S.street,seq:S.tellSeq};render()})()` },
 ];
 
 // ページの中で、見えている大事な部品を調べる
@@ -252,7 +252,7 @@ async function shoot(browser, file, scene, vp, dir) {
         if (j === i) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t + h * .35, bottom: lr.top + f.t + h * .55 }, '本人の目 席' + (j + 1)); else hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
-      return { has: true, n: cs.length, text, fs, out, over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|still behind/.test(($('senseiText') || {}).textContent || ''), seen: !!(sv && sv.seen) } }) : null;
+      return { has: true, n: cs.length, text, fs, out, over, line: !!(S.jinNote && /後ろにまだ人がいる|still behind/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|still behind/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen) } }) : null;
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
