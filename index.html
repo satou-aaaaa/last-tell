@@ -2099,6 +2099,11 @@ html.ingame #game{height:100%}
 .stage.cool:not(.rk4):not(.face)::before{opacity:0}
 .vscard.cool:not(.rk4){background:linear-gradient(160deg,#1c1f2a,var(--panel) 60%)}
 
+/* クセの読める範囲（js/50_read_scope.js）：クセの札の中の「〇〇だけ」。6人卓でも 12px を下回らない。:has() は使わない */
+.plates .cue .rsOnly{display:block;margin-top:2px;font:700 12px/1.1 var(--sans,sans-serif);color:#1a1206;opacity:.85;white-space:nowrap;letter-spacing:0}
+.plates .cue .rsOnly[hidden]{display:none}
+.n6 .plates .cue .rsOnly{font-size:12px}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2290,7 +2295,7 @@ html.ingame #game{height:100%}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.93.1';
+const APP_VERSION='0.94.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2641,6 +2646,10 @@ Object.assign(EN_DICT,{
 "これは餞別（せんべつ）。天空の羽よ。縁起かつぎに、手札の上に置きなさい。羽を彫った銀のメダルだから、重さは十分よ":"A parting gift. A Skyline feather: a heavy silver medal with a feather carved in it. Put it on your cards for luck."
 });
 EN_TPL.push(["{0}は手を見せずに伏せた","{0} mucked without showing."],["{0}がチップを買い足して席に戻った","{0} bought more chips and sat back in."]);
+
+// クセの読める範囲（js/50_read_scope.js）の英語
+Object.assign(EN_DICT,{'クセは賭けた本人のことしか教えん。後ろにまだ人がいるぞ':"A tell only speaks for the one who bet. Someone's still behind them.",'この人だけ':'this one only'});
+EN_TPL.push(['{0}だけ','{0} only']);
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
@@ -12444,19 +12453,23 @@ LT.on('render',()=>{try{if(!S||!S.players)return;const R=e=>{const r=e&&e.getBou
 // 塔の下が自分の伏せ札にかかるときは、場札の下端より下の範囲で塔を上げる。額が塔に重なるときは、額を塔の左へ（入らなければ右へ）ずらす。
 // 横・PC は前のまま（額は塔の下に離れている）。位置合わせ（36_layout_pass）の後に毎回直す。値が変わらなければ書かない
 function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
-  const tight=S&&S.players&&S.players.length>4&&innerWidth<520&&innerHeight>innerWidth;
+  const tight=S&&S.players&&innerWidth<520&&innerHeight>innerWidth;   // v94：6人卓に限らない（第4章の縦で塔が伏せ札にかかった）
   const set=(e,k,v)=>{if(e&&e.style[k]!==v)e.style[k]=v};
-  if(!tight){set(p,'top','');set(s,'marginLeft','');return}
-  // 測るのは、ここで上げた分（top）と potClear が下げた分（translate）を除いた元の場所。両方を足して測ると、上げる・下げるが毎回ふくらんでいく
-  const R=e=>e.getBoundingClientRect(),k=R(p).height/(p.offsetHeight||1)||1,cur=(parseFloat(p.style.top)||0)+(parseFloat((p.style.translate||'').split(' ')[1])||0);
-  const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1).map(r=>({left:r.left,right:r.right,top:r.top-cur*k,bottom:r.bottom-cur*k}));
-  let up=0;if(cols.length){const card=[...document.querySelectorAll('#mine .card')].map(R).filter(r=>r.width>2),ct=card.length?Math.min(...card.map(r=>r.top)):1e9;
+  if(!tight){set(p,'top','');set(p,'left','');set(s,'marginLeft','');return}
+  // 測るのは、ここで動かした分（top・left）と potClear が下げた分（translate）を除いた元の場所。両方を足して測ると、上げる・下げるが毎回ふくらんでいく
+  const R=e=>e.getBoundingClientRect(),k=R(p).height/(p.offsetHeight||1)||1,cur=(parseFloat(p.style.top)||0)+(parseFloat((p.style.translate||'').split(' ')[1])||0),cx=parseFloat(p.style.left)||0;
+  const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1).map(r=>({left:r.left-cx*k,right:r.right-cx*k,top:r.top-cur*k,bottom:r.bottom-cur*k}));
+  const g=R($('game')||document.body);
+  let up=0,sx=0;if(cols.length){const card=[...document.querySelectorAll('#mine .card')].map(R).filter(r=>r.width>2),ct=card.length?Math.min(...card.map(r=>r.top)):1e9;
     const B=Math.max(...cols.map(r=>r.bottom)),T=Math.min(...cols.map(r=>r.top)),over=B-(ct-2);
-    if(over>0){const bc=typeof boardRects==='function'?boardRects():[],bb=bc.length?Math.max(...bc.map(r=>r.bottom)):-1e9;up=Math.max(0,Math.min(over,T-(bb+3)))}}
-  const nt=up?(-up/k).toFixed(1)+'px':'';set(p,'top',nt);
+    if(over>0){const bc=typeof boardRects==='function'?boardRects():[],bb=bc.length?Math.max(...bc.map(r=>r.bottom)):-1e9;up=Math.max(0,Math.min(over,T-(bb+3)));
+      // 上げきれない（場札と伏せ札の間が狭い）ときは、塔を伏せ札の左（入らなければ右）へ寄せる
+      if(over-up>0&&card.length){const cl=Math.min(...card.map(r=>r.left)),cr=Math.max(...card.map(r=>r.right)),Lb=Math.min(...cols.map(r=>r.left)),Rb=Math.max(...cols.map(r=>r.right));
+        if(Lb<cr&&cl<Rb){const dl=cl-4-Rb,dr=cr+4-Lb;if(Lb+dl>=g.left+4)sx=dl;else if(Rb+dr<=g.right-4)sx=dr}}}}
+  set(p,'top',up?(-up/k).toFixed(1)+'px':'');set(p,'left',sx?(sx/k).toFixed(1)+'px':'');
   if(!s||s.hidden||!cols.length)return set(s,'marginLeft','');
-  const ml=parseFloat(s.style.marginLeft)||0,sr0=R(s),sr={left:sr0.left-ml,right:sr0.right-ml,top:sr0.top,bottom:sr0.bottom},g=R($('game')||document.body);
-  const cs=up?cols.map(r=>({left:r.left,right:r.right,top:r.top-up,bottom:r.bottom-up})):[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1),hit=cs.some(r=>r.left<sr.right&&sr.left<r.right&&r.top<sr.bottom&&sr.top<r.bottom);
+  const ml=parseFloat(s.style.marginLeft)||0,sr0=R(s),sr={left:sr0.left-ml,right:sr0.right-ml,top:sr0.top,bottom:sr0.bottom};
+  const cs=up||sx?cols.map(r=>({left:r.left+sx,right:r.right+sx,top:r.top-up,bottom:r.bottom-up})):[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1),hit=cs.some(r=>r.left<sr.right&&sr.left<r.right&&r.top<sr.bottom&&sr.top<r.bottom);
   if(!hit)return set(s,'marginLeft','');
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right));
   let dx=L-4-sr.right;if(sr.left+dx<g.left+4){const d2=Rr+4-sr.left;dx=sr.right+d2<=g.right-4?d2:g.left+4-sr.left}
@@ -12465,6 +12478,31 @@ function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
   const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
 LT.on('layout',()=>{try{c35PotTight()}catch(e){}});
+
+/* ---------- クセの読める範囲（改善提案 2026-10-18 §1 案A「台詞と印」、satou 2026-10-18 02:35Z 決定） ---------- */
+// 自分を入れて3人以上が残っているハンドでクセの札が出たら、札に小さく「レイカだけ」と印を付ける（クセが教えるのは賭けた本人の手だけ）。
+// 初めてのときだけ、師匠のひとこと（セーブに1回）。1対1は今まで通り。表示だけで、CPU・ボットの打ち方は変えない
+// 仕様：research/クセの読める範囲_実装仕様.md
+const READ_SCOPE_LINE_JA='クセは賭けた本人のことしか教えん。後ろにまだ人がいるぞ',READ_SCOPE_TAG_JA='{0}だけ',READ_SCOPE_TAG0_JA='この人だけ';
+const RS_KEY='shisho-readscope';
+if(typeof SAVE_KEYS!=='undefined'&&!SAVE_KEYS.includes(RS_KEY))SAVE_KEYS.push(RS_KEY);
+// 第7章（ジンとの一騎打ち。本物のテルには触れない）・回想・物語の決めのハンドでは出さない
+const rsOff=()=>!CFG||CFG.flashback||(CFG.ch&&(CFG.ch.script==='final'||(!CFG.ch.p2&&CFG.ch.no===7)))||!S||S.storyHand;
+// 自分と本人のほかに、降りていない相手が1人以上
+function rsMulti(p){const me=S.players[0];return !!me&&inHand(me)&&S.players.some(o=>o!==p&&!o.human&&inHand(o))}
+// 印の名前は who()（まだ名乗っていない相手は見た目の呼び名。p.name をそのまま出すと名前がばれる）
+function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
+function rsLine(){if(S.rsSaid)return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
+  if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
+  jinNote(READ_SCOPE_LINE_JA,1);saveSet(RS_KEY,{v:1,seen:true},1)}
+LT.on('render',()=>{try{if(!S||!S.players)return;const off=S.handOver||rsOff();
+  S.players.forEach((p,i)=>{const cb=$('cue'+i);if(!cb)return;
+    const on=!off&&!!p.tell&&p.tell.meaning!=='none'&&rsMulti(p);   // クロウの手袋（meaning 'none'）には付けない
+    let t=cb.querySelector('.rsOnly');   // 27_render は札の seq が変わると textContent を書き直すので、そのたびに付け直す
+    if(on&&!t){t=document.createElement('small');t.className='rsOnly';cb.appendChild(t)}
+    if(t){if(t.hidden!==!on)t.hidden=!on;if(on){const x=rsTag(p);if(t.textContent!==x)t.textContent=x}}
+    if(on)rsLine()})}catch(e){}});
+LT.on('startHand',()=>{if(S)S.rsSaid=0});
 
 </script>
 <script>
