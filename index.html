@@ -2132,6 +2132,9 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 .p6hand .p6c{display:inline-block;min-width:30px;padding:4px 5px;border-radius:4px;background:#f4f1ea;color:#16181c;text-align:center}
 .p6hand .p6c.red{color:#c8252c}
 
+/* 第14章の5人卓（改善提案 第10回 §1）：縦は相手の席が近いので、見せた札を少し小さく（隣の席の札に重ならない） */
+@media (max-width:699px) and (orientation:portrait){.n5 .felt .spot:not(#spot0) .card{--cw:22px}.n5 .felt .spot{gap:2px}}
+
 /* クセの読める範囲（js/50_read_scope.js）：クセの札の中の「〇〇だけ」。6人卓でも 12px を下回らない。:has() は使わない */
 .plates .cue .rsOnly{display:block;margin-top:2px;font:700 12px/1.1 var(--sans,sans-serif);color:#1a1206;opacity:.85;white-space:nowrap;letter-spacing:0}
 .plates .cue .rsOnly[hidden]{display:none}
@@ -2331,7 +2334,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.95.4';
+const APP_VERSION='0.96.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2690,8 +2693,10 @@ Object.assign(EN_DICT,{
 "これまでの5つの店で集めた看板は、5枚。入口でその5枚を見せると、黒服の男が静かに扉を開けた。":"Five signs, one from each of the five clubs so far. You showed all five at the entrance, and a man in black quietly opened the door.",
 "勝てば、王冠の看板が6枚目になる。":"Win, and the Crown's sign becomes your sixth.",
 "クロウ、ゴウ様、カオル様、そしてあなたの4人です。最後の一人になった方が優勝です":"Four players: Crow, Mr. Go, Ms. Kaoru, and you. The last one standing wins.",
-"お席はこちらでお決めしています。あなたは3番のお席へどうぞ":"Seats are assigned by the house. Please take seat 3.",
 "お席はこちらでお決めしています。あなたは1番のお席へどうぞ":"Seats are assigned by the house. Please take seat 1.",
+"5人いれば、待つ時間も長い。降りて、ブラインドが上がる前に一度だけ行け":"With five at the table, the waiting is long. Fold, and strike once before the blinds go up.",
+"5人分の顔がある。……一番よくしゃべる顔から、見ろ":"Five faces. ...Start with the one that talks the most.",
+"5人のトーナメントだ。ハンドが進むと、ブラインドが上がっていく。最後の一人になれば優勝だ。":"A five-player tournament. As the hands go on, the blinds go up. Be the last one standing and you win.",
 "ああ。俺はもう、卓には座らん":"Yeah. I don't sit at tables anymore.",
 "王冠の主、クロウです。5枚の看板、入口で拝見しました":"I'm Crow, master of the Crown. I saw your five signs at the door.",
 "ようこそ、王冠へ。看板は入口で拝見しました":"Welcome to the Crown. I saw your signs at the door.",
@@ -3046,7 +3051,7 @@ const CHAPTERS=[
    ['','勝てば、王冠の看板が6枚目になる。'],
    ['クロダ','ようこそ。フロアの黒田です。今夜の看板戦は、トーナメントで行います'],
    ['クロダ','クロウ、ゴウ様、カオル様、そしてあなたの4人です。最後の一人になった方が優勝です'],
-   ['クロダ','お席はこちらでお決めしています。あなたは3番のお席へどうぞ'],
+   ['クロダ','お席はこちらでお決めしています。あなたは1番のお席へどうぞ'],
   ],
   // S1-4：クロウとの再会は1ハンド目のあと、観客席は2ハンド目のあと、ソウとゴウ・トーナメントの説明は3ハンド目のあと（ブラインドが上がる前）
   beats:[
@@ -6594,10 +6599,10 @@ function showVersus(done){
   $('vsGo').onclick=()=>{Depth.ask();close()};$('vsGo').focus({preventScroll:true});
 }
 /* 卓の配置：相手は奥、自分は手前。x は画面の横位置(%) */
-const LAYOUT={1:[50],2:[26,74],3:[17,50,83],5:[12,31,50,69,88]};
+const LAYOUT={1:[50],2:[26,74],3:[17,50,83],4:[14,38,62,86],5:[12,31,50,69,88]};   // 4：第14章の5人卓（改善提案 第10回 §1）
 const feltX=x=>(x+32)/164*100;
 function buildSeats(){
-  const xs=LAYOUT[N()-1];$('table').classList.toggle('n6',N()>=6);
+  const xs=LAYOUT[N()-1];$('table').classList.toggle('n6',N()>=6);$('table').classList.toggle('n5',N()===5);
   $('busts').innerHTML='';$('plates').innerHTML='';$('sayLayer').innerHTML='';
   $('felt').querySelectorAll('.spot').forEach(e=>e.remove());
   S.players.forEach((p,i)=>{
@@ -6606,9 +6611,9 @@ function buildSeats(){
       $('felt').appendChild(sp);return;
     }
     const x=xs[i-1],r=rankOf(p.name),solo=N()===2;
-    const w=(solo?52:N()===3?36:N()>=6?23:28)+r*(solo?3:N()>=6?1:2);
+    const w=(solo?52:N()===3?36:N()>=6?23:N()===5?25:28)+r*(solo?3:N()>=5?1:2);
     $('busts').insertAdjacentHTML('beforeend',`<div class="bust ${r>=3?'cool':'cute'}${r>=4?' rk4':''}" id="bust${i}" style="left:${x}%;width:${w}%"><div class="body" style="animation-delay:-${(i*1.1).toFixed(1)}s">${avatar(p.name)}</div></div>`);
-    $('sayLayer').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()>=6?30:N()===4?31:44}%"></div>`);
+    $('sayLayer').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()>=6?30:N()===5?28:N()===4?31:44}%"></div>`);
     $('plates').insertAdjacentHTML('beforeend',`<div class="plate" id="plate${i}" style="left:${x}%"></div>`);
     const sp=document.createElement('div');sp.className='spot';sp.id='spot'+i;
     sp.style.left=feltX(N()>=6&&innerWidth<560&&innerWidth<innerHeight?50+(x-50)*.85:x)+'%';sp.style.top='13%';
@@ -8152,7 +8157,8 @@ function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot
   // v77：WebKit で場札にチップが残る件の切り分け用の印（data-ca：hit＝かかっていた、nobest＝置き場が無かった、f＝動かした倍率）
   document.querySelectorAll('.felt .spot .mystack,.felt .spot .chipwrap').forEach(e=>{e.dataset.ca='ok'});ws.forEach(([w])=>{w.dataset.ca='hit'});
   const out=[];ws.forEach(([w,a])=>{const sp=w.id==='dbtn'?w:w.closest('.spot')||$('mine'),sr=R(sp),kx=sr.width/(sp.offsetWidth||1)||1,ky=sr.height/(sp.offsetHeight||1)||1;
-    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn,#mine .me-r .lbl2,#mine .me-r .chp')].filter(e=>e!==w).map(R).filter(vis)),obs=bc.concat(pot);
+    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn,#mine .me-r .lbl2,#mine .me-r .chp')].filter(e=>e!==w).map(R).filter(vis))
+      .concat([...document.querySelectorAll('.felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].filter(e=>!sp.contains(e)).map(R).filter(vis)),obs=bc.concat(pot);   // v0.96：ほかの席の見せた札にもかけない（第14章の5人卓の縦で、隣の席のチップが見せ札に乗った）
     let ux=sr.left+sr.width/2-bx,uy=sr.top+sr.height/2-by;const n=Math.hypot(ux,uy)||1;ux/=n;uy/=n;const sx=ux<0?-1:1,fw=document.querySelector('.felt-wrap'),top=sp.id==='mine'||!fw||parts(w)[0]===w||w.classList.contains('hand')?tb.top:Math.max(tb.top,R(fw).top);   // 席のチップは卓の縁より奥（相手の体の前）へは出さない（伏せ札・D の札は今までどおり）
     // まず席の札・名札にもかからない所。無ければ（狭い卓）場札とポットにかからないことだけを守る。卓の真ん中（席と反対）へ寄せるのは最後（ポットの山に見えるため）
     let best=null;for(const soft of [1,0])if(!best)for(const [vx,vy,pen] of [[ux,uy,1],[sx,0,1],[-sx,0,1],[0,uy<0?-1:1,1],[0,uy<0?1:-1,2.5]])for(let t=4;t<=Math.max(150,tb.width*.5);t+=4){const dx=vx*t,dy=vy*t;
@@ -9084,7 +9090,7 @@ const PART2=[
    ["タロウ","え？ 何がですか"],
    ["ジン","……聞こえていなかったなら、それでいい"],
    {p2preview:4}],lose:"急ぐな。カイの速さに、合わせるな"},
-{no:14,p2:4,lamp:"#c9a0ff",bgm:6,title:"孫弟子",venue:"ポーカールーム「王冠」",color:"#e3d4ff",goalText:"トーナメントで優勝する（最後の一人になる）",goal:{type:'bust'},tells:true,levels:[[1000,2000],[1500,3000],[2000,4000],[3000,6000],[5000,10000],[8000,16000]],levelHands:8,you:80000,blinds:[1000,2000],opps:[{name:'カイ',style:'kai',chips:50000,label:'速い'},{name:'ソウゲン',style:'nit2',chips:50000,label:'動かない'},{name:'クロウ',style:'crow',chips:50000,label:'読めない'}],extras:[{name:'ミヤコ',style:'tight',chips:40000},{name:'イオリ',style:'tight2',chips:40000}],seatPlan:['e0','p0','p1','p2','e1'],intro:[
+{no:14,p2:4,lamp:"#c9a0ff",bgm:6,title:"孫弟子",venue:"ポーカールーム「王冠」",color:"#e3d4ff",goalText:"トーナメントで優勝する（最後の一人になる）",goal:{type:'bust'},tells:true,levels:[[1000,2000],[1500,3000],[2000,4000],[2500,5000],[3000,6000],[4000,8000],[5000,10000]],levelHands:6,you:60000,blinds:[1000,2000],opps:[{name:'カイ',style:'kai',chips:60000,label:'速い'},{name:'ソウゲン',style:'nit2',chips:60000,label:'動かない'},{name:'クロウ',style:'crow',chips:60000,label:'読めない'}],extras:[{name:'ミヤコ',style:'tight',chips:60000}],seatPlan:['e0','p0','p1','p2'],intro:[
    {p2door:4},
    ["","ポーカールーム「王冠」。今日は、看板持ちだけの卓が立つ。"],
    ["","汐見、霧崎、その先の港町からも、古い看板を持った人たちが集まっていた。"],
@@ -9101,10 +9107,10 @@ const PART2=[
    ["","観客席のジンが、グラスを持つ手を止めた。"],
    ["ソウゲン","イサナは、わしの兄弟子だ。四十年前、波の紋の封を受け取って、出ていった"],
    ["ソウゲン","……あとのことは、ジンに聞け"],
-   ["師匠","6人いれば、待つ時間も長い。降りて、ブラインドが上がる前に一度だけ行け",{mt:'guard'}],
+   ["師匠","5人いれば、待つ時間も長い。降りて、ブラインドが上がる前に一度だけ行け",{mt:'guard'}],
    ["師匠","ブラインドが上がったら、先に打った者が残る",{mt:'attack'}],
-   ["師匠","6人分の顔がある。……一番よくしゃべる顔から、見ろ",{mt:'read'}],
-   {lesson:"看板持ちのテーブル",body:"6人のトーナメントだ。ハンドが進むと、ブラインドが上がっていく。最後の一人になれば優勝だ。"}],outro:[
+   ["師匠","5人分の顔がある。……一番よくしゃべる顔から、見ろ",{mt:'read'}],
+   {lesson:"看板持ちのテーブル",body:"5人のトーナメントだ。ハンドが進むと、ブラインドが上がっていく。最後の一人になれば優勝だ。"}],outro:[
    ["カイ","……負けた。また、待たれた"],
    ["","観客席の後ろで、ハヤトが立ち上がった。ジンが、その隣に並んだ。"],
    ["ジン","……ハヤト"],
@@ -11329,6 +11335,11 @@ function senseiFit(){const p=$('senseiText'),b=$('sensei');if(!p||!b||b.hidden||
 // v80（改善提案 2026-10-14b §1 の検査で見つかった）：横画面で、捨て札の山が「黙る・さあね…」（左下の .needlerow）の上に乗る。乗るときだけ山をボタンの上へ上げる
 function muckAvoid(){const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
   const cs=[...mp.querySelectorAll('.muckcard')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);if(!cs.length)return;
+  // v96 CI：縦の5人卓で、山が場札（2♣）の下の端にかかった。かかるときは場札の下へ下げる
+  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+    const L0=Math.min(...cs.map(r=>r.left)),R0=Math.max(...cs.map(r=>r.right)),T0=Math.min(...cs.map(r=>r.top));
+    const hb=bd.filter(q=>L0<q.right&&q.left<R0&&T0<q.bottom&&q.top<T0+4);
+    if(hb.length){const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,d=Math.max(...hb.map(q=>q.bottom))-T0+4;mp.style.translate=`0px ${(d/k).toFixed(1)}px`;return}}
   const bs=[...document.querySelectorAll('.needlerow button')].filter(b=>b.offsetParent&&+getComputedStyle(b).opacity>.05).map(b=>b.getBoundingClientRect()).filter(r=>r.width>2);if(!bs.length)return;
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right)),T=Math.min(...cs.map(r=>r.top)),B=Math.max(...cs.map(r=>r.bottom));
   const hit=bs.filter(q=>L<q.right&&q.left<Rr&&T<q.bottom&&q.top<B);if(!hit.length)return;
@@ -11726,9 +11737,9 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
-  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);   // 「あなたの番」（v91.1 CI：PC で自分の席番号が重なった）
+  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
   const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
   const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
@@ -11777,7 +11788,7 @@ function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .llto
   // 横に置けないとき（スマホ横など）は、ラックを縦にして場札の左右のすき間へ
   if(!c){t.classList.add('vert');size();const my=d.top+(d.height-h)/2;cs=[[d.left-8-w,my],[d.right+8,my]];if(m)cs.push([(m.right+d.left-w)/2,my]);c=cs.find(([x,y])=>ok(x,y))}
   // v95.3 レビュー：縦の6人卓のリバーで置けない回が多い。消す前に 0.7 倍に縮めて（横・縦の順に）もう一度探す。左上を軸に縮めるので、測った場所がそのまま左上になる
-  if(!c){t.style.transformOrigin='0 0';t.style.scale='.7';for(const v of [false,true]){t.classList.toggle('vert',v);size();cs=cands();if(v){const my=d.top+(d.height-h)/2;cs.push([d.left-8-w,my],[d.right+8,my])}c=cs.find(([x,y])=>ok(x,y));if(c)break}}
+  if(!c){t.style.transformOrigin='0 0';t.style.scale='.7';for(const v of [false,true]){t.classList.toggle('vert',v);size();cs=cands();if(v){const my=d.top+(d.height-h)/2;cs.push([d.left-8-w,my],[d.right+8,my]);if(m)cs.push([(m.right+d.left-w)/2,my])}c=cs.find(([x,y])=>ok(x,y));if(c)break}}
   if(!c){t.style.scale='';t.classList.remove('vert');t.classList.add('off');return}
   t.style.left=((c[0]-B.left)/sx).toFixed(1)+'px';t.style.top=((c[1]-B.top)/sy).toFixed(1)+'px'}
 // 札が配られる動きの途中で測ると小さく出るので、動きが終わったころにもう1回
@@ -11789,7 +11800,7 @@ function llPlaceAll(){try{llToolsPlace()}catch(e){}try{llCupPlace()}catch(e){}tr
 let llSeatChkAt=0;
 function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
   return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
 // 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
 function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
@@ -12301,7 +12312,7 @@ function vfResult(){
     const hit=y=>cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0);
     const c=[B2.b+6,B2.t-h-6];for(let k=1;k<=8;k++)c.push(B2.b+6+k*10,B2.t-h-6-k*10);
     let best=null,bv=1e9;for(const y of c){if(y<T.top+2||y+h>innerHeight-2)continue;const v=hit(y);if(v<bv){bv=v;best=y}if(!v)break}
-    if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px'};
+    if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}};   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
   tb.appendChild(d);d._place();setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);
@@ -12501,7 +12512,7 @@ function dealHelp(){
   if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return;
   try{if(typeof p6Premium==='function'&&p6Premium())return}catch(e){}   // 第6章：ときどき強い手（js/51_play6_fixes.js）
   const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return;
-  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:DEAL_HELP.def;
+  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:CFG.ch.p2===4?DEAL_HELP[6]:DEAL_HELP.def;   // 第14章も第6章と同じ（2026-10-19、第6章の形にそろえた）
   if(LT.rand()>=p||S.deck.length<12)return;
   S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()]}
 // 設定の初めの値（satou 2026-10-17 17:13Z のカード）：「先に選ぶ」（パスフォールド）は最初からオン、「カードをそろえる」は最初はオフ。
@@ -12606,6 +12617,9 @@ function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetPa
   const c=document.querySelector('#table > .cup:not(.off)');
   if(vis(c)&&hit(R(c),bc.concat([...document.querySelectorAll('#potChips .chip')].filter(vis).map(R)))&&typeof llCupPlace==='function')llCupPlace()}
 {const f=c35PotTight;c35PotTight=function(){f();try{c35ToolsChk()}catch(e){}}}
+// v0.96 CI（PC）：ポットの塔が描き直しの合図なしに伸びて、ラックに重なったまま残った。塔が変わったら少しおいて確かめ直す
+{let mo=null,tm=0;LT.on('layout',()=>{const pc=$('potChips');if(!pc||typeof MutationObserver==='undefined'||(mo&&mo.el===pc))return;if(mo)mo.disconnect();
+  mo=new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(()=>{try{c35ToolsChk()}catch(e){}},120)});mo.el=pc;mo.observe(pc,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']})})}
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
 // 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
 // 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
@@ -12680,12 +12694,24 @@ LT.on('layout',()=>{try{if(!$('game').hidden){rsEyeAvoid();rsSayAvoid()}}catch(e
    - 二人が飛んでクロウと二人になったら、短い場面を挟んで一騎打ち。負けたら一騎打ちの頭からやり直せる
    - 第6章は、ときどき強い手（TT以上か AK）が来る。CPU は弱い手でレイズに付いていかず、強い手で3ベットする
    - クロウは、ほかの二人が残っているうちは、大きな賭けに勝ち目の薄い手で全部を賭けない */
-const p6On=()=>typeof CFG!=='undefined'&&!!CFG&&!!CFG.ch&&CFG.ch.no===6&&!CFG.ch.p2&&!CFG.flashback&&!CFG.ura&&!CFG.run;
+// 守る相手：第6章はクロウ、第二部 第4章（第14章、王冠のトーナメント）はカイ（改善提案 第10回 §1 案A：第14章を第6章の形にそろえる）
+function p6Boss(){if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return null;
+  if(CFG.ch.no===6&&!CFG.ch.p2)return 'クロウ';if(CFG.ch.p2===4)return 'カイ';return null}
+const p6On=()=>!!p6Boss();
+const p6Six=()=>p6Boss()==='クロウ';   // 第6章だけのもの（#18・#19）。強い手は第14章にも
 const P6_HU=[
   ['クロダ','ゴウ様、カオル様が抜けられました。残りはお二人です。ここからはヘッズアップ、一対一です'],
   ['クロウ','……ようやく、二人きりですね'],
   ['ジン','ここからが本番だ。クロウのクセは、うのみにするな'],
 ];
+const P14_HU=[
+  ['クロダ','残りはお二人です。ここからはヘッズアップ、一対一です'],
+  ['カイ','……やっと来たな。この前の続きだ'],
+  ['師匠','速さに付き合うな。待てる者が、最後に残る'],
+];
+const P6_TXT={'クロウ':{hu:P6_HU,log:'残りは二人。クロウとの一騎打ち',hint:'クロウとの一騎打ちの頭から、やり直せます',msg:'クロウとの一騎打ちから'},
+  'カイ':{hu:P14_HU,log:'残りは二人。カイとの一騎打ち',hint:'カイとの一騎打ちの頭から、やり直せます',msg:'カイとの一騎打ちから'}};
+const p6T=k=>{const t=(P6_TXT[p6Boss()]||P6_TXT['クロウ'])[k];return I18N.lang==='en'&&typeof t==='string'?(EN_DICT[t]||t):t};
 Object.assign(EN_DICT,{
   'ゴウ様、カオル様が抜けられました。残りはお二人です。ここからはヘッズアップ、一対一です':'Mr. Go and Ms. Kaoru are out. Two players remain. From here it is heads-up, one on one.',
   '……ようやく、二人きりですね':'...At last, just the two of us.',
@@ -12693,6 +12719,12 @@ Object.assign(EN_DICT,{
   '一騎打ちからやり直す':'Retry from the heads-up',
   'クロウとの一騎打ちの頭から、やり直せます':'You can retry from the start of the heads-up with Crow.',
   'クロウとの一騎打ちから':'Heads-up with Crow',
+  '残りはお二人です。ここからはヘッズアップ、一対一です':'Two players remain. From here it is heads-up, one on one.',
+  '……やっと来たな。この前の続きだ':'...Finally. Let\'s finish what we started.',
+  '速さに付き合うな。待てる者が、最後に残る':'Don\'t match his speed. The one who can wait is the one left standing.',
+  'カイとの一騎打ちの頭から、やり直せます':'You can retry from the start of the heads-up with Kai.',
+  'カイとの一騎打ちから':'Heads-up with Kai',
+  '残りは二人。クロウとの一騎打ち':'Two left. Heads-up with Crow','残りは二人。カイとの一騎打ち':'Two left. Heads-up with Kai',
   'マック':'Muck','手を見せずに伏せた':'folded without showing',
   '先に選ぶ':'Pre-select',
 });
@@ -12702,9 +12734,14 @@ Object.assign(EN_DICT,{
 // 自分もオールインに入っているときは、自分とほかの人の勝ち負け（誰に勝って誰に負けるか）が元の並びと同じになる並びだけを使う＝自分の結果は変えない
 function p6Board(deck){const d=deck.slice(),b=S.board.slice();while(b.length<5){d.pop();const n=b.length?1:3;for(let k=0;k<n;k++)b.push(d.pop())}return b}
 LT.on('nextStreet:before',()=>{try{
-  if(!p6On()||S.p6hu||!S.runout||S.p6rig===S.handNo||S.board.length>=5)return;S.p6rig=S.handNo;
-  const live=S.players.filter(inHand),me=S.players[0],mine=live.includes(me);
-  const cr=live.find(p=>p.name==='クロウ');if(!cr||live.filter(p=>!p.human).length<2)return;
+  if(!p6On()||S.p6hu||S.board.length>=5)return;
+  const live=S.players.filter(inHand),me=S.players[0],mine=live.includes(me),bs=live.find(p=>p.name===p6Boss());
+  // 第14章：自分が降りた勝負で、カイが持ち点の半分以上を入れていれば、オールインでなくても次の札からカイが勝つ並びに（自分の結果には関わらない。
+  // カイは自分から大きく打つので、オールインの前に決まることが多い。小さな勝負は並べ替えない＝カイが勝ちすぎない）
+  const deep=!S.runout&&!mine&&!p6Six()&&bs&&bs.total>=bs.chips&&bs.chips<=BB()*15;   // 残りが少ない＝負ければ飛ぶときだけ（勝ちすぎて一騎打ちが重くならないように）
+  if(deep){const k=S.handNo+':'+S.board.length;if(S.p6rig===k)return;S.p6rig=k}
+  else{if(!S.runout||S.p6rig===S.handNo)return;S.p6rig=S.handNo}
+  const cr=live.find(p=>p.name===p6Boss());if(!cr||live.filter(p=>!p.human).length<2)return;
   const sg=x=>x>0?1:x<0?-1:0,meVs=b=>{const m=bestN(me.hand.concat(b));return live.filter(p=>p!==me).map(p=>sg(cmp(m,bestN(p.hand.concat(b))))).join()};
   const base=mine?meVs(p6Board(S.deck)):'';
   const won=d=>{const b=p6Board(d),c=bestN(cr.hand.concat(b));return live.every(p=>p===cr||p.human||cmp(c,bestN(p.hand.concat(b)))>0)&&(!mine||meVs(b)===base)};
@@ -12718,10 +12755,22 @@ function p6Cpu(i,d){
   const p=S.players[i],me=S.players[0],pre=S.street==='preflop',toCall=S.currentBet-p.bet,bb=BB();
   if(!p||p.human||!p.hand||p.hand.length!==2)return d;
   const stage1=!S.p6hu&&S.players.filter(q=>q.chips>0||q.allIn).length>2;
-  // クロウ：ほかの二人が残っているうちは、大きな賭けに、勝ち目の薄い手で全部を賭けない（一騎打ちまで残る）
-  if(p.name==='クロウ'&&stage1&&S.aggr!==i&&d.type!=='fold'&&toCall>0&&toCall>=p.chips*.5){
+  // 守る相手（クロウ／カイ）：ほかの客が残っているうちは、大きな賭けに、勝ち目の薄い手で全部を賭けない（一騎打ちまで残る）
+  if(p.name===p6Boss()&&stage1&&S.aggr!==i&&d.type!=='fold'&&toCall>0&&toCall>=p.chips*.5){
     const eq=equity(p.hand,S.board,S.players.filter(q=>q!==p&&inHand(q)).length,200);
     if(eq<.6){const f=Object.assign({},d,{type:'fold'});delete f.to;return f}}
+  // 第14章のカイは自分から大きく打つ：持ち点の半分以上を賭ける・上げるのも、勝ち目6割からだけ（足りなければ、払える分で付くか降りる）
+  // 自分が入っている勝負では7割5分から（自分に飛ばされて一騎打ちの前に消えることを減らす）。
+  // 自分が降りた勝負の river は、相手の手に負けるなら大きく払わない（場札がもう並べ替えられないので）
+  // 細ったカイ（10BB以下）は、自分が降りたあとの preflop で全部を押す（場札はカイが勝つ並び＝ほかの客から取り返す。ブラインドで細って自分に飛ばされるのを減らす）
+  if(p.name===p6Boss()&&!p6Six()&&stage1&&pre&&!inHand(me)&&p.chips+p.bet<=bb*10&&p.chips>toCall)return Object.assign({},d,{type:'raise',to:p.bet+p.chips});
+  const bossBig=p.name===p6Boss()&&!p6Six()&&stage1&&(d.type==='raise'?d.to-p.bet:d.type==='call'?toCall:0)>=p.chips*.5;
+  if(bossBig&&!inHand(me)&&S.board.length>=5&&S.players.some(q=>q!==p&&inHand(q)&&cmp(bestN(q.hand.concat(S.board)),bestN(p.hand.concat(S.board)))>0)){
+    const f=Object.assign({},d,{type:toCall>0?'fold':'call'});delete f.to;return f}
+  if(bossBig&&(d.type==='raise'||inHand(me)&&S.aggr!==i)){
+    const eq=equity(p.hand,S.board,S.players.filter(q=>q!==p&&inHand(q)).length,200);
+    if(eq<(inHand(me)?.75:.6)){const f=Object.assign({},d,{type:toCall>0&&toCall<p.chips*.5?'call':toCall>0?'fold':'call'});delete f.to;return f}}
+  if(!p6Six())return d;   // ここから下は第6章だけ
   // #18 めちゃくちゃな手で参加しない：レイズに、弱い2枚では付いていかない（ゴウは荒いので半分は付いていく）
   // クロウは強いキャラなので、3BBまでのオープンには元の打ち方で守る（プロポーカー A1：降りすぎない）
   if(pre&&d.type!=='fold'&&toCall>0&&S.currentBet>bb&&!(p.name==='クロウ'&&S.currentBet<=bb*3)&&preTier(p.hand)===0&&Math.random()>(p.name==='ゴウ'?.5:.2)){const f=Object.assign({},d,{type:'fold'});delete f.to;return f}
@@ -12734,9 +12783,9 @@ function p6Cpu(i,d){
 // ===== #16・#17 ときどき強い手（js/49 の dealHelp から呼ぶ。配ったら true） =====
 // 8ハンド強い手が来ていなければ、4割で山から TT 以上のペアか AK を選んで、自分の2枚と入れ替える
 function p6Premium(){
-  if(!p6On()||!S||!S.players)return false;const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2)return false;
+  if(!p6On()||!S||!S.players)return false;const me=S.players[0];   // 第14章も（2026-10-19 コーディネーター経由：satou 10-17「全体を易しくしてよい」、前の第14章の勝率 約4割に戻す）if(!me||me.out||!me.hand||me.hand.length!==2)return false;
   if(preTier(me.hand)===2){S.p6prem=S.handNo;return false}
-  if(S.handNo-(S.p6prem||0)<8||LT.rand()>.4)return false;
+  const k14=!p6Six();if(S.handNo-(S.p6prem||0)<(k14?6:8)||LT.rand()>(k14?.5:.4))return false;   // 第14章は少し多め（6ハンドに5割。5人・30BB で前の第14章の勝率 約4割に戻す）
   const D=S.deck,c=[];for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++){const x=D[a],y=D[b];if((x.r===y.r&&x.r>=10)||(x.r+y.r===27&&Math.max(x.r,y.r)===14))c.push([a,b])}
   if(!c.length)return false;const [a,b]=c[Math.floor(LT.rand()*c.length)],old=me.hand;me.hand=[D[a],D[b]];D[a]=old[0];D[b]=old[1];S.p6prem=S.handNo;return true}
 
@@ -12744,18 +12793,19 @@ function p6Premium(){
 {const _sh=startHand;startHand=function(){
   try{if(p6On()&&S&&S.players&&!S.p6hu&&!S.result&&!CFG.p6retry&&CFG.levels){
     const alive=S.players.filter(p=>p.chips>0);
-    if(alive.length===2&&alive[0].human&&alive[1].name==='クロウ'){
+    if(alive.length===2&&alive[0].human&&alive[1].name===p6Boss()){
       const lv=Math.min(CFG.levels.length-1,Math.floor(S.handNo/CFG.levelHands));
       S.p6hu=1;CFG.p6snap={me:alive[0].chips,crow:alive[1].chips,levels:CFG.levels.slice(lv)};
-      const s0=S,ch=CFG.ch;nextvClear();log('残りは二人。クロウとの一騎打ち',true);
-      return playScene(ch,P6_HU,()=>{if(S!==s0)return;show('game');Sound.bgm(CFG.bgm||0);if(S.handOver&&!S.result)startHand()})}}}catch(e){}
+      const s0=S,ch=CFG.ch;nextvClear();log(P6_TXT[p6Boss()].log,true);
+      return playScene(ch,P6_TXT[p6Boss()].hu,()=>{if(S!==s0)return;show('game');Sound.bgm(CFG.bgm||0);if(S.handOver&&!S.result)startHand()})}}}catch(e){}
   return _sh.apply(this,arguments)}}
 function p6Retry(){
   try{lastWipe()}catch(e){}
-  const ch=CFG.ch,sn=CFG.p6snap,crow=ch.opps.find(o=>o.name==='クロウ')||{name:'クロウ',style:'crow'};
-  startGame(Object.assign({},CFG,{seats:[{name:'あなた',chips:sn.me,human:true},Object.assign({},crow,{chips:sn.crow})],
+  const ch=CFG.ch,sn=CFG.p6snap,bn=p6Boss(),me=S&&S.players&&S.players[0]&&S.players[0].name||'あなた',
+    crow=ch.opps.find(o=>o.name===bn)||{name:bn,style:bn==='カイ'?'kai':'crow'};
+  startGame(Object.assign({},CFG,{seats:[{name:me,chips:sn.me,human:true},Object.assign({},crow,{chips:sn.crow})],
     levels:sn.levels.slice(),blinds:sn.levels[0],beatsOn:false,beatPre:[],nanori:false,p6snap:sn,p6retry:1}));
-  if(S){S.p6hu=1;S.msg=I18N.lang==='en'?'Heads-up with Crow':'クロウとの一騎打ちから'}}
+  if(S){S.p6hu=1;S.msg=p6T('msg')}}
 {const o=$('btnNext').onclick;$('btnNext').onclick=function(e){
   if(p6On()&&CFG.p6snap&&S&&S.result==='lose')return p6Retry();return o.call(this,e)}}
 
@@ -12764,7 +12814,7 @@ LT.on('render',()=>{try{
   if(!S||!S.players||typeof CFG==='undefined'||!CFG)return;const en=I18N.lang==='en';
   // 負けたとき：一騎打ちからやり直せることを、ボタンと一行で
   if(p6On()&&CFG.p6snap&&S.handOver&&S.result==='lose'){const t=en?'Retry from the heads-up':'一騎打ちからやり直す';if($('btnNext').textContent!==t)$('btnNext').textContent=t;
-    const h=$('betweenHint'),l=en?'You can retry from the start of the heads-up with Crow.':'クロウとの一騎打ちの頭から、やり直せます';if(h&&!h.textContent.includes(l))h.textContent=(h.textContent?h.textContent+'　':'')+l}
+    const h=$('betweenHint'),l=p6T('hint');if(h&&!h.textContent.includes(l))h.textContent=(h.textContent?h.textContent+'　':'')+l}
   // #27 トーナメントでは、自分のチップの横に BB の数
   if(CFG.levels){const c=$('mine')&&$('mine').querySelector('.chp');if(c){let b=$('mine').querySelector('.p6bb');const t=`${Math.floor(S.players[0].chips/BB())}BB`;
     if(!b){b=document.createElement('span');b.className='p6bb';c.after(b)}if(b.textContent!==t)b.textContent=t}}
