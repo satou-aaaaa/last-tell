@@ -278,6 +278,9 @@ async function shoot(browser, file, scene, vp, dir) {
     await page.screenshot({ path: shot });
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
+    // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
+    // 前は 60ms 待ってから置き直していて、撮る・測る間に重なったまま写った。置き直しが遅い・来ないものをここで拾う
+    if (scene.handEnd) { await page.waitForTimeout(1000); for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(Object.assign({}, x, { el: x.el + '（1秒後も）' })) }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
     return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, errors: await page.evaluate(() => __qa.errors) };

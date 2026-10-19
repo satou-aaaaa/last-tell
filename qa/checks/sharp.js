@@ -1,8 +1,9 @@
 // 画質（くっきり描けているか）の検査（2026-10-19 satou「ゲームの画質が悪いように見える」「同様の問題が二度と起こらないように」）
 //   ほかの画面の検査は deviceScaleFactor 1 で撮るので、高精細の画面（スマホ・PC の拡大表示）でだけ出るぼやけが写らない。
-//   ここではスマホ縦（3倍）・PC（2倍）で開き、部品ごとに「画面の細かさどおりに描けているか」（下の q、細かさ）を測る。1.7 より小さければ ❌。
-//   v0.97 までの卓（rotateX で倒した 3D の板）の場札は 1.4〜1.5、直したあと（01m_style_sharp.css、zoom:3）は 1.9〜2.1、卓の外の自分の手札は 1.8〜2.5。
-//   顔のアップ（カメラが寄ったとき）は、寄る前の同じ顔と比べる（0.85 倍より下がったら ❌）。
+//   ここではスマホ縦（3倍）・PC（2倍）で開き、部品ごとに「画面の細かさどおりに描けているか」（下の q、細かさ）を測る。1.6 より小さければ ❌（部品が複数あれば、いちばん低い値で）。
+//   v0.97 までの卓（rotateX で倒した 3D の板）の場札は 1.4〜1.5、直したあと（01m_style_sharp.css、zoom:3）は 1.75〜2.2、卓の外の自分の手札は 1.8〜2.5。
+//   顔のアップ（カメラが寄ったとき）は 1.45 より小さければ ❌。顔は柔らかい絵なので、くっきりでも 1.6〜2.2（引き伸ばしたぼやけは 1.3 前後）。
+//   寄る前との比は、表情・まばたき・写る範囲で 0.77〜1.13 とぶれたので、判定に使わない（表示だけ）。
 //   ui.js の最後から呼ぶ（Chromium と WebKit の両方で回る。qa.yml の組を足さなくてよい）。
 'use strict';
 const H = require('../lib/harness');
@@ -11,7 +12,7 @@ const VPS = [
   { key: 'スマホ縦_3倍', viewport: { width: 390, height: 844 }, dpr: 3, isMobile: true, hasTouch: true },
   { key: 'PC_2倍', viewport: { width: 1280, height: 800 }, dpr: 2 },
 ];
-const QMIN = 1.7, ZMIN = 0.85;
+const QMIN = 1.6, ZMIN = 1.45;
 
 // 画像（PNG の Buffer）を、ページの canvas で測る。
 //   v：輪郭の急さ（となりの点との明るさの差の上位 0.5% ÷ 部品の明るさの幅）
@@ -37,7 +38,7 @@ const rectsOf = (page, sel, n) => page.evaluate(([s, n]) => [...document.querySe
 async function measure(page, sel, n, k) {
   const out = [];
   for (const clip of await rectsOf(page, sel, n)) out.push((await sharpness(page, await page.screenshot({ clip }), k)).q);
-  return out.length ? out.reduce((a, b) => a + b, 0) / out.length : null;
+  return out.length ? Math.min(...out) : null;   // いちばん甘い部品で判定する（平均にすると、ぼやけた1枚が隠れる。CodeRabbit PR #107）
 }
 const r2 = v => v == null ? '—' : v.toFixed(2);
 
@@ -56,6 +57,8 @@ async function shoot(browser, file, vp) {
     const own = await measure(page, '#mine .card:not(.back)', 2, k);
     const board = await measure(page, '#boardCards .card:not(.back):not(.slot)', 3, k);
     const chips = await measure(page, '#potChips', 1, k);
+    const ownChips = await measure(page, '#mine .mystack', 1, k);   // 卓の外のチップ（くらべ用）
+    const seatChips = await measure(page, '.felt .spot .mystack', 2, k);   // 卓の上の相手のチップ（表示だけ。ポットのチップだけが甘いのか、卓のチップ全部かを見分ける）
     // 顔：寄る前と、寄ったあと（カメラの動きが終わってから）
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });
     const faceSel = `#bust${seat} .body svg`;
@@ -67,7 +70,7 @@ async function shoot(browser, file, vp) {
       await page.waitForTimeout(500);
       face1 = await measure(page, faceSel, 1, k);
     }
-    return { own, board, chips, face0, face1, seat };
+    return { own, board, chips, ownChips, seatChips, face0, face1, seat };
   } finally { await ctx.close() }
 }
 
@@ -75,14 +78,15 @@ async function run({ browser, file }) {
   const items = [];
   for (const vp of VPS) {
     let r;
-    try { r = await shoot(browser, file, vp) } catch (e) { items.push({ id: `sharp:${vp.key}`, title: `画質を測れた（${vp.key}）`, status: 'warn', detail: String(e.message).slice(0, 120) }); continue }
-    const bad = v => v != null && v < QMIN, ref = `（くらべ：自分の手札 ${r2(r.own)}）`;
-    items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上）`, status: r.board == null ? 'warn' : bad(r.board) || bad(r.chips) ? 'fail' : 'ok',
-      detail: r.board == null ? '場札が見つからなかった' : `場札 ${r2(r.board)}、ポットのチップ ${r2(r.chips)} ${ref}${bad(r.board) || bad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、拡大など）' : ''}` });
-    // 顔は柔らかい絵（グラデーション）なので、細かさの値そのものでなく「寄る前の同じ顔」と比べる（0.85 倍より下がったら ❌）
-    const kf = r.face0 && r.face1 != null ? r.face1 / r.face0 : null;
-    items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、寄る前の ${ZMIN} 倍以上）`, status: kf == null ? 'warn' : kf < ZMIN ? 'fail' : 'ok',
-      detail: kf == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}（${r2(kf)} 倍）` });
+    try { r = await shoot(browser, file, vp) } catch (e) { items.push({ id: `sharp:${vp.key}`, title: `画質を測れた（${vp.key}）`, status: 'fail', detail: String(e.message).slice(0, 120) }); continue }
+    // チップは CSS のグラデーションで描くので、ブラウザによっては卓の外でも柔らかい（v0.97.0 CI：WebKit だけポットのチップ 1.27〜1.50）。
+    // 卓のせいでぼやけたときだけ ❌ にするため、チップは「卓の外の自分のチップ」の 0.85 倍より下で、かつ QMIN 未満のときに ❌
+    const bad = v => v != null && v < QMIN, chipBad = v => bad(v) && !(r.ownChips != null && v >= r.ownChips * .85), ref = `（くらべ：自分の手札 ${r2(r.own)}、自分のチップ ${r2(r.ownChips)}、相手のチップ ${r2(r.seatChips)}）`;
+    items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上。チップは卓の外のチップの 0.85 倍以上でも可）`, status: r.board == null ? 'warn' : r.chips == null || bad(r.board) || chipBad(r.chips) ? 'fail' : 'ok',   // フロップではポットに必ずチップがある。測れなければ ❌
+      detail: r.board == null ? '場札が見つからなかった' : `場札 ${r2(r.board)}、ポットのチップ ${r2(r.chips)} ${ref}${bad(r.board) || chipBad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、拡大など）' : ''}` });
+    // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
+    items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : r.face1 < ZMIN ? 'fail' : 'ok',
+      detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
   }
   return { name: '画質（高精細の画面でくっきりしているか）', items };
 }
