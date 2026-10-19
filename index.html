@@ -12329,7 +12329,7 @@ function vfResult(){
     // v96 レビュー：場札の下がディーラーの山（飾り）に少しかかるだけで、場札の上（相手の顔のあご）へ行っていた。飾りの山はよけない（山のほうが .vfres をよけるか消える）。場札の下は左右に少しずらす案も試す
     const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++)c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);
     let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
-    if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
+    if(best==null)best=Math.max(T.top+2,Math.min(B2.b+6,innerHeight-2-h));d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
