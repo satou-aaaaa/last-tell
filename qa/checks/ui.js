@@ -55,6 +55,9 @@ const SCENES = [
   // 2026-10-14 CIのチェック充実 案2：まだ撮っていなかった遊び方と画面。基準（baseline.json の uiScenes）に入るまでは、問題があっても ⚠️
   { key: '第7章_ハンドの終わり', prep: `startChapter(CHAPTERS[6],true)`, handEnd: true },
   { key: '第11章_自分の番', prep: `startP2(PART2[0],true)`, myTurn: true },
+  // 第14章は5人卓（改善提案 第10回 §1。5人の並びはここだけ）
+  { key: '第14章_自分の番', prep: `startP2(PART2[3],true)`, myTurn: true, street: 'flop' },
+  { key: '第14章_ハンドの終わり', prep: `startP2(PART2[3],true)`, handEnd: true },
   { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true, street: 'flop' },
   { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
   { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en', after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
