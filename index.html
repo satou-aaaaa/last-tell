@@ -2173,9 +2173,8 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
    板の中身を 3 倍の細かさで描かせ（zoom:3）、板を 3 倍の大きさにしてから 1/3 に縮める（2 倍ではまだ少し甘かった。3 倍で卓の外の手札と同じくらい）。置き場所・大きさは今と同じ。
    qa/checks/sharp.js（画質の検査）がスマホ3倍・PC2倍で測る。01_style.css の .felt の後に読む */
 .felt{zoom:3;inset:0 auto auto -100%;width:300%;height:300%;transform:rotateX(50deg) scale(.333333)}
-/* 場札・ポットの台（.boardspot・.potzone）は、むかし立てた金額札のために preserve-3d だった（今の金額札 #potSign は卓の外）。
-   WebKit（iPhone の Safari）は preserve-3d の子を別の絵にして、板の zoom を使わず粗く描く（CI：ポットのチップ 0.94、場札 1.45）。
-   平らにして板の絵に入れる。Chromium の見た目は同じ（画面の差 0%） */
+/* 場札・ポットの台（.boardspot・.potzone）の preserve-3d は、むかし立てた金額札のためのもの（今の金額札 #potSign は卓の外）。
+   今は要らないので平らにして、卓の板の絵にまとめる。Chromium の見た目は同じ（画面の差 0%） */
 .felt .boardspot,.felt .potzone{transform-style:flat}
 
 </style>
