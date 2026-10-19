@@ -2149,6 +2149,31 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 .plates .cue.rsIn .rsOnly{display:inline;margin:0}
 .plates .cue.rsIn .rsOnly::before{content:'・'}
 
+/* カードのマークを見やすく（2026-10-19 satou「カードのマークがわかりづらい」、research/カードのマーク_提案.md）
+   案A ジャンボ数字：角の数字とマークを大きく、右下に大きなマーク1つ、下の逆さ数字はやめる
+   案B 絵札：小さい枠をやめ、右下に金の細い枠＋大きなマーク
+   案D 相手の席の小さい札：数字とマークだけを真ん中に大きく */
+.card .r,.card .s,.card .court{z-index:1} /* 札の光（.card::after の白いつや）が左上の数字を薄くしていた */
+.card .r{top:4%;left:7%;font-size:calc(var(--cw)*.42);letter-spacing:-.06em}
+.card .r i{font-size:.86em;margin-top:.04em}
+.card .r2{display:none}
+.card .s,.card .s.ace{place-items:end;padding:0 10% 8% 0;font-size:calc(var(--cw)*.52)}
+.card .court{border:0;background:none;inset:auto 7% 6% auto;width:54%;height:50%;display:grid;place-items:center}
+.card .court::before{content:"";position:absolute;inset:6%;border:1px solid var(--gold);border-radius:3px;opacity:.7;background:linear-gradient(160deg,rgba(226,182,91,.22),rgba(226,182,91,.04))}
+.card .court b{display:none}
+.card .court i{position:relative;font-size:calc(var(--cw)*.42)}
+/* 案D：席の札・捨て札の山・配り直しの札は小さい（17〜34px）ので、数字とマークだけ */
+.spot .card:not(.back) .s,.spot .card:not(.back) .court,.muckpile .card .s,.muckpile .card .court{display:none}
+.spot .card:not(.back) .r,.muckpile .card .r{top:50%;left:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.56)}
+.spot .card:not(.back) .r i,.muckpile .card .r i{display:block;font-size:.8em;margin-top:0}
+
+/* ---------- 卓の上をくっきり（2026-10-19 satou「画質が悪いように見える」） ----------
+   卓（.felt）は rotateX で奥へ倒した 3D の板。ブラウザはこの板を「倒す前の大きさ」で絵にしてから遠近で引き伸ばすので、
+   手前ほど札・チップ・ロゴがぼやけ、高精細の画面（スマホ・PC の拡大表示）では角がギザギザになる。
+   板の中身を 3 倍の細かさで描かせ（zoom:3）、板を 3 倍の大きさにしてから 1/3 に縮める（2 倍ではまだ少し甘かった。3 倍で卓の外の手札と同じくらい）。置き場所・大きさは今と同じ。
+   qa/checks/sharp.js（画質の検査）がスマホ3倍・PC2倍で測る。01_style.css の .felt の後に読む */
+.felt{zoom:3;inset:0 auto auto -100%;width:300%;height:300%;transform:rotateX(50deg) scale(.333333)}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2340,7 +2365,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.96.4';
+const APP_VERSION='0.97.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12111,7 +12136,8 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
                 toL=q.left-2-r2,toR=q.right+2-l2,okL=l2+toL>=T.left+2&&clr(toL),okR=r2+toR<=T.right-2&&clr(toR);
               dx=okL&&(!okR||-toL<=toR)?toL:okR?toR:0;
               if(!dx){// 横にも置けない：札は 28px で場札のすぐ上に置き、名札のほうを上へ逃がす（20px まで。名札の数字より、見せた札の数字が大事）
-                const up=Math.ceil(q.bottom+1-(top+need));if(up>0&&up<=20){pl.style.translate=`0 ${-up}px`;pl.dataset.sybp='1'}else{sc=1;need=need0}}}}}
+                // 持ち上げた名札が本当に上がったか測る。上がらない・顔の陰に入るときは戻す（v96.4 レビュー：WebKit の PC でカイの名札が消え、札がその場所に乗った）
+                const up=Math.ceil(q.bottom+1-(top+need));if(up>0&&up<=20){pl.style.translate=`0 ${-up}px`;pl.dataset.sybp='1';const pq=R(pl),mx=pq.left+pq.width/2,my=pq.top+pq.height/2,eh=document.elementFromPoint(mx,my);if(pq.bottom>top+need+1||(eh&&!pl.contains(eh)&&!h.contains(eh)&&eh.closest&&eh.closest('#busts'))){pl.style.translate='';delete pl.dataset.sybp;sc=1;need=need0}}else{sc=1;need=need0}}}}}
         // v96.2 レビュー：横の席（PC の右の席）は名札が場札の上にないので上の分かれ道に入らず、伸びた名札（勝ち・役の名前）が札の上の端にかかった。名札の下か上の、空いているほうへ札をずらす
         // 場札からよけた先（need）が名札にかかるときも
         else if(L<q.right-1&&q.left<Rt-1&&top+need<q.bottom-1&&q.top<bot+need-1){const T=R($('table')||document.body),
@@ -12152,7 +12178,9 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
         const sp=m.closest('.spot'),kx=sp&&sp.offsetWidth?R(sp).width/sp.offsetWidth:1,[x0,y0]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
         m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
   // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
-  if(moved){const v=document.querySelector('#table .vfres');if(v&&v._place)try{v._place()}catch(e){}}}
+  if(moved){const v=document.querySelector('#table .vfres');if(v&&v._place)try{v._place()}catch(e){}
+    // 席番号も、動いた札の横に置き直す（v96.4 レビュー：WebKit で席番号「3」「4」が場札に乗った）
+    try{if(typeof llSeatsPlace==='function')llSeatsPlace()}catch(e){}}}
 LT.on('layout',()=>{try{showYieldBoard()}catch(e){}
   // 見せた札は開く動きのあとで場所が決まる。layout が来ないこともあるので、ハンドの終わりに2回だけ測り直す（v96 レビュー：PC で名札に札の角が残った）
   try{if(S&&S.handOver&&S._sybT!==S.handNo){S._sybT=S.handNo;[700,1600].forEach(t=>setTimeout(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}},t))}}catch(e){}});
@@ -12556,7 +12584,7 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   const bar=$('tbar'),B=vis(bar)?bar.getBoundingClientRect():{left:0,right:innerWidth,bottom:0};
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
-  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
+  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #between .betweenrow, #between .acts button, #resultText, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
     .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
@@ -12564,6 +12592,7 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   // 卓の枠（#game）の中だけに置く（v92 レビュー：PC で枠の外の暗い所に出た）
   const G=vis($('game'))?$('game').getBoundingClientRect():{left:0,right:innerWidth,bottom:innerHeight};
   const ok=(x,y)=>x>=Math.max(4,G.left+4)&&x+w<=Math.min(innerWidth,G.right)-4&&y+h<=Math.min(innerHeight,G.bottom)-4&&!av.some(q=>x<q.right&&q.left<x+w&&y<q.bottom&&q.top<y+h);
+  // ハンドの終わりは #controls が隠れ、#between（結果の文と「次のハンドへ」）が出る。上の av に入れた（v96.4 レビュー：PC で直近の5手が「ブラフを見抜いた！」と「次のハンドへ」に重なった）
   const cs=[[B.left+4,y],[B.right-4-w,y]];
   // 師匠の帯（#sensei）が #tbar のすぐ下にあると上の2つはふさがる（v94.2 レビュー：横で直近の5手が消えた）。帯の下の左右も試す
   {const se=$('sensei');if(se&&!se.hidden&&vis(se)){const r=se.getBoundingClientRect();cs.push([r.left,r.bottom+6],[r.right-w,r.bottom+6])}}
@@ -12968,6 +12997,10 @@ function p6RaiseHand(){const P=$('raisePanel'),M=$('mine');if(!P||!M)return;
   if(box.innerHTML!==html)box.innerHTML=html;box.hidden=false}
 LT.on('render',()=>{try{p6RaiseHand()}catch(e){}});
 {const b=$('btnRaise');if(b)b.addEventListener('click',()=>{setTimeout(()=>{try{p6RaiseHand()}catch(e){}},0);setTimeout(()=>{try{p6RaiseHand()}catch(e){}},350)})}
+
+// カードのマーク 案C（2026-10-19 satou が A+B+C+D を選択）：4色のトランプを最初からオンにする。
+// 設定で自分で切り替えた人（保存に c4 がある人）はそのまま
+if(SETTINGS.c4===undefined){SETTINGS.c4=true;try{b4Apply()}catch(e){}}
 
 </script>
 <script>
