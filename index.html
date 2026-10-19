@@ -12059,6 +12059,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
   hands.forEach(h=>{if(h.dataset.syb&&(!on||h.classList.contains('folded')||h.classList.contains('muck'))){h.style.translate='';h.style.scale='';delete h.dataset.syb}});
   if(!on)return;
   const R=e=>e.getBoundingClientRect(),board=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(!board.length)return;
+  let moved=0;
   hands.forEach(h=>{if(h.classList.contains('folded')||h.classList.contains('muck'))return;
     const cs=[...h.querySelectorAll('.card:not(.back):not(.slot)')].filter(e=>e.offsetParent);if(!cs.length)return;
     h.style.translate='';h.style.scale='';
@@ -12071,7 +12072,9 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
     if(!need&&sc===1){delete h.dataset.syb;return}
     const k=h.offsetHeight?R(h).height/h.offsetHeight:1;
     h.style.transformOrigin=sc<1?'50% 0':'';h.style.scale=sc<1?sc.toFixed(3):'';
-    h.style.translate=`0 ${Math.round(need/(k||1))}px`;h.dataset.syb='1'})}
+    h.style.translate=`0 ${Math.round(need/(k||1))}px`;h.dataset.syb='1';moved=1});
+  // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
+  if(moved){const v=document.querySelector('#table .vfres');if(v&&v._place)try{v._place()}catch(e){}}}
 LT.on('layout',()=>{try{showYieldBoard()}catch(e){}
   // 見せた札は開く動きのあとで場所が決まる。layout が来ないこともあるので、ハンドの終わりに2回だけ測り直す（v96 レビュー：PC で名札に札の角が残った）
   try{if(S&&S.handOver&&S._sybT!==S.handNo){S._sybT=S.handNo;[700,1600].forEach(t=>setTimeout(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}},t))}}catch(e){}});
@@ -12322,14 +12325,16 @@ function vfResult(){
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
     const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0)};
+    // 横の範囲は、ずらす案だけで見る（v96.1 CI：卓と同じくらい幅の広い札で、全部の案が外れて場札の下に固定されていた）
     // v96 レビュー：場札の下がディーラーの山（飾り）に少しかかるだけで、場札の上（相手の顔のあご）へ行っていた。飾りの山はよけない（山のほうが .vfres をよけるか消える）。場札の下は左右に少しずらす案も試す
     const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++)c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);
-    let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2)continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
+    let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
     if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
-  tb.appendChild(d);d._place();setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);
+  tb.appendChild(d);d._place();setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
+  
   const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
   LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
 }
@@ -12384,6 +12389,9 @@ LT.on('renderLine',()=>{try{if(!SC)return;const l=SC.lines[SC.i];if(!Array.isArr
 
 // ===== D6：人だかりの声は誰の声か分かるように =====
 CROWD.lines=CROWD.lines.map(t=>'（周りの客）'+t);
+// v96.1 CI：6人卓の縦で、勝ち負けの札を置いたあとに自分の札（オールインで開いた札）が上がってきて重なった。layout のたびに、札にかかっていたら置き直す
+LT.on('layout',()=>{try{const e=document.querySelector('#table .vfres');if(!e||!e._place||e._pq)return;const D=e.getBoundingClientRect();
+  if([...document.querySelectorAll('#mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(x){}});
 
 /* ---------- ベット額と直近の5手（動画のツッコミ A5、satou 2026-10-17 12:21Z「両方出す」） ---------- */
 // 1) 名札の下の行動の語（46_act_word.js の .ltact）に、その人がこの通りで前に出している額を足す（「レイズ 13,000」）
