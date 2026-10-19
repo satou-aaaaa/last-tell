@@ -1,6 +1,6 @@
 # 通しで遊ぶ検査（CIのチェック充実 案5、2026-10-14）：毎晩、公開中の main で、まっさらなセーブから第1章→第7章→第二部まで続けて遊ぶ。
 # 1時間ほどかかるので、プルリクエストごとの QA では回さない。
-# 結果は ブランチ qa-results の nightly/（summary.md）。❌ のときは Issue「通しで遊ぶ検査が ❌」を立てる（開いていれば追記）。
+# 結果は ブランチ qa-results の nightly/（summary.md）。❌ のときは Issue「通しで遊ぶ検査が ❌」を立てる（開いていれば追記）。✅ のときは閉じる。
 name: 通しで遊ぶ
 
 on:
@@ -58,6 +58,18 @@ jobs:
           n=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -1)
           if [ -n "$n" ]; then gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" -f body="$body" >/dev/null
           else gh api "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" >/dev/null; fi
+      - name: ✅ のときは開いている Issue を閉じる
+        # 閉じないと、直ったあとも ❌ の Issue が残り続ける（#78、2026-10-19）
+        if: ${{ steps.p.outputs.code == '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="通しで遊ぶ検査が ❌"
+          n=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ -n "$n" ]; then
+            gh issue close "$n" -R "$GITHUB_REPOSITORY" --reason completed \
+              --comment "✅ になったので閉じます: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
