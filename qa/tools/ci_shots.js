@@ -20,7 +20,7 @@ const WK = process.env.QA_BROWSER === 'webkit' ? 'WebKit_' : '';
 const dataUrl = f => 'data:image/' + (f.endsWith('.png') ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(f).toString('base64');
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   // 1. JPEG にする（大きさはそのまま、質 72）
   for (const f of pngs) {

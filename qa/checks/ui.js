@@ -123,7 +123,7 @@ const INSPECT = `(() => {
   // 名札の下の行動の語（.ltact、アクションのわかりやすさ 案1）が、席番号・D・チップ・吹き出し・ポットの額・札に重ならないか（その席の伏せ札の上に重ねるのは決めた置き方なので見ない）
   if (!modal) { const okv = e => { if (!e || e.hidden || e.closest('[hidden]')) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') return false; for (let q = e; q && q !== document.body; q = q.parentElement) { const t = getComputedStyle(q); if (t.display === 'none' || +t.opacity === 0) return false } const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2 };
     const acts = [...document.querySelectorAll('.ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off)')].filter(okv);   // .vf*：動画のツッコミの直し（2026-10-17、js/47_video_fixes.js）。#vfLog：直近の5手（js/48_bet_log.js）
-    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off)')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）
+    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
     for (const el of acts) { const a = el.getBoundingClientRect(); for (const o of others) { if (o === el || o.contains(el) || el.contains(o)) continue; const c = o.getBoundingClientRect();
       const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
       const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
@@ -278,6 +278,9 @@ async function shoot(browser, file, scene, vp, dir) {
     await page.screenshot({ path: shot });
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
+    // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
+    // 前は 60ms 待ってから置き直していて、撮る・測る間に重なったまま写った。置き直しが遅い・来ないものをここで拾う
+    if (scene.handEnd) { await page.waitForTimeout(1000); for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(Object.assign({}, x, { el: x.el + '（1秒後も）' })) }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
     return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, errors: await page.evaluate(() => __qa.errors) };
@@ -348,6 +351,14 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     if (ll.some(x => x.id === 'livelook:error' && x.closed)) { const b2 = await H.launch(); try { ll = (await require('./livelook').run({ browser: b2, file })).items.map(x => ({ ...x, detail: (x.detail || '') + '（ブラウザを開き直した2回目）' })) } finally { await b2.close().catch(() => {}) } }
     items.push(...ll.map(({ closed, ...x }) => x));
   } catch (e) { items.push({ id: 'livelook:error', title: 'ライブポーカーらしい見た目の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
+  finally { if (own) await own.close().catch(() => {}) }
+  // 画質（2026-10-19 satou「画質が悪いように見える」「同様の問題が二度と起こらないように」）：上の撮影は 1 倍の画面なので、
+  // 高精細の画面（スマホ3倍・PC2倍）でだけ出るぼやけをここで測る（checks/sharp.js）
+  //   測っている途中でブラウザが落ちたときだけ、新しいブラウザで1回やり直す（ふつうの ❌ はやり直さない。CodeRabbit PR #109）
+  try { let b3 = browser.isConnected() ? browser : (own = await H.launch()); let r = await require('./sharp').run({ browser: b3, file, dir });
+    if (!b3.isConnected() && r.items.some(i => i.status === 'fail')) { if (own) await own.close().catch(() => {}); b3 = own = await H.launch(); r = await require('./sharp').run({ browser: b3, file, dir }); r.items.forEach(i => { i.detail = `（ブラウザが落ちたので1回やり直した）${i.detail || ''}` }) }
+    items.push(...r.items) }
+  catch (e) { items.push({ id: 'sharp:error', title: '画質（高精細の画面でくっきりしているか）の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
   finally { if (own) await own.close().catch(() => {}) }
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }

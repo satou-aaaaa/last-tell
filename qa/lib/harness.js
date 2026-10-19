@@ -29,16 +29,17 @@ function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {
 }
 
 async function launch() {
+  const exe = fs.existsSync('/opt/pw-browsers/chromium') ? undefined : undefined;
   // QA_BROWSER=webkit で iPhone の Safari と同じ WebKit で回す（2026-10-14 CIのチェック充実 案3）
   if (process.env.QA_BROWSER === 'webkit') return pw.webkit.launch();
-  // CHROMIUM_PATH: 入っている Chromium を使う（Claude Code のクラウドなど。scripts/setup.sh が設定する）
-  return pw.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
+  return pw.chromium.launch({ args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
 }
 
 // ゲームを開く。fonts.googleapis は止める（読み込みが止まるため）
 // lite:true のときは動き（アニメーション）を止めて速く回す。画面チェックでは lite:false
-async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true, seed = null, deal = null } = {}) {
-  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile, hasTouch, serviceWorkers: 'block', reducedMotion: lite ? 'reduce' : 'no-preference' });
+async function openGame(browser, file, { viewport = { width: 1280, height: 800 }, fast = FAST, lang = 'ja', settings = {}, storage = null, isMobile = false, hasTouch = false, lite = true, seed = null, deal = null, dpr = 1 } = {}) {
+  // dpr：画面の細かさ（高精細のスマホは3）。ふだんは1。画質の検査（checks/sharp.js）だけが変える
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: dpr, isMobile, hasTouch, serviceWorkers: 'block', reducedMotion: lite ? 'reduce' : 'no-preference' });
   if (lite) await ctx.addInitScript(`document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition-duration:0s!important;transition-delay:0s!important}';document.head.appendChild(st)})`);
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   await ctx.route(/^https?:\/\/(?!localhost)/, r => r.abort()); // 外への通信はしない

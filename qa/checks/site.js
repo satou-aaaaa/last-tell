@@ -76,7 +76,7 @@ async function run({ browser, file, baseline }) {
       try {
         // 同じプロセスでページを配っているので、待つ間も止めない（execFileSync だと配れなくなって止まる）
         const out = await new Promise((ok, ng) => execFile('npx', ['-y', 'lighthouse@12.8.2', url, '--quiet', '--output=json', '--only-categories=performance,accessibility,best-practices,seo', '--form-factor=mobile',
-          '--chrome-flags=--headless=new --no-sandbox'], { env: { ...process.env, CHROME_PATH: process.env.CHROMIUM_PATH || H.pw.chromium.executablePath() }, maxBuffer: 1 << 28, timeout: 420000 }, (e, so) => e ? ng(e) : ok(String(so))));
+          '--chrome-flags=--headless=new --no-sandbox'], { env: { ...process.env, CHROME_PATH: H.pw.chromium.executablePath() }, maxBuffer: 1 << 28, timeout: 420000 }, (e, so) => e ? ng(e) : ok(String(so))));
         const j = JSON.parse(out); for (const [k, c] of Object.entries(j.categories)) scores[k] = Math.round(c.score * 100);
       } catch (e) { items.push({ id: 'site:lighthouse', title: 'Lighthouse の点', status: 'warn', detail: '測れなかった: ' + String(e.message).slice(0, 160) }) }
       if (Object.keys(scores).length) {
