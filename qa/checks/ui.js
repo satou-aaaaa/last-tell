@@ -355,8 +355,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 画質（2026-10-19 satou「画質が悪いように見える」「同様の問題が二度と起こらないように」）：上の撮影は 1 倍の画面なので、
   // 高精細の画面（スマホ3倍・PC2倍）でだけ出るぼやけをここで測る（checks/sharp.js）
   //   測っている途中でブラウザが落ちたときだけ、新しいブラウザで1回やり直す（ふつうの ❌ はやり直さない。CodeRabbit PR #109）
-  try { let b3 = browser.isConnected() ? browser : (own = await H.launch()); let r = await require('./sharp').run({ browser: b3, file });
-    if (!b3.isConnected() && r.items.some(i => i.status === 'fail')) { if (own) await own.close().catch(() => {}); b3 = own = await H.launch(); r = await require('./sharp').run({ browser: b3, file }); r.items.forEach(i => { i.detail = `（ブラウザが落ちたので1回やり直した）${i.detail || ''}` }) }
+  try { let b3 = browser.isConnected() ? browser : (own = await H.launch()); let r = await require('./sharp').run({ browser: b3, file, dir });
+    if (!b3.isConnected() && r.items.some(i => i.status === 'fail')) { if (own) await own.close().catch(() => {}); b3 = own = await H.launch(); r = await require('./sharp').run({ browser: b3, file, dir }); r.items.forEach(i => { i.detail = `（ブラウザが落ちたので1回やり直した）${i.detail || ''}` }) }
     items.push(...r.items) }
   catch (e) { items.push({ id: 'sharp:error', title: '画質（高精細の画面でくっきりしているか）の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
   finally { if (own) await own.close().catch(() => {}) }

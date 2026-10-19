@@ -33,9 +33,21 @@ async function sharpness(page, buf, k) {
   }, [buf.toString('base64'), k]);
 }
 // 部品の四角（縁の2pxは除き、画面の外は切る）。見えていて、ある程度の大きさがあるものだけ
-const rectsOf = (page, sel, n) => page.evaluate(([s, n]) => [...document.querySelectorAll(s)].filter(e => e.offsetParent !== null || e.tagName === 'svg').filter(e => getComputedStyle(e).visibility !== 'hidden')
-  .map(e => { const r = e.getBoundingClientRect(), x = Math.max(0, r.left + 2), y = Math.max(0, r.top + 2), x2 = Math.min(innerWidth, r.right - 2), y2 = Math.min(innerHeight, r.bottom - 2); return { x, y, width: x2 - x, height: y2 - y } })
-  .filter(r => r.width > 16 && r.height > 16).slice(0, n), [sel, n]);
+//   位置はブラウザの検査用の道具（Playwright の boundingBox）で取る。WebKit は zoom:3 の卓の中の部品で getBoundingClientRect が
+//   ずれた所を返し、何もないラシャを測っていた（v0.97.0 の CI：場札 1.45・チップ 0.94 の切り抜きが空の卓だった）。ずれの大きさは gap に残す
+let gapMax = 0;
+async function rectsOf(page, sel, n) {
+  const out = [];
+  for (const h of await page.$$(sel)) {
+    const g = await h.evaluate(e => { if (!(e.offsetParent !== null || e.tagName === 'svg') || getComputedStyle(e).visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, W: innerWidth, H: innerHeight } });
+    const b = g && await h.boundingBox(); if (!b) continue;
+    gapMax = Math.max(gapMax, Math.abs(b.x - g.x), Math.abs(b.y - g.y), Math.abs(b.width - g.w), Math.abs(b.height - g.h));
+    const x = Math.max(0, b.x + 2), y = Math.max(0, b.y + 2), x2 = Math.min(g.W, b.x + b.width - 2), y2 = Math.min(g.H, b.y + b.height - 2);
+    if (x2 - x > 16 && y2 - y > 16) out.push({ x, y, width: x2 - x, height: y2 - y });
+    if (out.length >= n) break;
+  }
+  return out;
+}
 async function measure(page, sel, n, k) {
   const out = [];
   for (const clip of await rectsOf(page, sel, n)) out.push((await sharpness(page, await page.screenshot({ clip }), k)).q);
@@ -43,8 +55,17 @@ async function measure(page, sel, n, k) {
 }
 const r2 = v => v == null ? '—' : v.toFixed(2);
 
-async function shoot(browser, file, vp) {
-  const k = vp.dpr;
+const bad = v => v == null || v < QMIN;
+// ぼやけたときに試す CSS（表示だけ。判定には使わない）
+const TRIES = [
+  ['札の3D・動きなし', '.felt .card{transform-style:flat!important;animation:none!important;transform:none!important}'],
+  ['卓の中の位置ずらしなし', '.felt .potzone,.felt .potchips,.felt .boardspot{translate:none!important}'],
+  ['will-change', '.felt .boardspot{will-change:transform}'],
+  ['卓を3Dにしない', '.felt{transform-style:flat!important}'],
+  ['zoomなし', '.felt{zoom:1!important;inset:0!important;width:auto!important;height:auto!important;transform:rotateX(50deg)!important}'],
+];
+async function shoot(browser, file, vp, dir) {
+  const k = vp.dpr; gapMax = 0;
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, dpr: vp.dpr, fast: 20, lite: false, settings: { motion: 'full' }, seed: 1001, storage: H.UNLOCKED });
   try {
     await page.evaluate(`startChapter(CHAPTERS[1],true)`);
@@ -60,6 +81,20 @@ async function shoot(browser, file, vp) {
     const chips = (await measure(page, '#potChips', 1, k)).q;
     const ownChips = (await measure(page, '#mine .mystack', 1, k)).q;   // 卓の外のチップ（くらべ用、表示だけ）
     const seatChips = (await measure(page, '.felt .spot .mystack', 2, k)).q;   // 卓の上の相手のチップ（くらべ用、表示だけ）
+    // ぼやけたときだけ：どの CSS を変えるとくっきりするかを試して、結果を表示する（直し方を CI 1回で探すため。WebKit は手元で動かせない）
+    let tries = null;
+    if (bad(board) || bad(chips)) {
+      tries = [];
+      for (const [name, css] of TRIES) {
+        await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
+        await page.waitForTimeout(400);
+        tries.push(`${name} 場札 ${r2((await measure(page, '#boardCards .card:not(.back):not(.slot)', 3, k)).q)}・チップ ${r2((await measure(page, '#potChips', 1, k)).q)}`);
+        await page.evaluate(() => document.getElementById('sharpTry').remove());
+      }
+      if (dir) for (const [nm, sel] of [['場札', '#boardCards .card:not(.back):not(.slot)'], ['ポットのチップ', '#potChips'], ['相手のチップ', '.felt .spot .mystack']]) {
+        const c = (await rectsOf(page, sel, 1))[0]; if (c) await page.screenshot({ clip: c, path: require('path').join(dir, `画質_${process.env.QA_BROWSER || 'chromium'}_${vp.key}_${nm}.png`) }).catch(() => {});
+      }
+    }
     // 顔：寄る前と、寄ったあと（カメラの動きが終わってから）
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });
     const faceSel = `#bust${seat} .body svg`;
@@ -71,20 +106,21 @@ async function shoot(browser, file, vp) {
       await page.waitForTimeout(500);
       face1 = (await measure(page, faceSel, 1, k)).q;
     }
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat };
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: Math.round(gapMax) };
   } finally { await ctx.close() }
 }
 
-async function run({ browser, file }) {
+async function run({ browser, file, dir }) {
   const items = [];
   for (const vp of VPS) {
     let r;
-    try { r = await shoot(browser, file, vp) } catch (e) { items.push({ id: `sharp:${vp.key}`, title: `画質を測れた（${vp.key}）`, status: 'fail', detail: String(e.message).slice(0, 120) }); continue }
+    try { r = await shoot(browser, file, vp, dir) } catch (e) { items.push({ id: `sharp:${vp.key}`, title: `画質を測れた（${vp.key}）`, status: 'fail', detail: String(e.message).slice(0, 120) }); continue }
     // フロップなので、場札3枚とポットのチップは必ずある。測れなければ ❌（見逃しを防ぐ。CodeRabbit PR #106）
-    const bad = v => v == null || v < QMIN, ref = `（くらべ：自分の手札 ${r2(r.own)}、自分のチップ ${r2(r.ownChips)}、相手のチップ ${r2(r.seatChips)}）`;
-    const why = r.chips == null ? 'ポットのチップが見つからなかった' : r.boardN < 3 ? `場札が ${r.boardN} 枚しか測れなかった（3枚のはず）` : bad(r.board) || bad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、preserve-3d、拡大など）' : '';
+    const ref = `（くらべ：自分の手札 ${r2(r.own)}、自分のチップ ${r2(r.ownChips)}、相手のチップ ${r2(r.seatChips)}）`;
+    const miss = [r.boardN < 3 && `場札が ${r.boardN} 枚しか測れなかった（3枚のはず）`, r.chips == null && 'ポットのチップが見つからなかった'].filter(Boolean).join('、');   // 足りないものは全部出す（CodeRabbit PR #106）
+    const why = miss || (bad(r.board) || bad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、preserve-3d、拡大など）' : '');
     items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上）`, status: why ? 'fail' : 'ok',
-      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}` });
+      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}${r.tries ? `（試した直し：${r.tries.join('、')}）` : ''}${r.gap > 3 ? `（getBoundingClientRect のずれ 最大 ${r.gap}px）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : r.face1 < ZMIN ? 'fail' : 'ok',
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
