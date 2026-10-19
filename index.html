@@ -10991,7 +10991,7 @@ function foldMuck(i,opt){
 function goneText(p){const hide=peekOn()&&!p.peeked;const w=p.mucked&&!p.folded?'伏せた':FOLD_GONE.ja;return hide||!p.hand.length?w:w+'　'+p.hand.map(cardStr).join(' ')}
 {const o=render;render=function(){const r=o.apply(this,arguments);
   try{if(!S||!S.players)return r;
-    if(S.handNo!==muckHand){if(muckHand>=0)muckGather();else muckReset();muckHand=S.handNo;for(const k in muckDone)delete muckDone[k]}
+    if(S.handNo!==muckHand){if(typeof muckAvoidCancel==='function')muckAvoidCancel();if(muckHand>=0)muckGather();else muckReset();muckHand=S.handNo;for(const k in muckDone)delete muckDone[k]}
     S.players.forEach((p,i)=>{if(p.out||p.sitOut)return;
       const gone=p.folded||p.mucked&&(!p.show||p.human);
       if(i===0){const h=$('mine')&&$('mine').querySelector('.hold');if(h&&gone&&muckDone[0]){h.classList.add('gone');h.dataset.gone=goneText(p)}}
@@ -11341,6 +11341,7 @@ function senseiFit(){const p=$('senseiText'),b=$('sensei');if(!p||!b||b.hidden||
 // v80（改善提案 2026-10-14b §1 の検査で見つかった）：横画面で、捨て札の山が「黙る・さあね…」（左下の .needlerow）の上に乗る。乗るときだけ山をボタンの上へ上げる
 // v0.96.2 CI：配る途中の札の位置で山を置くと、札が着いたあとにかかることがある。少しあとにもう一度だけ置き直す
 let _maT=0;function muckAvoidLate(){clearTimeout(_maT);_maT=setTimeout(()=>{try{muckAvoid(1)}catch(e){}},700)}
+function muckAvoidCancel(){clearTimeout(_maT);_maT=0}   // 次のハンドへ移るときは、前のハンドの置き直しを取り消す（CodeRabbit PR #104）
 function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
   const cs=[...mp.querySelectorAll('.muckcard')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);if(!cs.length)return;
   // v96 CI：縦の5人卓で、山が場札（2♣）の下の端にかかった。かかるときは場札の下へ下げる
@@ -11353,7 +11354,7 @@ function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelecto
       const ok=d=>!av.some(q=>L0<q.right&&q.left<R0&&T0+d<q.bottom&&q.top<B0+d)&&B0+d<innerHeight-2&&T0+d>2;
       const dn=bb-T0+4,up=bt-B0-4;let d=ok(dn)?dn:ok(up)?up:null;
       // どちらも空いていないときは、かかる面積がいちばん小さい位置（動かさないことも含む）にする（CodeRabbit PR #103）
-      if(d==null){const ov=d=>av.concat(hb).reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0)+(B0+d>innerHeight-2||T0+d<2?1e6:0);
+      if(d==null){const ov=d=>av.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0)+(B0+d>innerHeight-2||T0+d<2?1e6:0);
         d=[0,dn,up].sort((x,y)=>ov(x)-ov(y))[0]}
       if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`;return}}
   const bs=[...document.querySelectorAll('.needlerow button')].filter(b=>b.offsetParent&&+getComputedStyle(b).opacity>.05).map(b=>b.getBoundingClientRect()).filter(r=>r.width>2);if(!bs.length)return;
