@@ -2340,7 +2340,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.96.3';
+const APP_VERSION='0.96.4';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12084,7 +12084,8 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
     let need=0;cs.map(R).forEach(a=>board.forEach(b=>{if(!(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1))return;
       const d=a.top+a.bottom<b.top+b.bottom?-(a.bottom-b.top+3):b.bottom-a.top+3;if(Math.abs(d)>Math.abs(need))need=d}));const need0=need;   // 場札より上にある札は上へ、下にある札は下へ
     // v96 レビュー：5人卓では上へ逃がすと名札（と D）に札の数字の角が隠れた。名札の下から場札の上までに収まらないときは、札を縮めて収める
-    let sc=1,dx=0;{const sp=h.closest('.spot'),pl=sp&&$('plate'+sp.id.replace('spot','')),q=pl&&pl.getClientRects().length&&R(pl).width>2?R(pl):null;
+    let sc=1,dx=0;{const sp=h.closest('.spot'),pl=sp&&$('plate'+sp.id.replace('spot','')),q0=pl&&pl.getClientRects().length&&R(pl).width>2?R(pl):null,db=q0&&pl.querySelector('.dbadge'),qd=db&&db.getClientRects().length?R(db):null,   // 名札に付いた D（.dbadge）は名札の外にはみ出すので、名札とまとめて1つの四角で見る（v0.96.4 手元：横でカイの 9♠ に D がかかった）
+      q=q0&&qd&&qd.width>2?{left:Math.min(q0.left,qd.left),right:Math.max(q0.right,qd.right),top:Math.min(q0.top,qd.top),bottom:Math.max(q0.bottom,qd.bottom)}:q0;
       if(q){const rs=cs.map(R),top=Math.min(...rs.map(r=>r.top)),bot=Math.max(...rs.map(r=>r.bottom)),bt=Math.min(...board.map(r=>r.top)),L=Math.min(...rs.map(r=>r.left)),Rt=Math.max(...rs.map(r=>r.right));
         if(L<q.right&&q.left<Rt&&top<bt&&top+need<q.bottom+1&&q.bottom<bt){const room=bt-3-(q.bottom+1),f=room/(bot-top),
             // v96.1 レビュー：札の高さは 28px より小さくしない（横画面で数字が読めなかった）。0.6倍の下限で縮めきれずに名札の下へ入る回もあった（PC）
@@ -12094,13 +12095,20 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
             sc=fmin;need=bt-3-top-(bot-top)*sc;
             if(top+need<q.bottom-1){const cx=(L+Rt)/2,l2=cx-(cx-L)*sc,r2=cx+(Rt-cx)*sc,T=R($('table')||document.body),
                 t2=top+need,b2=t2+(bot-top)*sc,
-                // ずらした先がほかの席の札・名札・席番号にかからないか（v0.96.2 手元：横で左上の席の見せた札に重なった）
-                av=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), .dbadge, #dbtn')].filter(e=>!h.contains(e)&&e!==pl&&e.getClientRects().length).map(R).filter(r=>r.width>2),
+                // ずらした先がほかの席の札・名札・席番号・チップの山（自分の席の山も。v0.96.4 手元：横でカイの札が自分の山の上へ動いた）にかからないか（v0.96.2 手元：横で左上の席の見せた札に重なった）
+                av=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&e.getClientRects().length).map(R).filter(r=>r.width>2),
                 clr=d=>av.every(r=>!(l2+d<r.right-1&&r.left<r2+d-1&&t2<r.bottom-1&&r.top<b2-1)),
                 toL=q.left-2-r2,toR=q.right+2-l2,okL=l2+toL>=T.left+2&&clr(toL),okR=r2+toR<=T.right-2&&clr(toR);
               dx=okL&&(!okR||-toL<=toR)?toL:okR?toR:0;
               if(!dx){// 横にも置けない：札は 28px で場札のすぐ上に置き、名札のほうを上へ逃がす（20px まで。名札の数字より、見せた札の数字が大事）
-                const up=Math.ceil(q.bottom+1-(top+need));if(up>0&&up<=20){pl.style.translate=`0 ${-up}px`;pl.dataset.sybp='1'}else{sc=1;need=need0}}}}}}}   // それでも無理なら前のとおり
+                const up=Math.ceil(q.bottom+1-(top+need));if(up>0&&up<=20){pl.style.translate=`0 ${-up}px`;pl.dataset.sybp='1'}else{sc=1;need=need0}}}}}
+        // v96.2 レビュー：横の席（PC の右の席）は名札が場札の上にないので上の分かれ道に入らず、伸びた名札（勝ち・役の名前）が札の上の端にかかった。名札の下か上の、空いているほうへ札をずらす
+        // 場札からよけた先（need）が名札にかかるときも
+        else if(L<q.right-1&&q.left<Rt-1&&top+need<q.bottom-1&&q.top<bot+need-1){const T=R($('table')||document.body),
+            av=board.concat([...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&e.getClientRects().length).map(R).filter(r=>r.width>2)),
+            clr=d=>top+d>=T.top+2&&bot+d<=T.bottom-2&&av.every(r=>!(L<r.right-1&&r.left<Rt-1&&top+d<r.bottom-1&&r.top<bot+d-1)),
+            dn=Math.ceil(q.bottom+1-top),up=Math.floor(q.top-1-bot),c=[dn,up].filter(clr).sort((x,y)=>Math.abs(x)-Math.abs(y));
+          if(c.length)need=c[0]}}}   // どちらも空いていなければ、場札をよけた位置のまま   // それでも無理なら前のとおり
     if(!need&&!dx&&sc===1){delete h.dataset.syb;return}
     // 縮めて小さくなった札は、角の小さな数字ではなく真ん中に大きく数字とマークを出す（v96.1 レビュー：横で数字の札が真ん中のマークしか読めなかった）
     if(sc<1&&Math.max(...cs.map(e=>R(e).height))*sc<36)h.classList.add('sybs');
@@ -12109,10 +12117,13 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
     h.style.translate=`${Math.round(dx/(k||1))}px ${Math.round(need/(k||1))}px`;h.dataset.syb='1';moved=1});
   // ほかの席のチップの山（.mystack）が見せた札にかかっていたら、山のほうを横へよける（v0.96.2 手元：第14章で右の席の山がカイの札に乗った。chipAvoid は札が動く前に測っている）
   try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length).map(([h,rs])=>[h,[{left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right)),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom))}]]),T=R($('table'));   // 札は1枚ずつでなく手札まとめて1つの四角で見る（1枚ずつだと2枚の間を行ったり来たりした）
-    document.querySelectorAll('#felt .spot .mystack').forEach(m=>{const cs=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(!cs.length)return;
+    document.querySelectorAll('#felt .spot .mystack').forEach(m=>{const cs=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(!cs.length)return;if(R(m).width>2)cs.push(R(m));   // 山の箱（数の札も入る）ごとよける（v0.96.3 手元：箱の端がカイの札にかかった）
       let a={l:Math.min(...cs.map(r=>r.left)),r:Math.max(...cs.map(r=>r.right)),t:Math.min(...cs.map(r=>r.top)),b:Math.max(...cs.map(r=>r.bottom))};
       for(const [h,rs] of sh){if(h.closest('.spot')===m.closest('.spot'))continue;for(const c of rs){if(!(a.l<c.right-1&&c.left<a.r-1&&a.t<c.bottom-1&&c.top<a.b-1))continue;
-        const toR=c.right+3-a.l,toL=c.left-3-a.r,d=(a.l+a.r)/2>(c.left+c.right)/2?(a.r+toR<=T.right-2?toR:toL):(a.l+toL>=T.left+2?toL:toR);
+        const toR=c.right+3-a.l,toL=c.left-3-a.r,
+          // ずらした先が場札・見せた札にかからず、卓の中にあるほうへ。どちらもだめなら動かさない（v0.96.4 手元：山を場札の上へ押し出した）
+          hit=d=>a.l+d<T.left+2||a.r+d>T.right-2||board.concat(...sh.map(x=>x[1])).some(q=>a.l+d<q.right-1&&q.left<a.r+d-1&&a.t<q.bottom-1&&q.top<a.b-1),
+          ds=((a.l+a.r)/2>(c.left+c.right)/2?[toR,toL]:[toL,toR]).filter(d=>!hit(d));if(!ds.length)continue;const d=ds[0];
         const sp=m.closest('.spot'),kx=sp&&sp.offsetWidth?R(sp).width/sp.offsetWidth:1,[x0,y0]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
         m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
   // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
@@ -12122,6 +12133,10 @@ LT.on('layout',()=>{try{showYieldBoard()}catch(e){}
   try{if(S&&S.handOver&&S._sybT!==S.handNo){S._sybT=S.handNo;[700,1600].forEach(t=>setTimeout(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}},t))}}catch(e){}});
 // chipAvoid は見せた札の位置（translate）を戻してからチップの山を置く。ハンドの終わりは、そのあとで見せた札を置き直し、山もよけ直す（v0.96.2 手元：横で右の席の山がカイの札に乗った）
 if(typeof chipAvoid==='function'){const _ca=chipAvoid;chipAvoid=function(){const r=_ca.apply(this,arguments);try{if(S&&S.handOver)showYieldBoard()}catch(e){}return r}}
+// v96.2 レビュー：ハンドの終わりに名札が伸びる（名前を出した金の枠 .nm-on）と、置き直したあとで札が名札の下に入った。名札の大きさが変わったら置き直す
+if(typeof ResizeObserver==='function'){let _sybRT=0;const _sybRO=new ResizeObserver(()=>{try{if(!(S&&S.handOver))return}catch(e){return}clearTimeout(_sybRT);_sybRT=setTimeout(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}},60)});
+  const _sybObs=()=>{document.querySelectorAll('#plates .plate').forEach(p=>{if(!p._sybRO){p._sybRO=1;_sybRO.observe(p)}})};
+  LT.on('layout',()=>{try{_sybObs()}catch(e){}})}
 
 // アニメーションの重さ 案1（2026-10-17）：まばたきを「数秒おきに0.28秒だけ」動かす（01f_style_anim_lite.css）。
 // 今までは目に4.6秒の動きをずっと流していて、止まっている間も毎コマ顔の絵を描き直していた。
