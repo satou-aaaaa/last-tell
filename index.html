@@ -11732,9 +11732,9 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
-  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);   // 「あなたの番」（v91.1 CI：PC で自分の席番号が重なった）
+  const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
   const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
   const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
@@ -11795,7 +11795,7 @@ function llPlaceAll(){try{llToolsPlace()}catch(e){}try{llCupPlace()}catch(e){}tr
 let llSeatChkAt=0;
 function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
-  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden])')].filter(vis).map(R);
+  const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
   return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
 // 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
 function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
@@ -12307,7 +12307,7 @@ function vfResult(){
     const hit=y=>cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0);
     const c=[B2.b+6,B2.t-h-6];for(let k=1;k<=8;k++)c.push(B2.b+6+k*10,B2.t-h-6-k*10);
     let best=null,bv=1e9;for(const y of c){if(y<T.top+2||y+h>innerHeight-2)continue;const v=hit(y);if(v<bv){bv=v;best=y}if(!v)break}
-    if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px'};
+    if(best==null)best=B2.b+6;d.style.top=Math.round(best-T.top)+'px';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}};   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
   tb.appendChild(d);d._place();setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);
