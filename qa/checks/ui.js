@@ -57,7 +57,7 @@ const SCENES = [
   { key: '第11章_自分の番', prep: `startP2(PART2[0],true)`, myTurn: true },
   // 第14章は5人卓（改善提案 第10回 §1。5人の並びはここだけ）
   { key: '第14章_自分の番', prep: `startP2(PART2[3],true)`, myTurn: true, street: 'flop' },
-  { key: '第14章_ハンドの終わり', prep: `startP2(PART2[3],true)`, handEnd: true },
+  { key: '第14章_ハンドの終わり', prep: `startP2(PART2[3],true)`, handEnd: true, showBy: 2 },   // 上の真ん中の席（カイ）が札を見せたハンドの終わりで撮る（45秒で来なければどのハンドでも）。v96.1 レビュー：ミヤコが見せる回で、カイの札が撮れていなかった
   { key: '店で遊ぶ_自分の番', prep: `startStore(CHAPTERS[0],true)`, myTurn: true, street: 'flop' },
   { key: '裏の卓_自分の番', prep: `startUra(1)`, myTurn: true },
   { key: '英語_第1章の会話', prep: `startChapter(CHAPTERS[0])`, waitFor: `!$('scene').hidden`, lang: 'en', after: `SC&&SC.lines[SC.i]&&SC.lines[SC.i].door&&advance()`, measure: 'talkFace' },
@@ -83,6 +83,8 @@ const INSPECT = `(() => {
   const scope = modal || root;
   const els = [...scope.querySelectorAll(sel)].filter(el => shown(el) && vis(el) && !el.closest('#log, .log, details:not([open]) > :not(summary)'));
   const imp = els.filter(el => !el.closest('[aria-hidden=true]'));
+  // 席の透明な入れ物（.spot や .hand の枠）と卓の布（#felt）は、傾いた卓では手前に当たることがあるが、見た目は何も隠さない（v0.96.2：第14章の横で、見せた札が隣の席の枠に、脱落した人の名札が #felt に「隠れ」と出た）
+  const seatBox = t => t.id === 'felt' || !!t.closest('#felt .spot') && !t.closest('.card, .mystack, .chipwrap, .won-pile, .muckcard, .chip, .col, svg, img');
   for (const el of imp) {
     const r = el.getBoundingClientRect();
     // はみ出し
@@ -93,7 +95,7 @@ const INSPECT = `(() => {
     const clip = (() => { for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 2) return e.getBoundingClientRect() } return null })();
     const pts = [[.5, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]].map(([a, b]) => [r.left + r.width * a, r.top + r.height * b]).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < Hh && (!clip || (y >= clip.top && y <= clip.bottom && x >= clip.left && x <= clip.right)));
     let cov = 0, by = null;
-    for (const [x, y] of pts) { const t = document.elementFromPoint(x, y); if (t && !el.contains(t) && !t.contains(el)) { cov++; by = by || t } }
+    for (const [x, y] of pts) { const t = document.elementFromPoint(x, y); if (t && !el.contains(t) && !t.contains(el) && !seatBox(t)) { cov++; by = by || t } }
     if (pts.length >= 3 && cov >= 3) {
       const b = by.closest('button,[role=dialog],.card,[id]') || by;
       out.push({ kind: '隠れ', el: desc(el), by: desc(b) });
@@ -145,6 +147,14 @@ const INSPECT = `(() => {
     for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back)')].filter(e => vis(e))) { const a = el.getBoundingClientRect();
       const b = bc.find(c => Math.min(a.right, c.right) - Math.max(a.left, c.left) > 3 && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 3);
       if (b) { out.push({ kind: '重なり', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '場札 ' + Math.round(Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) + 'px' }); break } } }
+  // 相手の見せた札の数字の角（左上の角）が、ほかの部品の下に隠れていないか。縮めた札が小さすぎないか（v96.1 レビュー：5人卓の上の真ん中の席で、PC は名札の下に角が入り、横は 21px まで縮んで数字が読めなかった）
+  if (!modal) for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back)')].filter(e => vis(e))) { const a = el.getBoundingClientRect(); if (a.width < 3) continue;
+    // 卓は3Dで傾いていて elementFromPoint は当てにならない（#felt や #busts を返す）。札の角の四角と、上に重なりうる部品の四角で比べる
+    const cr = { l: a.left, t: a.top, r: a.left + Math.min(14, a.width * .35), b: a.top + Math.min(16, a.height * .45) };
+    const by = [...document.querySelectorAll('#table .vfres, #boardCards .card:not(.slot), #plates .plate, #potSign:not([hidden]) .pv, #sayLayer .say.go, #plates .say.go, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot)')].filter(e => vis(e) && e !== el && e.closest('.hand') !== el.closest('.hand'))
+      .find(e => { const q = e.getBoundingClientRect(); return q.width > 2 && Math.min(cr.r, q.right) - Math.max(cr.l, q.left) > 2 && Math.min(cr.b, q.bottom) - Math.max(cr.t, q.top) > 2 });
+    if (by) { out.push({ kind: '隠れ', el: '見せた札の角 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: desc(by) }); break }
+    const h = el.closest('.hand'); if (h && h.style.scale && a.height < 27) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（縮めた札は 28px 以上）' }); break } }
   // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）
   {const tb = document.getElementById('table'), tr = tb && vis(tb) ? tb.getBoundingClientRect() : { left: 0, right: W, top: 0, bottom: Hh };
     const L = Math.max(0, tr.left), R = Math.min(W, tr.right);
@@ -216,7 +226,7 @@ async function shoot(browser, file, scene, vp, dir) {
       await H.startBot(page, { policy: 'call', maxHands: 99 });
       // 自分の番（またはハンドの終わり）が来たら止める
       // street：撮る時点を決めた通り（例 'flop'＝フロップで自分の番）にする。版ごとにプリフロップ・フロップと揺れて「22% 変わった」と出ていた（改善提案 2026-10-14b §1）。30秒で来なければ、どの番でも撮る
-      await page.evaluate(([h, st]) => { const B = __bot, t = B.tick, t0 = Date.now(); B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden && (!st || S.street === st || Date.now() - t0 > 30000))) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, [!!scene.handEnd, scene.street || '']);
+      await page.evaluate(([h, st, sb]) => { const B = __bot, t = B.tick, t0 = Date.now(); B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden && (!sb || (S.players[sb] && S.players[sb].show && !S.players[sb].folded) || Date.now() - t0 > 45000)) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden && (!st || S.street === st || Date.now() - t0 > 30000))) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, [!!scene.handEnd, scene.street || '', scene.showBy || 0]);
       while (!(await page.evaluate(() => __bot.done)) && Date.now() - t0 < 60000) await page.waitForTimeout(150);
       await page.evaluate(() => clearInterval(__bot.timer));
     } else {
