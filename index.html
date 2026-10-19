@@ -12098,7 +12098,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
     h.style.transformOrigin=sc<1?'50% 0':'';h.style.scale=sc<1?sc.toFixed(3):'';
     h.style.translate=`${Math.round(dx/(k||1))}px ${Math.round(need/(k||1))}px`;h.dataset.syb='1';moved=1});
   // ほかの席のチップの山（.mystack）が見せた札にかかっていたら、山のほうを横へよける（v0.96.2 手元：第14章で右の席の山がカイの札に乗った。chipAvoid は札が動く前に測っている）
-  try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length),T=R($('table'));
+  try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length).map(([h,rs])=>[h,[{left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right)),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom))}]]),T=R($('table'));   // 札は1枚ずつでなく手札まとめて1つの四角で見る（1枚ずつだと2枚の間を行ったり来たりした）
     document.querySelectorAll('#felt .spot .mystack').forEach(m=>{const cs=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(!cs.length)return;
       let a={l:Math.min(...cs.map(r=>r.left)),r:Math.max(...cs.map(r=>r.right)),t:Math.min(...cs.map(r=>r.top)),b:Math.max(...cs.map(r=>r.bottom))};
       for(const [h,rs] of sh){if(h.closest('.spot')===m.closest('.spot'))continue;for(const c of rs){if(!(a.l<c.right-1&&c.left<a.r-1&&a.t<c.bottom-1&&c.top<a.b-1))continue;
