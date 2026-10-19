@@ -6,6 +6,9 @@ LAST TELL（最後のテル）のテスト公開用サイト。https://satou-aaa
 - `privacy*.html`、`terms*.html`、`support*.html`、`licenses/`：ゲームの「その他」画面からつながるページ。index.html と同じ場所に置く
 - `manifest.webmanifest`、`sw.js`、`icons/`：ホーム画面に追加して、オフラインでも遊べるようにするためのファイル
 
+## 準備（最初に一度）
+`bash scripts/setup.sh`（Node.js 22 と Python 3 が要る。検査の依存とブラウザを入れる。Windows は Git Bash で）。
+
 ## 更新のしかた
 1. 新しいブランチで index.html を作り直す
    ```

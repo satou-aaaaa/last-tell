@@ -4,6 +4,14 @@
 
 LAST TELL（最後のテル）のテスト公開用サイト。ゲーム本体は別の場所（`story/shisho.html`）で作り、ここには公開用のコピーを置く。更新の手順は README.md。
 
+## 準備（最初に一度）
+
+```bash
+bash scripts/setup.sh   # Node.js（版は .nvmrc）と Python 3 を確かめ、qa/ の依存とブラウザを入れる。何度実行してもよい（Windows は Git Bash で）
+```
+
+Claude Code のクラウドセッションでは `.claude/settings.json` のフックが自動で実行する。
+
 ## push する前の確認
 
 ```bash
