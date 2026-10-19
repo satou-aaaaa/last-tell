@@ -12507,7 +12507,7 @@ function dealHelp(){
   if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return;
   try{if(typeof p6Premium==='function'&&p6Premium())return}catch(e){}   // 第6章：ときどき強い手（js/51_play6_fixes.js）
   const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return;
-  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:DEAL_HELP.def;
+  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:CFG.ch.p2===4?DEAL_HELP[6]:DEAL_HELP.def;   // 第14章も第6章と同じ（2026-10-19、第6章の形にそろえた）
   if(LT.rand()>=p||S.deck.length<12)return;
   S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()]}
 // 設定の初めの値（satou 2026-10-17 17:13Z のカード）：「先に選ぶ」（パスフォールド）は最初からオン、「カードをそろえる」は最初はオフ。
@@ -12690,7 +12690,7 @@ LT.on('layout',()=>{try{if(!$('game').hidden){rsEyeAvoid();rsSayAvoid()}}catch(e
 function p6Boss(){if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return null;
   if(CFG.ch.no===6&&!CFG.ch.p2)return 'クロウ';if(CFG.ch.p2===4)return 'カイ';return null}
 const p6On=()=>!!p6Boss();
-const p6Six=()=>p6Boss()==='クロウ';   // 第6章だけのもの（強い手・#18・#19）
+const p6Six=()=>p6Boss()==='クロウ';   // 第6章だけのもの（#18・#19）。強い手は第14章にも
 const P6_HU=[
   ['クロダ','ゴウ様、カオル様が抜けられました。残りはお二人です。ここからはヘッズアップ、一対一です'],
   ['クロウ','……ようやく、二人きりですね'],
@@ -12730,7 +12730,7 @@ LT.on('nextStreet:before',()=>{try{
   const live=S.players.filter(inHand),me=S.players[0],mine=live.includes(me),bs=live.find(p=>p.name===p6Boss());
   // 第14章：自分が降りた勝負で、カイが持ち点の半分以上を入れていれば、オールインでなくても次の札からカイが勝つ並びに（自分の結果には関わらない。
   // カイは自分から大きく打つので、オールインの前に決まることが多い。小さな勝負は並べ替えない＝カイが勝ちすぎない）
-  const deep=!S.runout&&!mine&&!p6Six()&&bs&&bs.total>=bs.chips;
+  const deep=!S.runout&&!mine&&!p6Six()&&bs&&bs.total>=bs.chips&&bs.chips<=BB()*15;   // 残りが少ない＝負ければ飛ぶときだけ（勝ちすぎて一騎打ちが重くならないように）
   if(deep){const k=S.handNo+':'+S.board.length;if(S.p6rig===k)return;S.p6rig=k}
   else{if(!S.runout||S.p6rig===S.handNo)return;S.p6rig=S.handNo}
   const cr=live.find(p=>p.name===p6Boss());if(!cr||live.filter(p=>!p.human).length<2)return;
@@ -12775,9 +12775,9 @@ function p6Cpu(i,d){
 // ===== #16・#17 ときどき強い手（js/49 の dealHelp から呼ぶ。配ったら true） =====
 // 8ハンド強い手が来ていなければ、4割で山から TT 以上のペアか AK を選んで、自分の2枚と入れ替える
 function p6Premium(){
-  if(!p6Six()||!S||!S.players)return false;const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2)return false;
+  if(!p6On()||!S||!S.players)return false;const me=S.players[0];   // 第14章も（2026-10-19 コーディネーター経由：satou 10-17「全体を易しくしてよい」、前の第14章の勝率 約4割に戻す）if(!me||me.out||!me.hand||me.hand.length!==2)return false;
   if(preTier(me.hand)===2){S.p6prem=S.handNo;return false}
-  if(S.handNo-(S.p6prem||0)<8||LT.rand()>.4)return false;
+  const k14=!p6Six();if(S.handNo-(S.p6prem||0)<(k14?6:8)||LT.rand()>(k14?.5:.4))return false;   // 第14章は少し多め（6ハンドに5割。5人・30BB で前の第14章の勝率 約4割に戻す）
   const D=S.deck,c=[];for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++){const x=D[a],y=D[b];if((x.r===y.r&&x.r>=10)||(x.r+y.r===27&&Math.max(x.r,y.r)===14))c.push([a,b])}
   if(!c.length)return false;const [a,b]=c[Math.floor(LT.rand()*c.length)],old=me.hand;me.hand=[D[a],D[b]];D[a]=old[0];D[b]=old[1];S.p6prem=S.handNo;return true}
 
