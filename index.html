@@ -11783,7 +11783,7 @@ function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .llto
   // 横に置けないとき（スマホ横など）は、ラックを縦にして場札の左右のすき間へ
   if(!c){t.classList.add('vert');size();const my=d.top+(d.height-h)/2;cs=[[d.left-8-w,my],[d.right+8,my]];if(m)cs.push([(m.right+d.left-w)/2,my]);c=cs.find(([x,y])=>ok(x,y))}
   // v95.3 レビュー：縦の6人卓のリバーで置けない回が多い。消す前に 0.7 倍に縮めて（横・縦の順に）もう一度探す。左上を軸に縮めるので、測った場所がそのまま左上になる
-  if(!c){t.style.transformOrigin='0 0';t.style.scale='.7';for(const v of [false,true]){t.classList.toggle('vert',v);size();cs=cands();if(v){const my=d.top+(d.height-h)/2;cs.push([d.left-8-w,my],[d.right+8,my])}c=cs.find(([x,y])=>ok(x,y));if(c)break}}
+  if(!c){t.style.transformOrigin='0 0';t.style.scale='.7';for(const v of [false,true]){t.classList.toggle('vert',v);size();cs=cands();if(v){const my=d.top+(d.height-h)/2;cs.push([d.left-8-w,my],[d.right+8,my]);if(m)cs.push([(m.right+d.left-w)/2,my])}c=cs.find(([x,y])=>ok(x,y));if(c)break}}
   if(!c){t.style.scale='';t.classList.remove('vert');t.classList.add('off');return}
   t.style.left=((c[0]-B.left)/sx).toFixed(1)+'px';t.style.top=((c[1]-B.top)/sy).toFixed(1)+'px'}
 // 札が配られる動きの途中で測ると小さく出るので、動きが終わったころにもう1回
