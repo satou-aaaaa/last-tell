@@ -229,6 +229,8 @@ async function shoot(browser, file, scene, vp, dir) {
       await page.evaluate(([h, st, sb]) => { const B = __bot, t = B.tick, t0 = Date.now(); B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden && (!sb || (S.players[sb] && S.players[sb].show && !S.players[sb].folded) || Date.now() - t0 > 45000)) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden && (!st || S.street === st || Date.now() - t0 > 30000))) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, [!!scene.handEnd, scene.street || '', scene.showBy || 0]);
       while (!(await page.evaluate(() => __bot.done)) && Date.now() - t0 < 60000) await page.waitForTimeout(150);
       await page.evaluate(() => clearInterval(__bot.timer));
+      // ハンドの終わりが60秒で来なかったら、進行中の画面をハンドの終わりとして撮らない（CodeRabbit PR #103）
+      if (scene.handEnd && !(await page.evaluate(() => __bot.done))) throw new Error('ハンドの終わりを待って60秒たった');
     } else {
       while (!(await page.evaluate(scene.waitFor)) && Date.now() - t0 < 40000) await page.waitForTimeout(100);
     }
