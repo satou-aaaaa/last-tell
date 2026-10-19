@@ -12067,7 +12067,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
     // v96 レビュー：5人卓では上へ逃がすと名札（と D）に札の数字の角が隠れた。名札の下から場札の上までに収まらないときは、札を縮めて収める
     let sc=1;{const sp=h.closest('.spot'),pl=sp&&$('plate'+sp.id.replace('spot','')),q=pl&&pl.getClientRects().length&&R(pl).width>2?R(pl):null;
       if(q){const rs=cs.map(R),top=Math.min(...rs.map(r=>r.top)),bot=Math.max(...rs.map(r=>r.bottom)),bt=Math.min(...board.map(r=>r.top)),L=Math.min(...rs.map(r=>r.left)),Rt=Math.max(...rs.map(r=>r.right));
-        if(L<q.right&&q.left<Rt&&top<bt&&top+need<q.bottom+1&&q.bottom<bt){const room=bt-3-(q.bottom+1);sc=Math.max(.6,Math.min(1,room/(bot-top)));need=q.bottom+1-top}}}
+        if(L<q.right&&q.left<Rt&&top<bt&&top+need<q.bottom+1&&q.bottom<bt){const room=bt-3-(q.bottom+1),f=room/(bot-top);if(f>=.6){sc=Math.min(1,f);need=q.bottom+1-top}}}}   // 0.6倍でも入らないときは縮めない（場札にはかけず、前のとおり名札の側へ逃がす）
     if(!need&&sc===1){delete h.dataset.syb;return}
     const k=h.offsetHeight?R(h).height/h.offsetHeight:1;
     h.style.transformOrigin=sc<1?'50% 0':'';h.style.scale=sc<1?sc.toFixed(3):'';
