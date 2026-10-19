@@ -2167,6 +2167,13 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 .spot .card:not(.back) .r,.muckpile .card .r{top:50%;left:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.56)}
 .spot .card:not(.back) .r i,.muckpile .card .r i{display:block;font-size:.8em;margin-top:0}
 
+/* ---------- 卓の上をくっきり（2026-10-19 satou「画質が悪いように見える」） ----------
+   卓（.felt）は rotateX で奥へ倒した 3D の板。ブラウザはこの板を「倒す前の大きさ」で絵にしてから遠近で引き伸ばすので、
+   手前ほど札・チップ・ロゴがぼやけ、高精細の画面（スマホ・PC の拡大表示）では角がギザギザになる。
+   板の中身を 3 倍の細かさで描かせ（zoom:3）、板を 3 倍の大きさにしてから 1/3 に縮める（2 倍ではまだ少し甘かった。3 倍で卓の外の手札と同じくらい）。置き場所・大きさは今と同じ。
+   qa/checks/sharp.js（画質の検査）がスマホ3倍・PC2倍で測る。01_style.css の .felt の後に読む */
+.felt{zoom:3;inset:0 auto auto -100%;width:300%;height:300%;transform:rotateX(50deg) scale(.333333)}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>

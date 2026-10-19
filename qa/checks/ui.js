@@ -349,6 +349,11 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     items.push(...ll.map(({ closed, ...x }) => x));
   } catch (e) { items.push({ id: 'livelook:error', title: 'ライブポーカーらしい見た目の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
   finally { if (own) await own.close().catch(() => {}) }
+  // 画質（2026-10-19 satou「画質が悪いように見える」「同様の問題が二度と起こらないように」）：上の撮影は 1 倍の画面なので、
+  // 高精細の画面（スマホ3倍・PC2倍）でだけ出るぼやけをここで測る（checks/sharp.js）
+  try { const b3 = browser.isConnected() ? browser : (own = await H.launch()); items.push(...(await require('./sharp').run({ browser: b3, file })).items) }
+  catch (e) { items.push({ id: 'sharp:error', title: '画質（高精細の画面でくっきりしているか）の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
+  finally { if (own) await own.close().catch(() => {}) }
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };
