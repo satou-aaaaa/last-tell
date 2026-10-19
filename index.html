@@ -7102,7 +7102,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   if(CFG.refill)S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;log(`${p.name}がチップを補充して席に戻った`)}});
   if(S.rebuyMain){S.rebuyMain=false;S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;S.chipsReset=S.handNo+1;log(`${p.name}がチップを買い足して席に戻った`)}})}   // 相手役がほかの客に飛ばされたとき（endHand の byOther）
   S.players.forEach(p=>{p.out=p.chips<=0||!!p.sitOut});
-  S.handNo++;
+  S.handNo++;if(typeof muckAvoidCancel==='function')muckAvoidCancel();   // 前のハンドの捨て札の山の置き直しを取り消す（CodeRabbit PR #105）
   // トーナメント：決まったハンド数ごとにブラインドが上がる
   if(CFG.levels){const lv=Math.min(CFG.levels.length-1,Math.floor((S.handNo-1)/CFG.levelHands));
     if(CFG.blinds!==CFG.levels[lv]){const up=S.handNo>1;CFG.blinds=CFG.levels[lv];if(up){log(`ブラインドが上がった：${SB()}/${BB()}`);dealerSay('ブラインドが上がります')}}}
@@ -8150,7 +8150,10 @@ function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect()
   const hit=(x,y)=>obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
   const inT=(x,y)=>r0.left+x>=tb.left+4&&r0.right+x<=tb.right-2&&r0.top+y>=tb.top+2&&r0.bottom+y<=tb.bottom-2;
   const ys=[0];if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
-  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
+  // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
+  const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
+  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}
+  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)&&!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
 // v71（改善提案§1）：席の前の賭けチップ（.chipwrap）と持ち点の塔（.mystack。自分の欄の分も）、1対1では相手の伏せ札・D の札も（v70 レビュー）、場札にかかるときは、bPlace と同じく空いた所を探して席の側へ寄せる。
 // 寄せる向きは「場札の真ん中→席」、横（席のある側・反対側）、縦（席の側・反対側）の順。席の札・名札・ポットの山にかからない、いちばん近い所。位置合わせ（36_layout_pass）で fitTable の後に呼ぶ
 function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot .hand,#dbtn';document.querySelectorAll(MS).forEach(e=>{if(e.style.translate)e.style.translate=''});   // 自分の欄・相手の伏せ札・D の札は fitTable が戻さないので、ここで戻す
@@ -11371,7 +11374,9 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(()=>{talkPlace();const row=$('askRow');
       // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
       const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
-      if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row)});
+      if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row);
+      // 手札は配る動きのあとで場所が決まる。少しあとにもう一度だけ確かめる（v0.96.4 CI）
+      if(row&&!row.hidden&&typeof bPlace==='function'){clearTimeout(LP._askT);LP._askT=setTimeout(()=>{try{const r=$('askRow');if(r&&!r.hidden&&onMine(r))bPlace(r)}catch(e){}},700)}});
     lpTry(cuePlace);lpTry(dcallPlace);
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
@@ -12091,7 +12096,10 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
         if(L<q.right&&q.left<Rt&&top<bt&&top+need<q.bottom+1&&q.bottom<bt){const room=bt-3-(q.bottom+1),f=room/(bot-top),
             // v96.1 レビュー：札の高さは 28px より小さくしない（横画面で数字が読めなかった）。0.6倍の下限で縮めきれずに名札の下へ入る回もあった（PC）
             cH=Math.max(...rs.map(r=>r.height)),fmin=Math.min(1,29/cH);
-          if(f>=fmin){sc=Math.min(1,f);need=q.bottom+1-top}
+          // 名札の下へ縮めて置く先も、ほかの席の札・山・席番号にかからないか確かめる（CodeRabbit PR #105）。かかるなら下の「横へずらす」へ
+          const okF=f>=fmin&&(()=>{const s1=Math.min(1,f),cx=(L+Rt)/2,l1=cx-(cx-L)*s1,r1=cx+(Rt-cx)*s1,t1=q.bottom+1,b1=t1+(bot-top)*s1;
+            return [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&!pl.contains(e)&&e.getClientRects().length).map(R).filter(r=>r.width>2).every(r=>!(l1<r.right-1&&r.left<r1-1&&t1<r.bottom-1&&r.top<b1-1))})();
+          if(okF){sc=Math.min(1,f);need=q.bottom+1-top}
           else{// 名札と場札の間に入らない：28px の大きさで場札のすぐ上に置き、名札の横の空いた方へずらす
             sc=fmin;need=bt-3-top-(bot-top)*sc;
             if(top+need<q.bottom-1){const cx=(L+Rt)/2,l2=cx-(cx-L)*sc,r2=cx+(Rt-cx)*sc,T=R($('table')||document.body),
@@ -12123,8 +12131,11 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
       for(const [h,rs] of sh){if(h.closest('.spot')===m.closest('.spot'))continue;for(const c of rs){if(!(a.l<c.right-1&&c.left<a.r-1&&a.t<c.bottom-1&&c.top<a.b-1))continue;
         const toR=c.right+3-a.l,toL=c.left-3-a.r,
           // ずらした先が場札・見せた札にかからず、卓の中にあるほうへ。どちらもだめなら動かさない（v0.96.4 手元：山を場札の上へ押し出した）
-          hit=d=>a.l+d<T.left+2||a.r+d>T.right-2||board.concat(...sh.map(x=>x[1])).some(q=>a.l+d<q.right-1&&q.left<a.r+d-1&&a.t<q.bottom-1&&q.top<a.b-1),
-          ds=((a.l+a.r)/2>(c.left+c.right)/2?[toR,toL]:[toL,toR]).filter(d=>!hit(d));if(!ds.length)continue;const d=ds[0];
+          ot=[...document.querySelectorAll('#felt .spot .mystack')].filter(e=>e!==m&&e.getClientRects().length).map(R).filter(r=>r.width>2),   // ほかの山にも重ねない（CodeRabbit PR #105）
+          hit=(d,os)=>a.l+d<T.left+2||a.r+d>T.right-2||board.concat(...sh.map(x=>x[1]),os).some(q=>a.l+d<q.right-1&&q.left<a.r+d-1&&a.t<q.bottom-1&&q.top<a.b-1),
+          d2=(a.l+a.r)/2>(c.left+c.right)/2?[toR,toL]:[toL,toR];
+          // 山どうしが重ならない先を選ぶ。どこもなければ、札を隠すよりは山どうしが重なるほうを選ぶ
+          let ds=d2.filter(d=>!hit(d,ot));if(!ds.length)ds=d2.filter(d=>!hit(d,[]));if(!ds.length)continue;const d=ds[0];
         const sp=m.closest('.spot'),kx=sp&&sp.offsetWidth?R(sp).width/sp.offsetWidth:1,[x0,y0]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
         m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
   // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
@@ -12697,7 +12708,7 @@ function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetPa
   const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');
   if(t&&[...t.querySelectorAll('.dtray,.ddeck')].filter(vis).some(e=>hit(R(e),tw.concat(bc)))&&typeof llToolsPlace==='function')llToolsPlace();
   const c=document.querySelector('#table > .cup:not(.off)');
-  if(vis(c)&&hit(R(c),bc.concat([...document.querySelectorAll('#potChips .chip')].filter(vis).map(R)))&&typeof llCupPlace==='function')llCupPlace()}
+  if(vis(c)&&hit(R(c),bc.concat([...document.querySelectorAll('#potChips .chip, #mine .mystack')].filter(vis).map(R)))&&typeof llCupPlace==='function')llCupPlace()}   // 自分のチップの山が増えて飲み物にかかったときも置き直す（v0.96.4 CI：PC で飲み物 × 自分の山）
 {const f=c35PotTight;c35PotTight=function(){f();try{c35ToolsChk()}catch(e){}}}
 // v0.96 CI（PC）：ポットの塔が描き直しの合図なしに伸びて、ラックに重なったまま残った。塔が変わったら少しおいて確かめ直す
 {let mo=null,tm=0;LT.on('layout',()=>{const pc=$('potChips');if(!pc||typeof MutationObserver==='undefined'||(mo&&mo.el===pc))return;if(mo)mo.disconnect();
