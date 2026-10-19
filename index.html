@@ -12865,8 +12865,10 @@ function p6Cpu(i,d){
     if(eq<(inHand(me)?.75:.6)){const f=Object.assign({},d,{type:toCall>0&&toCall<p.chips*.5?'call':toCall>0?'fold':'call'});delete f.to;return f}}
   if(!p6Six())return d;   // ここから下は第6章だけ
   // #18 めちゃくちゃな手で参加しない：レイズに、弱い2枚では付いていかない（ゴウは荒いので半分は付いていく）
-  // クロウは強いキャラなので、3BBまでのオープンには元の打ち方で守る（プロポーカー A1：降りすぎない）
-  if(pre&&d.type!=='fold'&&toCall>0&&S.currentBet>bb&&!(p.name==='クロウ'&&S.currentBet<=bb*3)&&preTier(p.hand)===0&&Math.random()>(p.name==='ゴウ'?.5:.2)){const f=Object.assign({},d,{type:'fold'});delete f.to;return f}
+  // 強いキャラ（クロウ・カオル）は、3BBまでのオープンには元の打ち方で守る（プロポーカー A1：降りすぎない）
+  // v0.96.4：カオルもここで弱い2枚を8割捨てていたので、A1 の検査で降りる 81〜84% になっていた。25_cpu.js の A1 と同じ条件で外す
+  const a1=styleOf(p),a1Def=a1.noLimp&&(a1.read||0)>=.6&&S.raises===1&&S.currentBet<=bb*3;
+  if(pre&&d.type!=='fold'&&toCall>0&&S.currentBet>bb&&!a1Def&&preTier(p.hand)===0&&Math.random()>(p.name==='ゴウ'?.5:.2)){const f=Object.assign({},d,{type:'fold'});delete f.to;return f}
   // #19 強い手（AA〜77、AK・AQ・AJ、KQ）は、1回のレイズには3ベットで返す
   if(pre&&S.raises===1&&toCall>0&&d.type==='call'&&preTier(p.hand)===2&&p.chips>toCall*2&&Math.random()<.65){
     const half=bb/2,to=Math.min(p.bet+p.chips,Math.round(S.currentBet*3/half)*half);if(to>S.currentBet)return Object.assign({},d,{type:'raise',to})}
