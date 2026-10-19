@@ -152,7 +152,7 @@ const INSPECT = `(() => {
     // 卓は3Dで傾いていて elementFromPoint は当てにならない（#felt や #busts を返す）。札の角の四角と、上に重なりうる部品の四角で比べる
     const cr = { l: a.left, t: a.top, r: a.left + Math.min(14, a.width * .35), b: a.top + Math.min(16, a.height * .45) };
     const by = [...document.querySelectorAll('#table .vfres, #boardCards .card:not(.slot), #plates .plate, #potSign:not([hidden]) .pv, #sayLayer .say.go, #plates .say.go, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot)')].filter(e => vis(e) && e !== el && e.closest('.hand') !== el.closest('.hand'))
-      .find(e => { const q = e.getBoundingClientRect(); return q.width > 2 && Math.min(cr.r, q.right) - Math.max(cr.l, q.left) > 2 && Math.min(cr.b, q.bottom) - Math.max(cr.t, q.top) > 2 });
+      .find(e => { const q = e.getBoundingClientRect(); return q.width > 2 && [cr].concat(el.closest('.hand.sybs') ? [{ l: a.left + a.width * .25, r: a.right - a.width * .25, t: a.top + a.height * .25, b: a.bottom - a.height * .25 }] : []).some(c => Math.min(c.r, q.right) - Math.max(c.l, q.left) > 2 && Math.min(c.b, q.bottom) - Math.max(c.t, q.top) > 2) });   // 縮めた札（.sybs）は数字を真ん中に出すので、真ん中も見る（PR #103 のレビュー）
     if (by) { out.push({ kind: '隠れ', el: '見せた札の角 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: desc(by) }); break }
     const h = el.closest('.hand'); if (h && h.style.scale && a.height < 27) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（縮めた札は 28px 以上）' }); break } }
   // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）

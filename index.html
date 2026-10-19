@@ -11357,7 +11357,10 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
   if(gameOn){
     lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
     if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
-    lpTry(()=>{talkPlace();const row=$('askRow');if(row&&row._bp&&!row.hidden&&typeof bPlace==='function')bPlace(row)});
+    lpTry(()=>{talkPlace();const row=$('askRow');
+      // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
+      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
+      if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row)});
     lpTry(cuePlace);lpTry(dcallPlace);
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
@@ -12107,6 +12110,8 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
 LT.on('layout',()=>{try{showYieldBoard()}catch(e){}
   // 見せた札は開く動きのあとで場所が決まる。layout が来ないこともあるので、ハンドの終わりに2回だけ測り直す（v96 レビュー：PC で名札に札の角が残った）
   try{if(S&&S.handOver&&S._sybT!==S.handNo){S._sybT=S.handNo;[700,1600].forEach(t=>setTimeout(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}},t))}}catch(e){}});
+// chipAvoid は見せた札の位置（translate）を戻してからチップの山を置く。ハンドの終わりは、そのあとで見せた札を置き直し、山もよけ直す（v0.96.2 手元：横で右の席の山がカイの札に乗った）
+if(typeof chipAvoid==='function'){const _ca=chipAvoid;chipAvoid=function(){const r=_ca.apply(this,arguments);try{if(S&&S.handOver)showYieldBoard()}catch(e){}return r}}
 
 // アニメーションの重さ 案1（2026-10-17）：まばたきを「数秒おきに0.28秒だけ」動かす（01f_style_anim_lite.css）。
 // 今までは目に4.6秒の動きをずっと流していて、止まっている間も毎コマ顔の絵を描き直していた。
