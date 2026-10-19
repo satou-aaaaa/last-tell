@@ -2331,7 +2331,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.95.3';
+const APP_VERSION='0.95.4';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2691,6 +2691,7 @@ Object.assign(EN_DICT,{
 "勝てば、王冠の看板が6枚目になる。":"Win, and the Crown's sign becomes your sixth.",
 "クロウ、ゴウ様、カオル様、そしてあなたの4人です。最後の一人になった方が優勝です":"Four players: Crow, Mr. Go, Ms. Kaoru, and you. The last one standing wins.",
 "お席はこちらでお決めしています。あなたは3番のお席へどうぞ":"Seats are assigned by the house. Please take seat 3.",
+"お席はこちらでお決めしています。あなたは1番のお席へどうぞ":"Seats are assigned by the house. Please take seat 1.",
 "ああ。俺はもう、卓には座らん":"Yeah. I don't sit at tables anymore.",
 "王冠の主、クロウです。5枚の看板、入口で拝見しました":"I'm Crow, master of the Crown. I saw your five signs at the door.",
 "ようこそ、王冠へ。看板は入口で拝見しました":"Welcome to the Crown. I saw your signs at the door.",
@@ -9088,6 +9089,7 @@ const PART2=[
    ["","ポーカールーム「王冠」。今日は、看板持ちだけの卓が立つ。"],
    ["","汐見、霧崎、その先の港町からも、古い看板を持った人たちが集まっていた。"],
    ["クロダ","ようこそ。本日は、港の看板持ちによるトーナメントです"],
+   ["クロダ","お席はこちらでお決めしています。あなたは1番のお席へどうぞ"],
    ["クロウ","今日は、ただの客です。……誘う側からは、降りましたので"],
    ["ミヤコ","やあ。今日はスチールさせないよ"],
    ["カイ","この前の続きだ、タロウ"],
@@ -11758,7 +11760,7 @@ LT.on('nextStreet:before',()=>{try{if(S&&!S.handOver&&!S.reveal&&['preflop','flo
 LT.on('render',()=>{for(const f of [llPrint,llSeats,llTools])try{f()}catch(e){}});
 // 置き場所：捨て札の山の左 → 場札の下の真ん中 → 場札の右 → 場札の上 → 場札の下（右・左）。場札・相手の札・ポット・クセの札・名札・手元に重ならない最初の場所。どこも重なるなら出さない
 function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .lltools'),bs=t&&t.parentNode,bd=$('boardCards'),tb=$('table');if(!t||!bd||!tb)return;
-  t.classList.remove('off','vert');t.style.left=t.style.top='';
+  t.classList.remove('off','vert');t.style.left=t.style.top='';t.style.scale='';
   const B=bs.getBoundingClientRect(),sx=B.width/(bs.offsetWidth||1)||1,sy=B.height/(bs.offsetHeight||1)||1,T=tb.getBoundingClientRect();
   const vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,mp=document.querySelector('.felt .boardspot > .muckpile'),m=mp&&mp.getBoundingClientRect();
   // 場札は箱より大きく描かれることがある（遠近）ので、箱と札を合わせた四角で測る
@@ -11769,12 +11771,14 @@ function llToolsPlace(){const t=document.querySelector('.felt .boardspot > .llto
   let w,h;const ok=(x,y)=>x>=T.left+4&&x+w<=T.right-4&&y>=T.top&&!av.some(q=>x<q.right+4&&q.left-4<x+w&&y<q.bottom+4&&q.top-4<y+h);   // 4px あける
   const size=()=>{const r=t.getBoundingClientRect();w=r.width;h=r.height};size();
   const mc=[...document.querySelectorAll('.felt .boardspot > .muckpile .muckcard')].filter(vis).map(e=>e.getBoundingClientRect()),mb=Math.max(d.bottom,...mc.map(q=>q.bottom));
-  let cs=[];if(m)cs.push([m.left-34*sx-w,m.top-h/2],[Math.max(T.left+6,m.left-w/2),mb+6]);   // 捨て札の山の左、山の下
-  cs.push([d.left+(d.width-w)/2,d.bottom+8],[d.right+12,d.top+(d.height-h)/2],[d.left+(d.width-w)/2,d.top-h-8],[d.left,d.top-h-8],[d.right-w,d.bottom+8],[d.left,d.bottom+8],[d.right-w,d.top-h-8],[d.left-12-w,d.top+(d.height-h)/2]);
-  let c=cs.find(([x,y])=>ok(x,y));
+  const cands=()=>{const cs=[];if(m)cs.push([m.left-34*sx-w,m.top-h/2],[Math.max(T.left+6,m.left-w/2),mb+6]);   // 捨て札の山の左、山の下
+    cs.push([d.left+(d.width-w)/2,d.bottom+8],[d.right+12,d.top+(d.height-h)/2],[d.left+(d.width-w)/2,d.top-h-8],[d.left,d.top-h-8],[d.right-w,d.bottom+8],[d.left,d.bottom+8],[d.right-w,d.top-h-8],[d.left-12-w,d.top+(d.height-h)/2]);return cs};
+  let cs=cands(),c=cs.find(([x,y])=>ok(x,y));
   // 横に置けないとき（スマホ横など）は、ラックを縦にして場札の左右のすき間へ
   if(!c){t.classList.add('vert');size();const my=d.top+(d.height-h)/2;cs=[[d.left-8-w,my],[d.right+8,my]];if(m)cs.push([(m.right+d.left-w)/2,my]);c=cs.find(([x,y])=>ok(x,y))}
-  if(!c){t.classList.add('off');return}
+  // v95.3 レビュー：縦の6人卓のリバーで置けない回が多い。消す前に 0.7 倍に縮めて（横・縦の順に）もう一度探す。左上を軸に縮めるので、測った場所がそのまま左上になる
+  if(!c){t.style.transformOrigin='0 0';t.style.scale='.7';for(const v of [false,true]){t.classList.toggle('vert',v);size();cs=cands();if(v){const my=d.top+(d.height-h)/2;cs.push([d.left-8-w,my],[d.right+8,my])}c=cs.find(([x,y])=>ok(x,y));if(c)break}}
+  if(!c){t.style.scale='';t.classList.remove('vert');t.classList.add('off');return}
   t.style.left=((c[0]-B.left)/sx).toFixed(1)+'px';t.style.top=((c[1]-B.top)/sy).toFixed(1)+'px'}
 // 札が配られる動きの途中で測ると小さく出るので、動きが終わったころにもう1回
 // 置き場所の計算は、ハンド・通り・画面の大きさ・席の数・答え待ちが変わったときだけ（毎回の layout では測らない。v85 レビュー：重さ）
