@@ -12098,7 +12098,8 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
             cH=Math.max(...rs.map(r=>r.height)),fmin=Math.min(1,29/cH);
           // 名札の下へ縮めて置く先も、ほかの席の札・山・席番号にかからないか確かめる（CodeRabbit PR #105）。かかるなら下の「横へずらす」へ
           const okF=f>=fmin&&(()=>{const s1=Math.min(1,f),cx=(L+Rt)/2,l1=cx-(cx-L)*s1,r1=cx+(Rt-cx)*s1,t1=q.bottom+1,b1=t1+(bot-top)*s1;
-            return [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&!pl.contains(e)&&e.getClientRects().length).map(R).filter(r=>r.width>2).every(r=>!(l1<r.right-1&&r.left<r1-1&&t1<r.bottom-1&&r.top<b1-1))})();
+            // ほかの名札の D（.dbadge）も入れる。名札の外にはみ出す（v0.96.4 CI：横でソウゲンの 3♥ の角が左の名札の D にかかった）
+            return [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, #plates .dbadge, .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&!pl.contains(e)&&e.getClientRects().length).map(R).filter(r=>r.width>2).every(r=>!(l1<r.right-1&&r.left<r1-1&&t1<r.bottom-1&&r.top<b1-1))})();
           if(okF){sc=Math.min(1,f);need=q.bottom+1-top}
           else{// 名札と場札の間に入らない：28px の大きさで場札のすぐ上に置き、名札の横の空いた方へずらす
             sc=fmin;need=bt-3-top-(bot-top)*sc;
@@ -12118,6 +12119,18 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
             clr=d=>top+d>=T.top+2&&bot+d<=T.bottom-2&&av.every(r=>!(L<r.right-1&&r.left<Rt-1&&top+d<r.bottom-1&&r.top<bot+d-1)),
             dn=Math.ceil(q.bottom+1-top),up=Math.floor(q.top-1-bot),c=[dn,up].filter(clr).sort((x,y)=>Math.abs(x)-Math.abs(y));
           if(c.length)need=c[0]}}}   // どちらも空いていなければ、場札をよけた位置のまま   // それでも無理なら前のとおり
+    // ほかの席の名札（と D）が札の角にかかるときも、空いている向きへ少しずらす（v0.96.4 CI：横で左の名札の下の端が、となりの席の 3♥ の角にかかった）
+    try{const sp=h.closest('.spot'),pl=sp&&$('plate'+sp.id.replace('spot','')),rs=cs.map(R),top=Math.min(...rs.map(r=>r.top)),bot=Math.max(...rs.map(r=>r.bottom)),L=Math.min(...rs.map(r=>r.left)),Rt=Math.max(...rs.map(r=>r.right)),
+        cx=(L+Rt)/2,l=cx-(cx-L)*sc+dx,r=cx+(Rt-cx)*sc+dx,t=top+need,b=t+(bot-top)*sc,
+        hitOf=(arr,x,y)=>arr.filter(q=>l+x<q.right-1&&q.left<r+x-1&&t+y<q.bottom-1&&q.top<b+y-1),
+        pls=[...document.querySelectorAll('#plates .plate, #plates .dbadge')].filter(e=>e!==pl&&!(pl&&pl.contains(e))&&e.getClientRects().length).map(R).filter(q=>q.width>2),
+        hp=hitOf(pls,0,0);
+      if(hp.length){const T=R($('table')||document.body),
+          av=board.concat(pls,[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e.getClientRects().length).map(R).filter(q=>q.width>2)),
+          cand=[[0,Math.max(...hp.map(q=>q.bottom))+1-t],[0,Math.min(...hp.map(q=>q.top))-1-b],[Math.max(...hp.map(q=>q.right))+1-l,0],[Math.min(...hp.map(q=>q.left))-1-r,0]]
+            .filter(([x,y])=>Math.abs(x)+Math.abs(y)<=40&&l+x>=T.left+2&&r+x<=T.right-2&&t+y>=T.top+2&&b+y<=T.bottom-2&&!hitOf(av,x,y).length)
+            .sort((u,v)=>Math.abs(u[0])+Math.abs(u[1])-Math.abs(v[0])-Math.abs(v[1]));
+        if(cand.length){dx+=cand[0][0];need+=cand[0][1]}}}catch(e){}
     if(!need&&!dx&&sc===1){delete h.dataset.syb;return}
     // 縮めて小さくなった札は、角の小さな数字ではなく真ん中に大きく数字とマークを出す（v96.1 レビュー：横で数字の札が真ん中のマークしか読めなかった）
     if(sc<1&&Math.max(...cs.map(e=>R(e).height))*sc<36)h.classList.add('sybs');
