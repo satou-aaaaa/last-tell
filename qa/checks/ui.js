@@ -309,7 +309,8 @@ async function shoot(browser, file, scene, vp, dir) {
     let stall = null;
     if (stallRem >= 0) { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
       stall = await page.evaluate(() => { const out = []; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected) continue;
-        const nm = a.animationName || a.id || '動き（script）', who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
+        const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）',   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
+        who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
         const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return out }).catch(() => null) }
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
