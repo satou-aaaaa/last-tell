@@ -2368,7 +2368,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.6';
+const APP_VERSION='0.97.7';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2424,7 +2424,11 @@ const LT={_h:{},errors:0,
       let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
       if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
-setInterval(()=>LT.sweep(),250);
+// 見張りは画を描いた直後に動かす（v0.97.7：途中で呼ぶと getAnimations が画面全体のスタイルの計算をその場でさせ、手の始まりなどで1回 40ms 以上かかっていた）
+// 描く前の予約は1つだけ（画面を隠している間は requestAnimationFrame が止まるので、戻ったときに何本もたまらないように。CodeRabbit PR #121）
+// Safari で画が止まると requestAnimationFrame も来ない（v0.97.7 CI：WebKit で見張りが動かず、止まった動きが残った）。予約から 500ms 来なければ、待たずに見張る
+let ltSwAt=0;
+setInterval(()=>{const now=performance.now();if(!ltSwAt){ltSwAt=now;requestAnimationFrame(()=>setTimeout(()=>{ltSwAt=0;LT.sweep()},0))}else if(now-ltSwAt>=500)LT.sweep()},250);
 
 // ===== 英語版：画面に出る日本語を、表示の直前に英語へ置きかえる =====
 // ゲームの中の文字列はそのまま（勝敗の処理に影響しない）。画面の文字、属性、キャンバスの文字だけを訳す。
@@ -12228,7 +12232,12 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
           // 山どうしが重ならない先を選ぶ。どこもなければ、札を隠すよりは山どうしが重なるほうを選ぶ
           let ds=d2.filter(d=>!hit(d,ot));if(!ds.length)ds=d2.filter(d=>!hit(d,[]));if(!ds.length)continue;const d=ds[0];
         const sp=m.closest('.spot'),kx=sp&&sp.offsetWidth?R(sp).width/sp.offsetWidth:1,[x0,y0]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
-        m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
+        m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;
+        // 卓は3Dで倒してあるので、席の幅から出した倍率（kx）は奥行きで変わり、ずらした量が足りないことがある（v0.97.7 CI：6人卓の横で 9px 足りず、隣の見せた札の角に乗った）。
+        // ずらしたあとの場所を測って、狙った場所との差を2回まで足し直す
+        const goal=a.l+d,bx=()=>{const q=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(R(m).width>2)q.push(R(m));return q.length?Math.min(...q.map(r=>r.left)):null};
+        for(let it=0;it<2;it++){const nl=bx();if(nl==null)break;const res=goal-nl;if(Math.abs(res)<=1)break;const [x1]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);m.style.translate=`${(x1+res/(kx||1)).toFixed(1)}px ${y0}px`}
+        a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
   // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
   if(moved){const v=document.querySelector('#table .vfres');if(v&&v._place)try{v._place()}catch(e){}
     // 席番号も、動いた札の横に置き直す（v96.4 レビュー：WebKit で席番号「3」「4」が場札に乗った）

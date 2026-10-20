@@ -61,7 +61,7 @@ async function run({ browser, file, quick, baseline }) {
     const { ctx, page } = await H.openGame(browser, file, { fast: 20 });
     try {
       await cdp(page);
-      await page.evaluate(() => { window.__sw = []; const f = LT.sweep; LT.sweep = function () { try { getComputedStyle(document.documentElement).opacity } catch (e) {} const t = performance.now(), at = this._swAt; const r = f.apply(this, arguments); if (this._swAt !== at) __sw.push(performance.now() - t); return r } });   // 間引いた回は数えない。先にスタイルの計算を済ませておく（getAnimations はたまった計算を先に行い、それは次のコマでも要る分なので、見張りの重さに入れない）
+      await page.evaluate(() => { window.__sw = []; const f = LT.sweep; LT.sweep = function () { try { if (performance.now() - (this._swAt || 0) >= 240) document.getAnimations() } catch (e) {} const t = performance.now(), at = this._swAt; const r = f.apply(this, arguments); if (this._swAt !== at) __sw.push(performance.now() - t); return r } });   // 間引いた回は数えない。先にスタイルの計算を済ませておく（v0.97.7：前は getComputedStyle(根元) で済ませていたが、それは根元の分しか計算しないので、画面全体の計算が見張りの重さに入っていた。同じ getAnimations を先に呼んで済ませる。getAnimations はたまった計算を先に行い、それは次のコマでも要る分なので、見張りの重さに入れない）
       await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);
       await H.startBot(page, { policy: 'mix', maxHands: quick ? 4 : 10 });
       await H.runUntilDone(page, { timeoutMs: 180000, stallMs: 40000 });
