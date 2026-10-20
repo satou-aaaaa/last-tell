@@ -2368,7 +2368,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.1';
+const APP_VERSION='0.97.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -6819,9 +6819,12 @@ function potPush(){camSnapWide();
     const sx=(pr.width/190).toFixed(3),sy=(pr.height/78).toFixed(3);g.style.transformOrigin='0 0';
     const r=tgt?tgt.getBoundingClientRect():pr,dx=r.left+r.width/2-pr.left-pr.width/2,dy=r.top+r.height/2-pr.top-pr.height/2,n=Math.hypot(dx,dy)||1;
     const fx=r.left+r.width/2-pr.left-.55*95,fy=r.top+r.height/2-pr.top-.55*39;
+    let landed=false;const h0=S.handNo,land1=()=>{if(landed)return;landed=true;if(S.handNo!==h0){g.remove();if(--left===0)S.potPushing=false;return}land()};   // 次のハンドが始まっていたら、新しいポットには触らない
     const land=()=>{g.remove();if(wp&&S.wonPile===W){wp.classList.remove('wait');if(wonNeat(i))setTimeout(()=>{if(S.wonPile===W)wonRestack(i)},900*SPEED())}if(--left===0)done()};
     g.animate([{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
-      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land})}
+      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land1;
+    // Safari で動きの終わり（onfinish）が来ないことがあり、ポットの額が出たまま残った（v0.97.1 PR #113 の CI：WebKit 第2章 PC で4秒たっても送り中）。時間でも終える（v0.78 の lpKick と同じ考え）
+    setTimeout(land1,750*SPEED()+300)})}
 function potRect(){const e=$('potChips');const r=e&&e.getBoundingClientRect();return r&&r.width?r:null}
 
 /* ---------- 音（WebAudio・最初はオフ）：場面で変わる音楽をコードで作る（案A・research/音楽_実装仕様.md） ---------- */
