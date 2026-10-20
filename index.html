@@ -2428,7 +2428,7 @@ const LT={_h:{},errors:0,
 // 描く前の予約は1つだけ（画面を隠している間は requestAnimationFrame が止まるので、戻ったときに何本もたまらないように。CodeRabbit PR #121）
 // Safari で画が止まると requestAnimationFrame も来ない（v0.97.7 CI：WebKit で見張りが動かず、止まった動きが残った）。予約から 500ms 来なければ、待たずに見張る
 let ltSwAt=0;
-setInterval(()=>{const now=performance.now();if(!ltSwAt){ltSwAt=now;requestAnimationFrame(()=>setTimeout(()=>{ltSwAt=0;LT.sweep()},0))}else if(now-ltSwAt>500)LT.sweep()},250);
+setInterval(()=>{const now=performance.now();if(!ltSwAt){ltSwAt=now;requestAnimationFrame(()=>setTimeout(()=>{ltSwAt=0;LT.sweep()},0))}else if(now-ltSwAt>=500)LT.sweep()},250);
 
 // ===== 英語版：画面に出る日本語を、表示の直前に英語へ置きかえる =====
 // ゲームの中の文字列はそのまま（勝敗の処理に影響しない）。画面の文字、属性、キャンバスの文字だけを訳す。
