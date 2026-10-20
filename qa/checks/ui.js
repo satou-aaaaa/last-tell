@@ -304,14 +304,14 @@ async function shoot(browser, file, scene, vp, dir) {
     const plates = await page.evaluate(() => { try { const tb = document.getElementById('table'); if (!tb || !tb.offsetParent || (document.getElementById('game') || {}).hidden) return null; const miss = []; (S.players || []).forEach((p, i) => { if (!i || !p || p.out) return; const e = document.getElementById('plate' + i); let op = 1;
       for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity;
       const r = e && e.getBoundingClientRect(), ok = e && e.offsetParent && !e.hidden && getComputedStyle(e).visibility !== 'hidden' && r.width > 2 && r.height > 2 && op > .05 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
-      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return null } }).catch(() => null);
-    const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => ({ a, ct: a.currentTime })); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return -1 } }).catch(() => -1);
-    let stall = null;
-    if (stallRem >= 0) { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
+      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return { err: String(e.message || e).slice(0, 80) } } }).catch(e => ({ err: String(e.message || e).slice(0, 80) }));   // 検査の失敗は ❌ にする（null は場面が対象外のときだけ。CodeRabbit PR #116）
+    const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => ({ a, ct: a.currentTime })); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return 'err:' + String(e.message || e).slice(0, 80) } }).catch(e => 'err:' + String(e.message || e).slice(0, 80));
+    let stall = typeof stallRem === 'string' ? { err: stallRem.slice(4) } : null;
+    if (typeof stallRem === 'number') { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
       stall = await page.evaluate(() => { const out = []; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected) continue;
         const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）',   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
         who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
-        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return out }).catch(() => null) }
+        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return out }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
     // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
@@ -393,10 +393,11 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
       if (bad.length) bad.push(`［${x.dbg}］`) }
     items.push({ id: `ui:handend-state:${r.scene}:${r.vp}`, title: `ハンドの終わりにポットが勝った人へ渡り、勝ったら「あなたの勝ち」が出る（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : wait > 1500 ? 'warn' : 'ok',
       detail: (bad.length ? bad.join('・') + '（4秒待っても、そろわなかった）' + why : wait > 1500 ? `ポットが渡り終わるまで ${wait}ms 待った${why}（1.5秒より長い。Mac の Safari でももたついて見える見込み）［${x.dbg}］` : wait >= 200 ? `撮る前に ${wait}ms 待った` : '') + ((r.errors || []).length ? '。ページのエラー：' + r.errors.slice(0, 2).join(' / ').slice(0, 160) : '') }) }
-  for (const r of res) if (r.plates) items.push({ id: `ui:plates:${r.scene}:${r.vp}`, title: `座っている相手の名札が全員見えている（${r.scene}・${r.vp}）`, status: r.plates.length ? 'fail' : 'ok', detail: r.plates.length ? '見えない名札：' + r.plates.join('、') : '' });
+  for (const r of res) if (r.plates) items.push({ id: `ui:plates:${r.scene}:${r.vp}`, title: `座っている相手の名札が全員見えている（${r.scene}・${r.vp}）`, status: r.plates.err || r.plates.length ? 'fail' : 'ok', detail: r.plates.err ? '測れなかった：' + r.plates.err : r.plates.length ? '見えない名札：' + r.plates.join('、') : '' });
   // 止まった動き：ゲームが時間で終わらせるはずの動き（script の動き＝LT.anim、CSS の vfIn・ltFlop/ltTurn/ltBack・ltDeal）が止まっていたら ❌、ほかの CSS の動きは ⚠️（v0.97.3）
   const STALL_OWN = /^(動き（script）|vfIn|ltFlop|ltTurn|ltBack|ltBackT|ltDeal|llDealBack2?)←/;
-  for (const r of res) if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
+  for (const r of res) if (r.stall && r.stall.err) items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: 'fail', detail: '測れなかった：' + r.stall.err });
+  else if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
     items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length ? 'warn' : 'ok',
       detail: r.stall.length ? '1秒以上進まない動き：' + r.stall.slice(0, 5).join('、') + (r.stall.length > 5 ? ` ほか${r.stall.length - 5}` : '') + (own.length ? '（ゲームが時間で終えるはずの動き。LT.anim / LT.cssDone を通っていない）' : '') : '' }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
