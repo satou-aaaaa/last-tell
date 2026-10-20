@@ -29,8 +29,10 @@ for (const d of dirs) {
     for (const it of g.items) { it.id = 'webkit:' + it.id; it.title = 'WebKit：' + it.title; if (it.shot) it.shot = it.shot.replace(/([^/]+)$/, 'WebKit_$1');
       if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:(stall|shown|cover):/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail }
       // WebKit だけの修正待ち：known.json に「webkit:」つきの名前で入れたものは、ここで 🟡 にする（run_all は「webkit:」をつける前に known.json を見るので当たらなかった。v0.97.5 CI）
-      const kw = knownW[it.id];
-      if (kw && it.status === 'fail') { it.status = 'known'; it.detail += `（修正待ち：${kw}）` } else if (kw && it.status === 'ok') { it.fixed = true; it.detail += '（直った。known.json から外してよい）' } }
+      //   「webkit:」つきは期限（「期限 YYYY-MM-DD」）が要る。期限が無い・過ぎたものは 🟡 にしない（❌・⚠️ のまま。CodeRabbit PR #119）
+      const kw = knownW[it.id], kwExp = kw && (String(kw).match(/期限\s*(\d{4}-\d{2}-\d{2})/) || [])[1], kwOk = kwExp && kwExp >= new Date().toISOString().slice(0, 10);
+      if (kw && (it.status === 'fail' || it.status === 'warn')) { if (kwOk) { it.status = 'known'; it.detail += `（修正待ち：${kw}）` } else it.detail += kwExp ? `（known.json の期限 ${kwExp} が過ぎた）` : '（known.json に期限がない）' }
+      else if (kw && it.status === 'ok') { it.fixed = true; it.detail += '（直った。known.json から外してよい）' } }
   }
   for (const g of r.groups) {
     done.add(g.key + (r.part ? '#' + r.part : ''));
