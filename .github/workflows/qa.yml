@@ -259,7 +259,7 @@ jobs:
           body="$(head -c 60000 qa-summary/summary.md)
 
           実行: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
-          n=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\" and (.pull_request | not)) | .number" | head -1)
+          n=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\" and (.pull_request | not) and any(.labels[]?; .name == \"ci-failure\")) | .number" | head -1)
           if [ -n "$n" ]; then gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" -f body="$body" >/dev/null
           else gh api "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" -f 'labels[]=ci-failure' >/dev/null; fi
       - name: main で ✅ のときは開いている Issue を閉じる
@@ -268,7 +268,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           title="main の QA が ❌"
-          n=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\" and (.pull_request | not)) | .number" | head -1)
+          n=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\" and (.pull_request | not) and any(.labels[]?; .name == \"ci-failure\")) | .number" | head -1)
           if [ -n "$n" ]; then
             gh issue close "$n" -R "$GITHUB_REPOSITORY" --reason completed \
               --comment "✅ になったので閉じます: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
