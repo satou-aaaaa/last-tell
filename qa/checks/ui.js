@@ -132,10 +132,11 @@ const INSPECT = `(() => {
       const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
       const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
       if (w > 4 && h > 4 && (!chip || w * h > .25 * a.width * a.height)) { out.push({ kind: '重なり', el: desc(el), by: desc(o) + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
-    // 一覧の足し忘れに備えて：勝ち負けの帯の真ん中と四隅で、押せる部品が見えていたら ❌（帯は pointer-events:none なので、帯の下の部品が返る）（v0.97.5 レビュー：一覧に無かった 💬 揺さぶるが帯の頭に乗った）
+    // 一覧の足し忘れに備えて：勝ち負けの帯と、見えている押せる部品すべてを箱で比べ、1px でも重なれば ❌（v0.97.5 レビュー：一覧に無かった 💬 揺さぶるが帯の頭に乗った。点で見ると細い重なりを外す：CodeRabbit PR #120）
     for (const el of document.querySelectorAll('.vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect(); if (a.width < 4) continue;
-      for (const [fx, fy] of [[.5, .5], [.08, .2], [.92, .2], [.08, .8], [.92, .8]]) { const t = document.elementFromPoint(a.left + a.width * fx, a.top + a.height * fy), bt = t && !el.contains(t) && t.closest('button, [role=button], a[href]');
-        if (bt) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯の上に押せる部品）' }); break } } }
+      for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
+        const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 1 && h > 1) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
