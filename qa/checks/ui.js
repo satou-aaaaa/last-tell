@@ -84,6 +84,8 @@ const INSPECT = `(() => {
   const els = [...scope.querySelectorAll(sel)].filter(el => shown(el) && vis(el) && !el.closest('#log, .log, details:not([open]) > :not(summary)'));
   const imp = els.filter(el => !el.closest('[aria-hidden=true]'));
   // 席の透明な入れ物（.spot や .hand の枠）と卓の布（#felt）は、傾いた卓では手前に当たることがあるが、見た目は何も隠さない（v0.96.2：第14章の横で、見せた札が隣の席の枠に、脱落した人の名札が #felt に「隠れ」と出た）
+  const effOp = t => { let o = 1; for (let e = t; e && e.nodeType === 1; e = e.parentElement) o *= +getComputedStyle(e).opacity; return o };
+  const painted0 = t => effOp(t) < 0.05 || getComputedStyle(t).visibility !== 'visible';
   const seatBox = t => t.id === 'felt' || !!t.closest('#felt .spot') && !t.closest('.card, .mystack, .chipwrap, .won-pile, .muckcard, .chip, .col, svg, img');
   for (const el of imp) {
     const r = el.getBoundingClientRect();
@@ -95,10 +97,12 @@ const INSPECT = `(() => {
     const clip = (() => { for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowY) && e.scrollHeight > e.clientHeight + 2) return e.getBoundingClientRect() } return null })();
     const pts = [[.5, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]].map(([a, b]) => [r.left + r.width * a, r.top + r.height * b]).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < Hh && (!clip || (y >= clip.top && y <= clip.bottom && x >= clip.left && x <= clip.right)));
     let cov = 0, by = null;
-    for (const [x, y] of pts) { const t = document.elementFromPoint(x, y); if (t && !el.contains(t) && !t.contains(el) && !seatBox(t)) { cov++; by = by || t } }
+    // 透明（opacity 0 の祖先がある）部品は何も隠さないので、その下を見る（v0.97.0 PR #111：第14章 PC で、写真では見えている場札 4♦ が div.card.back の下と出た）
+    for (const [x, y] of pts) { const t = document.elementsFromPoint(x, y).find(t => !painted0(t)); if (t && !el.contains(t) && !t.contains(el) && !seatBox(t)) { cov++; by = by || t } }
     if (pts.length >= 3 && cov >= 3) {
       const b = by.closest('button,[role=dialog],.card,[id]') || by;
-      out.push({ kind: '隠れ', el: desc(el), by: desc(b) });
+      const q = b.getBoundingClientRect(), home = b.closest('[id]');
+      out.push({ kind: '隠れ', el: desc(el), by: desc(b), at: (home && home !== b ? '#' + home.id + ' の中、' : '') + [q.left, q.top, q.width, q.height].map(Math.round).join(',') + '・不透明度 ' + effOp(b).toFixed(2) });
     }
     // 文字が切れている（ボタン）
     if (el.tagName === 'BUTTON' && (el.scrollWidth > el.clientWidth + 3) && /hidden|clip/.test(getComputedStyle(el).overflow)) out.push({ kind: '文字切れ', el: desc(el) });
@@ -291,6 +295,7 @@ async function shoot(browser, file, scene, vp, dir) {
       const vis = e => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
       return { iWon: me.won > 0, sd: S.street === 'showdown' && !S.board2, inIt: !me.folded && !me.out, pot: S.pot || 0, won: S.players.reduce((a, p) => a + (p.won || 0), 0),
         vf: !!v, vfOn: !!(v && vis(v) && vr.width > 2 && vr.top >= 0 && vr.bottom <= innerHeight && vr.left >= 0 && vr.right <= innerWidth), vfTop: v ? v.style.top : '', vfOut: !!(v && v.classList.contains('out')), vfDone: !!(S.vf && S.vf.res),
+        vfWin: !!(v && v.classList.contains('win')), vfH: v ? (v.dataset.h || '') : '', hand: S.handNo, fb: !!(typeof CFG !== 'undefined' && CFG.flashback), vfText: v ? v.textContent.slice(0, 40) : '',
         chips: pc ? [...pc.querySelectorAll('.chip')].filter(vis).length : -1, sign: vis(ps) && /\d/.test((ps && ps.textContent) || ''), quiet: typeof VF !== 'undefined' && VF.quiet ? !!VF.quiet() : null,
         dbg: `pushing=${!!S.potPushing} potmove=${document.querySelectorAll('#table .potmove').length} wonPile=${document.querySelectorAll('#table .won-pile').length}${S.wonPile ? '(' + Object.keys(S.wonPile.amt).join(',') + ')' : ''} anim=${document.getAnimations ? document.getAnimations().map(a => a.playState).join(',').slice(0, 60) : '?'} potPile=${S.potPile ? S.potPile.chips : '-'}` } }).catch(e => ({ err: String(e.message).slice(0, 80) })) : null;
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
@@ -336,7 +341,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     all.push(...keys);
     const fresh = r.issues.filter((x, i) => !known.has(keys[i]));
     const old = r.issues.length - fresh.length;
-    const txt = x => `${x.kind}: ${x.el}${x.by ? ' ← ' + x.by : ''}`;
+    const txt = x => `${x.kind}: ${x.el}${x.by ? ' ← ' + x.by : ''}${x.at ? '（' + x.at + '）' : ''}`;   // 隠した部品の場所と不透明度も出す（PR #111：写真では隠れていない札が「隠れ」と出て、何が隠したか分からなかった）
     const status = r.errors.length ? 'fail' : fresh.length ? (isNewScene(r.scene) ? 'warn' : 'fail') : old ? 'known' : 'ok';
     items.push({ id: `ui:${r.scene}:${r.vp}`, title: `画面 ${r.scene}（${r.vp}）`, status,
       detail: (r.errors.length ? 'エラー: ' + r.errors[0] + '。' : '') + (fresh.length && isNewScene(r.scene) ? '（新しく撮り始めた場面なので ⚠️。基準を書き直すと次から ❌）' : '') + (fresh.length ? '新しい問題: ' + fresh.slice(0, 4).map(txt).join('、') + (fresh.length > 4 ? ` ほか${fresh.length - 4}件` : '') : r.issues.length ? `前からある問題 ${old}件（${r.issues.slice(0, 2).map(txt).join('、')}）` : '重なり・はみ出し・隠れなし'),
@@ -356,6 +361,10 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   for (const r of res) if (r.hs) { const x = r.hs, bad = [];
     if (x.err) bad.push('状態を読めなかった：' + x.err);
     else { if (x.iWon && !x.quiet && !x.vfOn && !x.vfOut) bad.push(x.vf ? `「あなたの勝ち」が画面の外（top ${x.vfTop}）` : '「あなたの勝ち」が出ていない' + (x.vfDone ? '（出す処理は通った）' : ''));   // 静かな場面（第7章の最後など。VF.quiet）は出さない仕様
+      // 前のハンドの札が残っていないか（v0.97.0 PR #111：第14章で、負けたハンドに前のハンドの「あなたの勝ち」が残っていた）
+      if (x.vfOn && !x.vfOut && (x.vfWin !== x.iWon || (x.vfH && x.vfH !== String(x.hand)))) bad.push(`前のハンドの「${x.vfText}」が残っている（このハンド ${x.hand}・札 ${x.vfH || '?'}・このハンドで勝った ${x.iWon}）`);
+      // 自分が最後まで残った勝負は、勝っても負けても次のハンドまで出す仕様
+      if (x.sd && x.inIt && !x.iWon && !x.quiet && !x.fb && !x.vfOn && !x.vfOut) bad.push('最後まで残って負けたのに「あなたの負け」が出ていない' + (x.vfDone ? '（出す処理は通った）' : ''));
       if (x.won > 0 && x.chips > 0) bad.push(`ポットのチップ ${x.chips}枚が卓のまん中に残っている`);
       if (x.won > 0 && x.sign) bad.push('ポットの額が出たまま');
       if (bad.length) bad.push(`［${x.dbg}］`) }
