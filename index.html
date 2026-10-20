@@ -2402,7 +2402,18 @@ const LT={_h:{},errors:0,
   wrap(n,fn){if(typeof fn!=='function'||fn.__lt)return fn;const L=this;
     const w=function(...a){L.emit(n+':before',...a);const r=fn.apply(this,a);
       if(r&&typeof r.then==='function')return r.then(v=>{L.emit(n,...a);return v});L.emit(n,...a);return r};
-    w.__lt=n;return w}
+    w.__lt=n;return w},
+  // 動き（Web Animations）は必ずこれで動かす（v0.97.3：Safari では onfinish が来ないこと・動きが途中で止まることがある）。
+  // done は「終わった合図」と「時間（delay＋長さ＋300ms）」の早いほうで1回だけ呼ぶ。時間で来たときは動きも終わりの形にする。
+  // 止めた（cancel）動きの done は呼ばない（onfinish と同じ）。build.py の lint が、これ以外で動きの関数を直接呼ぶ所を止める。
+  anim(el,kf,opts,done){const a=el.animate(kf,opts);/*lt-anim-ok*/let fired=false;const fin=()=>{if(fired)return;fired=true;if(done)try{done()}catch(e){console.error('[LT.anim]',e)}};
+    a.onfinish=fin;/*lt-anim-ok*/a.oncancel=()=>{fired=true};const o=typeof opts==='number'?{duration:opts}:(opts||{}),it=o.iterations==null?1:o.iterations;
+    if(isFinite(it)){const ms=(+o.delay||0)+(+o.duration||0)*it+(+o.endDelay||0)+300;
+      setTimeout(()=>{if(fired)return;try{if(a.playState!=='idle'&&a.playState!=='finished')a.finish()}catch(e){}if(a.playState!=='idle')fin()},ms)}
+    return a},
+  // CSS の animation（fill both で出てくる動き：vfIn・ltFlop/ltTurn・ltDeal）も、ms たっても動いていたら終わりの形にする
+  cssFinish(el){try{if(!el||!el.isConnected||!el.getAnimations)return;el.getAnimations().forEach(a=>{const t=a.effect&&a.effect.getComputedTiming();if(t&&isFinite(t.endTime)&&a.playState==='running')a.finish()})}catch(e){}},
+  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)}
 };
 
 // ===== 英語版：画面に出る日本語を、表示の直前に英語へ置きかえる =====
@@ -4922,7 +4933,7 @@ function angleCall(i,kind){
     const src=$('spot'+i)&&$('spot'+i).querySelector('.mystack'),to=potRect(),tb=$('table').getBoundingClientRect();
     if(src&&to){const r=src.getBoundingClientRect();const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(100000,false);
       el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
-      el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${(to.left-r.left)*.45}px),calc(-50% + ${(to.top-r.top)*.45}px))`,opacity:.2}],{duration:700*SPEED(),fill:'forwards'}).onfinish=()=>el.remove()}
+      LT.anim(el,[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${(to.left-r.left)*.45}px),calc(-50% + ${(to.top-r.top)*.45}px))`,opacity:.2}],{duration:700*SPEED(),fill:'forwards'},()=>el.remove())}
   }
 }
 function angleRuling(i,kind){
@@ -6673,7 +6684,7 @@ function motion(el,kind,cool){
   const K={raise:[[0,0,1],[7,0,1.08],[0,0,1]],allin:[[0,0,1],[9,0,1.12],[2,0,1.04],[0,0,1]],call:[[0,0,1],[3,0,1],[0,0,1]],check:[[0,0,1],[2,0,1],[0,0,1]],
     fold:[[0,0,1],[5,-4,.98],[0,0,1]],win:cool?[[0,0,1],[4,0,1],[0,0,1],[3,0,1],[0,0,1]]:[[0,0,1],[-12,0,1],[0,0,1],[-7,0,1],[0,0,1]]}[kind];
   if(!K)return;
-  svg.animate(K.map(([y,r,s])=>({transform:`translateY(${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='win'?900:kind==='allin'?800:500,easing:'ease-out'});
+  LT.anim(svg,K.map(([y,r,s])=>({transform:`translateY(${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='win'?900:kind==='allin'?800:500,easing:'ease-out'});
 }
 function placeDealer(){
   const d=$('dbtn'),sp=$('spot'+S.dealer);
@@ -6704,8 +6715,8 @@ function potFly(from,amount){
     el.style.left=(from.left+from.width/2-tb.left)+'px';el.style.top=(from.top+from.height/2-tb.top)+'px';
     $('table').appendChild(el);
     const dx=r.left+r.width/2-from.left-from.width/2,dy=r.top+r.height/2-from.top-from.height/2;
-    el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.7)`,opacity:.2}],
-      {duration:700*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
+    LT.anim(el,[{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.7)`,opacity:.2}],
+      {duration:700*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'},()=>el.remove());
   });
 }
 function potCall(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
@@ -6723,8 +6734,8 @@ function gatherBets(){camSnapWide();
     el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';
     $('table').appendChild(el);src.style.visibility='hidden';
     const lx=tx+(Math.random()*2-1)*to.width*.3-r.left-r.width/2,ly=ty+(Math.random()*2-1)*to.height*.25-r.top-r.height/2;S.potLand=(S.potLand||0)+1;const h0=S.handNo;
-    el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`,offset:.85},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly-5}px))`,offset:.93},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`}],
-      {duration:620*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>{el.remove();S.potLand=Math.max(0,(S.potLand||0)-1);if(!S.potLand&&S.handNo===h0&&!S.handOver)potGrow(potTotal()-S.players.reduce((a,p)=>a+p.bet,0))};
+    LT.anim(el,[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`,offset:.85},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly-5}px))`,offset:.93},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`}],
+      {duration:620*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'},()=>{el.remove();S.potLand=Math.max(0,(S.potLand||0)-1);if(!S.potLand&&S.handNo===h0&&!S.handOver)potGrow(potTotal()-S.players.reduce((a,p)=>a+p.bet,0))});
   });
 }
 // 山はハンドごとに作り直す。乱数はハンド番号から作るので、描き直しても形が変わらない
@@ -6746,7 +6757,7 @@ function potGrow(pot){
     if(h===1&&potRnd()<.35)el.style.transform=`rotate(${(potRnd()*30-15).toFixed(0)}deg)`;
     pile.appendChild(el);news.push(el);have+=h}
   P.chips=have;potSignSoon();
-  if(!reducedMotion())news.forEach((el,i)=>el.animate([{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260*SPEED(),delay:i*25*SPEED(),easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
+  if(!reducedMotion())news.forEach((el,i)=>LT.anim(el,[{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260*SPEED(),delay:i*25*SPEED(),easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
 // v71（改善提案§1）：場札の置き場（5枚の列ごと。1枚でも配ったら、まだ配っていない場所にもチップを置かない）。札は卓から立てて見せる・めくる時に少し浮くので、横は列の箱・縦は札の上下で見る
 // （めくる途中で細くなっている札は使わない）
 function boardRects(){return['boardCards','board2'].map(id=>$(id)).filter(e=>e&&!e.hidden&&e.offsetParent&&e.querySelector('.card:not(.slot)')).map(e=>{const r=e.getBoundingClientRect(),ks=[...e.children].map(c=>c.getBoundingClientRect()),mw=Math.max(0,...ks.map(c=>c.width)),cs=ks.filter(c=>c.width>mw*.8);
@@ -6794,8 +6805,8 @@ function wonRestack(i,quick){const W=S&&S.wonPile;if(!W||W.done[i])return;W.done
     // 塔の描き直しで山が消えても動きが続くよう、卓の上の層に写してから吸い込ませる
     [...pile.children].forEach((c,k)=>{const r=c.getBoundingClientRect();if(!r.width)return;const f=document.createElement('div');f.className='potfly wonfly';f.innerHTML=`<span class="chip ${[...c.classList].filter(x=>/^c\d$/.test(x)).join(' ')}"></span>`;
       f.style.left=(r.left+r.width/2-tb.left)+'px';f.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(f);
-      f.animate([{transform:'translate(-50%,-50%) '+(c.style.transform||''),opacity:1},{transform:`translate(calc(-50% + ${(tx-r.left-r.width/2).toFixed(1)}px),calc(-50% + ${(ty-r.top-r.height/2).toFixed(1)}px))`,opacity:.15}],
-        {duration:450*SPEED(),delay:k*30*SPEED(),easing:'ease',fill:'both'}).onfinish=()=>f.remove()})}
+      LT.anim(f,[{transform:'translate(-50%,-50%) '+(c.style.transform||''),opacity:1},{transform:`translate(calc(-50% + ${(tx-r.left-r.width/2).toFixed(1)}px),calc(-50% + ${(ty-r.top-r.height/2).toFixed(1)}px))`,opacity:.15}],
+        {duration:450*SPEED(),delay:k*30*SPEED(),easing:'ease',fill:'both'},()=>f.remove())})}
   if(pile)pile.remove();if(S&&S.players)render()}
 // 次のハンドの最初（配る前）：崩れた山を全部塔へ戻す
 function wonClearAll(){const W=S&&S.wonPile;if(W)Object.keys(W.amt).forEach(i=>{if(!W.done[i])wonRestack(+i)});
@@ -6821,8 +6832,8 @@ function potPush(){camSnapWide();
     const fx=r.left+r.width/2-pr.left-.55*95,fy=r.top+r.height/2-pr.top-.55*39;
     let landed=false;const h0=S.handNo,land1=()=>{if(landed)return;landed=true;if(S.handNo!==h0){g.remove();if(--left===0&&(!S.wonPile||S.wonPile===W))S.potPushing=false;return}land()};   // 次のハンドが始まっていたら、新しいポットには触らない
     const land=()=>{g.remove();if(wp&&S.wonPile===W){wp.classList.remove('wait');if(wonNeat(i))setTimeout(()=>{if(S.wonPile===W)wonRestack(i)},900*SPEED())}if(--left===0)done()};
-    g.animate([{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
-      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land1;
+    LT.anim(g,[{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
+      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'},land1);
     // Safari で動きの終わり（onfinish）が来ないことがあり、ポットの額が出たまま残った（v0.97.1 PR #113 の CI：WebKit 第2章 PC で4秒たっても送り中）。時間でも終える（v0.78 の lpKick と同じ考え）
     setTimeout(land1,750*SPEED()+300)})}
 function potRect(){const e=$('potChips');const r=e&&e.getBoundingClientRect();return r&&r.width?r:null}
@@ -7226,8 +7237,8 @@ function pushChips(i){
   const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(p.bet,false,true);
   el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
   const dx=(to.left+to.width/2-r.left-r.width/2)*.55,dy=(to.top+to.height/2-r.top-r.height/2)*.55;
-  el.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.25},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,opacity:.9}],
-    {duration:800*SPEED(),easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'}).onfinish=()=>setTimeout(()=>el.remove(),200);
+  LT.anim(el,[{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.25},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,opacity:.9}],
+    {duration:800*SPEED(),easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'},()=>setTimeout(()=>el.remove(),200));
 }
 // 3. 大事な場面の持ち時間。第1〜3章は時間が切れても自動では降りない（難しさを変えないため）
 const Clock=(()=>{
@@ -8333,7 +8344,7 @@ function tapBlocked(p,i){
   return ['vs','help','setPanel','stackZoom','moreDlg','review'].some(id=>$(id)&&!$(id).hidden)}
 function tapMove(i,kind){const b=$('bust'+i),svg=b&&b.querySelector('.av');const K=TAP_MOVE[kind];
   if(!svg||!svg.animate||!K||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  svg.animate(K.map(([y,r,s,x])=>({transform:`translate(${x}%,${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='nod'?900:1400,easing:'ease-in-out'})}
+  LT.anim(svg,K.map(([y,r,s,x])=>({transform:`translate(${x}%,${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='nod'?900:1400,easing:'ease-in-out'})}
 function tapSay(p,line){if(!line)return;p.say={seq:(S.saySeq=(S.saySeq||0)+1),act:'',line,talk:true,tap:true};render()}
 // あなたの「ナイスハンド」は、自分の手の上に小さく出す
 function tapMe(line){const t=$('table');let m=$('tapMe');if(!m){m=document.createElement('div');m.id='tapMe';m.className='tapme';m.setAttribute('aria-live','polite');t.appendChild(m)}
@@ -10894,7 +10905,7 @@ function knockAt(pt,st,opt){
   const gap=(st.k==='fist'?230:st.k==='palm'?260:190)*sp;
   const ring=k=>{const r=document.createElement('div');r.className='knockring';const d=pt.cw*(st.k==='fist'?1.3:st.k==='finger'?.6:.95);
     r.style.width=r.style.height=d+'px';r.style.transform=`translate(${pt.x-d/2}px,${pt.y-d/2}px)`;L.appendChild(r);
-    r.animate([{opacity:.85,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(.25)`},{opacity:0,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(1.5)`}],{duration:460*sp,easing:'ease-out'}).onfinish=()=>r.remove()};
+    LT.anim(r,[{opacity:.85,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(.25)`},{opacity:0,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(1.5)`}],{duration:460*sp,easing:'ease-out'},()=>r.remove())};
   for(let k=0;k<n;k++)setTimeout(()=>{try{Sound.sfx(hard?'knockHard':'knock')}catch(e){}if(!reducedMotion())ring(k)},180*sp+k*gap+gap*.45);
   if(reducedMotion())return;
   const w=Math.max(18,pt.cw*(HAND_W[st.k]||.9)*1.15),h=w*70/(st.k==='finger'?40:st.k==='two'?44:st.k==='knuckle'?50:60);
@@ -10907,7 +10918,7 @@ function knockAt(pt,st,opt){
   const dur=180*sp+n*gap+240*sp,F=[{opacity:0,transform:pos(lift*1.6),offset:0},{opacity:1,transform:pos(lift),offset:180*sp/dur}];
   for(let k=0;k<n;k++){F.push({opacity:1,transform:pos(0),offset:(180*sp+k*gap+gap*.45)/dur});if(k<n-1)F.push({opacity:1,transform:pos(lift),offset:(180*sp+(k+1)*gap)/dur})}
   F.push({opacity:1,transform:pos(lift),offset:(dur-120*sp)/dur},{opacity:0,transform:pos(lift*1.6),offset:1});
-  el.animate(F,{duration:dur,easing:'ease-out'}).onfinish=()=>el.remove();
+  LT.anim(el,F,{duration:dur,easing:'ease-out'},()=>el.remove());
 }
 function knockCheck(i){
   if(!S||!S.players)return;const p=S.players[i];if(!p||p.out||p.sitOut)return;
@@ -10980,8 +10991,8 @@ function muckGather(){
   const r=fxRect(old),c=old.querySelector('.card');const cw=c?c.getBoundingClientRect().width:20;
   if(r){const L=fxLayer(),w=cw*1.1,h=w*70/60,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('palm');L.appendChild(el);
     const P=(x,y)=>`translate(${r.x-w/2+x}px,${r.y-h+y}px) rotate(180deg)`;el.style.transformOrigin='50% 50%';
-    el.animate([{opacity:0,transform:P(0,-h*.6)},{opacity:1,transform:P(0,0),offset:.3},{opacity:1,transform:P(0,-h*.7),offset:.85},{opacity:0,transform:P(0,-h*.9)}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in-out'}).onfinish=()=>el.remove()}
-  const oy=parseFloat((old.style.translate||'').split(' ')[1])||0;old.animate([{opacity:1,translate:`0 ${oy}px`},{opacity:1,translate:`0 ${oy}px`,offset:.3},{opacity:0,translate:`0 ${oy-cw*1.2}px`}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in'}).onfinish=()=>old.remove();
+    LT.anim(el,[{opacity:0,transform:P(0,-h*.6)},{opacity:1,transform:P(0,0),offset:.3},{opacity:1,transform:P(0,-h*.7),offset:.85},{opacity:0,transform:P(0,-h*.9)}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in-out'},()=>el.remove())}
+  const oy=parseFloat((old.style.translate||'').split(' ')[1])||0;LT.anim(old,[{opacity:1,translate:`0 ${oy}px`},{opacity:1,translate:`0 ${oy}px`,offset:.3},{opacity:0,translate:`0 ${oy-cw*1.2}px`}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in'},()=>old.remove());
 }
 /* 降りた人の札（2枚）の今の位置：CPU は席の札、あなたは手元の札 */
 function foldFrom(i){
@@ -11001,7 +11012,7 @@ function foldMuck(i,opt){
   {const f=from[0],w=f.w*.8,h=w*70/44,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('two');L.appendChild(el);
     const cx=from.length>1?(from[0].x+from[1].x+from[1].w)/2:f.x+f.w/2,me=i===0;
     const P=d=>me?`translate(${cx-w/2}px,${f.y+f.h*.35+d}px)`:`translate(${cx-w/2}px,${f.y+f.h*.65-h-d}px) rotate(180deg)`;el.style.transformOrigin='50% 50%';
-    el.animate([{opacity:0,transform:P(f.h*.4)},{opacity:1,transform:P(0),offset:.25},{opacity:1,transform:P(-f.h*(kind==='flick'?.55:.35)),offset:.65},{opacity:0,transform:P(-f.h*.2)}],{duration:(push+mv*.4),easing:'ease-out'}).onfinish=()=>el.remove()}
+    LT.anim(el,[{opacity:0,transform:P(f.h*.4)},{opacity:1,transform:P(0),offset:.25},{opacity:1,transform:P(-f.h*(kind==='flick'?.55:.35)),offset:.65},{opacity:0,transform:P(-f.h*.2)}],{duration:(push+mv*.4),easing:'ease-out'},()=>el.remove())}
   from.forEach((f,k)=>{
     const el=document.createElement('div');el.className='flycard';el.style.width=f.w+'px';
     el.innerHTML=i===0&&opt.flipFrom?cardHTML(p.hand[k],false):cardHTML({},true);L.appendChild(el);
@@ -11012,14 +11023,14 @@ function foldMuck(i,opt){
     const F=[{transform:T(sx,sy,0,1)}];
     if(i===0&&opt.flipFrom)F.push({transform:T(sx,sy,0,1)+' scaleX(0)',offset:.06});
     F.push({transform:T(mx+(kind==='flick'?(dx-sx)*.06:0),my,spin*.6,.85),offset:.38},{transform:T(mx,my,spin,.85),offset:.5},{transform:T(dx,dy,spin+settle,s1),offset:1});
-    el.animate(F,{duration:push+mv+sweep,easing:kind==='place'?'ease-in-out':'cubic-bezier(.3,.7,.3,1)',fill:'forwards'}).onfinish=()=>{el.remove();muckAdd()};
+    LT.anim(el,F,{duration:push+mv+sweep,easing:kind==='place'?'ease-in-out':'cubic-bezier(.3,.7,.3,1)',fill:'forwards'},()=>{el.remove();muckAdd()});
     if(i===0&&opt.flipFrom)setTimeout(()=>{el.innerHTML=cardHTML({},true)},(push+mv+sweep)*.06);
   });
   // ディーラーの手のひら（卓の奥から、札を山へ引き寄せる）
   setTimeout(()=>{const w=tw*1.2,h=w*70/60,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('palm');L.appendChild(el);el.style.transformOrigin='50% 50%';
     const ax=from[0].x+(px-from[0].x)*.3,ay=from[0].y+(py-from[0].y)*.3+from[0].h*.4;
     const P=(x,y)=>`translate(${x-w/2}px,${y-h}px) rotate(180deg)`;
-    el.animate([{opacity:0,transform:P(ax,ay-h*.4)},{opacity:1,transform:P(ax,ay),offset:.2},{opacity:1,transform:P(px,py),offset:.85},{opacity:0,transform:P(px,py-h*.5)}],{duration:sweep*1.15,easing:'ease-in-out'}).onfinish=()=>el.remove()},push+mv*.5);
+    LT.anim(el,[{opacity:0,transform:P(ax,ay-h*.4)},{opacity:1,transform:P(ax,ay),offset:.2},{opacity:1,transform:P(px,py),offset:.85},{opacity:0,transform:P(px,py-h*.5)}],{duration:sweep*1.15,easing:'ease-in-out'},()=>el.remove())},push+mv*.5);
 }
 /* つなぎ：render のあとで、このハンドで新しく降りた／伏せた人を探して動かす */
 function goneText(p){const hide=peekOn()&&!p.peeked;const w=p.mucked&&!p.folded?'伏せた':FOLD_GONE.ja;return hide||!p.hand.length?w:w+'　'+p.hand.map(cardStr).join(' ')}
@@ -11186,7 +11197,7 @@ function ltDealOrder(){const n=S.players.length,o=[];let i=nextIdx(S.dealer,p=>!
       for(let k=0;k<2*n;k++)setTimeout(()=>{if(S===s0&&S.handNo===h0)Sound.sfx('card')},300*SPEED()+k*LT_DEAL())}}catch(e){}
   return r}}
 function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.ltOrder.length)S.ltOrder=ltDealOrder();const now=performance.now(),n=S.ltOrder.length,el=now-S.ltDealAt,end=(2*n)*LT_DEAL()+400;
-  if(el>end){S.ltDealAt=0;return}
+  if(el>end){S.ltDealAt=0;S.ltOrder.forEach(i=>{const h=i===0?$('mine')&&$('mine').querySelector('.hold'):$('spot'+i)&&$('spot'+i).querySelector('.hand');if(h)h.querySelectorAll(':scope > .card').forEach(c=>LT.cssFinish(c))});return}   // 配り終わり：動きが止まっていても終わりの形に（v0.97.3 Safari）
   S.ltOrder.forEach((i,j)=>{const h=i===0?$('mine')&&$('mine').querySelector('.hold'):$('spot'+i)&&$('spot'+i).querySelector('.hand');if(!h)return;
     [...h.querySelectorAll(':scope > .card')].slice(0,2).forEach((c,r)=>{const d=(r*n+j)*LT_DEAL()-el;
       c.style.animation=`ltDeal ${260}ms cubic-bezier(.2,.7,.3,1) ${Math.round(d)}ms both`})})}
@@ -11196,7 +11207,7 @@ function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.lt
   try{if(S&&S.board){if(S.board.length>n0){if(typeof muckAdd==='function')muckAdd()}else if(S.ltBoardFrom===n0)S.ltBoardAt=at}}catch(e){}
   return r}}
 function ltBoardAnim(){if(!S||!S.ltBoardAt||reducedMotion())return;const el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
-    dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;return}
+    dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
   // 動作の重さの改善 案3：札の幅は先に全部測ってから書く（書く→測るをくり返さない）
   const cs=[...$('boardCards').children].map((c,k)=>[c,k]).filter(([c,k])=>!(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back')));
   cs.forEach(([c])=>{if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}});
@@ -11826,8 +11837,7 @@ function llBurn(){if(CFG.flashback||typeof muckAdd!=='function')return;(S.ll=S.l
   if(reducedMotion()||!a||!b||!L||!dk.offsetParent||dk.closest('.off')){muckAdd();return}
   const el=document.createElement('div');el.className='llburn';el.innerHTML=cardHTML({},true);L.appendChild(el);
   const w=a.w,P=(x,y,r)=>`translate(${x-w/2}px,${y}px) rotate(${r}deg)`;el.style.width=w+'px';
-  const an=el.animate([{transform:P(a.x+a.w/2,a.y,0)},{transform:P(b.x+b.w/2,b.y+b.h/2-w*.7,-14)}],{duration:220*Math.max(.6,SPEED()),easing:'ease-out'});
-  an.onfinish=()=>{el.remove();muckAdd()}}
+  LT.anim(el,[{transform:P(a.x+a.w/2,a.y,0)},{transform:P(b.x+b.w/2,b.y+b.h/2-w*.7,-14)}],{duration:220*Math.max(.6,SPEED()),easing:'ease-out'},()=>{el.remove();muckAdd()})}
 // 場札を出す前（本物の順）。リバーのあと（ショーダウンへ）とハンドの終わりは出さない
 LT.on('nextStreet:before',()=>{try{if(S&&!S.handOver&&!S.reveal&&['preflop','flop','turn'].includes(S.street))llBurn()}catch(e){}});
 LT.on('render',()=>{for(const f of [llPrint,llSeats,llTools])try{f()}catch(e){}});
@@ -12473,7 +12483,7 @@ function vfResult(){
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
-  tb.appendChild(d);d._place();setTimeout(()=>{try{if(d.isConnected&&!d.classList.contains('out'))d.style.animation='none'}catch(e){}},600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
+  tb.appendChild(d);d._place();LT.cssDone(d,600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
 setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
   const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
@@ -12716,7 +12726,7 @@ potGrow=function(pot){try{
   [150,700].forEach(t=>setTimeout(()=>{try{const k=document.querySelector('.felt .boardspot > .lltools:not(.off)'),g=$('potSign');if(!k||!g||g.hidden)return;
     const a=g.getBoundingClientRect(),hit=[...k.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=e.getBoundingClientRect();return b.width>2&&a.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom});
     if(hit&&typeof llToolsPlace==='function')llToolsPlace()}catch(e){}try{c35PotTight()}catch(e){}},t*SPEED()));
-  if(!old&&!reducedMotion())news.forEach((el,i)=>el.animate([{transform:'translateY(-8px)',opacity:0},{transform:'none',opacity:1}],{duration:240*SPEED(),delay:i*20*SPEED(),easing:'ease-out',fill:'backwards'}))}catch(e){}};
+  if(!old&&!reducedMotion())news.forEach((el,i)=>LT.anim(el,[{transform:'translateY(-8px)',opacity:0},{transform:'none',opacity:1}],{duration:240*SPEED(),delay:i*20*SPEED(),easing:'ease-out',fill:'backwards'}))}catch(e){}};
 
 // ===== #36：降りた人・見ている人は、こちら（カメラ）ではなく、いま打っている人か場札のほうを見る =====
 LT.on('render',()=>{try{if(!S||!S.players)return;const R=e=>{const r=e&&e.getBoundingClientRect();return r&&r.width?r.left+r.width/2:null};
