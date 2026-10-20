@@ -136,7 +136,7 @@ const INSPECT = `(() => {
     for (const el of document.querySelectorAll('.vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect(); if (a.width < 4) continue;
       for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
         const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
-        if (w > 1 && h > 1) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
+        if (w > 1 && h > 1 && !out.some(o => o.kind === '重なり' && o.el === desc(el) && String(o.by || '').startsWith(desc(bt)))) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
@@ -263,7 +263,7 @@ async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
   // どこで落ちたかを残す（v0.97.6 CI：WebKit で「フリー6人_ハンドの終わり・縦」だけ、撮り直しても4回続けてページが閉じた）
-  let step = '開く', crashed = false; page.on('crash', () => { crashed = true });
+  let step = '開く', crashed = false, closed = false; page.on('crash', () => { crashed = true }); page.on('close', () => { closed = true });
   try {
     await page.evaluate(scene.prep);
     const t0 = Date.now();
@@ -379,7 +379,7 @@ async function shoot(browser, file, scene, vp, dir) {
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
     return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
-    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
+    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
 }
 
