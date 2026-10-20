@@ -2425,7 +2425,9 @@ const LT={_h:{},errors:0,
       if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
 // 見張りは画を描いた直後に動かす（v0.97.7：途中で呼ぶと getAnimations が画面全体のスタイルの計算をその場でさせ、手の始まりなどで1回 40ms 以上かかっていた）
-setInterval(()=>requestAnimationFrame(()=>setTimeout(()=>LT.sweep(),0)),250);
+// 描く前の予約は1つだけ（画面を隠している間は requestAnimationFrame が止まるので、戻ったときに何本もたまらないように。CodeRabbit PR #121）
+let ltSwPending=false;
+setInterval(()=>{if(ltSwPending)return;ltSwPending=true;requestAnimationFrame(()=>setTimeout(()=>{ltSwPending=false;LT.sweep()},0))},250);
 
 // ===== 英語版：画面に出る日本語を、表示の直前に英語へ置きかえる =====
 // ゲームの中の文字列はそのまま（勝敗の処理に影響しない）。画面の文字、属性、キャンバスの文字だけを訳す。

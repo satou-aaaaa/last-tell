@@ -154,8 +154,10 @@ async function shoot(browser, file, vp, dir) {
         await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
         await page.waitForTimeout(400); gapMax = 0;
         const now = await gapParts();   // 元の測定と同じ部品（CodeRabbit PR #119）
-        let moved = 0; base.forEach((a, i) => { const c = now[i]; if (a && c) moved = Math.max(moved, Math.abs(a.x - c.x), Math.abs(a.y - c.y), Math.abs(a.width - c.width), Math.abs(a.height - c.height)) });
-        gapTries.push(`${name} ${Math.round(gapMax)}px（絵の動き ${Math.round(moved)}px）`);
+        // 直す前か後で見つからなかった部品があれば、動きは測れない（0px と出すと「見た目が変わらない」に見える。CodeRabbit PR #121）
+        let moved = 0, incomplete = base.length !== now.length;
+        base.forEach((a, i) => { const c = now[i]; if (!a || !c) { incomplete = true; return } moved = Math.max(moved, Math.abs(a.x - c.x), Math.abs(a.y - c.y), Math.abs(a.width - c.width), Math.abs(a.height - c.height)) });
+        gapTries.push(`${name} ${Math.round(gapMax)}px（絵の動き ${incomplete ? '測れない' : Math.round(moved) + 'px'}）`);
         await page.evaluate(() => document.getElementById('sharpTry').remove());
       }
       gapMax = keep; await page.waitForTimeout(300) }
