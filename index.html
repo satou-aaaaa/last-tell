@@ -2176,8 +2176,6 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 /* 場札・ポットの台（.boardspot・.potzone）の preserve-3d は、むかし立てた金額札のためのもの（今の金額札 #potSign は卓の外）。
    今は要らないので平らにして、卓の板の絵にまとめる。Chromium の見た目は同じ（画面の差 0%） */
 .felt .boardspot,.felt .potzone{transform-style:flat}
-/* 拡大を外した卓（js/52b_felt_flat.js が WebKit・場所のずれるブラウザで付ける）：01_style.css の .felt と同じ大きさ・倒し方に戻す */
-html.feltflat .felt{zoom:1;inset:0;width:auto;height:auto;transform:rotateX(50deg)}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -13062,24 +13060,6 @@ LT.on('render',()=>{try{p6RaiseHand()}catch(e){}});
 // カードのマーク 案C（2026-10-19 satou が A+B+C+D を選択）：4色のトランプを最初からオンにする。
 // 設定で自分で切り替えた人（保存に c4 がある人）はそのまま
 if(SETTINGS.c4===undefined){SETTINGS.c4=true;try{b4Apply()}catch(e){}}
-
-// 卓の中の拡大（01m_style_sharp.css の zoom:3）を、場所がずれるブラウザでは外す（v0.97.4 レビュー）
-//   WebKit（iPhone・Mac の Safari）は zoom:3 の卓の中を、Chromium より小さく上に描き、しかも getBoundingClientRect は描いた所と最大 81px ずれた所を返す。
-//   場札をよける処理（「あなたの勝ち」の帯・チップ・捨て札・見せた札）はこの数字で動くので、描かれた場札に帯や顔がかぶった。
-//   くっきりさより置き場所を優先して、WebKit では拡大を外す（html.feltflat）。ほかのブラウザでも、卓の中に見えない印を置いて
-//   拡大あり・なしで場所が 8px より違えば外す。結果は html の data-felt（zoom / flat）・data-felt-drift（px）・data-felt-why に残す（検査が読む）
-const FELT={done:false,drift:null,
-  webkit:(()=>{try{const u=navigator.userAgent||'';return /AppleWebKit/.test(u)&&!/(Chrome|Chromium|Edg|OPR|SamsungBrowser)\//.test(u)||/(iPhone|iPad|iPod)/.test(u)||navigator.vendor==='Apple Computer, Inc.'}catch(e){return false}})(),
-  set(flat,why){const h=document.documentElement;h.classList.toggle('feltflat',flat);h.dataset.felt=flat?'flat':'zoom';if(why)h.dataset.feltWhy=why},
-  probe(){const f=$('felt');if(!f||!f.offsetParent)return null;const r0=f.getBoundingClientRect();if(r0.width<3||r0.height<3)return null;
-    const p=document.createElement('div');p.style.cssText='position:absolute;left:30%;top:60%;width:10px;height:10px;visibility:hidden;pointer-events:none';f.appendChild(p);
-    const h=document.documentElement,was=h.classList.contains('feltflat');
-    try{h.classList.remove('feltflat');const a=p.getBoundingClientRect();h.classList.add('feltflat');const b=p.getBoundingClientRect();h.classList.toggle('feltflat',was);
-      return Math.round(Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.width-b.width),Math.abs(a.height-b.height)))}finally{p.remove()}}};
-FELT.set(FELT.webkit,FELT.webkit?'webkit':'');
-LT.on('layout',()=>{if(FELT.done)return;let d=null;try{d=FELT.probe()}catch(e){}if(d==null)return;
-  FELT.done=true;FELT.drift=d;document.documentElement.dataset.feltDrift=String(d);
-  if(!FELT.webkit&&d>8){FELT.set(true,'drift');try{layoutSoon()}catch(e){}}});
 
 </script>
 <script>

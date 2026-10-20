@@ -74,21 +74,24 @@ const all = groups.flatMap(g => g.items);
 // くり返し出る ⚠️（v0.97.4 レビュー：心の声の字幕の ⚠️ が v0.97.1・v0.97.2・v0.97.4 と出たり消えたりしながら、誰も直さなかった）
 //   直近に公開した3版（ブランチ qa-results の v<版>/result.json）に同じ項目の ⚠️・❌・🟡 があれば「くり返し（n回目）」を付けて一番上に出す。
 //   3回目（前の2版以上＋今）は ❌：直すか、known.json に期限付き（「期限 YYYY-MM-DD」）で入れる。期限が過ぎたら また ❌
+let prevErr = '';
 const prevVers = (() => { try {
   const vk = v => v.replace(/^v/, '').split('.').map(Number), cmp = (a, b) => { const x = vk(a), y = vk(b); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0 };
   if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && v !== 'v' + ver && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
-  const sh = c => require('child_process').execSync(c, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64e6 });
-  sh('git fetch -q --depth 1 origin qa-results');
-  return sh('git ls-tree --name-only origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
-    .map(v => { try { return JSON.parse(sh(`git show "origin/qa-results:${v}/result.json"`)) } catch (e) { return null } }).filter(Boolean);
-} catch (e) { return [] } })();
+  const git = (...a) => require('child_process').execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 });   // 引数は配列で渡す（シェルを通さない）
+  git('fetch', '-q', '--depth', '1', 'origin', 'qa-results');
+  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
+    .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { return null } }).filter(Boolean);
+} catch (e) { prevErr = String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
+if (prevErr) all.push({ id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr });
 if (prevVers.length) {
   const knownAll = (() => { try { return JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8')) } catch (e) { return {} } })(), today = new Date().toISOString().slice(0, 10);
   const seen = prevVers.map(r => new Set((r.groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok').map(i => i.id)));
   for (const it of all) { if (it.status !== 'warn') continue; const n = seen.filter(s => s.has(it.id)).length; if (!n) continue;
     it.repeat = n + 1; const k = knownAll[it.id], exp = k && (String(k).match(/期限\s*(\d{4}-\d{2}-\d{2})/) || [])[1];
-    if (it.repeat >= 3 && k && (!exp || exp >= today)) { it.status = 'known'; it.detail = `くり返し（${it.repeat}回目、修正待ち：${k}）` + it.detail }
-    else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : ''}：` + it.detail }
+    if (it.repeat >= 3 && k && exp && exp >= today)   // 期限のない登録は通さない（CodeRabbit PR #119）
+      { it.status = 'known'; it.detail = `くり返し（${it.repeat}回目、修正待ち：${k}）` + it.detail }
+    else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }
     else it.detail = `くり返し（${it.repeat}回目）：` + it.detail } }
 
 const cnt = s => all.filter(i => i.status === s).length;
