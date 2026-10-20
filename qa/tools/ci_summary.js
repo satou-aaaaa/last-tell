@@ -19,6 +19,7 @@ let ver = 'unknown', quick = true;
 // --part で分けた組（CIの高速化 案1）：結果の届いた「検査#組」と、勝率の生の結果（章ごとに混ぜてから判定する）
 const done = new Set(), wrRaw = {};
 const J = require('../lib/winrate_judge');
+const knownW = (() => { try { return JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8')) } catch (e) { return {} } })();   // WebKit の組の修正待ち（下）
 for (const d of dirs) {
   const r = JSON.parse(fs.readFileSync(path.join(inDir, d, 'result.json'), 'utf8'));
   ver = r.ver || ver; quick = r.quick;
@@ -26,7 +27,10 @@ for (const d of dirs) {
   if (/webkit/i.test(d)) for (const g of r.groups) {
     g.key = 'webkit-' + g.key; g.name = 'WebKit（iPhone の Safari）：' + g.name; delete g.baselineOut;
     for (const it of g.items) { it.id = 'webkit:' + it.id; it.title = 'WebKit：' + it.title; if (it.shot) it.shot = it.shot.replace(/([^/]+)$/, 'WebKit_$1');
-      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:(stall|shown|cover):/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
+      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:(stall|shown|cover):/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail }
+      // WebKit だけの修正待ち：known.json に「webkit:」つきの名前で入れたものは、ここで 🟡 にする（run_all は「webkit:」をつける前に known.json を見るので当たらなかった。v0.97.5 CI）
+      const kw = knownW[it.id];
+      if (kw && it.status === 'fail') { it.status = 'known'; it.detail += `（修正待ち：${kw}）` } else if (kw && it.status === 'ok') { it.fixed = true; it.detail += '（直った。known.json から外してよい）' } }
   }
   for (const g of r.groups) {
     done.add(g.key + (r.part ? '#' + r.part : ''));
