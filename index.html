@@ -2368,7 +2368,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.1';
+const APP_VERSION='0.97.2';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -6819,9 +6819,12 @@ function potPush(){camSnapWide();
     const sx=(pr.width/190).toFixed(3),sy=(pr.height/78).toFixed(3);g.style.transformOrigin='0 0';
     const r=tgt?tgt.getBoundingClientRect():pr,dx=r.left+r.width/2-pr.left-pr.width/2,dy=r.top+r.height/2-pr.top-pr.height/2,n=Math.hypot(dx,dy)||1;
     const fx=r.left+r.width/2-pr.left-.55*95,fy=r.top+r.height/2-pr.top-.55*39;
+    let landed=false;const h0=S.handNo,land1=()=>{if(landed)return;landed=true;if(S.handNo!==h0){g.remove();if(--left===0&&(!S.wonPile||S.wonPile===W))S.potPushing=false;return}land()};   // 次のハンドが始まっていたら、新しいポットには触らない
     const land=()=>{g.remove();if(wp&&S.wonPile===W){wp.classList.remove('wait');if(wonNeat(i))setTimeout(()=>{if(S.wonPile===W)wonRestack(i)},900*SPEED())}if(--left===0)done()};
     g.animate([{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
-      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land})}
+      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land1;
+    // Safari で動きの終わり（onfinish）が来ないことがあり、ポットの額が出たまま残った（v0.97.1 PR #113 の CI：WebKit 第2章 PC で4秒たっても送り中）。時間でも終える（v0.78 の lpKick と同じ考え）
+    setTimeout(land1,750*SPEED()+300)})}
 function potRect(){const e=$('potChips');const r=e&&e.getBoundingClientRect();return r&&r.width?r:null}
 
 /* ---------- 音（WebAudio・最初はオフ）：場面で変わる音楽をコードで作る（案A・research/音楽_実装仕様.md） ---------- */
@@ -11376,23 +11379,29 @@ function muckAvoidCancel(){clearTimeout(_maT);_maT=0}   // 次のハンドへ移
 function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
   const cs=[...mp.querySelectorAll('.muckcard')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);if(!cs.length)return;
   // v96 CI：縦の5人卓で、山が場札（2♣）の下の端にかかった。かかるときは場札の下へ下げる
-  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
     const L0=Math.min(...cs.map(r=>r.left)),R0=Math.max(...cs.map(r=>r.right)),T0=Math.min(...cs.map(r=>r.top));
     const B0=Math.max(...cs.map(r=>r.bottom)),mn=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2),hb=bd.concat(mn).filter(q=>L0<q.right&&q.left<R0&&T0<q.bottom&&q.top<B0);
     // v0.96.2 CI：山の下の端が場札の上の端にかかることもある。下へ下げて自分の札・ほかの札にかかるなら、場札の上へ上げる
     if(hb.length){const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,bb=Math.max(...hb.map(q=>q.bottom)),bt=Math.min(...hb.map(q=>q.top));
       const av=[...document.querySelectorAll('#mine .card, .felt .spot .card:not(.slot), .felt .spot .mystack')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2).concat(bd);
-      const ok=d=>!av.some(q=>L0<q.right&&q.left<R0&&T0+d<q.bottom&&q.top<B0+d)&&B0+d<innerHeight-2&&T0+d>2;
-      const dn=bb-T0+4,up=bt-B0-4;let d=ok(dn)?dn:ok(up)?up:null;
-      // どちらも空いていないときは、かかる面積がいちばん小さい位置（動かさないことも含む）にする（CodeRabbit PR #103）
-      if(d==null){const ov=d=>av.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0)+(B0+d>innerHeight-2||T0+d<2?1e6:0);
-        d=[0,dn,up].sort((x,y)=>ov(x)-ov(y))[0]}
+      const dn=bb-T0+4,up=bt-B0-4;
+      // 札にかかる面積×4＋「黙る」などのボタンにかかる面積で選ぶ（CodeRabbit PR #115：下げた先がボタンに乗ることがあった）。同じなら 下げる→上げる→動かさない の順
+      const nb=[...document.querySelectorAll('.needlerow button')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+      const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0);
+      const cost=d=>ov(d,av)*4+ov(d,nb)+(B0+d>innerHeight-2||T0+d<2?1e7:0);
+      const d=[dn,up,0].reduce((a,x)=>cost(x)<cost(a)?x:a);
       if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`;return}}
   const bs=[...document.querySelectorAll('.needlerow button')].filter(b=>b.offsetParent&&+getComputedStyle(b).opacity>.05).map(b=>b.getBoundingClientRect()).filter(r=>r.width>2);if(!bs.length)return;
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right)),T=Math.min(...cs.map(r=>r.top)),B=Math.max(...cs.map(r=>r.bottom));
   const hit=bs.filter(q=>L<q.right&&q.left<Rr&&T<q.bottom&&q.top<B);if(!hit.length)return;
-  const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,top=Math.min(...bs.map(q=>q.top));
-  mp.style.translate=`0px ${(-(B-top+6)/k).toFixed(1)}px`}
+  const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,top=Math.min(...bs.map(q=>q.top)),bot=Math.max(...bs.map(q=>q.bottom));
+  // v0.97.1 main CI：縦の5人卓で、ボタン（黙る・さあ）をよけて上げた山が場札（2♣）の上に乗った。場札・札にかからない位置を選ぶ（札にかかるのはボタンより重く見る）
+  const cd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+  const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(Rr,q.right)-Math.max(L,q.left))*Math.max(0,Math.min(B+d,q.bottom)-Math.max(T+d,q.top)),0);
+  const cost=d=>ov(d,cd)*4+ov(d,bs)+(B+d>innerHeight-2||T+d<2?1e7:0);
+  const d=[0,-(B-top+6),bot-T+6].sort((x,y)=>cost(x)-cost(y))[0];
+  if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`}
 const lpTry=f=>{try{f()}catch(e){console.error('[LT] layout',e)}};
 // 順番：測るだけのもの・書くことが少ないものを先に、書いてから測るもの（fitTable・吹き出しの追いかけ）を後に。faceFit は 30c_ui64 で先に登録してある
 LT.on('layout',()=>{const gameOn=!$('game').hidden;
@@ -11791,9 +11800,9 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
   const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
-  const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
+  const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x-1<q.right&&q.left<x+z+1&&y-1<q.bottom&&q.top<y+z+1);   // 1px あける：置く位置を整数に丸めると 0.5px 札にかかる（v0.97.2 CI：7×0px）
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
-  const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
+  const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x-1<q.right&&q.left<x+z+1&&y-1<q.bottom&&q.top<y+z+1);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
     if(!r&&i){const sp=$('spot'+i);if(sp){const q=R(sp);r={left:q.left+q.width/2-14,right:q.left+q.width/2+14,top:q.top,bottom:q.top+20,height:20}}}
@@ -12452,13 +12461,13 @@ function vfResult(){
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
   const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
-    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
-    const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0)};
+    const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v*q.k:0)},0)};
     // 横の範囲は、ずらす案だけで見る（v96.1 CI：卓と同じくらい幅の広い札で、全部の案が外れて場札の下に固定されていた）
     // v96 レビュー：場札の下がディーラーの山（飾り）に少しかかるだけで、場札の上（相手の顔のあご）へ行っていた。飾りの山はよけない（山のほうが .vfres をよけるか消える）。場札の下は左右に少しずらす案も試す
-    const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++)c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);
+    const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++){c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);for(const dx of [40,-40,80,-80])c.push([B2.b+6+k*10,dx])}
     let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
     if(best==null)best=Math.max(T.top+2,Math.min(B2.b+6,innerHeight-2-h));d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
