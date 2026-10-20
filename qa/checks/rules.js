@@ -199,7 +199,7 @@ async function run({ browser, file, quick, part = null }) {
     // 打って数える方は ⚠️ だけ。合否は下の直接の測り方で決める。強い手での正しいコールも数えるので、中くらいの手だけを見る直接の測り方と食い違う
     // （satou 2026-10-17「直接測定で判断」：降りすぎ＝v0.89.1 でジン 8%（49回）、コールしすぎ＝回数を足すとクロウ 48%（29回））
     const badCall = callStrong.filter(x => x[1] > 40), lowCall = callStrong.filter(x => x[2] >= 30 && x[1] < 10);
-    items.push({ id: 'rule:S2-overbet', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length || badCall.length || lowCall.length ? 'warn' : 'ok',
+    items.push({ id: 'rule:S2-overbet', warnOnly: '2026-10-17 satou：ゲーム内の S2 は ⚠️ だけ。合否は直接の測り方 S2-direct で決める', title: '強いキャラがリバーのポット2倍ベットにコールしすぎない（プロポーカー S2）', status: !callStrong.length || badCall.length || lowCall.length ? 'warn' : 'ok',
       detail: (callStrong.length ? callStrong.map(x => `${x[0]} コール ${x[1]}%（${x[2]}回）`).join('、') + '（40%以下・30回以上なら10%以上で ✅、外れたら ⚠️。合否は直接の測り方 S2-direct で決める）' : '測れる回数が足りない') });
     // S2 の直接の測り方（10%以上40%以下で合格）。境目なら別の種でもう200回ずつ足す（案3）
     let d = await probeS2(browser, file), more = '';
