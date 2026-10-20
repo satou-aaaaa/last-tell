@@ -51,6 +51,8 @@ if qa_src.is_dir():
     import subprocess
     def git(*a):
         return subprocess.run(['git', '-C', str(root), *a], capture_output=True, text=True).stdout
+    if subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '-q', 'origin/main'], capture_output=True).returncode:
+        sys.exit('origin/main が無いので、共有フォルダの qa/ が古くないか確かめられません。git fetch origin main をしてからもう一度')   # CodeRabbit #111
     newer, local = [], []
     for f in filter(None, git('-c', 'core.quotepath=off', 'ls-files', '-z', 'qa').split('\0')):
         s = qa_src / f[3:]
