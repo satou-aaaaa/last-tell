@@ -164,7 +164,7 @@ try{const k=TOUR.findIndex(t=>t[0]==='#controls');if(k>=0)TOUR[k]=[TOUR[k][0],TO
 
 // ---------- §A-7・C-3：設定（よく使う3つ＋くわしい設定。2択はスイッチ、3択以上は「今の値 ▾」） ----------
 const SET64_SEL={
-  btnPeek:[['めくって見る（第1・2章は表）',()=>!SETTINGS.peekSet,()=>{SETTINGS.peekSet=false;delete SETTINGS.peek;saveSettings();renderPeek();if(S&&S.players)render()}],['めくって見る',()=>!!SETTINGS.peekSet&&!!SETTINGS.peek],['いつも表',()=>!!SETTINGS.peekSet&&!SETTINGS.peek]],
+  btnPeek:[['いつも表（はじめの設定）',()=>!SETTINGS.peekSet,()=>{SETTINGS.peekSet=false;delete SETTINGS.peek;saveSettings();renderPeek();if(S&&S.players)render()}],['めくって見る',()=>!!SETTINGS.peekSet&&!!SETTINGS.peek],['いつも表',()=>!!SETTINGS.peekSet&&!SETTINGS.peek]],
   btnSound:[['オフ',()=>(+SETTINGS.sound||0)===0],['効果音だけ',()=>(+SETTINGS.sound||0)===1],['すべて',()=>(+SETTINGS.sound||0)===2]],
   btnSpeed:[['ふつう',()=>SETTINGS.speed!=='fast'],['速い',()=>SETTINGS.speed==='fast']],
   btnCam:[['強め',()=>camSet()==='strong'],['控えめ',()=>camSet()==='soft'],['オフ',()=>camSet()==='off']],

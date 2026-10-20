@@ -25,14 +25,16 @@ LT.on('render',()=>{
   S.players.forEach((p,i)=>{const sy=$('say'+i);if(!p.say||!p.say.line||!sy)return;const key=S.handNo+':'+p.say.seq;
     if(sy.dataset.seq===key&&sy.classList.contains('go')&&(!SK.shown[i]||SK.shown[i].key!==key))SK.shown[i]={key,say:p.say,t:now,need:skRead(p.say.line)}})});
 // 2・3. 掛け合いが今どこまで進んだかを S.sayKeep に持つ（中身は 25_cpu の bSay と同じ。進みを数える所だけ足した）
-bSay=function(lines,ok,done){const s0=S,h0=S.handNo,gap=1500*SPEED();let k=0,tries=0;
+bSay=function(lines,ok,done){const s0=S,h0=S.handNo,gap=1900*SPEED();let k=0,tries=0;   // 第6章の録画 #33：1.5秒では読めない
   const run={live:!S.handOver,ask:!!done,gap,get rest(){return lines.slice(k)},on:true};S.sayKeep=run;
   const stop=()=>{run.on=false;if(s0.sayKeep===run)s0.sayKeep=null};
   const step=()=>{if(S!==s0||S.handNo!==h0||!ok())return stop();
     if(k>=lines.length){stop();if(done)done();return}
     if(bBlocked()){if(++tries<15)setTimeout(step,400);else stop();return}
     const [n,line]=lines[k++],i=S.players.findIndex(p=>p.name===n&&!p.human);
-    if(i<0)return step();const p=S.players[i];p.say={seq:(S.saySeq=(S.saySeq||0)+1),line,talk:true,bt:true};render();setTimeout(step,gap)};
+    if(i<0)return step();const p=S.players[i];p.say={seq:(S.saySeq=(S.saySeq||0)+1),line,talk:true,bt:true};
+    try{const to=typeof btTo==='function'?btTo(lines,n):'';if(to)p.say.sub=to}catch(e){}   // 第6章の録画 #35：誰に話しているか（js/51_play6_fixes.js）
+    render();setTimeout(step,gap)};
   step();return lines.length*gap};
 // 2. 自分が打ったとき、ハンドの頭の掛け合いが残っていれば、次の CPU は残りの分（最後の1行を読む時間も）待つ
 LT.on('act:before',i=>{try{const run=S.sayKeep,p=S.players[i];

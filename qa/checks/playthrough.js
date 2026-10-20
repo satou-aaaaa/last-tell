@@ -33,7 +33,7 @@ async function playChapter(browser, file, ch, storage, seed, weaken) {
     let where = '';
     if (b.result === 'win' && !back) { r.status = 'stalled-outro';
       where = await page.evaluate(() => { const vis = el => !!el && !el.hidden && el.getClientRects().length > 0;
-        return '見えている画面: ' + ['title', 'chapters', 'scene', 'game', 'between', 'vs'].filter(id => vis($(id))).join('・') + '、押せるボタン: ' + [...document.querySelectorAll('button')].filter(x => vis(x) && !x.disabled).map(x => x.id || x.textContent.trim().slice(0, 8)).slice(0, 12).join('・') + (typeof S !== 'undefined' && S && S.players ? `、卓: 手番 ${S.toAct}・${S.street}・終わり ${!!S.handOver}・回想 ${!!(typeof flashOf === 'function' && flashOf())}・判断待ち ${!!S.fbAsk}・自動 ${!!S.autoMe}` : '') }) }
+        return '見えている画面: ' + ['title', 'chapters', 'scene', 'game', 'between', 'vs'].filter(id => vis($(id))).join('・') + '、押せるボタン: ' + [...document.querySelectorAll('button')].filter(x => vis(x) && !x.disabled).map(x => x.id || x.textContent.trim().slice(0, 8)).slice(0, 12).join('・') + (typeof S !== 'undefined' && S && S.players ? `、卓: 手番 ${S.toAct}・${S.street}・終わり ${!!S.handOver}・回想 ${!!(typeof CFG !== 'undefined' && CFG && CFG.flashback)}・判断待ち ${!!S.fbAsk}・自動 ${!!S.autoMe}` : '') }) }
     await page.waitForTimeout(800);
     const after = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])));
     return { status: r.status, where, result: b.result, hands: b.hands, errors: [...new Set([...(b.chipErr || []).map(e => 'チップの合計 ' + e.diff), ...(await page.evaluate(() => __qa.errors))])].slice(0, 3), after };
@@ -59,7 +59,7 @@ async function run({ browser, file }) {
     let weak = false;
     if (!got && !bad.length) { const r = await playChapter(browser, file, ch, storage, H.seedOf('playthrough', ch, TRIES), true);
       if (r.status === 'stalled' || r.status === 'error') bad.push(`${TRIES + 1}回目（相手を減らして）で止まった（${r.hands}ハンド）`);
-      if (r.status === 'stalled-outro') bad.push('${TRIES + 1}回目（相手を減らして）勝ったあとの締めの会話が終わらない（章の一覧・タイトルに戻らない）。' + r.where);
+      if (r.status === 'stalled-outro') bad.push(`${TRIES + 1}回目（相手を減らして）勝ったあとの締めの会話が終わらない（章の一覧・タイトルに戻らない）。` + r.where);
       if (r.errors.length) bad.push('エラー: ' + r.errors.join(' / '));
       if (r.result === 'win' && !bad.length) { got = r; weak = true } }
     const name = ch > 10 ? `第二部 第${ch}章` : `第${ch}章`;

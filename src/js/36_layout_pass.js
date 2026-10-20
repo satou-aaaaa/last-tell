@@ -73,20 +73,47 @@ function senseiFit(){const p=$('senseiText'),b=$('sensei');if(!p||!b||b.hidden||
   if(p.scrollHeight>lh*1.5){let f=f0;while(f>f0-2&&p.scrollHeight>lh*1.5){f-=.5;p.style.fontSize=f+'px'}if(p.scrollHeight>lh*1.5)p.style.fontSize=''}
   p._sk=k}
 // v80（改善提案 2026-10-14b §1 の検査で見つかった）：横画面で、捨て札の山が「黙る・さあね…」（左下の .needlerow）の上に乗る。乗るときだけ山をボタンの上へ上げる
-function muckAvoid(){const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
+// v0.96.2 CI：配る途中の札の位置で山を置くと、札が着いたあとにかかることがある。少しあとにもう一度だけ置き直す
+let _maT=0;function muckAvoidLate(){clearTimeout(_maT);_maT=setTimeout(()=>{try{muckAvoid(1)}catch(e){}},700)}
+function muckAvoidCancel(){clearTimeout(_maT);_maT=0}   // 次のハンドへ移るときは、前のハンドの置き直しを取り消す（CodeRabbit PR #104）
+function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
   const cs=[...mp.querySelectorAll('.muckcard')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);if(!cs.length)return;
+  // v96 CI：縦の5人卓で、山が場札（2♣）の下の端にかかった。かかるときは場札の下へ下げる
+  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+    const L0=Math.min(...cs.map(r=>r.left)),R0=Math.max(...cs.map(r=>r.right)),T0=Math.min(...cs.map(r=>r.top));
+    const B0=Math.max(...cs.map(r=>r.bottom)),mn=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2),hb=bd.concat(mn).filter(q=>L0<q.right&&q.left<R0&&T0<q.bottom&&q.top<B0);
+    // v0.96.2 CI：山の下の端が場札の上の端にかかることもある。下へ下げて自分の札・ほかの札にかかるなら、場札の上へ上げる
+    if(hb.length){const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,bb=Math.max(...hb.map(q=>q.bottom)),bt=Math.min(...hb.map(q=>q.top));
+      const av=[...document.querySelectorAll('#mine .card, .felt .spot .card:not(.slot), .felt .spot .mystack')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2).concat(bd);
+      const dn=bb-T0+4,up=bt-B0-4;
+      // 札にかかる面積×4＋「黙る」などのボタンにかかる面積で選ぶ（CodeRabbit PR #115：下げた先がボタンに乗ることがあった）。同じなら 下げる→上げる→動かさない の順
+      const nb=[...document.querySelectorAll('.needlerow button')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+      const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0);
+      const cost=d=>ov(d,av)*4+ov(d,nb)+(B0+d>innerHeight-2||T0+d<2?1e7:0);
+      const d=[dn,up,0].reduce((a,x)=>cost(x)<cost(a)?x:a);
+      if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`;return}}
   const bs=[...document.querySelectorAll('.needlerow button')].filter(b=>b.offsetParent&&+getComputedStyle(b).opacity>.05).map(b=>b.getBoundingClientRect()).filter(r=>r.width>2);if(!bs.length)return;
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right)),T=Math.min(...cs.map(r=>r.top)),B=Math.max(...cs.map(r=>r.bottom));
   const hit=bs.filter(q=>L<q.right&&q.left<Rr&&T<q.bottom&&q.top<B);if(!hit.length)return;
-  const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,top=Math.min(...bs.map(q=>q.top));
-  mp.style.translate=`0px ${(-(B-top+6)/k).toFixed(1)}px`}
+  const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,top=Math.min(...bs.map(q=>q.top)),bot=Math.max(...bs.map(q=>q.bottom));
+  // v0.97.1 main CI：縦の5人卓で、ボタン（黙る・さあ）をよけて上げた山が場札（2♣）の上に乗った。場札・札にかからない位置を選ぶ（札にかかるのはボタンより重く見る）
+  const cd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+  const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(Rr,q.right)-Math.max(L,q.left))*Math.max(0,Math.min(B+d,q.bottom)-Math.max(T+d,q.top)),0);
+  const cost=d=>ov(d,cd)*4+ov(d,bs)+(B+d>innerHeight-2||T+d<2?1e7:0);
+  const d=[0,-(B-top+6),bot-T+6].sort((x,y)=>cost(x)-cost(y))[0];
+  if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`}
 const lpTry=f=>{try{f()}catch(e){console.error('[LT] layout',e)}};
 // 順番：測るだけのもの・書くことが少ないものを先に、書いてから測るもの（fitTable・吹き出しの追いかけ）を後に。faceFit は 30c_ui64 で先に登録してある
 LT.on('layout',()=>{const gameOn=!$('game').hidden;
   if(gameOn){
     lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
     if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
-    lpTry(()=>{talkPlace();const row=$('askRow');if(row&&row._bp&&!row.hidden&&typeof bPlace==='function')bPlace(row)});
+    lpTry(()=>{talkPlace();const row=$('askRow');
+      // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
+      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
+      if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row);
+      // 手札は配る動きのあとで場所が決まる。少しあとにもう一度だけ確かめる（v0.96.4 CI）
+      if(row&&!row.hidden&&typeof bPlace==='function'){clearTimeout(LP._askT);LP._askT=setTimeout(()=>{try{const r=$('askRow');if(r&&!r.hidden&&onMine(r))bPlace(r)}catch(e){}},700)}});
     lpTry(cuePlace);lpTry(dcallPlace);
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});

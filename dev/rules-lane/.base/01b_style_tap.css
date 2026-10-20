@@ -1,5 +1,0 @@
-/* 相手をタップすると反応（2026-10-10） */
-.bust{cursor:pointer;-webkit-tap-highlight-color:transparent}
-.tapme{position:absolute;left:50%;bottom:24.5%;transform:translateX(-50%);z-index:6;pointer-events:none;white-space:nowrap;
-  font-size:.78rem;color:#f4efe4;background:rgba(0,0,0,.66);border:1px solid rgba(255,255,255,.18);padding:2px 12px;border-radius:12px;opacity:0;transition:opacity .25s}
-.tapme.go{opacity:1}

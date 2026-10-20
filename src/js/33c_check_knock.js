@@ -45,7 +45,7 @@ function knockAt(pt,st,opt){
   const gap=(st.k==='fist'?230:st.k==='palm'?260:190)*sp;
   const ring=k=>{const r=document.createElement('div');r.className='knockring';const d=pt.cw*(st.k==='fist'?1.3:st.k==='finger'?.6:.95);
     r.style.width=r.style.height=d+'px';r.style.transform=`translate(${pt.x-d/2}px,${pt.y-d/2}px)`;L.appendChild(r);
-    r.animate([{opacity:.85,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(.25)`},{opacity:0,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(1.5)`}],{duration:460*sp,easing:'ease-out'}).onfinish=()=>r.remove()};
+    LT.anim(r,[{opacity:.85,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(.25)`},{opacity:0,transform:`translate(${pt.x-d/2}px,${pt.y-d/2}px) scale(1.5)`}],{duration:460*sp,easing:'ease-out'},()=>r.remove())};
   for(let k=0;k<n;k++)setTimeout(()=>{try{Sound.sfx(hard?'knockHard':'knock')}catch(e){}if(!reducedMotion())ring(k)},180*sp+k*gap+gap*.45);
   if(reducedMotion())return;
   const w=Math.max(18,pt.cw*(HAND_W[st.k]||.9)*1.15),h=w*70/(st.k==='finger'?40:st.k==='two'?44:st.k==='knuckle'?50:60);
@@ -58,7 +58,7 @@ function knockAt(pt,st,opt){
   const dur=180*sp+n*gap+240*sp,F=[{opacity:0,transform:pos(lift*1.6),offset:0},{opacity:1,transform:pos(lift),offset:180*sp/dur}];
   for(let k=0;k<n;k++){F.push({opacity:1,transform:pos(0),offset:(180*sp+k*gap+gap*.45)/dur});if(k<n-1)F.push({opacity:1,transform:pos(lift),offset:(180*sp+(k+1)*gap)/dur})}
   F.push({opacity:1,transform:pos(lift),offset:(dur-120*sp)/dur},{opacity:0,transform:pos(lift*1.6),offset:1});
-  el.animate(F,{duration:dur,easing:'ease-out'}).onfinish=()=>el.remove();
+  LT.anim(el,F,{duration:dur,easing:'ease-out'},()=>el.remove());
 }
 function knockCheck(i){
   if(!S||!S.players)return;const p=S.players[i];if(!p||p.out||p.sitOut)return;

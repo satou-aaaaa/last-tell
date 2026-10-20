@@ -28,7 +28,7 @@ function angleCall(i,kind){
     const src=$('spot'+i)&&$('spot'+i).querySelector('.mystack'),to=potRect(),tb=$('table').getBoundingClientRect();
     if(src&&to){const r=src.getBoundingClientRect();const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(100000,false);
       el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
-      el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${(to.left-r.left)*.45}px),calc(-50% + ${(to.top-r.top)*.45}px))`,opacity:.2}],{duration:700*SPEED(),fill:'forwards'}).onfinish=()=>el.remove()}
+      LT.anim(el,[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${(to.left-r.left)*.45}px),calc(-50% + ${(to.top-r.top)*.45}px))`,opacity:.2}],{duration:700*SPEED(),fill:'forwards'},()=>el.remove())}
   }
 }
 function angleRuling(i,kind){

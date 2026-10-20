@@ -1,0 +1,7 @@
+/* クセの読める範囲（js/50_read_scope.js）：クセの札の中の「〇〇だけ」。6人卓でも 12px を下回らない。:has() は使わない */
+.plates .cue .rsOnly{display:block;margin-top:2px;font:700 12px/1.1 var(--sans,sans-serif);color:#1a1206;opacity:.85;white-space:nowrap;letter-spacing:0}
+.plates .cue .rsOnly[hidden]{display:none}
+.n6 .plates .cue .rsOnly{font-size:12px}
+/* v94 レビュー 2：縦は札と同じ行に（.rsIn は 50_read_scope.js が付ける） */
+.plates .cue.rsIn .rsOnly{display:inline;margin:0}
+.plates .cue.rsIn .rsOnly::before{content:'・'}

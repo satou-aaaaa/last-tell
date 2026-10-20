@@ -179,8 +179,8 @@ $('nick').value=nick();$('nick').oninput=()=>{SETTINGS.nick=$('nick').value.slic
 function renderClock(){$('btnClock').textContent='持ち時間：'+(SETTINGS.clock?'あり':'なし')}
 $('btnClock').onclick=()=>{SETTINGS.clock=!SETTINGS.clock;saveSettings();renderClock();if(!SETTINGS.clock)Clock.stop();else if(S&&S.players&&S.toAct===0&&!S.handOver&&bigSpotForMe())Clock.start(S.myTurnKey)};
 renderClock();
-function peekOn(){if(SETTINGS.peekSet)return !!SETTINGS.peek;return !(typeof CFG!=='undefined'&&CFG&&CFG.ch&&!CFG.ch.p2&&CFG.ch.no<=2)}
-function renderPeek(){$('btnPeek').textContent='手札：'+(SETTINGS.peekSet?(SETTINGS.peek?'めくって見る':'いつも表'):'めくって見る（第1・2章は表）')}
+function peekOn(){if(SETTINGS.peekSet)return !!SETTINGS.peek;return false}   // 第6章の録画 #24「ハンド隠さないで」：はじめは表。めくるのは設定で
+function renderPeek(){$('btnPeek').textContent='手札：'+(SETTINGS.peekSet?(SETTINGS.peek?'めくって見る':'いつも表'):'いつも表（はじめの設定）')}
 $('btnPeek').onclick=()=>{SETTINGS.peek=SETTINGS.peekSet?!SETTINGS.peek:!peekOn();SETTINGS.peekSet=true;saveSettings();renderPeek();if(S&&S.players)render()};
 renderPeek();
 
@@ -208,6 +208,9 @@ function renderQuick(show){
 function pickQuick(v){
   if(quickPick===v){return confirmRaise()}
   quickPick=v;raiseOpen=false;$('raiseRange').value=v;renderControls()}
+// 額のつまみは BB の半分きざみ。全額が きざみに乗らないと、いちばん右でも全額にならず 500〜数千点が残っていた（第6章の録画 #1）
+// → いちばん右のきざみ（全額との差がきざみ1つ未満）は全額として扱う
+function raiseVal(){const r=$('raiseRange'),v=+r.value,{maxTo}=raiseBounds(),st=+r.step||1;return v<maxTo&&v+st>maxTo?maxTo:v}
 function isAllinRaise(v){const me=S.players[0];return v>=me.bet+me.chips}
 function armAllin(id){
   if(SETTINGS.allinConfirm===false)return false;
@@ -216,7 +219,7 @@ function armAllin(id){
   renderControls();return true}
 function clearArm(){allinArm='';clearTimeout(allinTimer)}
 function confirmRaise(){
-  const v=+$('raiseRange').value;
+  const v=raiseVal();
   if(isAllinRaise(v)&&armAllin('raise'))return;
   clearArm();raiseOpen=false;quickPick=0;buzz();act(0,'raise',v)}
 function buzz(){if(SETTINGS.sound&&navigator.vibrate)try{navigator.vibrate(8)}catch(e){}}
@@ -299,7 +302,7 @@ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{
 function openStackZoom(i){const p=S&&S.players[i];if(!p||p.out||!p.chips)return;const z=$('stackZoom');
   z.innerHTML=`<div class="szin"><h3>${esc(p.name)}の前のチップ</h3><div class="zstack">${stackCols(p.chips,7,20)}</div>
     <div class="legend">${STACK_DENOMS.map(([v,c])=>`<span><i><span class="chip ${c}" style="bottom:0"></span></i>${fmt(v)}</span>`).join('')}</div>
-    <p class="zhint">色ごとに数えて足すと、持ち点になります。5枚ずつ少しあけて積んであり、1本は最大20枚です。</p><div class="zbtns">${approxOn()?'<button class="mini" id="btnZoomCount">ディーラーに数えてもらう</button>':''}<button class="mini" id="btnZoomClose">閉じる</button></div></div>`;z.dataset.i=i;
+    <p class="zhint">色ごとに数えて足すと、持ち点になります。5枚ずつ少しあけて積んであり、1本は最大20枚です。</p>${approxOn()?'<p class="zhint">自分の番のときだけ、賭ける額を決めるために、ディーラーに正確に数えてもらえます。</p>':''}<div class="zbtns">${approxOn()&&!S.handOver&&S.toAct===0?'<button class="mini" id="btnZoomCount">ディーラーに数えてもらう</button>':''}<button class="mini" id="btnZoomClose">閉じる</button></div></div>`;z.dataset.i=i;
   z.hidden=false;$('btnZoomClose').focus()}
 $('stackZoom').addEventListener('click',e=>{if(e.target.id==='btnZoomCount'){$('stackZoom').hidden=true;dealerCount(+$('stackZoom').dataset.i)}
   else if(e.target.id==='stackZoom'||e.target.id==='btnZoomClose')$('stackZoom').hidden=true});

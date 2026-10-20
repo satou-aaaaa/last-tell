@@ -38,8 +38,8 @@ function muckGather(){
   const r=fxRect(old),c=old.querySelector('.card');const cw=c?c.getBoundingClientRect().width:20;
   if(r){const L=fxLayer(),w=cw*1.1,h=w*70/60,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('palm');L.appendChild(el);
     const P=(x,y)=>`translate(${r.x-w/2+x}px,${r.y-h+y}px) rotate(180deg)`;el.style.transformOrigin='50% 50%';
-    el.animate([{opacity:0,transform:P(0,-h*.6)},{opacity:1,transform:P(0,0),offset:.3},{opacity:1,transform:P(0,-h*.7),offset:.85},{opacity:0,transform:P(0,-h*.9)}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in-out'}).onfinish=()=>el.remove()}
-  old.animate([{opacity:1,translate:'0 0'},{opacity:1,translate:'0 0',offset:.3},{opacity:0,translate:`0 -${cw*1.2}px`}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in'}).onfinish=()=>old.remove();
+    LT.anim(el,[{opacity:0,transform:P(0,-h*.6)},{opacity:1,transform:P(0,0),offset:.3},{opacity:1,transform:P(0,-h*.7),offset:.85},{opacity:0,transform:P(0,-h*.9)}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in-out'},()=>el.remove())}
+  const oy=parseFloat((old.style.translate||'').split(' ')[1])||0;LT.anim(old,[{opacity:1,translate:`0 ${oy}px`},{opacity:1,translate:`0 ${oy}px`,offset:.3},{opacity:0,translate:`0 ${oy-cw*1.2}px`}],{duration:FOLD_MS.gather*SPEED(),easing:'ease-in'},()=>old.remove());
 }
 /* 降りた人の札（2枚）の今の位置：CPU は席の札、あなたは手元の札 */
 function foldFrom(i){
@@ -59,7 +59,7 @@ function foldMuck(i,opt){
   {const f=from[0],w=f.w*.8,h=w*70/44,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('two');L.appendChild(el);
     const cx=from.length>1?(from[0].x+from[1].x+from[1].w)/2:f.x+f.w/2,me=i===0;
     const P=d=>me?`translate(${cx-w/2}px,${f.y+f.h*.35+d}px)`:`translate(${cx-w/2}px,${f.y+f.h*.65-h-d}px) rotate(180deg)`;el.style.transformOrigin='50% 50%';
-    el.animate([{opacity:0,transform:P(f.h*.4)},{opacity:1,transform:P(0),offset:.25},{opacity:1,transform:P(-f.h*(kind==='flick'?.55:.35)),offset:.65},{opacity:0,transform:P(-f.h*.2)}],{duration:(push+mv*.4),easing:'ease-out'}).onfinish=()=>el.remove()}
+    LT.anim(el,[{opacity:0,transform:P(f.h*.4)},{opacity:1,transform:P(0),offset:.25},{opacity:1,transform:P(-f.h*(kind==='flick'?.55:.35)),offset:.65},{opacity:0,transform:P(-f.h*.2)}],{duration:(push+mv*.4),easing:'ease-out'},()=>el.remove())}
   from.forEach((f,k)=>{
     const el=document.createElement('div');el.className='flycard';el.style.width=f.w+'px';
     el.innerHTML=i===0&&opt.flipFrom?cardHTML(p.hand[k],false):cardHTML({},true);L.appendChild(el);
@@ -70,20 +70,20 @@ function foldMuck(i,opt){
     const F=[{transform:T(sx,sy,0,1)}];
     if(i===0&&opt.flipFrom)F.push({transform:T(sx,sy,0,1)+' scaleX(0)',offset:.06});
     F.push({transform:T(mx+(kind==='flick'?(dx-sx)*.06:0),my,spin*.6,.85),offset:.38},{transform:T(mx,my,spin,.85),offset:.5},{transform:T(dx,dy,spin+settle,s1),offset:1});
-    el.animate(F,{duration:push+mv+sweep,easing:kind==='place'?'ease-in-out':'cubic-bezier(.3,.7,.3,1)',fill:'forwards'}).onfinish=()=>{el.remove();muckAdd()};
+    LT.anim(el,F,{duration:push+mv+sweep,easing:kind==='place'?'ease-in-out':'cubic-bezier(.3,.7,.3,1)',fill:'forwards'},()=>{el.remove();muckAdd()});
     if(i===0&&opt.flipFrom)setTimeout(()=>{el.innerHTML=cardHTML({},true)},(push+mv+sweep)*.06);
   });
   // ディーラーの手のひら（卓の奥から、札を山へ引き寄せる）
   setTimeout(()=>{const w=tw*1.2,h=w*70/60,el=document.createElement('div');el.className='foldhand';el.style.width=w+'px';el.innerHTML=handSVG('palm');L.appendChild(el);el.style.transformOrigin='50% 50%';
     const ax=from[0].x+(px-from[0].x)*.3,ay=from[0].y+(py-from[0].y)*.3+from[0].h*.4;
     const P=(x,y)=>`translate(${x-w/2}px,${y-h}px) rotate(180deg)`;
-    el.animate([{opacity:0,transform:P(ax,ay-h*.4)},{opacity:1,transform:P(ax,ay),offset:.2},{opacity:1,transform:P(px,py),offset:.85},{opacity:0,transform:P(px,py-h*.5)}],{duration:sweep*1.15,easing:'ease-in-out'}).onfinish=()=>el.remove()},push+mv*.5);
+    LT.anim(el,[{opacity:0,transform:P(ax,ay-h*.4)},{opacity:1,transform:P(ax,ay),offset:.2},{opacity:1,transform:P(px,py),offset:.85},{opacity:0,transform:P(px,py-h*.5)}],{duration:sweep*1.15,easing:'ease-in-out'},()=>el.remove())},push+mv*.5);
 }
 /* つなぎ：render のあとで、このハンドで新しく降りた／伏せた人を探して動かす */
 function goneText(p){const hide=peekOn()&&!p.peeked;const w=p.mucked&&!p.folded?'伏せた':FOLD_GONE.ja;return hide||!p.hand.length?w:w+'　'+p.hand.map(cardStr).join(' ')}
 {const o=render;render=function(){const r=o.apply(this,arguments);
   try{if(!S||!S.players)return r;
-    if(S.handNo!==muckHand){if(muckHand>=0)muckGather();else muckReset();muckHand=S.handNo;for(const k in muckDone)delete muckDone[k]}
+    if(S.handNo!==muckHand){if(typeof muckAvoidCancel==='function')muckAvoidCancel();if(muckHand>=0)muckGather();else muckReset();muckHand=S.handNo;for(const k in muckDone)delete muckDone[k]}
     S.players.forEach((p,i)=>{if(p.out||p.sitOut)return;
       const gone=p.folded||p.mucked&&(!p.show||p.human);
       if(i===0){const h=$('mine')&&$('mine').querySelector('.hold');if(h&&gone&&muckDone[0]){h.classList.add('gone');h.dataset.gone=goneText(p)}}

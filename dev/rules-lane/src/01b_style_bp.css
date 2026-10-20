@@ -1,7 +1,0 @@
-/* ===== 開発と設計のベストプラクティス：新しい版のお知らせ（案12）。タイトル画面だけに出る ===== */
-#ltUpd{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;padding:8px 8px 8px 14px;background:#14161dee;border:1px solid #d9b45a66;border-radius:8px;box-shadow:0 6px 24px #0008;color:#efe6cf;font-size:.9rem;letter-spacing:.03em}
-#ltUpd[hidden]{display:none}
-#ltUpd span{flex:none;white-space:nowrap}
-#ltUpd button{flex:none;min-height:40px;padding:6px 14px;font-size:.85rem}
-/* スマホ横：左下は注意書きと「閉じる」があるので、右下（キャラの足元）に寄せる */
-@media (max-height:500px) and (orientation:landscape){#ltUpd{left:auto;right:max(16px,env(safe-area-inset-right));transform:none}}

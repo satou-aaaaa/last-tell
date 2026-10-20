@@ -38,30 +38,43 @@ async function run({ browser, file }) {
   }
   stage = '2';
   // 2) 道具・カップ・伏せ札・札の文字・バーン（フリー6人、縦・横・PC）
+  // WebKit では、この段（動きを全部つけた6人卓をリバーまで3つの画面で打つ）でブラウザが落ち続けた（PR #79〜#83）。
+  // WebKit は画面ごとに新しいブラウザで開き、動きは少なめ（lite）にする。ここで見るのは置き場所と向きだけで、動きの途中は見ない
+  const WK = process.env.QA_BROWSER === 'webkit'; let wkB = null;
+  try {
   for (const [w, h] of VPS) {
-    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(browser, file, { fast: 20, viewport: { width: w, height: h }, lite: false, storage: H.UNLOCKED, seed: 42 });
+    if (WK) { if (wkB) await wkB.close().catch(() => {}); wkB = await H.launch() }
+    const vp = `${w}x${h}`, { ctx, page } = await H.openGame(WK ? wkB : browser, file, { fast: 20, viewport: { width: w, height: h }, lite: WK, storage: H.UNLOCKED, seed: 42 });
     try {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
       const measure = () => page.evaluate(() => {
         const R = e => e.getBoundingClientRect(), vis = e => e && e.offsetParent && R(e).width > 2, ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-        const hit = (sel, against) => { const out = []; for (const e of document.querySelectorAll(sel)) { if (!vis(e) || e.closest('.off')) continue; const a = R(e); for (const o of document.querySelectorAll(against)) if (vis(o) && !e.contains(o) && !o.contains(e) && ov(a, R(o))) out.push((o.id || o.className).slice(0, 20)) } return out };
+        const hit = (sel, against) => { const out = []; for (const e of document.querySelectorAll(sel)) { if (!vis(e) || e.closest('.off')) continue; const a = R(e); for (const o of document.querySelectorAll(against)) if (vis(o) && !e.contains(o) && !o.contains(e) && ov(a, R(o))) { const q = R(o); out.push((sel === '.llseats i' ? '席番号' + e.textContent + '←' : '') + (o.id || o.className).slice(0, 20) + (o.closest && o.closest('.spot') ? '（' + o.closest('.spot').id + '）' : '') + ` ${Math.round(Math.min(a.right, q.right) - Math.max(a.left, q.left))}×${Math.round(Math.min(a.bottom, q.bottom) - Math.max(a.top, q.top))}px`) } } return out };   // どの席番号がどの札に何px かかったかを出す（PR #111 で「card back noanim」だけで分からなかった）
+        // 塔×自分の手札は、重なる四角の中の点に塔のチップが本当に描かれているかで見る（WebKit は3Dの卓の上の塔の四角を 40〜70px 大きく返す。PR #98 CI）
+        // 塔は pointer-events:none なので、測る間だけ当たるようにする
+        const towerHit = () => { const pc = document.getElementById('potChips'), out = []; if (!pc) return out; const k = pc.style.pointerEvents; pc.style.pointerEvents = 'auto';
+          try { for (const e of pc.querySelectorAll('.col')) { if (!vis(e) || e.closest('.off')) continue; const a = R(e);
+            for (const o of document.querySelectorAll('#mine .card')) { if (!vis(o)) continue; const q = R(o), l = Math.max(a.left, q.left), rt = Math.min(a.right, q.right), t = Math.max(a.top, q.top), b = Math.min(a.bottom, q.bottom); if (rt - l <= 2 || b - t <= 2) continue;
+              let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) { const els = document.elementsFromPoint(l + (rt - l) * (i + .5) / 6, t + (b - t) * (j + .5) / 6); if (els.some(x => e.contains(x)) && els.some(x => o.contains(x))) n++ }
+              if (n) out.push(`${(o.className).slice(0, 20)} ${Math.round(rt - l)}×${Math.round(b - t)}px（${n}/36点）`) } } } finally { pc.style.pointerEvents = k } return out };
         const tools = document.querySelector('.felt .lltools'), cup = document.querySelector('#table > .cup');
         const backs = [...document.querySelectorAll('.felt .spot .card.back')].filter(vis), flat = backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).length;   // 寝かせる回転（rotateX）が付いているか。卓の遠近で見かけの高さが変わる席があるので、回転が付いていれば良い
         const txt = document.getElementById('table').innerText;
         return {
-          toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue'),
-          cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go'),
-          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'),
+          // v95.2 レビュー：塔が後から動いて、ラックが塔に・カップがリバーの札に乗った。ラック×塔、カップ×場札・塔も見る
+          toolsOff: !tools || tools.classList.contains('off'), tools: hit('.felt .lltools .dtray, .felt .lltools .ddeck', '#boardCards .card, .felt .spot .card, #potSign, #plates .cue, #potChips .chip'),
+          cupOff: !cup || cup.classList.contains('off'), cup: hit('#table > .cup', '#acts, #askRow, #mine .mystack, #dcall.go, #boardCards .card, #potChips .chip'),
+          seats: hit('.llseats i', '#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card'), mf: hit('#mfInner', '.felt .boardspot > .lltools:not(.off), #potChips .chip'), tower: towerHit(),
           backs: backs.length, flat, flatWho: backs.filter(e => !/^matrix3d/.test(getComputedStyle(e).transform) && R(e).height >= e.offsetHeight - .5).map(e => e.closest('.spot').id + ' ' + e.className + ' ' + getComputedStyle(e).transform.slice(0, 20) + ' ' + getComputedStyle(e).animationName), burns: S.ll && S.ll.burns || 0, words: ['勝ち +', '伏せた', 'あなたのチップ'].filter(s => txt.includes(s)),
           bg: (() => { const b = document.querySelector('.room > .backroom i'); return b ? [getComputedStyle(b).backgroundImage.slice(0, 10), getComputedStyle(b.parentNode).filter] : null })()
         };
       });
       let r = await measure();
       // 重なりが出たら 1.5秒待って測り直す（WebKit は顔アップや札の動きの途中で測ることがある。v0.86.4 CI）。残ったものだけを問題にする
-      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length) { await page.waitForTimeout(1500); r = await measure() }
-      add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
-      add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
+      if (r.seats.length || r.tools.length || r.toolsOff || r.mf.length || r.tower.length || r.cup.length) { await page.waitForTimeout(1500); r = await measure() }
+      add(`livelook:tools:${vp}`, `ラックと山が場札・札・ポット・ポットの塔・クセに重ならない（${vp}）`, r.tools.length ? r.tools.slice(0, 4).join(', ') : r.toolsOff ? '置ける場所がなく出していない' : '', '重なりなし', !r.tools.length);
+      add(`livelook:cup:${vp}`, `飲み物がボタン・答え・チップ・ディーラーの声・場札・ポットの塔に重ならない（${vp}）`, r.cup.length ? r.cup.join(', ') : '', r.cupOff ? '置ける場所がないので出していない' : '重なりなし');
       // 名札が空の席が勝ったら、顔の下の金の線（#bustN.llwin）になる（縦の6人卓。v0.85.2 レビュー）
       if (vp === '390x844') {
         const g = await page.evaluate(() => { const ho = S.handOver, won = S.players.map(p => p.won); const small = S.players.map((p, i) => i && $('plate' + i) && ($('plate' + i).offsetHeight < 16 || $('plate' + i).offsetWidth < 28) ? i : 0).filter(Boolean);
@@ -69,6 +82,8 @@ async function run({ browser, file }) {
         if (g) add(`livelook:winedge-small:${vp}`, `名札が空の席が勝つと顔の下に金の線（${vp}）`, g.filter(x => !x[1] || x[2]).map(x => `席${x[0] + 1}`).join(', '), `${g.length}席`);
       }
       add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
+      // v95.1 レビュー：縦の大きなポットで、塔の下半分が自分の手札の後ろに隠れていた（ui の場面はポットが小さくて出なかった）
+      add(`livelook:tower:${vp}`, `ポットの塔が自分の手札にかからない（${vp}）`, [...new Set(r.tower)].slice(0, 4).join(', '), '重なりなし');
       add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');
       add(`livelook:backs:${vp}`, `相手の伏せ札が寝ている（${vp}）`, r.flat ? `${r.flat}/${r.backs}枚が立ったまま（${r.flatWho.slice(0, 2).join(' / ')}）` : '', `${r.backs}枚`);
       add(`livelook:burn:${vp}`, `場札を出すたびにバーン（${vp}）`, r.burns !== 3 ? `リバーまでで${r.burns}枚（期待3）` : '', '3枚');
@@ -76,6 +91,7 @@ async function run({ browser, file }) {
       add(`livelook:backroom:${vp}`, `店の奥は data: の絵で filter なし（${vp}）`, !r.bg ? '無い' : (!/url\("?data:/.test(r.bg[0]) ? r.bg[0] : r.bg[1] !== 'none' ? 'filter: ' + r.bg[1] : ''), 'OK');
     } finally { await ctx.close() }
   }
+  } finally { if (wkB) await wkB.close().catch(() => {}) }
   stage = '3';
   // 3) ジンの席にプロテクターが出ない・第7章でめくりが出ない（第7章を数ハンド）
   {

@@ -22,7 +22,7 @@ const PREVIEW={
   3:{boss:'セキ',sign:'月影',line:'君の弟子なら、紳士的に勝負しよう'},
   4:{boss:'レイカ',sign:'天空',line:'嘘かどうかなんて、顔を見たってわからないわよ'},
   5:{boss:'ハヤト',sign:'地下の賭場跡',line:'……ジンさん。15年ぶりですね'},
-  6:{boss:'クロウ',sign:'王冠',line:'看板をお持ちですね。拝見しましょう'},
+  6:{boss:'クロウ',sign:'王冠',line:'ようこそ、王冠へ。看板は入口で拝見しました'},
   7:{boss:'ジン',sign:'錨亭、閉店後',line:'15年ぶりだ。……卒業試験をやる'},
 };
 // ボスの名乗り
@@ -34,7 +34,7 @@ function showNanori(name,done){
   v.querySelector('.nanori').onclick=go;setTimeout(go,(reducedMotion()?1400:2100)*SPEED());
 }
 // ===== 案3：同じ誘い（第6章、ブラインドが2回目に上がる前の休憩。チップや相手の打ち方は変えない） =====
-const TEMPT={ask:"クロウの誘いに、どう答える？",intro:[['',"ブラインドが上がる前の短い休憩。クロウが、あなたの席の横に立った。"],['クロウ',"いい打ち方です。……王冠の卓に、座ってみませんか"],['',"15年前、ハヤトが聞いたのと同じ言葉だった。"],['クロウ',"それから、もう一つ。ジンのクセを、教えてさしあげましょうか。15年前から、私は知っています"],['クロウ',"卒業試験があるのでしょう。答えを知っていれば、楽になりますよ"]],
+const TEMPT={ask:"クロウの誘いに、どう答える？",intro:[['',"ブラインドが上がる前の短い休憩。クロウが、あなたの席の横に立った。"],['クロウ',"いい打ち方です。……王冠の卓に、座ってみませんか"],['',"15年前、ハヤトが聞いたのと同じ言葉だった。"],['クロウ',"それから、もう一つ。ジンのクセを、教えてさしあげましょうか。15年前から、私は知っています"],['クロウ',"いずれ、ジンと打つ日が来るのでしょう。答えを知っていれば、楽になりますよ"]],
   choices:[{id:'refuse',label:"断る",lines:[['クロウ',"……そうですか。今夜は、断られてばかりです"],['クロウ',"15年前、同じ卓で、断れなかった若者がいました"]]},{id:'silent',label:"黙っている",lines:[['',"あなたは何も言わず、チップをそろえた。"],['クロウ',"答えないのも、答えです。……ジンに似てきましたね"]]}]};
 function temptPick(id){if(!SC)return;const c=TEMPT.choices.find(x=>x.id===id)||TEMPT.choices[1];const t=loadStory();t.tempt=c.id;saveStory(t);
   if(S)S.temptPicked=c.id;SC.picked=c.id;const i=SC.i;SC.lines=SC.lines.slice(0,i+1).concat(c.lines,SC.lines.slice(i+1));SC.i++;renderLine()}
@@ -44,7 +44,7 @@ function ilSeen(n){const t=loadStory();if(!t.il[n]){t.il[n]=1;saveStory(t)}}
 function ilNote(){const t=loadStory(),ks=Object.keys(INTERLUDE).filter(n=>t.il[n]);if(!ks.length)return'';
   return`<article class="rcard ilnote"><h4>そのころ</h4><p class="exnote">章のあとで見た幕間を、もう一度見られます。</p><div class="ilbtns">${ks.map(n=>`<button class="mini" data-il="${n}"><span>第${n}章のあと</span><span>${esc(INTERLUDE[n].place)}</span></button>`).join('')}</div></article>`}
 {const _sh=startHand;startHand=function(){
-  if(typeof CFG!=='undefined'&&CFG&&CFG.ch&&CFG.ch.no===6&&!CFG.ura&&!CFG.run&&!CFG.flashback&&CFG.levels&&CFG.levelHands&&S&&S.players&&!S.tempted&&!S.result&&S.handNo===CFG.levelHands*2&&S.players[0].chips>0){
+  if(typeof CFG!=='undefined'&&CFG&&CFG.ch&&CFG.ch.no===6&&!CFG.ura&&!CFG.run&&!CFG.flashback&&CFG.levels&&CFG.levelHands&&S&&S.players&&!S.tempted&&!S.result&&S.handNo===CFG.levelHands*2&&S.players[0].chips>0&&!loadStory().tempt){   // 第6章の録画 #7：一度答えたら、やり直しのトーナメントでは出さない
     S.tempted=true;const s0=S,ch=CFG.ch;nextvClear();
     return playScene(ch,TEMPT.intro.concat([{choice:'tempt'}]),()=>{
       if(!s0.temptPicked){const t=loadStory();t.tempt='silent';saveStory(t)}

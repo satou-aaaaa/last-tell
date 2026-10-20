@@ -77,7 +77,7 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   const bar=$('tbar'),B=vis(bar)?bar.getBoundingClientRect():{left:0,right:innerWidth,bottom:0};
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
-  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, #controls, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
+  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, .llseats i:not([hidden]), #controls, #between .betweenrow, #between .acts button, #resultText, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
     .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
@@ -85,7 +85,11 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   // 卓の枠（#game）の中だけに置く（v92 レビュー：PC で枠の外の暗い所に出た）
   const G=vis($('game'))?$('game').getBoundingClientRect():{left:0,right:innerWidth,bottom:innerHeight};
   const ok=(x,y)=>x>=Math.max(4,G.left+4)&&x+w<=Math.min(innerWidth,G.right)-4&&y+h<=Math.min(innerHeight,G.bottom)-4&&!av.some(q=>x<q.right&&q.left<x+w&&y<q.bottom&&q.top<y+h);
+  // 席番号（.llseats i）も入れる。見せた札を動かしたあと席番号が置き直されるので（v0.97.0 手元：フリー6人の縦で席番号に重なった）
+  // ハンドの終わりは #controls が隠れ、#between（結果の文と「次のハンドへ」）が出る。上の av に入れた（v96.4 レビュー：PC で直近の5手が「ブラフを見抜いた！」と「次のハンドへ」に重なった）
   const cs=[[B.left+4,y],[B.right-4-w,y]];
+  // 師匠の帯（#sensei）が #tbar のすぐ下にあると上の2つはふさがる（v94.2 レビュー：横で直近の5手が消えた）。帯の下の左右も試す
+  {const se=$('sensei');if(se&&!se.hidden&&vis(se)){const r=se.getBoundingClientRect();cs.push([r.left,r.bottom+6],[r.right-w,r.bottom+6])}}
   const c=cs.find(([x,y])=>ok(x,y));
   b.classList.toggle('off',!c);b.style.visibility='';
   if(c){b.style.left=Math.round(c[0])+'px';b.style.top=Math.round(c[1])+'px'}}

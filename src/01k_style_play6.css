@@ -1,0 +1,25 @@
+/* 第6章の録画からの直し（satou 2026-10-18） */
+/* #8 負けたときの一行：赤い縁。自分の役は小さく */
+.vfres.lose{box-shadow:inset 0 0 0 1px #e05a5a}.vfres.lose b{color:#ff8a8a}
+.vfres .m{color:#a9b4bf;font-size:.9em}
+/* #23 先に選ぶボタン：本番のボタンと見分けがつくよう、点線の枠と「先に選ぶ」の見出し */
+#prerow{position:relative;padding-top:15px}
+#prerow::before{content:'先に選ぶ（相手の番のあいだ）';position:absolute;left:4px;top:0;font-size:11px;line-height:13px;color:#9aa6b2;letter-spacing:.02em}
+html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
+#prerow button{background:transparent!important;border:1px dashed rgba(200,210,220,.45)!important;box-shadow:none!important;color:#c9d2db}
+#prerow button[aria-pressed="true"]{border-style:solid!important;border-color:#e2b65b!important;color:#e2b65b;background:rgba(226,182,91,.08)!important}
+/* #27 トーナメント：自分のチップの横に BB */
+#mine .p6bb{margin-left:4px;font-size:11px;color:#9fd0ff;font-variant-numeric:tabular-nums}
+/* #48 後ろの人だかり：小さく、薄く（巨人のように見えた） */
+#table .ltcrowd i{top:14%;height:15%}
+#table .ltcrowd i.cr3{top:15%;height:14%}
+#table .ltcrowd.cr-on i{opacity:.45}
+/* 額を選ぶ枠の下に隠れた自分の札は隠し、枠の中に小さく出す（js/51_play6_fixes.js p6RaiseHand） */
+#mine.p6under .card{visibility:hidden}
+.p6hand{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 4px;font:700 14px/1 var(--display,inherit);color:#e8e4da}
+.p6hand small{font-size:12px;font-weight:600;color:#a9b4bf;margin-right:2px}
+.p6hand .p6c{display:inline-block;min-width:30px;padding:4px 5px;border-radius:4px;background:#f4f1ea;color:#16181c;text-align:center}
+.p6hand .p6c.red{color:#c8252c}
+
+/* 第14章の5人卓（改善提案 第10回 §1）：縦は相手の席が近いので、見せた札を少し小さく（隣の席の札に重ならない） */
+@media (max-width:699px) and (orientation:portrait){.n5 .felt .spot:not(#spot0) .card{--cw:22px}.n5 .felt .spot{gap:2px}}

@@ -45,3 +45,9 @@
 .vfprot .pic{width:40px;height:40px;flex:none}.vfprot .pic svg{width:100%;height:100%}
 .vfprot b{display:block;font-size:13px}.vfprot small{display:block;font-size:11px;line-height:1.4;color:var(--muted,#a8a8a8)}
 @media (prefers-reduced-motion:reduce){.vfres,.vfcard{animation:none}}
+/* v96 レビュー：自分が D のとき、顔の左上の D が上の「あなたの番」にかかった。D は顔の左下へ */
+.mine .me-ava .dbadge{top:auto;bottom:-6px}
+/* v96.1 レビュー：縮めた見せた札（.hand.sybs）は、真ん中に大きく数字とマークを出す（角の数字は小さすぎて読めない） */
+.spot .hand.sybs .card .s,.spot .hand.sybs .card .court,.spot .hand.sybs .card .r2{display:none}
+.spot .hand.sybs .card .r:not(.r2){top:50%;left:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.6);letter-spacing:-.06em}
+.spot .hand.sybs .card .r:not(.r2) i{display:block;font-size:.62em;margin-top:0}

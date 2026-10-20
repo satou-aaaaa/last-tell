@@ -26,7 +26,7 @@ for (const d of dirs) {
   if (/webkit/i.test(d)) for (const g of r.groups) {
     g.key = 'webkit-' + g.key; g.name = 'WebKit（iPhone の Safari）：' + g.name; delete g.baselineOut;
     for (const it of g.items) { it.id = 'webkit:' + it.id; it.title = 'WebKit：' + it.title; if (it.shot) it.shot = it.shot.replace(/([^/]+)$/, 'WebKit_$1');
-      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
+      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:stall:/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
   }
   for (const g of r.groups) {
     done.add(g.key + (r.part ? '#' + r.part : ''));

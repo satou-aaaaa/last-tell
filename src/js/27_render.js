@@ -264,7 +264,7 @@ function renderControls(){
   updateRaiseLabel();
 }
 function updateRaiseLabel(){
-  const me=S.players[0],v=+$('raiseRange').value,all=v>=me.bet+me.chips;
+  const me=S.players[0],v=raiseVal(),all=v>=me.bet+me.chips;
   const word=S.currentBet===0?'ベット':'レイズ';
   const pay=v-me.bet;
   $('raiseAmt').textContent=fmt(v);

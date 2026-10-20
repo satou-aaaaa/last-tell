@@ -46,7 +46,7 @@ const TELLS={
   'クロウ':{strong:{cue:'sweat',rate:.7,false:.1},bluff:{cue:'smile',rate:.7,false:.1}},
   'カオル':{strong:{cue:'glance',rate:.65,false:.1},bluff:{cue:'fast',rate:.65,false:.1}},
 };
-const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'口元が緩んだ',stare:'こっちをじっと見ている',
+const CUE_LABEL={glove:'白い手袋の指先を直した',release:'あごの傷から手を離した',scar:'あごの傷に触れている',glance:'自分のチップをちらっと見た',still:'急に動かなくなった',smile:'にやりと笑った',stare:'こっちをじっと見ている',
   talk:'いつもより口数が多い',fast:'考えずにすぐ賭けた',sweat:'汗をかいている'};
 const CUE_SFX={glove:'スッ',release:'……',scar:'傷',glance:'ちらっ',still:'…',smile:'ニヤ',stare:'じっ',talk:'ペラペラ',fast:'サッ',sweat:'タラ…'};
 const TRUTH_JP={strong:'強い手',bluff:'ブラフ',none:'特に意味なし'};

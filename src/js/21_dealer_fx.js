@@ -16,8 +16,8 @@ function potFly(from,amount){
     el.style.left=(from.left+from.width/2-tb.left)+'px';el.style.top=(from.top+from.height/2-tb.top)+'px';
     $('table').appendChild(el);
     const dx=r.left+r.width/2-from.left-from.width/2,dy=r.top+r.height/2-from.top-from.height/2;
-    el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.7)`,opacity:.2}],
-      {duration:700*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
+    LT.anim(el,[{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.7)`,opacity:.2}],
+      {duration:700*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'},()=>el.remove());
   });
 }
 function potCall(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
@@ -35,8 +35,8 @@ function gatherBets(){camSnapWide();
     el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';
     $('table').appendChild(el);src.style.visibility='hidden';
     const lx=tx+(Math.random()*2-1)*to.width*.3-r.left-r.width/2,ly=ty+(Math.random()*2-1)*to.height*.25-r.top-r.height/2;S.potLand=(S.potLand||0)+1;const h0=S.handNo;
-    el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`,offset:.85},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly-5}px))`,offset:.93},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`}],
-      {duration:620*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'}).onfinish=()=>{el.remove();S.potLand=Math.max(0,(S.potLand||0)-1);if(!S.potLand&&S.handNo===h0&&!S.handOver)potGrow(potTotal()-S.players.reduce((a,p)=>a+p.bet,0))};
+    LT.anim(el,[{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`,offset:.85},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly-5}px))`,offset:.93},{transform:`translate(calc(-50% + ${lx}px),calc(-50% + ${ly}px))`}],
+      {duration:620*SPEED(),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'},()=>{el.remove();S.potLand=Math.max(0,(S.potLand||0)-1);if(!S.potLand&&S.handNo===h0&&!S.handOver)potGrow(potTotal()-S.players.reduce((a,p)=>a+p.bet,0))});
   });
 }
 // 山はハンドごとに作り直す。乱数はハンド番号から作るので、描き直しても形が変わらない
@@ -58,7 +58,7 @@ function potGrow(pot){
     if(h===1&&potRnd()<.35)el.style.transform=`rotate(${(potRnd()*30-15).toFixed(0)}deg)`;
     pile.appendChild(el);news.push(el);have+=h}
   P.chips=have;potSignSoon();
-  if(!reducedMotion())news.forEach((el,i)=>el.animate([{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260*SPEED(),delay:i*25*SPEED(),easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
+  if(!reducedMotion())news.forEach((el,i)=>LT.anim(el,[{transform:(el.style.transform||'')+' translateY(-10px)',opacity:0},{transform:el.style.transform||'none',opacity:1}],{duration:260*SPEED(),delay:i*25*SPEED(),easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}))}
 // v71（改善提案§1）：場札の置き場（5枚の列ごと。1枚でも配ったら、まだ配っていない場所にもチップを置かない）。札は卓から立てて見せる・めくる時に少し浮くので、横は列の箱・縦は札の上下で見る
 // （めくる途中で細くなっている札は使わない）
 function boardRects(){return['boardCards','board2'].map(id=>$(id)).filter(e=>e&&!e.hidden&&e.offsetParent&&e.querySelector('.card:not(.slot)')).map(e=>{const r=e.getBoundingClientRect(),ks=[...e.children].map(c=>c.getBoundingClientRect()),mw=Math.max(0,...ks.map(c=>c.width)),cs=ks.filter(c=>c.width>mw*.8);
@@ -106,8 +106,8 @@ function wonRestack(i,quick){const W=S&&S.wonPile;if(!W||W.done[i])return;W.done
     // 塔の描き直しで山が消えても動きが続くよう、卓の上の層に写してから吸い込ませる
     [...pile.children].forEach((c,k)=>{const r=c.getBoundingClientRect();if(!r.width)return;const f=document.createElement('div');f.className='potfly wonfly';f.innerHTML=`<span class="chip ${[...c.classList].filter(x=>/^c\d$/.test(x)).join(' ')}"></span>`;
       f.style.left=(r.left+r.width/2-tb.left)+'px';f.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(f);
-      f.animate([{transform:'translate(-50%,-50%) '+(c.style.transform||''),opacity:1},{transform:`translate(calc(-50% + ${(tx-r.left-r.width/2).toFixed(1)}px),calc(-50% + ${(ty-r.top-r.height/2).toFixed(1)}px))`,opacity:.15}],
-        {duration:450*SPEED(),delay:k*30*SPEED(),easing:'ease',fill:'both'}).onfinish=()=>f.remove()})}
+      LT.anim(f,[{transform:'translate(-50%,-50%) '+(c.style.transform||''),opacity:1},{transform:`translate(calc(-50% + ${(tx-r.left-r.width/2).toFixed(1)}px),calc(-50% + ${(ty-r.top-r.height/2).toFixed(1)}px))`,opacity:.15}],
+        {duration:450*SPEED(),delay:k*30*SPEED(),easing:'ease',fill:'both'},()=>f.remove())})}
   if(pile)pile.remove();if(S&&S.players)render()}
 // 次のハンドの最初（配る前）：崩れた山を全部塔へ戻す
 function wonClearAll(){const W=S&&S.wonPile;if(W)Object.keys(W.amt).forEach(i=>{if(!W.done[i])wonRestack(+i)});
@@ -131,7 +131,10 @@ function potPush(){camSnapWide();
     const sx=(pr.width/190).toFixed(3),sy=(pr.height/78).toFixed(3);g.style.transformOrigin='0 0';
     const r=tgt?tgt.getBoundingClientRect():pr,dx=r.left+r.width/2-pr.left-pr.width/2,dy=r.top+r.height/2-pr.top-pr.height/2,n=Math.hypot(dx,dy)||1;
     const fx=r.left+r.width/2-pr.left-.55*95,fy=r.top+r.height/2-pr.top-.55*39;
+    let landed=false;const h0=S.handNo,land1=()=>{if(landed)return;landed=true;if(S.handNo!==h0){g.remove();if(--left===0&&(!S.wonPile||S.wonPile===W))S.potPushing=false;return}land()};   // 次のハンドが始まっていたら、新しいポットには触らない
     const land=()=>{g.remove();if(wp&&S.wonPile===W){wp.classList.remove('wait');if(wonNeat(i))setTimeout(()=>{if(S.wonPile===W)wonRestack(i)},900*SPEED())}if(--left===0)done()};
-    g.animate([{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
-      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish=land})}
+    LT.anim(g,[{transform:`scale(${sx},${sy})`,opacity:1},{transform:`translate(${(-dx/n*6).toFixed(1)}px,${(-dy/n*6).toFixed(1)}px) scale(${sx},${sy})`,opacity:1,offset:.18},{transform:`translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(.55)`,opacity:wp?.9:.1}],
+      {duration:750*SPEED(),easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'},land1);
+    // Safari で動きの終わり（onfinish）が来ないことがあり、ポットの額が出たまま残った（v0.97.1 PR #113 の CI：WebKit 第2章 PC で4秒たっても送り中）。時間でも終える（v0.78 の lpKick と同じ考え）
+    setTimeout(land1,750*SPEED()+300)})}
 function potRect(){const e=$('potChips');const r=e&&e.getBoundingClientRect();return r&&r.width?r:null}

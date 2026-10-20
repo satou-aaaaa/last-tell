@@ -59,7 +59,7 @@ function reviewLines(st,ch,result){
   else if(st.badCall>=2){k='call';r.push('払いすぎだ。足りない見込みで追いかけるな')}
   else if(st.pfr===0&&st.vpip>=3){k='passive';r.push('入るときは、いつも様子見だな。自分から仕掛けろ')}
   else r.push('目立った悪いくせは、ない');
-  r.push({loose:'次は、いい手だけで入ってみろ',fold:'次は、一度だけ最後まで見てみろ',call:'次は、コールの前に一度数えろ',passive:'次は、後ろの席でだけ仕掛けてみろ',none:'次は、相手の顔をもっと見ろ'}[k]);
+  r.push({loose:'次は、いい手だけで入ってみろ',fold:'次は、一度だけ最後まで見てみろ',call:'次は、コールの前に一度数えろ',passive:'次は、後ろの席でだけ仕掛けてみろ',none:'次は、相手メモのクセを一つだけ決めて、その人が賭けるたびに確かめろ'}[k]);
   return reviewLesson59(r,ch,result)}
 function reviewHTML(r){return r?`<div class="ava">${avatar(P2ON()?'師匠':'ジン')}</div><b>${P2ON()?esc(mentorName()+'の三行'):'ジンの三行'}</b><ol>${r.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:''}
 function saveReview(r){if(!r)return;try{const o=JSON.parse(localStorage.getItem(REVIEW_KEY))||{};const ch=o.ch&&typeof o.ch==='object'?o.ch:{};

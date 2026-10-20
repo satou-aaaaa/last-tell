@@ -26,11 +26,12 @@ LT.on('askQuiz',id=>{try{const box=$('quiz'),q=box&&box.querySelector('.qq');if(
 // 易しくする（satou 2026-10-17 17:13Z のカード：難易度「全体を易しく」、第5章「弱い手を減らす」）
 // ストーリーの章で、自分に弱い2枚（preTier 0）が来たら、ある割合でその2枚を山の底に戻して引き直す（1回だけ）。
 // 第5章は 6割、ほかの章は 3割。回想・裏の卓・はしご・フリー対戦は今のまま。台本・決まった札は後の setupScript が上書きする
-const DEAL_HELP={def:.3,5:.6};
+const DEAL_HELP={def:.3,5:.6,6:.6};   // 第6章も 6割（satou 2026-10-18 第6章の録画 #15〜17）
 function dealHelp(){
   if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return;
+  try{if(typeof p6Premium==='function'&&p6Premium())return}catch(e){}   // 第6章：ときどき強い手（js/51_play6_fixes.js）
   const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return;
-  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:DEAL_HELP.def;
+  const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:CFG.ch.p2===4?DEAL_HELP[6]:DEAL_HELP.def;   // 第14章も第6章と同じ（2026-10-19、第6章の形にそろえた）
   if(LT.rand()>=p||S.deck.length<12)return;
   S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()]}
 // 設定の初めの値（satou 2026-10-17 17:13Z のカード）：「先に選ぶ」（パスフォールド）は最初からオン、「カードをそろえる」は最初はオフ。
@@ -66,8 +67,8 @@ potGrow=function(pot){try{
   // 山を積み直すと金額札が上下に動くので、ラック（道具）が金額札にかかったら置き直す（CI：WebKit 縦で金額札とラックが重なった）
   [150,700].forEach(t=>setTimeout(()=>{try{const k=document.querySelector('.felt .boardspot > .lltools:not(.off)'),g=$('potSign');if(!k||!g||g.hidden)return;
     const a=g.getBoundingClientRect(),hit=[...k.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=e.getBoundingClientRect();return b.width>2&&a.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom});
-    if(hit&&typeof llToolsPlace==='function')llToolsPlace()}catch(e){}},t*SPEED()));
-  if(!old&&!reducedMotion())news.forEach((el,i)=>el.animate([{transform:'translateY(-8px)',opacity:0},{transform:'none',opacity:1}],{duration:240*SPEED(),delay:i*20*SPEED(),easing:'ease-out',fill:'backwards'}))}catch(e){}};
+    if(hit&&typeof llToolsPlace==='function')llToolsPlace()}catch(e){}try{c35PotTight()}catch(e){}},t*SPEED()));
+  if(!old&&!reducedMotion())news.forEach((el,i)=>LT.anim(el,[{transform:'translateY(-8px)',opacity:0},{transform:'none',opacity:1}],{duration:240*SPEED(),delay:i*20*SPEED(),easing:'ease-out',fill:'backwards'}))}catch(e){}};
 
 // ===== #36：降りた人・見ている人は、こちら（カメラ）ではなく、いま打っている人か場札のほうを見る =====
 LT.on('render',()=>{try{if(!S||!S.players)return;const R=e=>{const r=e&&e.getBoundingClientRect();return r&&r.width?r.left+r.width/2:null};
@@ -79,25 +80,67 @@ LT.on('render',()=>{try{if(!S||!S.players)return;const R=e=>{const r=e&&e.getBou
 // ===== v93 レビュー 1：スマホ縦はポットの塔と額・自分の伏せ札の間が狭い =====
 // 塔の下が自分の伏せ札にかかるときは、場札の下端より下の範囲で塔を上げる。額が塔に重なるときは、額を塔の左へ（入らなければ右へ）ずらす。
 // 横・PC は前のまま（額は塔の下に離れている）。位置合わせ（36_layout_pass）の後に毎回直す。値が変わらなければ書かない
+// v95.1：額の数字（.pv）を、塔・自分の札・場札のどれにもかからず #game の中に収まる一番近い所へ置く（縦・横・PC 共通）。cols はよける塔の柱の場所
+function c35SignFit(s,cols,g){const R=e=>e.getBoundingClientRect(),set=(e,k,v)=>{if(e&&e.style[k]!==v)e.style[k]=v};
+  const kl=s.style.marginLeft,kt=s.style.marginTop;s.style.marginLeft='';s.style.marginTop='';const m0=parseFloat(getComputedStyle(s).marginTop)||0,ks=R(s).height/(s.offsetHeight||1)||1;
+  const pv=[...s.querySelectorAll('.pv')].map(R).filter(r=>r.width>2),tg=pv.length?pv:[R(s)];s.style.marginLeft=kl;s.style.marginTop=kt;
+  const avoid=cols.concat([...document.querySelectorAll('#mine .card')].map(R).filter(r=>r.width>2),typeof boardRects==='function'?boardRects():[]);
+  const fit=(x,y)=>tg.every(a=>a.left+x>=g.left+4&&a.right+x<=g.right-4&&a.top+y>=g.top+2&&a.bottom+y<=g.bottom-2&&!avoid.some(r=>Math.min(r.right,a.right+x)-Math.max(r.left,a.left+x)>-2&&Math.min(r.bottom,a.bottom+y)-Math.max(r.top,a.top+y)>-2));
+  let best=null;if(!fit(0,0)){for(let y=-80;y<=60;y+=2)for(let x=-200;x<=200;x+=4){const c=Math.abs(x)+Math.abs(y);if((!best||c<best[2])&&fit(x,y))best=[x,y,c]}}
+  const [dx,dy]=best||[0,0];set(s,'marginLeft',dx?Math.round(dx/ks)+'px':'');set(s,'marginTop',dy?Math.round(m0+dy/ks)+'px':'')}
 function c35PotTight(){const p=$('potChips'),s=$('potSign');if(!p)return;
-  const tight=S&&S.players&&S.players.length>4&&innerWidth<520&&innerHeight>innerWidth;
+  const tight=S&&S.players&&innerWidth<520&&innerHeight>innerWidth;   // v94：6人卓に限らない（第4章の縦で塔が伏せ札にかかった）
   const set=(e,k,v)=>{if(e&&e.style[k]!==v)e.style[k]=v};
-  if(!tight){set(p,'top','');set(s,'marginLeft','');return}
-  // 測るのは、ここで上げた分（top）と potClear が下げた分（translate）を除いた元の場所。両方を足して測ると、上げる・下げるが毎回ふくらんでいく
-  const R=e=>e.getBoundingClientRect(),k=R(p).height/(p.offsetHeight||1)||1,cur=(parseFloat(p.style.top)||0)+(parseFloat((p.style.translate||'').split(' ')[1])||0);
-  const cols=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1).map(r=>({left:r.left,right:r.right,top:r.top-cur*k,bottom:r.bottom-cur*k}));
-  let up=0;if(cols.length){const card=[...document.querySelectorAll('#mine .card')].map(R).filter(r=>r.width>2),ct=card.length?Math.min(...card.map(r=>r.top)):1e9;
-    const B=Math.max(...cols.map(r=>r.bottom)),T=Math.min(...cols.map(r=>r.top)),over=B-(ct-2);
-    if(over>0){const bc=typeof boardRects==='function'?boardRects():[],bb=bc.length?Math.max(...bc.map(r=>r.bottom)):-1e9;up=Math.max(0,Math.min(over,T-(bb+3)))}}
-  const nt=up?(-up/k).toFixed(1)+'px':'';set(p,'top',nt);
-  if(!s||s.hidden||!cols.length)return set(s,'marginLeft','');
-  const ml=parseFloat(s.style.marginLeft)||0,sr0=R(s),sr={left:sr0.left-ml,right:sr0.right-ml,top:sr0.top,bottom:sr0.bottom},g=R($('game')||document.body);
-  const cs=up?cols.map(r=>({left:r.left,right:r.right,top:r.top-up,bottom:r.bottom-up})):[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1),hit=cs.some(r=>r.left<sr.right&&sr.left<r.right&&r.top<sr.bottom&&sr.top<r.bottom);
-  if(!hit)return set(s,'marginLeft','');
-  const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right));
-  let dx=L-4-sr.right;if(sr.left+dx<g.left+4){const d2=Rr+4-sr.left;dx=sr.right+d2<=g.right-4?d2:g.left+4-sr.left}
-  set(s,'marginLeft',Math.round(dx)+'px');
+  if(!tight){set(p,'top','');set(p,'left','');set(p,'scale','');set(p,'visibility','');set(p,'transformOrigin','');set(s,'marginLeft','');
+    // v94.5 CI：横で塔の下端が額の上に 3px かかった（Chromium 第1章_自分の番）。額が塔の下にあって重なるときは、額を重なった分だけ下げる
+    if(!s||s.hidden){set(s,'marginTop','');return}
+    // v95 CI・レビュー：横・PC でも額が塔や自分の札にかかった。額の数字で測り、かからない一番近い所へ
+    c35SignFit(s,[...p.querySelectorAll('.col')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>1),($('game')||document.body).getBoundingClientRect());return}
+  // v95.2 CI：縦の6人卓のリバーで、potClear が場札の下へ下げた塔が伏せ札の後ろに入った（上げる・寄せる・縮めるを別々に決めていたので、組み合わせなら入る所を見落とした）。
+  // 縦は塔の置き場所をここでまとめて決める。動かす前の場所で、伏せ札・場札・自分の顔と持ち点にかからなければそのまま。
+  // かかるときは、縮める（1〜0.55倍）・上下・左右を合わせて一番近い所へ。どこにも無ければ塔は出さない（額は出したまま）。縦では potClear の下げ（translate）は使わない
+  const R=e=>e.getBoundingClientRect(),g=R($('game')||document.body),ps=p.style;
+  for(const k of['scale','top','left','translate','visibility','transformOrigin'])if(ps[k])ps[k]='';
+  const lc=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1);
+  if(lc.length){const pr=R(p),k=pr.height/(p.offsetHeight||1)||1,pc=(pr.left+pr.right)/2,Ty=Math.min(...lc.map(r=>r.top)),L0=Math.min(...lc.map(r=>r.left));
+    const av=[...document.querySelectorAll('#mine .card')].map(R).filter(r=>r.width>2).concat(typeof boardRects==='function'?boardRects():[],[...document.querySelectorAll('#mine .me-l,#mine .me-r')].map(R).filter(r=>r.width>2));
+    const fits=(f,x,y)=>lc.every(c=>{const l=pc+(c.left-pc)*f+x,r=pc+(c.right-pc)*f+x,t=Ty+(c.top-Ty)*f+y,b=Ty+(c.bottom-Ty)*f+y;
+      return l>=g.left+4&&r<=g.right-4&&t>=g.top+2&&b<=g.bottom-2&&av.every(a=>!(l<a.right+2&&a.left-2<r&&t<a.bottom+3&&a.top-2<b))});
+    if(!fits(1,0,0)){let bs=null;
+      for(let i=0;i<=9;i++){if(bs&&i*10>=bs[3])break;const f=1-i*.05;for(let y=-120;y<=120;y+=4)for(let x=-360;x<=360;x+=4){const c=Math.abs(x)+Math.abs(y)+i*10;if(bs&&c>=bs[3])continue;if(fits(f,x,y))bs=[f,x,y,c]}}
+      if(!bs)ps.visibility='hidden';
+      else{const [f,x,y]=bs;if(f<.999){ps.transformOrigin=`50% ${((Ty-pr.top)/k).toFixed(1)}px`;ps.scale=f.toFixed(3)}
+        // 縮める軸を変えると卓の拡大（transform）の軸も動き、卓は遠近がついているので、動かした量と画面での量が合わない。置いてから測って、ずれを数回で詰める
+        const at=()=>{const q=[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1);return[Math.min(...q.map(r=>r.left)),Math.min(...q.map(r=>r.top)),q]};
+        let tx=pc+(L0-pc)*f+x,ty=Ty+y,sl=0,st=0,[l,t,q]=at(),kx=k,ky=k;
+        for(let n=0;n<6;n++){
+          // 置けたか測る。まだ何かにかかっていれば、動かした向きにかかった分だけ先へ
+          if(Math.abs(tx-l)<=.5&&Math.abs(ty-t)<=.5){let ox=0,oy=0;for(const c of q)for(const a of av){const w=Math.min(c.right,a.right+2)-Math.max(c.left,a.left-2),h=Math.min(c.bottom,a.bottom+3)-Math.max(c.top,a.top-2);if(w>0&&h>0){if(y&&h<=w)oy=Math.max(oy,h);else if(x)ox=Math.max(ox,w);else oy=Math.max(oy,h)}}
+            if(!ox&&!oy)break;tx+=ox*(x<0?-1:1);ty+=oy*(y>0?1:-1)}
+          const nl=sl+(tx-l)/kx,nt=st+(ty-t)/ky;ps.left=nl.toFixed(1)+'px';ps.top=nt.toFixed(1)+'px';const [l2,t2,q2]=at();
+          if(Math.abs(nl-sl)>2&&Math.abs(l2-l)>1)kx=(l2-l)/(nl-sl);if(Math.abs(nt-st)>2&&Math.abs(t2-t)>1)ky=(t2-t)/(nt-st);sl=nl;st=nt;l=l2;t=t2;q=q2}
+        if(Math.abs(sl)<.5)ps.left='';if(Math.abs(st)<.5)ps.top=''}}}
+  if(!s||s.hidden){set(s,'marginLeft','');set(s,'marginTop','');return}
+  // v95 レビュー：第6章の縦で、額を塔からよけた先が自分の手札の上だった。塔（動かした後の場所）・自分の札・場札を全部よける
+  c35SignFit(s,ps.visibility?[]:[...p.querySelectorAll('.col')].map(R).filter(r=>r.width>1),g);
   // ずらした額がラック（道具）にかかったら、ラックを置き直す（ラックは額を避けて置く。v0.93.1 CI：WebKit 縦で額がラックに重なった）
   const k2=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(!k2)return;const a=R(s);
   if([...k2.querySelectorAll('.dtray,.ddeck')].some(e=>{const b=R(e);return b.width>2&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom})&&typeof llToolsPlace==='function')llToolsPlace()}
-LT.on('layout',()=>{try{c35PotTight()}catch(e){}});
+// v95.2 レビュー：ラックとカップは置いたときの塔・場札をよけるが、そのあと塔が動いた（c35PotTight）・場札がずれたときに置き直していなかった
+// （縦の6人卓のリバーで、ラックが塔に、カップがリバーの札に乗った）。塔を置いた後に毎回確かめ、かかっていれば置き直す。置けなければ今どおり出さない
+function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&getComputedStyle(e).visibility!=='hidden'&&R(e).width>2,
+    hit=(a,bs)=>bs.some(b=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom);
+  const tw=[...document.querySelectorAll('#potChips .chip')].filter(vis).map(R),bc=[...document.querySelectorAll('#boardCards .card')].filter(vis).map(R);
+  const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');
+  if(t&&[...t.querySelectorAll('.dtray,.ddeck')].filter(vis).some(e=>hit(R(e),tw.concat(bc)))&&typeof llToolsPlace==='function')llToolsPlace();
+  const c=document.querySelector('#table > .cup:not(.off)');
+  if(vis(c)&&hit(R(c),bc.concat([...document.querySelectorAll('#potChips .chip, #mine .mystack')].filter(vis).map(R)))&&typeof llCupPlace==='function')llCupPlace()}   // 自分のチップの山が増えて飲み物にかかったときも置き直す（v0.96.4 CI：PC で飲み物 × 自分の山）
+{const f=c35PotTight;c35PotTight=function(){f();try{c35ToolsChk()}catch(e){}}}
+// v0.96 CI（PC）：ポットの塔が描き直しの合図なしに伸びて、ラックに重なったまま残った。塔が変わったら少しおいて確かめ直す
+{let mo=null,tm=0;LT.on('layout',()=>{const pc=$('potChips');if(!pc||typeof MutationObserver==='undefined'||(mo&&mo.el===pc))return;if(mo)mo.disconnect();
+  mo=new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(()=>{try{c35ToolsChk()}catch(e){}},120)});mo.el=pc;mo.observe(pc,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']})})}
+// v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
+// 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
+// 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
+{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{try{c35PotTight()}catch(e){}});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
+let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});

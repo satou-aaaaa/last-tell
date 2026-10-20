@@ -14,7 +14,7 @@ const GOSSIP_REG={
 };
 const weakNow=h=>S.board.length<3?preTier(h)===0:isWeak(h,S.board);
 function approx(v){if(v<=0)return'0';const m=10**Math.floor(Math.log10(v)),r=Math.round(v/m)*m;return r>=10000?(r/10000)+'万':fmt(r)}
-const approxOn=()=>!!CFG.tells&&SETTINGS.count!=='exact';
+const approxOn=()=>!!CFG.tells&&!CFG.levels&&SETTINGS.count!=='exact';   // 第6章の録画 #27・#28：トーナメントは持ち点を正確に出す（約○万だとずれて BB が分からない）
 // フロアのルールクイズ。正解・不正解で勝敗は変わらない
 const QUIZ={
   tap:{q:'テーブルを叩いてから「ベットだ」と言った。どうなる？',opts:['チェック','ベット'],a:0,why:'多くの店では、テーブルを叩いたらチェックです。取り消せません'},
@@ -54,6 +54,7 @@ const roughOf=p=>{const st=p.style||{};return st.bluff>=.12||st.midP>=.45||!!st.
 function pickSeat(done){
   const opps=S.players.slice(1);
   if(opps.length<2||(CFG.ch&&CFG.ch.no<=4)||(CFG.run&&!hasLesson('seat')))return done();
+  if(CFG.levels){log('席：フロアが決めた席に座った（トーナメント）');return done()}   // 第6章の録画 #43：トーナメントは席が指定される
   const v=$('vs'),store=storeNo(),reg=loadReg(),usual=regLevel(store)>=1?reg.seat[store]:'';
   const rough=opps.some(roughOf);
   v.innerHTML=`<div class="vsin seatpick"><div class="vshead"><span class="vst">席を選ぶ</span></div>

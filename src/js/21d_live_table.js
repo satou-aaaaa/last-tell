@@ -144,7 +144,7 @@ function ltDealOrder(){const n=S.players.length,o=[];let i=nextIdx(S.dealer,p=>!
       for(let k=0;k<2*n;k++)setTimeout(()=>{if(S===s0&&S.handNo===h0)Sound.sfx('card')},300*SPEED()+k*LT_DEAL())}}catch(e){}
   return r}}
 function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.ltOrder.length)S.ltOrder=ltDealOrder();const now=performance.now(),n=S.ltOrder.length,el=now-S.ltDealAt,end=(2*n)*LT_DEAL()+400;
-  if(el>end){S.ltDealAt=0;return}
+  if(el>end){S.ltDealAt=0;S.ltOrder.forEach(i=>{const h=i===0?$('mine')&&$('mine').querySelector('.hold'):$('spot'+i)&&$('spot'+i).querySelector('.hand');if(h)h.querySelectorAll(':scope > .card').forEach(c=>LT.cssFinish(c))});return}   // 配り終わり：動きが止まっていても終わりの形に（v0.97.3 Safari）
   S.ltOrder.forEach((i,j)=>{const h=i===0?$('mine')&&$('mine').querySelector('.hold'):$('spot'+i)&&$('spot'+i).querySelector('.hand');if(!h)return;
     [...h.querySelectorAll(':scope > .card')].slice(0,2).forEach((c,r)=>{const d=(r*n+j)*LT_DEAL()-el;
       c.style.animation=`ltDeal ${260}ms cubic-bezier(.2,.7,.3,1) ${Math.round(d)}ms both`})})}
@@ -154,7 +154,7 @@ function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.lt
   try{if(S&&S.board){if(S.board.length>n0){if(typeof muckAdd==='function')muckAdd()}else if(S.ltBoardFrom===n0)S.ltBoardAt=at}}catch(e){}
   return r}}
 function ltBoardAnim(){if(!S||!S.ltBoardAt||reducedMotion())return;const el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
-    dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;return}
+    dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
   // 動作の重さの改善 案3：札の幅は先に全部測ってから書く（書く→測るをくり返さない）
   const cs=[...$('boardCards').children].map((c,k)=>[c,k]).filter(([c,k])=>!(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back')));
   cs.forEach(([c])=>{if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}});

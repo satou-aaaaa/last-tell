@@ -19,6 +19,11 @@ scripts.forEach((code, i) => {
 });
 if (bad) process.exit(1);
 console.log(`✅ 文法 OK（スクリプト ${scripts.length}個）`);
+// 3) 動きは LT.anim で（v0.97.3：Safari で onfinish が来ない・動きが止まることがあり、「終わったら消す・見せる」が走らなかった）
+//    .animate( / .onfinish= を LT.anim（00b_hooks.js）の外で書いたら止める。done は時間でも必ず1回呼ばれる
+{const hits=[];scripts.forEach((code,i)=>code.split('\n').forEach((l,k)=>{if(/\.animate\(|\.onfinish\s*=/.test(l)&&!l.includes('lt-anim-ok'))hits.push(`${lineOf(i)+k}行目: ${l.trim().slice(0,90)}`)}));
+  if(hits.length){console.error(`❌ 動きを .animate( / .onfinish= で直接書いている所が ${hits.length}件（LT.anim(el,kf,opts,done) を使う）`);hits.slice(0,10).forEach(h=>console.error('   '+h));process.exit(1)}
+  console.log('✅ 動きは全部 LT.anim');}
 let ESLint;
 try { ({ ESLint } = require(path.join(__dirname, 'node_modules', 'eslint'))); }
 catch { console.log('（ESLint が入っていないので書き方チェックは飛ばしました：cd dev/tools/lint && npm ci）'); process.exit(0); }

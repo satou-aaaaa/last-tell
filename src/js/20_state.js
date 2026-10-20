@@ -45,7 +45,7 @@ const INTRO={
   'ゴウ':['感じの悪い客','新人か。授業料、置いていけよ'],
   'ハヤト':['ジンの元一番弟子','二代目か。一勝負だけ、付き合ってやるよ'],
   'テツ':['地下の常連','ハヤトに勝てる奴なんて、見たことねえぞ'],
-  'クロウ':['王冠の主','看板をお持ちですね。拝見しましょう'],
+  'クロウ':['王冠の主','ようこそ、王冠へ。看板は入口で拝見しました'],
   'カオル':['王冠の常連','クロウさんの前では、みんな静かになるの'],
   'マツ':["錨亭の常連", "……降り"],
   'ナギ':["錨亭の常連", "見たいじゃん"],
@@ -100,10 +100,10 @@ function showVersus(done){
   $('vsGo').onclick=()=>{Depth.ask();close()};$('vsGo').focus({preventScroll:true});
 }
 /* 卓の配置：相手は奥、自分は手前。x は画面の横位置(%) */
-const LAYOUT={1:[50],2:[26,74],3:[17,50,83],5:[12,31,50,69,88]};
+const LAYOUT={1:[50],2:[26,74],3:[17,50,83],4:[14,38,62,86],5:[12,31,50,69,88]};   // 4：第14章の5人卓（改善提案 第10回 §1）
 const feltX=x=>(x+32)/164*100;
 function buildSeats(){
-  const xs=LAYOUT[N()-1];$('table').classList.toggle('n6',N()>=6);
+  const xs=LAYOUT[N()-1];$('table').classList.toggle('n6',N()>=6);$('table').classList.toggle('n5',N()===5);
   $('busts').innerHTML='';$('plates').innerHTML='';$('sayLayer').innerHTML='';
   $('felt').querySelectorAll('.spot').forEach(e=>e.remove());
   S.players.forEach((p,i)=>{
@@ -112,9 +112,9 @@ function buildSeats(){
       $('felt').appendChild(sp);return;
     }
     const x=xs[i-1],r=rankOf(p.name),solo=N()===2;
-    const w=(solo?52:N()===3?36:N()>=6?23:28)+r*(solo?3:N()>=6?1:2);
+    const w=(solo?52:N()===3?36:N()>=6?23:N()===5?25:28)+r*(solo?3:N()>=5?1:2);
     $('busts').insertAdjacentHTML('beforeend',`<div class="bust ${r>=3?'cool':'cute'}${r>=4?' rk4':''}" id="bust${i}" style="left:${x}%;width:${w}%"><div class="body" style="animation-delay:-${(i*1.1).toFixed(1)}s">${avatar(p.name)}</div></div>`);
-    $('sayLayer').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()>=6?30:N()===4?31:44}%"></div>`);
+    $('sayLayer').insertAdjacentHTML('beforeend',`<div class="say${x<30?' l':x>70?' r':''}" id="say${i}" style="left:${x}%;max-width:${N()>=6?30:N()===5?28:N()===4?31:44}%"></div>`);
     $('plates').insertAdjacentHTML('beforeend',`<div class="plate" id="plate${i}" style="left:${x}%"></div>`);
     const sp=document.createElement('div');sp.className='spot';sp.id='spot'+i;
     sp.style.left=feltX(N()>=6&&innerWidth<560&&innerWidth<innerHeight?50+(x-50)*.85:x)+'%';sp.style.top='13%';
@@ -140,7 +140,7 @@ function motion(el,kind,cool){
   const K={raise:[[0,0,1],[7,0,1.08],[0,0,1]],allin:[[0,0,1],[9,0,1.12],[2,0,1.04],[0,0,1]],call:[[0,0,1],[3,0,1],[0,0,1]],check:[[0,0,1],[2,0,1],[0,0,1]],
     fold:[[0,0,1],[5,-4,.98],[0,0,1]],win:cool?[[0,0,1],[4,0,1],[0,0,1],[3,0,1],[0,0,1]]:[[0,0,1],[-12,0,1],[0,0,1],[-7,0,1],[0,0,1]]}[kind];
   if(!K)return;
-  svg.animate(K.map(([y,r,s])=>({transform:`translateY(${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='win'?900:kind==='allin'?800:500,easing:'ease-out'});
+  LT.anim(svg,K.map(([y,r,s])=>({transform:`translateY(${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='win'?900:kind==='allin'?800:500,easing:'ease-out'});
 }
 function placeDealer(){
   const d=$('dbtn'),sp=$('spot'+S.dealer);

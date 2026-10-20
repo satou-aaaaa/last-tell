@@ -54,7 +54,7 @@ function tapBlocked(p,i){
   return ['vs','help','setPanel','stackZoom','moreDlg','review'].some(id=>$(id)&&!$(id).hidden)}
 function tapMove(i,kind){const b=$('bust'+i),svg=b&&b.querySelector('.av');const K=TAP_MOVE[kind];
   if(!svg||!svg.animate||!K||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  svg.animate(K.map(([y,r,s,x])=>({transform:`translate(${x}%,${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='nod'?900:1400,easing:'ease-in-out'})}
+  LT.anim(svg,K.map(([y,r,s,x])=>({transform:`translate(${x}%,${y}%) rotate(${r}deg) scale(${s})`})),{duration:kind==='nod'?900:1400,easing:'ease-in-out'})}
 function tapSay(p,line){if(!line)return;p.say={seq:(S.saySeq=(S.saySeq||0)+1),act:'',line,talk:true,tap:true};render()}
 // あなたの「ナイスハンド」は、自分の手の上に小さく出す
 function tapMe(line){const t=$('table');let m=$('tapMe');if(!m){m=document.createElement('div');m.id='tapMe';m.className='tapme';m.setAttribute('aria-live','polite');t.appendChild(m)}

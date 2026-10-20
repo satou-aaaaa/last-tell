@@ -1,0 +1,17 @@
+/* カードのマークを見やすく（2026-10-19 satou「カードのマークがわかりづらい」、research/カードのマーク_提案.md）
+   案A ジャンボ数字：角の数字とマークを大きく、右下に大きなマーク1つ、下の逆さ数字はやめる
+   案B 絵札：小さい枠をやめ、右下に金の細い枠＋大きなマーク
+   案D 相手の席の小さい札：数字とマークだけを真ん中に大きく */
+.card .r,.card .s,.card .court{z-index:1} /* 札の光（.card::after の白いつや）が左上の数字を薄くしていた */
+.card .r{top:4%;left:7%;font-size:calc(var(--cw)*.42);letter-spacing:-.06em}
+.card .r i{font-size:.86em;margin-top:.04em}
+.card .r2{display:none}
+.card .s,.card .s.ace{place-items:end;padding:0 10% 8% 0;font-size:calc(var(--cw)*.52)}
+.card .court{border:0;background:none;inset:auto 7% 6% auto;width:54%;height:50%;display:grid;place-items:center}
+.card .court::before{content:"";position:absolute;inset:6%;border:1px solid var(--gold);border-radius:3px;opacity:.7;background:linear-gradient(160deg,rgba(226,182,91,.22),rgba(226,182,91,.04))}
+.card .court b{display:none}
+.card .court i{position:relative;font-size:calc(var(--cw)*.42)}
+/* 案D：席の札・捨て札の山・配り直しの札は小さい（17〜34px）ので、数字とマークだけ */
+.spot .card:not(.back) .s,.spot .card:not(.back) .court,.muckpile .card .s,.muckpile .card .court{display:none}
+.spot .card:not(.back) .r,.muckpile .card .r{top:50%;left:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.56)}
+.spot .card:not(.back) .r i,.muckpile .card .r i{display:block;font-size:.8em;margin-top:0}

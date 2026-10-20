@@ -467,7 +467,10 @@ function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect()
   const hit=(x,y)=>obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
   const inT=(x,y)=>r0.left+x>=tb.left+4&&r0.right+x<=tb.right-2&&r0.top+y>=tb.top+2&&r0.bottom+y<=tb.bottom-2;
   const ys=[0];if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
-  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
+  // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
+  const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
+  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}
+  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)&&!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
 // v71（改善提案§1）：席の前の賭けチップ（.chipwrap）と持ち点の塔（.mystack。自分の欄の分も）、1対1では相手の伏せ札・D の札も（v70 レビュー）、場札にかかるときは、bPlace と同じく空いた所を探して席の側へ寄せる。
 // 寄せる向きは「場札の真ん中→席」、横（席のある側・反対側）、縦（席の側・反対側）の順。席の札・名札・ポットの山にかからない、いちばん近い所。位置合わせ（36_layout_pass）で fitTable の後に呼ぶ
 function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot .hand,#dbtn';document.querySelectorAll(MS).forEach(e=>{if(e.style.translate)e.style.translate=''});   // 自分の欄・相手の伏せ札・D の札は fitTable が戻さないので、ここで戻す
@@ -480,7 +483,8 @@ function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot
   // v77：WebKit で場札にチップが残る件の切り分け用の印（data-ca：hit＝かかっていた、nobest＝置き場が無かった、f＝動かした倍率）
   document.querySelectorAll('.felt .spot .mystack,.felt .spot .chipwrap').forEach(e=>{e.dataset.ca='ok'});ws.forEach(([w])=>{w.dataset.ca='hit'});
   const out=[];ws.forEach(([w,a])=>{const sp=w.id==='dbtn'?w:w.closest('.spot')||$('mine'),sr=R(sp),kx=sr.width/(sp.offsetWidth||1)||1,ky=sr.height/(sp.offsetHeight||1)||1;
-    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn,#mine .me-r .lbl2,#mine .me-r .chp')].filter(e=>e!==w).map(R).filter(vis)),obs=bc.concat(pot);
+    const own=[...sp.querySelectorAll('.hand:not(.folded):not(.muck) .card,.mystack .chip,.chipwrap .chip')].filter(e=>!w.contains(e)).map(R).filter(vis).concat([...document.querySelectorAll('#plates .plate,#mine .card,#dbtn,#mine .me-r .lbl2,#mine .me-r .chp')].filter(e=>e!==w).map(R).filter(vis))
+      .concat([...document.querySelectorAll('.felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].filter(e=>!sp.contains(e)).map(R).filter(vis)),obs=bc.concat(pot);   // v0.96：ほかの席の見せた札にもかけない（第14章の5人卓の縦で、隣の席のチップが見せ札に乗った）
     let ux=sr.left+sr.width/2-bx,uy=sr.top+sr.height/2-by;const n=Math.hypot(ux,uy)||1;ux/=n;uy/=n;const sx=ux<0?-1:1,fw=document.querySelector('.felt-wrap'),top=sp.id==='mine'||!fw||parts(w)[0]===w||w.classList.contains('hand')?tb.top:Math.max(tb.top,R(fw).top);   // 席のチップは卓の縁より奥（相手の体の前）へは出さない（伏せ札・D の札は今までどおり）
     // まず席の札・名札にもかからない所。無ければ（狭い卓）場札とポットにかからないことだけを守る。卓の真ん中（席と反対）へ寄せるのは最後（ポットの山に見えるため）
     let best=null;for(const soft of [1,0])if(!best)for(const [vx,vy,pen] of [[ux,uy,1],[sx,0,1],[-sx,0,1],[0,uy<0?-1:1,1],[0,uy<0?1:-1,2.5]])for(let t=4;t<=Math.max(150,tb.width*.5);t+=4){const dx=vx*t,dy=vy*t;

@@ -23,6 +23,10 @@
  "01h_style_video.css",
  "01i_style_betlog.css",
  "01j_style_play35.css",
+ "01k_style_play6.css",
+ "01k_style_readscope.css",
+ "01l_style_cardmark.css",
+ "01m_style_sharp.css",
  "02_body.html",
  "js/00_version_links.js",
  "js/00b_hooks.js",
@@ -39,6 +43,8 @@
  "js/01b_en_textfix.js",
  "js/01b_en_video.js",
  "js/01b_en_play35.js",
+ "js/01b_en_play6.js",
+ "js/01b_en_readscope.js",
  "js/01_i18n_engine.js",
  "js/02_chapters.js",
  "js/03_char_art.js",
@@ -106,5 +112,8 @@
  "js/47_video_fixes.js",
  "js/48_bet_log.js",
  "js/49_play35_fixes.js",
+ "js/50_read_scope.js",
+ "js/51_play6_fixes.js",
+ "js/52_cardmark.js",
  "99_tail.html"
 ]

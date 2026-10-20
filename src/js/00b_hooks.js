@@ -12,5 +12,16 @@ const LT={_h:{},errors:0,
   wrap(n,fn){if(typeof fn!=='function'||fn.__lt)return fn;const L=this;
     const w=function(...a){L.emit(n+':before',...a);const r=fn.apply(this,a);
       if(r&&typeof r.then==='function')return r.then(v=>{L.emit(n,...a);return v});L.emit(n,...a);return r};
-    w.__lt=n;return w}
+    w.__lt=n;return w},
+  // 動き（Web Animations）は必ずこれで動かす（v0.97.3：Safari では onfinish が来ないこと・動きが途中で止まることがある）。
+  // done は「終わった合図」と「時間（delay＋長さ＋300ms）」の早いほうで1回だけ呼ぶ。時間で来たときは動きも終わりの形にする。
+  // 止めた（cancel）動きの done は呼ばない（onfinish と同じ）。build.py の lint が、これ以外で動きの関数を直接呼ぶ所を止める。
+  anim(el,kf,opts,done){const a=el.animate(kf,opts);/*lt-anim-ok*/let fired=false;const fin=()=>{if(fired)return;fired=true;if(done)try{done()}catch(e){console.error('[LT.anim]',e)}};
+    a.onfinish=fin;/*lt-anim-ok*/a.oncancel=()=>{fired=true};const o=typeof opts==='number'?{duration:opts}:(opts||{}),it=o.iterations==null?1:o.iterations;
+    if(isFinite(it)){const ms=(+o.delay||0)+(+o.duration||0)*it+(+o.endDelay||0)+300;
+      setTimeout(()=>{if(fired)return;try{if(a.playState!=='idle'&&a.playState!=='finished')a.finish()}catch(e){}if(a.playState!=='idle')fin()},ms)}
+    return a},
+  // CSS の animation（fill both で出てくる動き：vfIn・ltFlop/ltTurn・ltDeal）も、ms たっても動いていたら終わりの形にする
+  cssFinish(el){try{if(!el||!el.isConnected||!el.getAnimations)return;el.getAnimations().forEach(a=>{const t=a.effect&&a.effect.getComputedTiming();if(t&&isFinite(t.endTime)&&a.playState==='running')a.finish()})}catch(e){}},
+  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)}
 };

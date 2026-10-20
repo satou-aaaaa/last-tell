@@ -42,7 +42,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   if(CFG.refill)S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;log(`${p.name}がチップを補充して席に戻った`)}});
   if(S.rebuyMain){S.rebuyMain=false;S.players.forEach(p=>{if(!p.human&&!p.extra&&p.chips<=0){p.chips=p.start;S.chipsReset=S.handNo+1;log(`${p.name}がチップを買い足して席に戻った`)}})}   // 相手役がほかの客に飛ばされたとき（endHand の byOther）
   S.players.forEach(p=>{p.out=p.chips<=0||!!p.sitOut});
-  S.handNo++;
+  S.handNo++;if(typeof muckAvoidCancel==='function')muckAvoidCancel();   // 前のハンドの捨て札の山の置き直しを取り消す（CodeRabbit PR #105）
   // トーナメント：決まったハンド数ごとにブラインドが上がる
   if(CFG.levels){const lv=Math.min(CFG.levels.length-1,Math.floor((S.handNo-1)/CFG.levelHands));
     if(CFG.blinds!==CFG.levels[lv]){const up=S.handNo>1;CFG.blinds=CFG.levels[lv];if(up){log(`ブラインドが上がった：${SB()}/${BB()}`);dealerSay('ブラインドが上がります')}}}

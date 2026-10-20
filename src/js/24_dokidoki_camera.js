@@ -28,8 +28,8 @@ function pushChips(i){
   const el=document.createElement('div');el.className='potfly';el.innerHTML=chipStack(p.bet,false,true);
   el.style.left=(r.left+r.width/2-tb.left)+'px';el.style.top=(r.top+r.height/2-tb.top)+'px';$('table').appendChild(el);
   const dx=(to.left+to.width/2-r.left-r.width/2)*.55,dy=(to.top+to.height/2-r.top-r.height/2)*.55;
-  el.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.25},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,opacity:.9}],
-    {duration:800*SPEED(),easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'}).onfinish=()=>setTimeout(()=>el.remove(),200);
+  LT.anim(el,[{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)',offset:.25},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,opacity:.9}],
+    {duration:800*SPEED(),easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'},()=>setTimeout(()=>el.remove(),200));
 }
 // 3. 大事な場面の持ち時間。第1〜3章は時間が切れても自動では降りない（難しさを変えないため）
 const Clock=(()=>{
@@ -167,7 +167,7 @@ function proceed(){
       else if(tc>0&&mn.angles.includes('onechip'))angle='onechip';
       if(angle){S.angleHand=S.handNo;d.type='call';delete d.to}
     }
-    const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.5:1)+hold+rdT;
+    const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.8:1)+hold+rdT;   // 客の降りは少しだけ速く（.5 だと「早い早い」：第6章の録画 #21）
     if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
       setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)askQuiz(angle==='faketap'?'tap':'onechip',()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}})},wait+1300*SPEED());return}
     setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
@@ -439,7 +439,7 @@ function showdown(){
       if(me.score[0]>=7)grantTitle('quads');
       if(me.allIn)grantTitle('allin');
       const loser=cont.filter(q=>!q.human&&!q.won).pop();
-      if(loser&&!CFG.flashback){loser.say={seq:(loser.actSeq||0)+1000,act:'',line:Math.random()<.5?'ナイスハンド':lineFor(loser.name,'fold')||'ナイスハンド'}}
+      if(loser&&!CFG.flashback){loser.say={seq:(loser.actSeq||0)+1000,act:'',line:'ナイスハンド'}}   // 負けた人に「降りるわ」（降りるときの台詞）を言わせていた（第6章の録画 #2）
     }else{
       const ws2=cont.filter(q=>q.won>0);
       if(me.hand[0].r===14&&me.hand[1].r===14)grantTitle('aalose');

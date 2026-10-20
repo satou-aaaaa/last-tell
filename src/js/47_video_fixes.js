@@ -70,25 +70,47 @@ potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
 function vfResult(){
-  if(!S||!S.handOver||!S.vf||S.vf.res||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
+  // S.vf は次のハンドの分（startHand:before で h＝次の番号）。前のハンドの終わりのまま描き直されたときは出さない（v0.97.0 PR #111：次のハンドの合図の途中で前のハンドの札を作り、次のハンドの勝ち負けが出ずに前の札が残った）
+  if(!S||!S.handOver||!S.vf||S.vf.res||S.vf.h!==S.handNo||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
   const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;S.vf.res=1;
   const me=S.players[0],sd=S.street==='showdown'&&!S.board2,iWon=me.won>0,inIt=!me.folded&&!me.out;
   if(!sd&&!iWon)return;   // ほかの人どうしで決まったハンドは、名札の語とディーラーの声で足りる
   const en=VF.en(),w=iWon?me:ws.reduce((a,b)=>b.won>a.won?b:a),h=sd?vfHand(w):'';
   let main,sub='';
   if(iWon){main=en?'You win':'あなたの勝ち';sub=`+${fmt(me.won)}`}
+  else if(inIt&&sd){main=en?'You lose':'あなたの負け';sub=''}   // 第6章の録画 #8：勝ったと思ったら負け → 自分の勝ち負けを先に大きく
   else{main=en?`${vfName(w)} wins`:`${vfName(w)}の勝ち`;if(inIt)sub=en?'You lose':'あなたの負け'}
   if(ws.length>1){main=en?'Split pot':'引き分け（ポットを分ける）';sub=iWon?`+${fmt(me.won)}`:''}
   const tb=$('table'),bc=$('boardCards');if(!tb||!bc)return;
   const old=tb.querySelector('.vfres');if(old)old.remove();
   const d=document.createElement('div');d.className='vfres'+(iWon?' win':'');d.setAttribute('role','status');
-  d.innerHTML=`<b>${esc(main)}</b>${h?`<span class="h">${esc(h)}</span>`:''}${sub?`<span class="n">${esc(sub)}</span>`:''}`;
-  const place=()=>{const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;d.style.top=Math.round(B.bottom-T.top+6)+'px'};
-  tb.appendChild(d);place();setTimeout(()=>{try{place()}catch(e){}},300);
-  const s0=S;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);
-  LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
+  const mh=!iWon&&inIt&&sd&&me.score?vfHand(me):'';   // 負けたときは自分の役も（「あなた：ツーペア」）
+  const hh=mh&&h?(en?`${vfName(w)}: ${h}`:`${vfName(w)}：${h}`):h;
+  d.innerHTML=`<b>${esc(main)}</b>${hh?`<span class="h">${esc(hh)}</span>`:''}${sub?`<span class="n">${esc(sub)}</span>`:''}${mh?`<span class="m">${esc((en?'You: ':'あなた：')+mh)}</span>`:''}`;
+  if(!iWon&&inIt)d.classList.add('lose');
+  // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
+  const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
+    cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
+    const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
+    const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v*q.k:0)},0)};
+    // 横の範囲は、ずらす案だけで見る（v96.1 CI：卓と同じくらい幅の広い札で、全部の案が外れて場札の下に固定されていた）
+    // v96 レビュー：場札の下がディーラーの山（飾り）に少しかかるだけで、場札の上（相手の顔のあご）へ行っていた。飾りの山はよけない（山のほうが .vfres をよけるか消える）。場札の下は左右に少しずらす案も試す
+    const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++){c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);for(const dx of [40,-40,80,-80])c.push([B2.b+6+k*10,dx])}
+    let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
+    if(best==null)best=Math.max(T.top+2,Math.min(B2.b+6,innerHeight-2-h));d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
+    {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
+  const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
+  d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
+  tb.appendChild(d);d._place();LT.cssDone(d,600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
+setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
+  
+  const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
+  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
 }
-LT.on('render',()=>{try{vfResult()}catch(e){}});
+// 念のため：ハンドが始まったら、前のハンドの勝ち負けの札は残さない
+LT.on('startHand',()=>{try{document.querySelectorAll('#table .vfres').forEach(e=>{if(!S||e.dataset.h!==String(S.handNo))e.remove()})}catch(e){}});
+LT.on('render',()=>{try{vfResult();const e=document.querySelector('#table .vfres');if(e&&e._place&&!e._pq){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(e){}});
 
 // ===== A9：フロアのクイズは「ルールを覚える」ためと一言。設定でオフにできる =====
 LT.on('askQuiz',()=>{try{const em=document.querySelector('#quiz .qhead em');if(em&&!document.querySelector('#quiz .vfqwhy')){const p=document.createElement('p');p.className='vfqwhy';
@@ -139,3 +161,6 @@ LT.on('renderLine',()=>{try{if(!SC)return;const l=SC.lines[SC.i];if(!Array.isArr
 
 // ===== D6：人だかりの声は誰の声か分かるように =====
 CROWD.lines=CROWD.lines.map(t=>'（周りの客）'+t);
+// v96.1 CI：6人卓の縦で、勝ち負けの札を置いたあとに自分の札（オールインで開いた札）が上がってきて重なった。layout のたびに、札にかかっていたら置き直す
+LT.on('layout',()=>{try{const e=document.querySelector('#table .vfres');if(!e||!e._place||e._pq)return;const D=e.getBoundingClientRect();
+  if([...document.querySelectorAll('#mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(x){}});
