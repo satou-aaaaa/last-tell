@@ -259,10 +259,12 @@ async function shoot(browser, file, scene, vp, dir) {
         vf: !!v, vfOn: !!(v && vis(v) && vr.width > 2 && vr.top >= 0 && vr.bottom <= innerHeight && vr.left >= 0 && vr.right <= innerWidth), vfTop: v ? v.style.top : '', vfOut: !!(v && v.classList.contains('out')), vfDone: !!(S.vf && S.vf.res),
         vfWin: !!(v && v.classList.contains('win')), vfH: v ? (v.dataset.h || '') : '', hand: S.handNo, fb: !!(typeof CFG !== 'undefined' && CFG.flashback), vfText: v ? v.textContent.slice(0, 40) : '',
         chips: pc ? [...pc.querySelectorAll('.chip')].filter(vis).length : -1, sign: vis(ps) && /\d/.test((ps && ps.textContent) || ''), quiet: typeof VF !== 'undefined' && VF.quiet ? !!VF.quiet() : null,
-        dbg: `pushing=${!!S.potPushing} potmove=${document.querySelectorAll('#table .potmove').length} wonPile=${document.querySelectorAll('#table .won-pile').length}${S.wonPile ? '(' + Object.keys(S.wonPile.amt).join(',') + ')' : ''} anim=${document.getAnimations ? document.getAnimations().map(a => a.playState).join(',').slice(0, 60) : '?'} potPile=${S.potPile ? S.potPile.chips : '-'}` } }).catch(e => ({ err: String(e.message).slice(0, 80) }));
+        dbg: `pushing=${!!S.potPushing} potfly=${document.querySelectorAll('#table .potfly').length} potmove=${document.querySelectorAll('#table .potmove').length}${v ? ` vf=${v.className}/${(+getComputedStyle(v).opacity).toFixed(2)}/${[vr.left, vr.top, vr.width, vr.height].map(Math.round).join(',')}` : ''} wonPile=${document.querySelectorAll('#table .won-pile').length}${S.wonPile ? '(' + Object.keys(S.wonPile.amt).join(',') + ')' : ''} anim=${document.getAnimations ? document.getAnimations().map(a => a.playState).join(',').slice(0, 60) : '?'} potPile=${S.potPile ? S.potPile.chips : '-'}` } }).catch(e => ({ err: String(e.message).slice(0, 80) }));
     const hsReady = x => !x || x.err || !((x.won > 0 && (x.chips > 0 || x.sign)) || (x.iWon && !x.quiet && !x.vfOn && !x.vfOut));
-    let hs0 = null, waitMs = 0;
-    if (scene.handEnd) { const tw = Date.now(); hs0 = await readHs(); while (!hsReady(hs0) && Date.now() - tw < 4000) { await page.waitForTimeout(100); hs0 = await readHs() } waitMs = Date.now() - tw }
+    // 何を待ったか（チップ・額・勝ち負けの札）を残す（v0.97.1 PR #112：WebKit で 1.5〜3秒待ったが、何が遅いのか分からなかった）
+    const hsWhy = x => !x || x.err ? '' : [x.won > 0 && x.chips > 0 ? `チップ${x.chips}枚` : '', x.won > 0 && x.sign ? '額' : '', x.iWon && !x.quiet && !x.vfOn && !x.vfOut ? (x.vf ? '札が画面の外か透明' : '札なし') : ''].filter(Boolean).join('+');
+    let hs0 = null, waitMs = 0, waitWhy = '';
+    if (scene.handEnd) { const tw = Date.now(); hs0 = await readHs(); while (!hsReady(hs0) && Date.now() - tw < 4000) { const w = hsWhy(hs0); if (w && !waitWhy.endsWith(w)) waitWhy += (waitWhy ? ' → ' : '') + `${Date.now() - tw}ms:${w}`; await page.waitForTimeout(100); hs0 = await readHs() } waitMs = Date.now() - tw }
     const issues = await page.evaluate(INSPECT);
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
@@ -304,7 +306,7 @@ async function shoot(browser, file, scene, vp, dir) {
     // 改善提案 第11回 0-3：WebKit の PC で、勝ったのにポットが卓のまん中に残り「あなたの勝ち」（.vfres）が出なかった（v0.97.0）。
     // WebKit の .felt の中は getBoundingClientRect が描かれる場所とずれるので、場所でなく状態で見る（両ブラウザで同じ物差し）
     // 撮ってから1秒あとの状態も残す（撮った時の状態は hs0）
-    const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs }) : null;
+    const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
     return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, errors: await page.evaluate(() => __qa.errors) };
@@ -365,7 +367,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     if (/横/.test(r.vp) && x.vf && x.vf.log && x.vf.se) items.push({ id: `ui:vflog-sensei:${r.vp}`, title: `師匠の帯が出ていても直近の5手が出る（${r.vp}）`, status: x.vf.on ? 'ok' : 'warn', detail: x.vf.on ? '' : '#vfLog が .off（置ける所がない）' });
     items.push({ id: `ui:readscope-over:${r.vp}`, title: `印の付いたクセの札が顔・札・吹き出し・名札に重ならない（${r.vp}）`, status: x.over && x.over.some(o => /^(#say|吹き出し)/.test(o)) ? 'fail' : x.over && x.over.length ? 'warn' : 'ok', detail: x.over && x.over.length ? x.over.slice(0, 4).join('、') : '' }) }   // v94.3 レビュー：吹き出しが印にかかるのは ❌（吹き出しは手前の層で印が読めない）。顔・札・名札は ⚠
   // ハンドの終わりの状態（0-3）：自分が勝った回は「あなたの勝ち」が画面の中にある。ポットのチップと額は勝った人へ渡って卓のまん中に残らない
-  for (const r of res) if (r.hs) { const x = r.hs.hs0 || r.hs, bad = [], wait = r.hs.waitMs || 0;   // 撮った時の状態で決める
+  for (const r of res) if (r.hs) { const x = r.hs.hs0 || r.hs, bad = [], wait = r.hs.waitMs || 0, why = r.hs.waitWhy ? `（待ったもの ${r.hs.waitWhy}）` : '';   // 撮った時の状態で決める
     if (x.err) bad.push('状態を読めなかった：' + x.err);
     else { if (x.iWon && !x.quiet && !x.vfOn && !x.vfOut) bad.push(x.vf ? `「あなたの勝ち」が画面の外（top ${x.vfTop}）` : '「あなたの勝ち」が出ていない' + (x.vfDone ? '（出す処理は通った）' : ''));   // 静かな場面（第7章の最後など。VF.quiet）は出さない仕様
       // 前のハンドの札が残っていないか（v0.97.0 PR #111：第14章で、負けたハンドに前のハンドの「あなたの勝ち」が残っていた）
@@ -376,7 +378,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
       if (x.won > 0 && x.sign) bad.push('ポットの額が出たまま');
       if (bad.length) bad.push(`［${x.dbg}］`) }
     items.push({ id: `ui:handend-state:${r.scene}:${r.vp}`, title: `ハンドの終わりにポットが勝った人へ渡り、勝ったら「あなたの勝ち」が出る（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : wait > 1500 ? 'warn' : 'ok',
-      detail: (bad.length ? bad.join('・') + '（4秒待っても、そろわなかった）' : wait > 1500 ? `ポットが渡り終わるまで ${wait}ms 待った（1.5秒より長い。Mac の Safari でももたついて見える見込み）［${x.dbg}］` : wait >= 200 ? `撮る前に ${wait}ms 待った` : '') + ((r.errors || []).length ? '。ページのエラー：' + r.errors.slice(0, 2).join(' / ').slice(0, 160) : '') }) }
+      detail: (bad.length ? bad.join('・') + '（4秒待っても、そろわなかった）' + why : wait > 1500 ? `ポットが渡り終わるまで ${wait}ms 待った${why}（1.5秒より長い。Mac の Safari でももたついて見える見込み）［${x.dbg}］` : wait >= 200 ? `撮る前に ${wait}ms 待った` : '') + ((r.errors || []).length ? '。ページのエラー：' + r.errors.slice(0, 2).join(' / ').slice(0, 160) : '') }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
     status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
