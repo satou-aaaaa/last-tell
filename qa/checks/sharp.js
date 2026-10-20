@@ -37,7 +37,7 @@ async function sharpness(page, buf, k) {
 //   WebKit は zoom:3 の卓の中の部品で、getBoundingClientRect も Playwright の boundingBox もずれた所を返し、
 //   何もないラシャを測っていた（v0.97.0 の CI：場札 1.45・チップ 0.94 の切り抜きが空の卓。ずれは最大 70〜90px）。
 //   そこで部品をいったん赤紫に塗って画面を撮り、赤紫の範囲を本当の場所とする。getBoundingClientRect とのずれは gap に残す
-let gapMax = 0, paintLog = null;   // paintLog：試した直しで絵が動いていないかをくらべるため、描かれた場所を順に残す
+let gapMax = 0, paintLog = null, hitStat = null;   // hitStat：当たり判定（elementFromPoint）が描かれた場所と測った場所のどちらに従うか（v0.97.7。WebKit で場所の数字の代わりに使えるかを見る）   // paintLog：試した直しで絵が動いていないかをくらべるため、描かれた場所を順に残す
 const MARK = 'sharpMark';
 async function rectsOf(page, sel, n) {
   const out = [];
@@ -66,6 +66,9 @@ async function rectsOf(page, sel, n) {
       return x2 < 0 ? null : { x: x1, y: y1, width: x2 - x1 + 1, height: y2 - y1 + 1 } }, [shot.toString('base64'), plain.toString('base64')]);
     if (paintLog) paintLog.push(b);
     if (!b) continue;
+    if (hitStat) { const h = await page.evaluate(([s, i, b, g]) => { const e = document.querySelectorAll(s)[i]; if (!e) return null; const at = (x, y) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)) };
+        return { p: at(b.x + b.width / 2, b.y + b.height / 2), g: at(g.x + g.w / 2, g.y + g.h / 2) } }, [sel, i, b, g]);
+      if (h) { hitStat.n++; if (h.p) hitStat.p++; if (h.g) hitStat.g++ } }
     gapMax = Math.max(gapMax, Math.abs(b.x - g.x), Math.abs(b.y - g.y));
     const x = Math.max(0, b.x + 2), y = Math.max(0, b.y + 2), x2 = Math.min(g.W, b.x + b.width - 2), y2 = Math.min(g.H, b.y + b.height - 2);
     if (x2 - x > 16 && y2 - y > 16) out.push({ x, y, width: x2 - x, height: y2 - y });
@@ -98,13 +101,10 @@ const GAP_TRIES = [
   ['手札の遠近なし', '.felt .spot .hand{perspective:none!important}'],
   ['zoomなし', '.felt{zoom:1!important;inset:0!important;width:auto!important;height:auto!important;transform:rotateX(50deg)!important}'],
   ['will-change', '.felt{will-change:transform}'],
-  // v0.97.7：遠近の中心（.felt-wrap の perspective-origin 50% -30%）を、卓の transform の中の perspective() にまとめる。Chromium では場所の差 0px。
-  // 卓は zoom:3 なので、Chromium は transform の長さも3倍にする（620/3）。WebKit が3倍にしないときのため 620px も試す
-  ['遠近を卓にまとめる（620/3）', '.felt-wrap{perspective:none!important}.felt{transform-origin:50% -10%!important;transform:perspective(206.6667px) translateY(10%) rotateX(50deg) scale(.333333) translateY(-10%)!important}'],
-  ['遠近を卓にまとめる（620）', '.felt-wrap{perspective:none!important}.felt{transform-origin:50% -10%!important;transform:perspective(620px) translateY(10%) rotateX(50deg) scale(.333333) translateY(-10%)!important}'],
+  // v0.97.7 で試した「遠近を卓の perspective() にまとめる」（Chromium では差 0px）は、WebKit で絵が 160px 動いた・測れなくなったので外した
 ];
 async function shoot(browser, file, vp, dir) {
-  const k = vp.dpr; gapMax = 0;
+  const k = vp.dpr; gapMax = 0; hitStat = { n: 0, p: 0, g: 0 };
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, dpr: vp.dpr, fast: 20, lite: false, settings: { motion: 'full' }, seed: 1001, storage: H.UNLOCKED });
   try {
     await page.evaluate(`startChapter(CHAPTERS[1],true)`);
@@ -146,8 +146,9 @@ async function shoot(browser, file, vp, dir) {
       face1 = (await measure(page, faceSel, 1, k)).q;
     }
     // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
-    let gapTries = null;
+    let gapTries = null, hitKeep = null;
     if (gapMax > GAP_MAX) { gapTries = []; const keep = gapMax;
+      hitKeep = hitStat; hitStat = null;   // 試した直しの間の当たり判定は数えない
       const gapParts = async () => { paintLog = []; await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 3); await rectsOf(page, '#potChips', 1); await rectsOf(page, '.felt .spot .mystack', 2); const r = paintLog; paintLog = null; return r };
       const base = await gapParts();   // 直しを入れる前の描かれた場所（直しで絵まで動いたら、見た目が変わる直し）
       for (const [name, css] of GAP_TRIES) {
@@ -161,7 +162,8 @@ async function shoot(browser, file, vp, dir) {
         await page.evaluate(() => document.getElementById('sharpTry').remove());
       }
       gapMax = keep; await page.waitForTimeout(300) }
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
+    const hit = hitKeep || hitStat; hitStat = null;
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries, hit };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
   } finally { await ctx.close() }
 }
 
@@ -183,7 +185,7 @@ async function run({ browser, file, dir }) {
     // 卓の中の部品が、getBoundingClientRect の場所に描かれているか（v0.97.4 レビュー：WebKit で最大 81px ずれ、場所の数字で場札をよける処理がすべて外れた）。
     // 色を塗って探した本当の場所とのずれが GAP_MAX を超えたら ❌（どのブラウザでも。前は表示だけだった）
     items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
-      detail: `ずれ 最大 ${Math.round(r.gap)}px${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
+      detail: `ずれ 最大 ${Math.round(r.gap)}px${r.hit && r.hit.n ? `、当たり判定が部品に当たる：描かれた場所 ${r.hit.p}/${r.hit.n}・測った場所 ${r.hit.g}/${r.hit.n}` : ''}${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
