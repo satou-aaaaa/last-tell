@@ -2368,7 +2368,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.3';
+const APP_VERSION='0.97.4';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2413,8 +2413,17 @@ const LT={_h:{},errors:0,
     return a},
   // CSS の animation（fill both で出てくる動き：vfIn・ltFlop/ltTurn・ltDeal）も、ms たっても動いていたら終わりの形にする
   cssFinish(el){try{if(!el||!el.isConnected||!el.getAnimations)return;el.getAnimations().forEach(a=>{const t=a.effect&&a.effect.getComputedTiming();if(t&&isFinite(t.endTime)&&a.playState==='running')a.finish()})}catch(e){}},
-  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)}
+  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)},
+  // 見張り（v0.97.3 レビュー）：画面のすべての動き（CSS の animation・transition、script の動き）を 250ms ごとに見て、
+  // 最初に見た時からの残り時間＋300ms をすぎても動いていれば、終わりの形にする。Safari で動きが止まっても、透明・横向き・途中のまま残らない。
+  // 一つずつ LT.cssDone を足すのでは抜けが出た（v0.97.3：見せた札の flip/flipSlow が透明のまま）ので、全部まとめて見る。終わりのない動き（infinite）と止めた動きは見ない
+  _sw:typeof WeakMap!=='undefined'?new WeakMap():null,
+  sweep(){if(!this._sw||!document.getAnimations)return;const now=performance.now();if(now-(this._swAt||0)<240)return;this._swAt=now;   // qa は setInterval を速めるので、実の時間で 240ms ごとに
+    for(const a of document.getAnimations()){try{if(a.playState!=='running'){this._sw.delete(a);continue}const t=a.effect&&a.effect.getComputedTiming();if(!t||!isFinite(t.endTime))continue;
+      let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
+      if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
+setInterval(()=>LT.sweep(),250);
 
 // ===== 英語版：画面に出る日本語を、表示の直前に英語へ置きかえる =====
 // ゲームの中の文字列はそのまま（勝敗の処理に影響しない）。画面の文字、属性、キャンバスの文字だけを訳す。
