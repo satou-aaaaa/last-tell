@@ -225,7 +225,7 @@ const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){con
 //   場札・見せた札を赤紫に塗って撮り、上に乗る部品（帯・名札・顔）を消してもう一度撮る。赤紫の点が消すと増えた分＝かぶって隠れていた分。
 //   どの部品かは、1種類ずつ消して増えた分で名前を出す（ブラウザによらず同じ物差し）
 const COVER_PX = 150, COVER_FRAC = .04;
-const COVER_MARK = '#boardCards .card:not(.slot):not(.back), .felt .spot .hand:not(.folded):not(.muck):not(.mucked-away) .card:not(.back)';
+const COVER_MARK = '#boardCards .card:not(.slot):not(.back), #board2 .card:not(.slot):not(.back), .felt .spot .hand:not(.folded):not(.muck):not(.mucked-away) .card:not(.back)';
 const COVER_BY = [['「あなたの勝ち・負け」の帯', '.vfres'], ['名札', '#plates .plate'], ['顔', '#busts .bust']];
 async function paintCover(page) {
   const count = async () => { const b = await page.screenshot({ scale: 'css' }); return page.evaluate(async b64 => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode(); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0);

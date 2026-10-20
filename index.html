@@ -12147,7 +12147,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
   hands.forEach(h=>{if(h.dataset.syb&&(!on||h.classList.contains('folded')||h.classList.contains('muck'))){h.style.translate='';h.style.scale='';h.classList.remove('sybs');delete h.dataset.syb}});
   document.querySelectorAll('#plates [data-sybp]').forEach(p=>{p.style.translate='';delete p.dataset.sybp});   // 前に上へ逃がした名札を戻してから測る
   if(!on)return;
-  const R=e=>e.getBoundingClientRect(),board=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(!board.length)return;
+  const R=e=>e.getBoundingClientRect(),board=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(!board.length)return;
   let moved=0;
   hands.forEach(h=>{if(h.classList.contains('folded')||h.classList.contains('muck'))return;
     const cs=[...h.querySelectorAll('.card:not(.back):not(.slot)')].filter(e=>e.offsetParent);if(!cs.length)return;
@@ -12475,7 +12475,7 @@ potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
 // .vfres が札（場札・自分の札・見せた札）にかかっているか。かかっていたら置き直す（場札も見る：v0.97.5 CI）
-function vfOverCards(d){const D=d.getBoundingClientRect();return [...document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})}
+function vfOverCards(d){const D=d.getBoundingClientRect();return [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})}
 function vfResult(){
   // S.vf は次のハンドの分（startHand:before で h＝次の番号）。前のハンドの終わりのまま描き直されたときは出さない（v0.97.0 PR #111：次のハンドの合図の途中で前のハンドの札を作り、次のハンドの勝ち負けが出ずに前の札が残った）
   if(!S||!S.handOver||!S.vf||S.vf.res||S.vf.h!==S.handNo||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
