@@ -146,12 +146,12 @@ async function shoot(browser, file, vp, dir) {
       for (const [name, css] of GAP_TRIES) {
         await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
         await page.waitForTimeout(400); gapMax = 0;
-        await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 2); await rectsOf(page, '#potChips', 1);
+        await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 3); await rectsOf(page, '#potChips', 1); await rectsOf(page, '.felt .spot .mystack', 2);   // 元の測定と同じ部品（CodeRabbit PR #119）
         gapTries.push(`${name} ${Math.round(gapMax)}px`);
         await page.evaluate(() => document.getElementById('sharpTry').remove());
       }
       gapMax = keep; await page.waitForTimeout(300) }
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: Math.round(gapMax), gapTries };
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
   } finally { await ctx.close() }
 }
 
@@ -173,7 +173,7 @@ async function run({ browser, file, dir }) {
     // 卓の中の部品が、getBoundingClientRect の場所に描かれているか（v0.97.4 レビュー：WebKit で最大 81px ずれ、場所の数字で場札をよける処理がすべて外れた）。
     // 色を塗って探した本当の場所とのずれが GAP_MAX を超えたら ❌（どのブラウザでも。前は表示だけだった）
     items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
-      detail: `ずれ 最大 ${r.gap}px${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
+      detail: `ずれ 最大 ${Math.round(r.gap)}px${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });

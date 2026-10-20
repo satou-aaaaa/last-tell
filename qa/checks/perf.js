@@ -61,7 +61,7 @@ async function run({ browser, file, quick, baseline }) {
     const { ctx, page } = await H.openGame(browser, file, { fast: 20 });
     try {
       await cdp(page);
-      await page.evaluate(() => { window.__sw = []; const f = LT.sweep; LT.sweep = function () { const t = performance.now(), at = this._swAt; const r = f.apply(this, arguments); if (this._swAt !== at) __sw.push(performance.now() - t); return r } });   // 間引きで何もしなかった回は数えない
+      await page.evaluate(() => { window.__sw = []; const f = LT.sweep; LT.sweep = function () { try { getComputedStyle(document.documentElement).opacity } catch (e) {} const t = performance.now(), at = this._swAt; const r = f.apply(this, arguments); if (this._swAt !== at) __sw.push(performance.now() - t); return r } });   // 間引いた回は数えない。先にスタイルの計算を済ませておく（getAnimations はたまった計算を先に行い、それは次のコマでも要る分なので、見張りの重さに入れない）
       await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);
       await H.startBot(page, { policy: 'mix', maxHands: quick ? 4 : 10 });
       await H.runUntilDone(page, { timeoutMs: 180000, stallMs: 40000 });
@@ -74,7 +74,7 @@ async function run({ browser, file, quick, baseline }) {
   const vs = k => b[k] != null ? `（前の版 ${b[k]}）` : '';
   items.push({ id: 'perf:load', title: `起動の速さ（CPU ${SLOW}倍遅く、スマホ縦）`, status: worse('titleMs', 1.3, 300) || out.titleMs > 5000 ? 'warn' : 'ok',
     detail: `ファイル ${out.sizeKB}KB${vs('sizeKB')}、読み込み ${out.loadMs}ms、タイトルが出るまで ${out.titleMs}ms${vs('titleMs')}（目安 5000ms 以内）、メモリ ${out.heapLoadMB}MB` });
-  items.push({ id: 'perf:sweep', title: `動きの見張り（LT.sweep）1回の重さ（CPU ${SLOW}倍遅く、自動対戦中、平均 2ms 以下）`, status: out.sweepErr || !out.sweepN ? 'fail' : out.sweepAvgMs > 2 ? 'warn' : 'ok',
+  items.push({ id: 'perf:sweep', title: `動きの見張り（LT.sweep）1回の重さ（CPU ${SLOW}倍遅く、自動対戦中、平均 2ms 以下、スタイルの計算は除く）`, status: out.sweepErr || !out.sweepN ? 'fail' : out.sweepAvgMs > 2 ? 'warn' : 'ok',
     detail: out.sweepErr ? '測れなかった：' + out.sweepErr : !out.sweepN ? '一度も動かなかった（LT.sweep が無いか、呼ばれていない）' : `平均 ${out.sweepAvgMs}ms、一番長い ${out.sweepMaxMs}ms（${out.sweepN}回）` });
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',

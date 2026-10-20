@@ -81,9 +81,10 @@ const prevVers = (() => { try {
   const git = (...a) => require('child_process').execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 });   // 引数は配列で渡す（シェルを通さない）
   git('fetch', '-q', '--depth', '1', 'origin', 'qa-results');
   return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
-    .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { return null } }).filter(Boolean);
-} catch (e) { prevErr = String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
-if (prevErr) all.push({ id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr });
+    .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { prevErr += (prevErr ? '／' : '') + `${v} が読めない（${String(e && e.message || e).split('\n')[0].slice(0, 60)}）`; return null } }).filter(Boolean);   // 読めない版は黙って飛ばさず ⚠️ に出す（CodeRabbit PR #119）
+} catch (e) { prevErr += (prevErr ? '／' : '') + String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
+if (prevErr) { const it = { id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr };
+  all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }   // result.json・report.md にも残す（CodeRabbit PR #119）
 if (prevVers.length) {
   const knownAll = (() => { try { return JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8')) } catch (e) { return {} } })(), today = new Date().toISOString().slice(0, 10);
   const seen = prevVers.map(r => new Set((r.groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok').map(i => i.id)));
