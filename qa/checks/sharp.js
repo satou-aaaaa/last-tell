@@ -37,7 +37,7 @@ async function sharpness(page, buf, k) {
 //   WebKit は zoom:3 の卓の中の部品で、getBoundingClientRect も Playwright の boundingBox もずれた所を返し、
 //   何もないラシャを測っていた（v0.97.0 の CI：場札 1.45・チップ 0.94 の切り抜きが空の卓。ずれは最大 70〜90px）。
 //   そこで部品をいったん赤紫に塗って画面を撮り、赤紫の範囲を本当の場所とする。getBoundingClientRect とのずれは gap に残す
-let gapMax = 0;
+let gapMax = 0, paintLog = null;   // paintLog：試した直しで絵が動いていないかをくらべるため、描かれた場所を順に残す
 const MARK = 'sharpMark';
 async function rectsOf(page, sel, n) {
   const out = [];
@@ -64,6 +64,7 @@ async function rectsOf(page, sel, n) {
       for (let y = 0; y < M.h; y++) for (let k = 0; k < M.w; k++) { const o = (y * M.w + k) * 4, r = d[o], gg = d[o + 1], bb = d[o + 2];
         if (Math.abs(r - q[o]) + Math.abs(gg - q[o + 1]) + Math.abs(bb - q[o + 2]) > 60 && r > 60 && bb > 60 && gg < .45 * Math.min(r, bb) && Math.abs(r - bb) < .35 * Math.max(r, bb)) { if (k < x1) x1 = k; if (k > x2) x2 = k; if (y < y1) y1 = y; if (y > y2) y2 = y } }
       return x2 < 0 ? null : { x: x1, y: y1, width: x2 - x1 + 1, height: y2 - y1 + 1 } }, [shot.toString('base64'), plain.toString('base64')]);
+    if (paintLog) paintLog.push(b);
     if (!b) continue;
     gapMax = Math.max(gapMax, Math.abs(b.x - g.x), Math.abs(b.y - g.y));
     const x = Math.max(0, b.x + 2), y = Math.max(0, b.y + 2), x2 = Math.min(g.W, b.x + b.width - 2), y2 = Math.min(g.H, b.y + b.height - 2);
@@ -97,6 +98,10 @@ const GAP_TRIES = [
   ['手札の遠近なし', '.felt .spot .hand{perspective:none!important}'],
   ['zoomなし', '.felt{zoom:1!important;inset:0!important;width:auto!important;height:auto!important;transform:rotateX(50deg)!important}'],
   ['will-change', '.felt{will-change:transform}'],
+  // v0.97.7：遠近の中心（.felt-wrap の perspective-origin 50% -30%）を、卓の transform の中の perspective() にまとめる。Chromium では場所の差 0px。
+  // 卓は zoom:3 なので、Chromium は transform の長さも3倍にする（620/3）。WebKit が3倍にしないときのため 620px も試す
+  ['遠近を卓にまとめる（620/3）', '.felt-wrap{perspective:none!important}.felt{transform-origin:50% -10%!important;transform:perspective(206.6667px) translateY(10%) rotateX(50deg) scale(.333333) translateY(-10%)!important}'],
+  ['遠近を卓にまとめる（620）', '.felt-wrap{perspective:none!important}.felt{transform-origin:50% -10%!important;transform:perspective(620px) translateY(10%) rotateX(50deg) scale(.333333) translateY(-10%)!important}'],
 ];
 async function shoot(browser, file, vp, dir) {
   const k = vp.dpr; gapMax = 0;
@@ -143,11 +148,14 @@ async function shoot(browser, file, vp, dir) {
     // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
     let gapTries = null;
     if (gapMax > GAP_MAX) { gapTries = []; const keep = gapMax;
+      const gapParts = async () => { paintLog = []; await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 3); await rectsOf(page, '#potChips', 1); await rectsOf(page, '.felt .spot .mystack', 2); const r = paintLog; paintLog = null; return r };
+      const base = await gapParts();   // 直しを入れる前の描かれた場所（直しで絵まで動いたら、見た目が変わる直し）
       for (const [name, css] of GAP_TRIES) {
         await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
         await page.waitForTimeout(400); gapMax = 0;
-        await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 3); await rectsOf(page, '#potChips', 1); await rectsOf(page, '.felt .spot .mystack', 2);   // 元の測定と同じ部品（CodeRabbit PR #119）
-        gapTries.push(`${name} ${Math.round(gapMax)}px`);
+        const now = await gapParts();   // 元の測定と同じ部品（CodeRabbit PR #119）
+        let moved = 0; base.forEach((a, i) => { const c = now[i]; if (a && c) moved = Math.max(moved, Math.abs(a.x - c.x), Math.abs(a.y - c.y), Math.abs(a.width - c.width), Math.abs(a.height - c.height)) });
+        gapTries.push(`${name} ${Math.round(gapMax)}px（絵の動き ${Math.round(moved)}px）`);
         await page.evaluate(() => document.getElementById('sharpTry').remove());
       }
       gapMax = keep; await page.waitForTimeout(300) }
