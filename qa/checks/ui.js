@@ -263,6 +263,10 @@ async function shoot(browser, file, scene, vp, dir) {
     const call = scene.callCheck ? await page.evaluate(() => { const d = $('dcall'); if (!d) return null; const sn = d.querySelector('.sn');
       return { go: d.classList.contains('go'), sn: sn ? sn.textContent : '', text: (d.textContent || '').trim().slice(0, 40), name: /(さん|の方)、/.test(d.textContent || '') } }) : null;
     // クセの読める範囲：印（.rsOnly）が出ていて 12px 以上、画面の外へ出ず、クセの札が顔・札・吹き出し・名札に重ならないか。師匠のひとことが1回出て、セーブに残るか
+    // 改善提案 第11回 0-2：師匠のひとことは、はじめての人の案内（tipK）や帯の待ち（#sensei.mwait）の間は出ずに待つ（ゲームの仕様）。
+    // 1回だけ測ると案内が出ている回だけ落ちるので、印の台詞が S.jinNote に入ってセーブに残るまで最大4秒待つ（100ms ごと）
+    if (scene.rsCheck) await page.waitForFunction(() => { try { const sv = JSON.parse(localStorage.getItem('shisho-readscope') || 'null');
+      return !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '') && sv && sv.seen) } catch (e) { return false } }, null, { timeout: 4000, polling: 100 }).catch(() => {});
     const rs = scene.rsCheck ? await page.evaluate(() => { const cs = [...document.querySelectorAll('#plates .cue')].filter(e => { const q = e.querySelector('.rsOnly'); return e.offsetParent && q && !q.hidden }); if (!cs.length) return { has: false };
       // v94 レビュー 3：見えている印の付いた札すべてを測る。本人の顔は目の帯（faceBox の上から 35〜55%）だけ数える
       const g = ($('game') || document.body).getBoundingClientRect(), over = []; let out = 0, fs = 99, text = '';
@@ -272,7 +276,7 @@ async function shoot(browser, file, scene, vp, dir) {
         if (j === i) hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t + h * .35, bottom: lr.top + f.t + h * .55 }, '本人の目 席' + (j + 1)); else hit({ left: lr.left + f.l, right: lr.left + f.r, top: lr.top + f.t, bottom: lr.top + f.b }, '顔 席' + (j + 1)) });
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent || (e.classList.contains('say') && !(e.textContent || '').trim())) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
-      return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen) } }) : null;
+      return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen), tip: typeof tipK !== 'undefined' && tipK ? String(tipK) : '', mwait: !!($('sensei') && $('sensei').classList.contains('mwait')) } }) : null;
     const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
@@ -281,9 +285,17 @@ async function shoot(browser, file, scene, vp, dir) {
     // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
     // 前は 60ms 待ってから置き直していて、撮る・測る間に重なったまま写った。置き直しが遅い・来ないものをここで拾う
     if (scene.handEnd) { await page.waitForTimeout(1000); for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(Object.assign({}, x, { el: x.el + '（1秒後も）' })) }
+    // 改善提案 第11回 0-3：WebKit の PC で、勝ったのにポットが卓のまん中に残り「あなたの勝ち」（.vfres）が出なかった（v0.97.0）。
+    // WebKit の .felt の中は getBoundingClientRect が描かれる場所とずれるので、場所でなく状態で見る（両ブラウザで同じ物差し）
+    const hs = scene.handEnd ? await page.evaluate(() => { const me = S.players[0], v = document.querySelector('#table > .vfres'), vr = v && v.getBoundingClientRect(), ps = $('potSign'), pc = $('potChips');
+      const vis = e => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
+      return { iWon: me.won > 0, sd: S.street === 'showdown' && !S.board2, inIt: !me.folded && !me.out, pot: S.pot || 0, won: S.players.reduce((a, p) => a + (p.won || 0), 0),
+        vf: !!v, vfOn: !!(v && vis(v) && vr.width > 2 && vr.top >= 0 && vr.bottom <= innerHeight && vr.left >= 0 && vr.right <= innerWidth), vfTop: v ? v.style.top : '', vfOut: !!(v && v.classList.contains('out')), vfDone: !!(S.vf && S.vf.res),
+        chips: pc ? [...pc.querySelectorAll('.chip')].filter(vis).length : -1, sign: vis(ps) && /\d/.test((ps && ps.textContent) || ''), quiet: typeof VF !== 'undefined' && VF.quiet ? !!VF.quiet() : null,
+        dbg: `pushing=${!!S.potPushing} potmove=${document.querySelectorAll('#table .potmove').length} wonPile=${document.querySelectorAll('#table .won-pile').length}${S.wonPile ? '(' + Object.keys(S.wonPile.amt).join(',') + ')' : ''} anim=${document.getAnimations ? document.getAnimations().map(a => a.playState).join(',').slice(0, 60) : '?'} potPile=${S.potPile ? S.potPile.chips : '-'}` } }).catch(e => ({ err: String(e.message).slice(0, 80) })) : null;
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -336,10 +348,19 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     detail: r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
   for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
     items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.shown && x.seen ? 'ok' : 'fail',
-      detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') });
+      detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') + (x.line && x.seen ? '' : `（4秒待った。案内 ${x.tip || 'なし'}・帯の待ち ${x.mwait ? 'あり' : 'なし'}）`) });
     // 直近の5手（#vfLog）が、師匠の帯が出ている横画面でも出ているか（v94.2 レビュー）
     if (/横/.test(r.vp) && x.vf && x.vf.log && x.vf.se) items.push({ id: `ui:vflog-sensei:${r.vp}`, title: `師匠の帯が出ていても直近の5手が出る（${r.vp}）`, status: x.vf.on ? 'ok' : 'warn', detail: x.vf.on ? '' : '#vfLog が .off（置ける所がない）' });
     items.push({ id: `ui:readscope-over:${r.vp}`, title: `印の付いたクセの札が顔・札・吹き出し・名札に重ならない（${r.vp}）`, status: x.over && x.over.some(o => /^(#say|吹き出し)/.test(o)) ? 'fail' : x.over && x.over.length ? 'warn' : 'ok', detail: x.over && x.over.length ? x.over.slice(0, 4).join('、') : '' }) }   // v94.3 レビュー：吹き出しが印にかかるのは ❌（吹き出しは手前の層で印が読めない）。顔・札・名札は ⚠
+  // ハンドの終わりの状態（0-3）：自分が勝った回は「あなたの勝ち」が画面の中にある。ポットのチップと額は勝った人へ渡って卓のまん中に残らない
+  for (const r of res) if (r.hs) { const x = r.hs, bad = [];
+    if (x.err) bad.push('状態を読めなかった：' + x.err);
+    else { if (x.iWon && !x.quiet && !x.vfOn && !x.vfOut) bad.push(x.vf ? `「あなたの勝ち」が画面の外（top ${x.vfTop}）` : '「あなたの勝ち」が出ていない' + (x.vfDone ? '（出す処理は通った）' : ''));   // 静かな場面（第7章の最後など。VF.quiet）は出さない仕様
+      if (x.won > 0 && x.chips > 0) bad.push(`ポットのチップ ${x.chips}枚が卓のまん中に残っている`);
+      if (x.won > 0 && x.sign) bad.push('ポットの額が出たまま');
+      if (bad.length) bad.push(`［${x.dbg}］`) }
+    items.push({ id: `ui:handend-state:${r.scene}:${r.vp}`, title: `ハンドの終わりにポットが勝った人へ渡り、勝ったら「あなたの勝ち」が出る（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : 'ok',
+      detail: bad.join('・') + ((r.errors || []).length ? '。ページのエラー：' + r.errors.slice(0, 2).join(' / ').slice(0, 160) : '') }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
     status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',

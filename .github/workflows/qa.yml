@@ -201,6 +201,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -246,5 +247,31 @@ jobs:
           [ "$FULL" = true ] && [ -z "$PR" ] && [ "$HEAD_REF" = main ] && vkey="v$ver"
           printf 'branch: %s\nsha: %s\nrun: %s/%s/actions/runs/%s\nfull: %s\nat: %s\n' "$HEAD_REF" "${{ github.event.pull_request.head.sha || github.sha }}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$FULL" "$(date -u +%FT%TZ)" > qa-summary/run.txt
           bash qa/tools/publish_results.sh qa-summary "$key" "$vkey"
+      # main の検査が ❌ なら Issue を立てる（あれば追記）、✅ なら閉じる。
+      # 公開後の QA は Auto merge が GITHUB_TOKEN で起こすので workflow_run が起きず、ci-failure-issue.yml では見張れない
+      # （改善提案 第11回 0-1：v0.97.0 の main の ❌ に Issue が立たなかった、2026-10-20）。通しで遊ぶ検査（playthrough.yml）と同じ形
+      - name: main で ❌ のときは Issue を立てる
+        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.groups.outputs.run == 'true' && steps.s.outputs.code != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="main の QA が ❌"
+          body="$(head -c 60000 qa-summary/summary.md)
+
+          実行: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
+          n=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ -n "$n" ]; then gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" -f body="$body" >/dev/null
+          else gh api "repos/$GITHUB_REPOSITORY/issues" -f title="$title" -f body="$body" -f 'labels[]=ci-failure' >/dev/null; fi
+      - name: main で ✅ のときは開いている Issue を閉じる
+        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.groups.outputs.run == 'true' && steps.s.outputs.code == '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="main の QA が ❌"
+          n=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ -n "$n" ]; then
+            gh issue close "$n" -R "$GITHUB_REPOSITORY" --reason completed \
+              --comment "✅ になったので閉じます: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
+          fi
       - name: 合否
         run: exit ${{ steps.s.outputs.code || 0 }}
