@@ -14,7 +14,7 @@ const VPS = [
   { key: 'スマホ縦_3倍', viewport: { width: 390, height: 844 }, dpr: 3, isMobile: true, hasTouch: true },
   { key: 'PC_2倍', viewport: { width: 1280, height: 800 }, dpr: 2 },
 ];
-const QMIN = 1.6, ZMIN = 1.45;
+const QMIN = 1.6, ZMIN = 1.45, GAP_MAX = 8;
 
 // 画像（PNG の Buffer）を、ページの canvas で測る。
 //   v：輪郭の急さ（となりの点との明るさの差の上位 0.5% ÷ 部品の明るさの幅）
@@ -87,6 +87,17 @@ const TRIES = [
   ['卓を3Dにしない', '.felt{transform-style:flat!important}'],
   ['zoomなし', '.felt{zoom:1!important;inset:0!important;width:auto!important;height:auto!important;transform:rotateX(50deg)!important}'],
 ];
+// 場所のずれを直す候補（表示だけ。判定には使わない）
+const GAP_TRIES = [
+  ['倒さない', '.felt{transform:scale(.333333)!important}'],
+  ['卓を3Dにしない', '.felt{transform-style:flat!important}'],
+  ['卓の中も全部平ら', '.felt,.felt *{transform-style:flat!important}'],
+  ['遠近を卓の transform に', '.felt-wrap{perspective:none!important}.felt{transform:perspective(620px) rotateX(50deg) scale(.333333)!important}'],
+  ['.table の遠近なし', '.table{perspective:none!important}'],
+  ['手札の遠近なし', '.felt .spot .hand{perspective:none!important}'],
+  ['zoomなし', '.felt{zoom:1!important;inset:0!important;width:auto!important;height:auto!important;transform:rotateX(50deg)!important}'],
+  ['will-change', '.felt{will-change:transform}'],
+];
 async function shoot(browser, file, vp, dir) {
   const k = vp.dpr; gapMax = 0;
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, dpr: vp.dpr, fast: 20, lite: false, settings: { motion: 'full' }, seed: 1001, storage: H.UNLOCKED });
@@ -129,7 +140,18 @@ async function shoot(browser, file, vp, dir) {
       await page.waitForTimeout(500);
       face1 = (await measure(page, faceSel, 1, k)).q;
     }
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: Math.round(gapMax) };
+    // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
+    let gapTries = null;
+    if (gapMax > GAP_MAX) { gapTries = []; const keep = gapMax;
+      for (const [name, css] of GAP_TRIES) {
+        await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
+        await page.waitForTimeout(400); gapMax = 0;
+        await rectsOf(page, '#boardCards .card:not(.back):not(.slot)', 3); await rectsOf(page, '#potChips', 1); await rectsOf(page, '.felt .spot .mystack', 2);   // 元の測定と同じ部品（CodeRabbit PR #119）
+        gapTries.push(`${name} ${Math.round(gapMax)}px`);
+        await page.evaluate(() => document.getElementById('sharpTry').remove());
+      }
+      gapMax = keep; await page.waitForTimeout(300) }
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
   } finally { await ctx.close() }
 }
 
@@ -147,11 +169,15 @@ async function run({ browser, file, dir }) {
     const miss = [r.boardN < 3 && `場札が ${r.boardN} 枚しか測れなかった（3枚のはず）`, r.chips == null && 'ポットのチップが見つからなかった'].filter(Boolean).join('、');   // 足りないものは全部出す（CodeRabbit PR #106）
     const why = miss || (bad(r.board) || bad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、preserve-3d、拡大など）' : '');
     items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上）`, status: miss ? 'fail' : st(vp, why ? 'fail' : 'ok'),   // 測れないときは WebKit の PC でも ❌
-      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}${r.tries ? `（試した直し：${r.tries.join('、')}）` : ''}${r.gap > 30 ? `（卓の部品の getBoundingClientRect のずれ 最大 ${r.gap}px）` : ''}${why && !miss && soft(vp) ? '（Mac の Safari は全体に柔らかく、直す手が無いので ⚠️）' : ''}` });
+      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}${r.tries ? `（試した直し：${r.tries.join('、')}）` : ''}${why && !miss && soft(vp) ? '（Mac の Safari は全体に柔らかく、直す手が無いので ⚠️）' : ''}` });
+    // 卓の中の部品が、getBoundingClientRect の場所に描かれているか（v0.97.4 レビュー：WebKit で最大 81px ずれ、場所の数字で場札をよける処理がすべて外れた）。
+    // 色を塗って探した本当の場所とのずれが GAP_MAX を超えたら ❌（どのブラウザでも。前は表示だけだった）
+    items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
+      detail: `ずれ 最大 ${Math.round(r.gap)}px${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
   }
   return { name: '画質（高精細の画面でくっきりしているか）', items };
 }
-module.exports = { run, VPS, QMIN, ZMIN };
+module.exports = { run, VPS, QMIN, ZMIN, GAP_MAX };
