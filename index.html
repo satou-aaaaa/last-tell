@@ -11396,7 +11396,7 @@ function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelecto
   const hit=bs.filter(q=>L<q.right&&q.left<Rr&&T<q.bottom&&q.top<B);if(!hit.length)return;
   const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,top=Math.min(...bs.map(q=>q.top)),bot=Math.max(...bs.map(q=>q.bottom));
   // v0.97.1 main CI：縦の5人卓で、ボタン（黙る・さあ）をよけて上げた山が場札（2♣）の上に乗った。場札・札にかからない位置を選ぶ（札にかかるのはボタンより重く見る）
-  const cd=[...document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, .felt .spot .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+  const cd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
   const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(Rr,q.right)-Math.max(L,q.left))*Math.max(0,Math.min(B+d,q.bottom)-Math.max(T+d,q.top)),0);
   const cost=d=>ov(d,cd)*4+ov(d,bs)+(B+d>innerHeight-2||T+d<2?1e7:0);
   const d=[0,-(B-top+6),bot-T+6].sort((x,y)=>cost(x)-cost(y))[0];
