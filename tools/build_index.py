@@ -46,5 +46,33 @@ print('index.html written,', len(src), 'chars; sw VERSION =', stamp)
 
 qa_src = pathlib.Path(sys.argv[1]).resolve().parent.parent / 'qa'
 if qa_src.is_dir():
+    # 写す前に、リポジトリ（main）の方が新しい qa/ のファイルが無いか見る。共有フォルダの古い写しで上書きすると、
+    # 別の PR で main に入った検査の直しが消える（2026-10-20：#108 の harness.js・site.js・ci_shots.js が共有フォルダに無かった）
+    import subprocess
+    def git(*a):
+        return subprocess.run(['git', '-C', str(root), *a], capture_output=True, text=True).stdout
+    if subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '-q', 'origin/main'], capture_output=True).returncode:
+        sys.exit('origin/main が無いので、共有フォルダの qa/ が古くないか確かめられません。git fetch origin main をしてからもう一度')   # CodeRabbit #111
+    newer, local = [], []
+    for f in filter(None, git('-c', 'core.quotepath=off', 'ls-files', '-z', 'qa').split('\0')):
+        s = qa_src / f[3:]
+        if not s.is_file():
+            continue
+        shared = s.read_bytes()
+        main = subprocess.run(['git', '-C', str(root), 'show', f'origin/main:{f}'], capture_output=True).stdout
+        if main and main != shared:
+            # 共有フォルダの中身が main の過去のどれかと同じなら、古い写し（更新時刻ではなく中身で見る。CodeRabbit #111）
+            h = subprocess.run(['git', '-C', str(root), 'hash-object', '--stdin'], input=shared, capture_output=True).stdout.decode().strip()
+            olds = {git('rev-parse', f'{c}:{f}').strip() for c in git('log', '--format=%H', 'origin/main', '--', f).split()[1:]}
+            if h in olds:
+                newer.append(f)
+        # リポジトリでまだコミットしていない qa/ の直しは、共有フォルダの写しで消さない
+        w = root / f
+        if w.is_file() and w.read_bytes() != shared and git('status', '--porcelain', '--', f).strip():
+            local.append(f)
+    if local:
+        sys.exit('リポジトリの qa/ にコミットしていない直しがあります。共有フォルダへ入れるか、捨ててからもう一度：\n  ' + '\n  '.join(local))
+    if newer:
+        sys.exit('main の方が新しい qa/ のファイルがあります。共有フォルダへ戻してから（git show origin/main:<ファイル> > 共有フォルダ）もう一度：\n  ' + '\n  '.join(newer))
     shutil.copytree(qa_src, root / 'qa', dirs_exist_ok=True, ignore=shutil.ignore_patterns('reports', 'node_modules', 'qa-summary', 'qa-report*', 'groups'))
     print('qa/ copied from', qa_src)

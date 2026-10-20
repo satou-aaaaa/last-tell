@@ -2368,7 +2368,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.0';
+const APP_VERSION='0.97.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12432,7 +12432,8 @@ potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
 function vfResult(){
-  if(!S||!S.handOver||!S.vf||S.vf.res||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
+  // S.vf は次のハンドの分（startHand:before で h＝次の番号）。前のハンドの終わりのまま描き直されたときは出さない（v0.97.0 PR #111：次のハンドの合図の途中で前のハンドの札を作り、次のハンドの勝ち負けが出ずに前の札が残った）
+  if(!S||!S.handOver||!S.vf||S.vf.res||S.vf.h!==S.handNo||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
   const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;S.vf.res=1;
   const me=S.players[0],sd=S.street==='showdown'&&!S.board2,iWon=me.won>0,inIt=!me.folded&&!me.out;
   if(!sd&&!iWon)return;   // ほかの人どうしで決まったハンドは、名札の語とディーラーの声で足りる
@@ -12466,8 +12467,10 @@ function vfResult(){
   tb.appendChild(d);d._place();setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
   const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
-  LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
+  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
 }
+// 念のため：ハンドが始まったら、前のハンドの勝ち負けの札は残さない
+LT.on('startHand',()=>{try{document.querySelectorAll('#table .vfres').forEach(e=>{if(!S||e.dataset.h!==String(S.handNo))e.remove()})}catch(e){}});
 LT.on('render',()=>{try{vfResult();const e=document.querySelector('#table .vfres');if(e&&e._place&&!e._pq){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(e){}});
 
 // ===== A9：フロアのクイズは「ルールを覚える」ためと一言。設定でオフにできる =====
