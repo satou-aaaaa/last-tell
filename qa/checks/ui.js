@@ -311,11 +311,18 @@ async function shoot(browser, file, scene, vp, dir) {
       if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return { err: String(e.message || e).slice(0, 80) } } }).catch(e => ({ err: String(e.message || e).slice(0, 80) }));   // 検査の失敗は ❌ にする（null は場面が対象外のときだけ。CodeRabbit PR #116）
     const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => { const t = a.effect.getComputedTiming(); return { a, ct: a.currentTime, rem: t.endTime - (t.localTime || 0) } }); window.__qaSt0 = performance.now(); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return 'err:' + String(e.message || e).slice(0, 80) } }).catch(e => 'err:' + String(e.message || e).slice(0, 80));
     let stall = typeof stallRem === 'string' ? { err: stallRem.slice(4) } : null;
+    // 残りの長い動きも見落とさない（CodeRabbit PR #118）：止まっていて期限前のものがあれば、期限（最大6秒）まで待って見直す。それでも期限前のものは「見きれず」として結果に残す
+    let stallLong = [];
     if (typeof stallRem === 'number') { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
-      stall = await page.evaluate(() => { const out = []; const waited = performance.now() - window.__qaSt0; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected || x.rem + 700 > waited) continue;   // ゲームの見張り（LT.sweep）が終わらせるまでの時間（残り＋300ms＋見る間隔）をすぎたものだけ
-        const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）',   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
-        who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
-        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return out }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
+      const STALL_EVAL = () => { const out = [], wait = [], long = []; const waited = performance.now() - window.__qaSt0; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected) continue;
+        const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）';   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
+        if (x.rem + 700 > waited) { wait.push(x.rem + 700 - waited); long.push(nm); continue }   // ゲームの見張り（LT.sweep）が終わらせるまでの時間（残り＋300ms＋見る間隔）をすぎたものだけ
+        const who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
+        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return { out, wait: Math.max(0, ...wait), long: [...new Set(long)] } };
+      let sr = await page.evaluate(STALL_EVAL).catch(e => ({ err: String(e.message || e).slice(0, 80) }));
+      if (!sr.err && sr.long.length) { const spent = await page.evaluate(() => performance.now() - window.__qaSt0).catch(() => 6000), more = Math.min(sr.wait + 100, 6000 - spent);
+        if (more > 0) { await page.waitForTimeout(more); sr = await page.evaluate(STALL_EVAL).catch(e => ({ err: String(e.message || e).slice(0, 80) })) } }
+      stall = sr.err ? sr : sr.out; stallLong = sr.err ? [] : sr.long }
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
     // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
@@ -327,7 +334,7 @@ async function shoot(browser, file, scene, vp, dir) {
     const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, stall, plates, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -403,8 +410,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const STALL_OWN = /./;
   for (const r of res) if (r.stall && r.stall.err) items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: 'fail', detail: '測れなかった：' + r.stall.err });
   else if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
-    items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length ? 'warn' : 'ok',
-      detail: r.stall.length ? '1秒以上進まない動き：' + r.stall.slice(0, 5).join('、') + (r.stall.length > 5 ? ` ほか${r.stall.length - 5}` : '') + (own.length ? '（LT.sweep が時間で終えるはずの動き）' : '') : '' }) }
+    items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length || (r.stallLong || []).length ? 'warn' : 'ok',
+      detail: (r.stall.length ? '1秒以上進まない動き：' + r.stall.slice(0, 5).join('、') + (r.stall.length > 5 ? ` ほか${r.stall.length - 5}` : '') + (own.length ? '（LT.sweep が時間で終えるはずの動き）' : '') : '') + ((r.stallLong || []).length ? `${r.stall.length ? '／' : ''}止まっているが残りが長く6秒では見きれなかった：` + r.stallLong.slice(0, 5).join('、') : '') }) }
   // 見せた相手の札が見える（不透明度 0.9 以上・幅 8px 以上・動きが終わっている。高さは卓の奥行きで 22px ほどになる札もあるので見ない）（v0.97.3 レビュー：WebKit 6人卓の縦で、勝った相手の見せた札が透明・横向きのまま。状態で見るので WebKit でも ❌）
   for (const r of res) if (r.hs && !r.hs.err) { const x = r.hs; const bad = x.shownBad || [];
     items.push({ id: `ui:shown:${r.scene}:${r.vp}`, title: `見せた相手の札が見える（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : 'ok', detail: bad.length ? '見えない札：' + bad.slice(0, 4).join('、') + '（撮って1秒あと）' : '' }) }
