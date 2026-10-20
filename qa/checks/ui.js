@@ -303,8 +303,8 @@ async function shoot(browser, file, scene, vp, dir) {
     // 座っている相手の名札が全員見えている（v0.97.2 レビュー：WebKit PC 第14章でカイの名札が消えていたのに検査を通っていた）
     const plates = await page.evaluate(() => { try { const tb = document.getElementById('table'); if (!tb || !tb.offsetParent || (document.getElementById('game') || {}).hidden) return null; const miss = []; (S.players || []).forEach((p, i) => { if (!i || !p || p.out) return; const e = document.getElementById('plate' + i); let op = 1;
       for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity;
-      const r = e && e.getBoundingClientRect(), ok = e && e.offsetParent && !e.hidden && r.width > 2 && r.height > 2 && op > .05 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
-      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return null } }).catch(() => null);
+      const r = e && e.getBoundingClientRect(), ok = e && e.offsetParent && !e.hidden && getComputedStyle(e).visibility !== 'hidden' && r.width > 2 && r.height > 2 && op > .05 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return null } }).catch(() => null);
     const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => ({ a, ct: a.currentTime })); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return -1 } }).catch(() => -1);
     let stall = null;
     if (stallRem >= 0) { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
