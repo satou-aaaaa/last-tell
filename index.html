@@ -11799,9 +11799,9 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
   const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
-  const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
+  const ok=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&y+z<=T.bottom&&!av.some(q=>x-1<q.right&&q.left<x+z+1&&y-1<q.bottom&&q.top<y+z+1);   // 1px あける：置く位置を整数に丸めると 0.5px 札にかかる（v0.97.2 CI：7×0px）
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #plates .cue, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
-  const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x<q.right&&q.left<x+z&&y<q.bottom&&q.top<y+z);
+  const okCorner=(x,y)=>x>=T.left&&x+z<=T.right&&y>=T.top&&!hard.some(q=>x-1<q.right&&q.left<x+z+1&&y-1<q.bottom&&q.top<y+z+1);
   [...L.children].forEach(el=>{const i=+el.dataset.i,p=S.players[i];let h=i?$('spot'+i)&&$('spot'+i).querySelector('.hand'):$('mine')&&$('mine').querySelector('.hold');
     let r=vis(h)&&h.querySelector('.card')?R(h):null;
     if(!r&&i){const sp=$('spot'+i);if(sp){const q=R(sp);r={left:q.left+q.width/2-14,right:q.left+q.width/2+14,top:q.top,bottom:q.top+20,height:20}}}
@@ -12460,13 +12460,13 @@ function vfResult(){
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
   const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
-    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
-    const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v:0)},0)};
+    const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v*q.k:0)},0)};
     // 横の範囲は、ずらす案だけで見る（v96.1 CI：卓と同じくらい幅の広い札で、全部の案が外れて場札の下に固定されていた）
     // v96 レビュー：場札の下がディーラーの山（飾り）に少しかかるだけで、場札の上（相手の顔のあご）へ行っていた。飾りの山はよけない（山のほうが .vfres をよけるか消える）。場札の下は左右に少しずらす案も試す
-    const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++)c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);
+    const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++){c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);for(const dx of [40,-40,80,-80])c.push([B2.b+6+k*10,dx])}
     let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
     if(best==null)best=Math.max(T.top+2,Math.min(B2.b+6,innerHeight-2-h));d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
