@@ -14,7 +14,7 @@ const VPS = [
   { key: 'スマホ縦_3倍', viewport: { width: 390, height: 844 }, dpr: 3, isMobile: true, hasTouch: true },
   { key: 'PC_2倍', viewport: { width: 1280, height: 800 }, dpr: 2 },
 ];
-const QMIN = 1.6, ZMIN = 1.45;
+const QMIN = 1.6, ZMIN = 1.45, GAP_MAX = 8;
 
 // 画像（PNG の Buffer）を、ページの canvas で測る。
 //   v：輪郭の急さ（となりの点との明るさの差の上位 0.5% ÷ 部品の明るさの幅）
@@ -129,7 +129,8 @@ async function shoot(browser, file, vp, dir) {
       await page.waitForTimeout(500);
       face1 = (await measure(page, faceSel, 1, k)).q;
     }
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: Math.round(gapMax) };
+    const felt = await page.evaluate(() => ({ mode: document.documentElement.dataset.felt || '', why: document.documentElement.dataset.feltWhy || '', drift: document.documentElement.dataset.feltDrift || '' }));
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: Math.round(gapMax), felt };
   } finally { await ctx.close() }
 }
 
@@ -139,6 +140,8 @@ async function run({ browser, file, dir }) {
   // 直す手が無いので ⚠️ にとどめる。iPhone（WebKit のスマホ縦）と Chromium は ❌ のまま
   const soft = vp => process.env.QA_BROWSER === 'webkit' && vp.key === 'PC_2倍';
   const st = (vp, s) => s === 'fail' && soft(vp) ? 'warn' : s;
+  // 卓の拡大を外した（js/52b_felt_flat.js：WebKit など場所のずれるブラウザ）ときは、くっきりさより場所を優先したので ⚠️（v0.97.4 レビュー）
+  const flat = r => r.felt && r.felt.mode === 'flat';
   for (const vp of VPS) {
     let r;
     try { r = await shoot(browser, file, vp, dir) } catch (e) { items.push({ id: `sharp:${vp.key}`, title: `画質を測れた（${vp.key}）`, status: 'fail', detail: String(e.message).slice(0, 120) }); continue }
@@ -146,12 +149,16 @@ async function run({ browser, file, dir }) {
     const ref = `（くらべ：自分の手札 ${r2(r.own)}、自分のチップ ${r2(r.ownChips)}、相手のチップ ${r2(r.seatChips)}）`;
     const miss = [r.boardN < 3 && `場札が ${r.boardN} 枚しか測れなかった（3枚のはず）`, r.chips == null && 'ポットのチップが見つからなかった'].filter(Boolean).join('、');   // 足りないものは全部出す（CodeRabbit PR #106）
     const why = miss || (bad(r.board) || bad(r.chips) ? '。ぼやけている：ブラウザが低い解像度で描いて引き伸ばしている（3D で倒した卓、preserve-3d、拡大など）' : '');
-    items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上）`, status: miss ? 'fail' : st(vp, why ? 'fail' : 'ok'),   // 測れないときは WebKit の PC でも ❌
-      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}${r.tries ? `（試した直し：${r.tries.join('、')}）` : ''}${r.gap > 30 ? `（卓の部品の getBoundingClientRect のずれ 最大 ${r.gap}px）` : ''}${why && !miss && soft(vp) ? '（Mac の Safari は全体に柔らかく、直す手が無いので ⚠️）' : ''}` });
+    items.push({ id: `sharp:table:${vp.key}`, title: `卓の上の札・チップがくっきり描けている（${vp.key}、細かさ ${QMIN} 以上）`, status: miss ? 'fail' : st(vp, why ? (flat(r) ? 'warn' : 'fail') : 'ok'),   // 測れないときは WebKit の PC でも ❌
+      detail: `場札 ${r2(r.board)}（${r.boardN}枚）、ポットのチップ ${r2(r.chips)} ${ref}${why && !why.startsWith('。') ? '：' : ''}${why}${r.tries ? `（試した直し：${r.tries.join('、')}）` : ''}${why && !miss && flat(r) ? `（卓の拡大を外している：${r.felt.why || '?'}。場所を優先して ⚠️）` : ''}${why && !miss && soft(vp) ? '（Mac の Safari は全体に柔らかく、直す手が無いので ⚠️）' : ''}` });
+    // 卓の中の部品が、getBoundingClientRect の場所に描かれているか（v0.97.4 レビュー：WebKit で最大 81px ずれ、場所の数字で場札をよける処理がすべて外れた）。
+    // 色を塗って探した本当の場所とのずれが GAP_MAX を超えたら ❌（どのブラウザでも。前は表示だけだった）
+    items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
+      detail: `ずれ 最大 ${r.gap}px（卓：${r.felt && r.felt.mode || '?'}${r.felt && r.felt.why ? '・' + r.felt.why : ''}${r.felt && r.felt.drift ? `、拡大あり・なしの差 ${r.felt.drift}px` : ''}）` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
   }
   return { name: '画質（高精細の画面でくっきりしているか）', items };
 }
-module.exports = { run, VPS, QMIN, ZMIN };
+module.exports = { run, VPS, QMIN, ZMIN, GAP_MAX };

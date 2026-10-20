@@ -220,6 +220,40 @@ const INSPECT = `(() => {
 const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '#felt .spot .hand .card', '.spot .mystack', '#mine .me-r'].concat((process.env.QA_RECTS || '').split(',').filter(Boolean));
 const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id,tl:e.style.translate||undefined,ca:e.dataset.ca}});if(a.length)o[q]=a}return o})()`;
 
+// 描かれた場所で、場札・見せた札に何かがかぶっていないか（v0.97.4 レビュー）
+//   WebKit は zoom:3 の卓の中を getBoundingClientRect とずれた所に描き、場所の数字で見る検査がすべて ✅ のまま、場札に「あなたの勝ち」の帯がかぶっていた。
+//   場札・見せた札を赤紫に塗って撮り、上に乗る部品（帯・名札・顔）を消してもう一度撮る。赤紫の点が消すと増えた分＝かぶって隠れていた分。
+//   どの部品かは、1種類ずつ消して増えた分で名前を出す（ブラウザによらず同じ物差し）
+const COVER_PX = 150, COVER_FRAC = .04;
+const COVER_MARK = '#boardCards .card:not(.slot):not(.back), .felt .spot .hand:not(.folded):not(.muck):not(.mucked-away) .card:not(.back)';
+const COVER_BY = [['「あなたの勝ち・負け」の帯', '.vfres'], ['名札', '#plates .plate'], ['顔', '#busts .bust']];
+async function paintCover(page) {
+  const count = async () => { const b = await page.screenshot({ scale: 'css' }); return page.evaluate(async b64 => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode(); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let o = 0; o < d.length; o += 4) { const r = d[o], g = d[o + 1], bb = d[o + 2]; if (r > 60 && bb > 60 && g < .45 * Math.min(r, bb) && Math.abs(r - bb) < .35 * Math.max(r, bb)) n++ } return n }, b.toString('base64')) };
+  const hide = sel => page.evaluate(s => { let st = document.getElementById('qaCoverHide'); if (!st) { st = document.createElement('style'); st.id = 'qaCoverHide'; document.head.appendChild(st) } st.textContent = s ? s + '{visibility:hidden!important}' : '' }, sel);
+  try {
+    const n = await page.evaluate(sel => { const st = document.createElement('style'); st.id = 'qaCoverMark'; st.textContent = '[data-qa-cover],[data-qa-cover] *{background:#ff00ff!important;fill:#ff00ff!important;color:#ff00ff!important;box-shadow:none!important;border-color:#ff00ff!important;opacity:1!important;filter:none!important;text-shadow:none!important}'; document.head.appendChild(st);
+      let k = 0; document.querySelectorAll(sel).forEach(e => { if (e.offsetParent && e.getBoundingClientRect().width > 2) { e.setAttribute('data-qa-cover', ''); k++ } }); return k }, COVER_MARK);
+    if (!n) return { n: 0 };
+    await page.waitForTimeout(120);
+    const shown = await count();
+    await hide(COVER_BY.map(x => x[1]).join(','));
+    await page.waitForTimeout(120);
+    const all = await count();
+    const by = [];
+    if (all - shown > 40) for (const [nm, sel] of COVER_BY) { await hide(sel); await page.waitForTimeout(80); const c = await count(); if (c - shown > 20) by.push(`${nm} ${c - shown}px²`) }
+    return { n, shown, all, lost: all - shown, by };
+  } catch (e) { return { err: String(e.message || e).slice(0, 80) } }
+  finally { await page.evaluate(() => { document.querySelectorAll('[data-qa-cover]').forEach(e => e.removeAttribute('data-qa-cover')); for (const id of ['qaCoverMark', 'qaCoverHide']) { const s = document.getElementById(id); if (s) s.remove() } }).catch(() => {}) }
+}
+// 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
+const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
+        // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
+        .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+          const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
+          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) };
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
@@ -272,13 +306,14 @@ async function shoot(browser, file, scene, vp, dir) {
     const issues = await page.evaluate(INSPECT);
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
-    if (scene.measure === 'inner') face = await page.evaluate(sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
-        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
-        // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
-        .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
-          const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
-          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) }, scene.sel || '#mfInner');
+    if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
+    // 心の声：D（ディーラーの印）を全席に動かして、そのたびに置き直して測る（v0.97.4 レビュー：D の位置しだいで字幕が D と席番号にかかり、版ごとに ⚠️ が出たり消えたりした）
+    let innerD = null;
+    if (scene.key === 'フリー6人_心の声') { innerD = [];
+      const n = await page.evaluate(() => S.players.length), d0 = await page.evaluate(() => S.dealer);
+      for (let d = 0; d < n; d++) { await page.evaluate(d => { S.dealer = d; render(); try { layoutSoon() } catch (e) {} }, d); await page.waitForTimeout(400); await page.evaluate(() => { try { mfPlace() } catch (e) {} }); await page.waitForTimeout(150);
+        const ov = await page.evaluate(INNER_OV, '#mfInner'); if (Array.isArray(ov) && ov.length) innerD.push(`D が席${d + 1}：` + ov.join('、')) }
+      await page.evaluate(d => { S.dealer = d; render(); try { layoutSoon() } catch (e) {} }, d0); await page.waitForTimeout(400) }
     if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
       const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
     // ディーラーの呼び名：#dcall に席番号（.sn）と「〜さん／〜の方」が入っているか
@@ -332,9 +367,10 @@ async function shoot(browser, file, scene, vp, dir) {
     // WebKit の .felt の中は getBoundingClientRect が描かれる場所とずれるので、場所でなく状態で見る（両ブラウザで同じ物差し）
     // 撮ってから1秒あとの状態も残す（撮った時の状態は hs0）
     const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
+    const cover = scene.handEnd ? await paintCover(page) : null;   // 描かれた場所で場札・見せた札にかぶるもの（v0.97.4 レビュー）
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -408,6 +444,11 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 止まった動き：ゲームが時間で終わらせるはずの動き（script の動き＝LT.anim、CSS の vfIn・ltFlop/ltTurn/ltBack・ltDeal）が止まっていたら ❌、ほかの CSS の動きは ⚠️（v0.97.3）
   // v0.97.3 レビュー後：ゲームの見張り（LT.sweep）がすべての終わりのある動きを時間で終えるので、止まった動きは種類を問わず ❌（WebKit でも）
   const STALL_OWN = /./;
+  for (const r of res) if (r.innerD) items.push({ id: `ui:innerD:${r.vp}`, title: `心の声の字幕が、D がどの席にあっても重ならない（${r.vp}）`, status: r.innerD.length ? 'warn' : 'ok', detail: r.innerD.slice(0, 4).join(' ／ ') + (r.innerD.length > 4 ? ` ほか${r.innerD.length - 4}` : '') });
+  // 描かれた場所で場札・見せた札にかぶる部品（v0.97.4 レビュー）。隠れた点が 塗った点の COVER_FRAC 以上、かつ COVER_PX 以上で ❌（ブラウザによらない）
+  for (const r of res) if (r.cover) { const c = r.cover, bad = c.err || c.lost >= COVER_PX && c.lost >= COVER_FRAC * c.all;
+    items.push({ id: `ui:cover:${r.scene}:${r.vp}`, title: `場札・見せた札に帯・名札・顔がかぶっていない（描かれた場所で。${r.scene}・${r.vp}）`, status: bad ? 'fail' : 'ok',
+      detail: c.err ? '測れなかった：' + c.err : !c.n ? '' : `札 ${c.n}枚、隠れた点 ${c.lost}px²／${c.all}px²` + (c.by && c.by.length ? '：' + c.by.join('、') : '') }) }
   for (const r of res) if (r.stall && r.stall.err) items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: 'fail', detail: '測れなかった：' + r.stall.err });
   else if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
     items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length || (r.stallLong || []).length ? 'warn' : 'ok',
