@@ -11379,17 +11379,18 @@ function muckAvoidCancel(){clearTimeout(_maT);_maT=0}   // 次のハンドへ移
 function muckAvoid(late){if(!late)muckAvoidLate();const mp=document.querySelector('.felt .boardspot > .muckpile');if(!mp)return;if(mp.style.translate)mp.style.translate='';
   const cs=[...mp.querySelectorAll('.muckcard')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);if(!cs.length)return;
   // v96 CI：縦の5人卓で、山が場札（2♣）の下の端にかかった。かかるときは場札の下へ下げる
-  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+  {const bd=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
     const L0=Math.min(...cs.map(r=>r.left)),R0=Math.max(...cs.map(r=>r.right)),T0=Math.min(...cs.map(r=>r.top));
     const B0=Math.max(...cs.map(r=>r.bottom)),mn=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2),hb=bd.concat(mn).filter(q=>L0<q.right&&q.left<R0&&T0<q.bottom&&q.top<B0);
     // v0.96.2 CI：山の下の端が場札の上の端にかかることもある。下へ下げて自分の札・ほかの札にかかるなら、場札の上へ上げる
     if(hb.length){const sp=mp.parentElement,k=sp.getBoundingClientRect().height/(sp.offsetHeight||1)||1,bb=Math.max(...hb.map(q=>q.bottom)),bt=Math.min(...hb.map(q=>q.top));
       const av=[...document.querySelectorAll('#mine .card, .felt .spot .card:not(.slot), .felt .spot .mystack')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2).concat(bd);
-      const ok=d=>!av.some(q=>L0<q.right&&q.left<R0&&T0+d<q.bottom&&q.top<B0+d)&&B0+d<innerHeight-2&&T0+d>2;
-      const dn=bb-T0+4,up=bt-B0-4;let d=ok(dn)?dn:ok(up)?up:null;
-      // どちらも空いていないときは、かかる面積がいちばん小さい位置（動かさないことも含む）にする（CodeRabbit PR #103）
-      if(d==null){const ov=d=>av.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0)+(B0+d>innerHeight-2||T0+d<2?1e6:0);
-        d=[0,dn,up].sort((x,y)=>ov(x)-ov(y))[0]}
+      const dn=bb-T0+4,up=bt-B0-4;
+      // 札にかかる面積×4＋「黙る」などのボタンにかかる面積で選ぶ（CodeRabbit PR #115：下げた先がボタンに乗ることがあった）。同じなら 下げる→上げる→動かさない の順
+      const nb=[...document.querySelectorAll('.needlerow button')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(e=>e.getBoundingClientRect()).filter(r=>r.width>2);
+      const ov=(d,qs)=>qs.reduce((t,q)=>t+Math.max(0,Math.min(R0,q.right)-Math.max(L0,q.left))*Math.max(0,Math.min(B0+d,q.bottom)-Math.max(T0+d,q.top)),0);
+      const cost=d=>ov(d,av)*4+ov(d,nb)+(B0+d>innerHeight-2||T0+d<2?1e7:0);
+      const d=[dn,up,0].reduce((a,x)=>cost(x)<cost(a)?x:a);
       if(d)mp.style.translate=`0px ${(d/k).toFixed(1)}px`;return}}
   const bs=[...document.querySelectorAll('.needlerow button')].filter(b=>b.offsetParent&&+getComputedStyle(b).opacity>.05).map(b=>b.getBoundingClientRect()).filter(r=>r.width>2);if(!bs.length)return;
   const L=Math.min(...cs.map(r=>r.left)),Rr=Math.max(...cs.map(r=>r.right)),T=Math.min(...cs.map(r=>r.top)),B=Math.max(...cs.map(r=>r.bottom));
