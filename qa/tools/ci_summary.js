@@ -96,6 +96,8 @@ if (prevVers.length) {
   const seen = prevVers.map(r => new Set((r.groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok').map(i => i.id)));
   for (const it of all) { if (it.status !== 'warn') continue; const n = seen.filter(s => s.has(it.id)).length; if (!n) continue;
     it.repeat = n + 1; const k = knownAll[it.id], exp = k && (String(k).match(/期限\s*(\d{4}-\d{2}-\d{2})/) || [])[1];
+    // 「⚠️ だけ」と決めた検査（項目の warnOnly に、だれがいつ決めたか）は、くり返しても ❌ に上げない。くり返しの回数は出す（v0.97.5 レビュー：ゲーム内 S2）
+    if (it.warnOnly) { it.detail = `くり返し（${it.repeat}回目。⚠️ だけの検査：${it.warnOnly}）：` + it.detail; continue }
     if (it.repeat >= 3 && k && exp && exp >= today)   // 期限のない登録は通さない（CodeRabbit PR #119）
       { it.status = 'known'; it.detail = `くり返し（${it.repeat}回目、修正待ち：${k}）` + it.detail }
     else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }

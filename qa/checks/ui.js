@@ -127,11 +127,16 @@ const INSPECT = `(() => {
   // 名札の下の行動の語（.ltact、アクションのわかりやすさ 案1）が、席番号・D・チップ・吹き出し・ポットの額・札に重ならないか（その席の伏せ札の上に重ねるのは決めた置き方なので見ない）
   if (!modal) { const okv = e => { if (!e || e.hidden || e.closest('[hidden]')) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') return false; for (let q = e; q && q !== document.body; q = q.parentElement) { const t = getComputedStyle(q); if (t.display === 'none' || +t.opacity === 0) return false } const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2 };
     const acts = [...document.querySelectorAll('.ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off)')].filter(okv);   // .vf*：動画のツッコミの直し（2026-10-17、js/47_video_fixes.js）。#vfLog：直近の5手（js/48_bet_log.js）
-    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
+    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText, #table .needlerow button')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
     for (const el of acts) { const a = el.getBoundingClientRect(); for (const o of others) { if (o === el || o.contains(el) || el.contains(o)) continue; const c = o.getBoundingClientRect();
       const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
       const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
       if (w > 4 && h > 4 && (!chip || w * h > .25 * a.width * a.height)) { out.push({ kind: '重なり', el: desc(el), by: desc(o) + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
+    // 一覧の足し忘れに備えて：勝ち負けの帯と、見えている押せる部品すべてを箱で比べ、1px でも重なれば ❌（v0.97.5 レビュー：一覧に無かった 💬 揺さぶるが帯の頭に乗った。点で見ると細い重なりを外す：CodeRabbit PR #120）
+    for (const el of document.querySelectorAll('.vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect(); if (a.width < 4) continue;
+      for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
+        const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 1 && h > 1 && !out.some(o => o.kind === '重なり' && o.el === desc(el) && String(o.by || '').startsWith(desc(bt)))) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
@@ -257,6 +262,8 @@ const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hid
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
+  // どこで落ちたかを残す（v0.97.6 CI：WebKit で「フリー6人_ハンドの終わり・縦」だけ、撮り直しても4回続けてページが閉じた）
+  let step = '開く', crashed = false, closed = false; page.on('crash', () => { crashed = true }); page.on('close', () => { closed = true });
   try {
     await page.evaluate(scene.prep);
     const t0 = Date.now();
@@ -303,7 +310,7 @@ async function shoot(browser, file, scene, vp, dir) {
     const hsWhy = x => !x || x.err ? '' : [x.won > 0 && x.chips > 0 ? `チップ${x.chips}枚` : '', x.won > 0 && x.sign ? '額' : '', x.iWon && !x.quiet && !x.vfOn && !x.vfOut ? (x.vf ? '札が画面の外か透明' : '札なし') : ''].filter(Boolean).join('+');
     let hs0 = null, waitMs = 0, waitWhy = '', lastWhy = '';
     if (scene.handEnd) { const tw = Date.now(); hs0 = await readHs(); while (!hsReady(hs0) && Date.now() - tw < 4000) { const w = hsWhy(hs0); if (w && w !== lastWhy) lastWhy = w, waitWhy += (waitWhy ? ' → ' : '') + `${Date.now() - tw}ms:${w}`; await page.waitForTimeout(100); hs0 = await readHs() } waitMs = Date.now() - tw }
-    const issues = await page.evaluate(INSPECT);
+    step = '重なりを見る'; const issues = await page.evaluate(INSPECT);
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
@@ -334,7 +341,7 @@ async function shoot(browser, file, scene, vp, dir) {
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent || (e.classList.contains('say') && !(e.textContent || '').trim())) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
       return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen), tip: typeof tipK !== 'undefined' && tipK ? String(tipK) : '', mwait: !!($('sensei') && $('sensei').classList.contains('mwait')) } }) : null;
-    const rects = await page.evaluate(RECTS);
+    step = '場所を測る・撮る'; const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
     // 止まった動き（v0.97.3 レビュー：WebKit で動きが途中で止まり、終わったら消す・見せる処理が走らなかった。ポットの山・札が重なったまま・透明の「あなたの負け」）
@@ -344,7 +351,7 @@ async function shoot(browser, file, scene, vp, dir) {
       for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity;
       const r = e && e.getBoundingClientRect(), ok = e && e.offsetParent && !e.hidden && getComputedStyle(e).visibility !== 'hidden' && r.width > 2 && r.height > 2 && op > .05 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
       if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return { err: String(e.message || e).slice(0, 80) } } }).catch(e => ({ err: String(e.message || e).slice(0, 80) }));   // 検査の失敗は ❌ にする（null は場面が対象外のときだけ。CodeRabbit PR #116）
-    const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => { const t = a.effect.getComputedTiming(); return { a, ct: a.currentTime, rem: t.endTime - (t.localTime || 0) } }); window.__qaSt0 = performance.now(); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return 'err:' + String(e.message || e).slice(0, 80) } }).catch(e => 'err:' + String(e.message || e).slice(0, 80));
+    step = '止まった動き'; const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => { const t = a.effect.getComputedTiming(); return { a, ct: a.currentTime, rem: t.endTime - (t.localTime || 0) } }); window.__qaSt0 = performance.now(); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return 'err:' + String(e.message || e).slice(0, 80) } }).catch(e => 'err:' + String(e.message || e).slice(0, 80));
     let stall = typeof stallRem === 'string' ? { err: stallRem.slice(4) } : null;
     // 残りの長い動きも見落とさない（CodeRabbit PR #118）：止まっていて期限前のものがあれば、期限（最大6秒）まで待って見直す。それでも期限前のものは「見きれず」として結果に残す
     let stallLong = [];
@@ -367,12 +374,12 @@ async function shoot(browser, file, scene, vp, dir) {
     // WebKit の .felt の中は getBoundingClientRect が描かれる場所とずれるので、場所でなく状態で見る（両ブラウザで同じ物差し）
     // 撮ってから1秒あとの状態も残す（撮った時の状態は hs0）
     const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
-    const cover = scene.handEnd ? await paintCover(page) : null;   // 描かれた場所で場札・見せた札にかぶるもの（v0.97.4 レビュー）
+    step = '描かれた場所のかぶり'; const cover = scene.handEnd ? await paintCover(page) : null;   // 描かれた場所で場札・見せた札にかぶるもの（v0.97.4 レビュー）
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
     return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
-    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
+    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
 }
 
