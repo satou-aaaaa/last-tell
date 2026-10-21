@@ -414,8 +414,6 @@ async function shoot(browser, file, scene, vp, dir) {
       const MEASURE = need => page.evaluate(need => { const cs = [...document.querySelectorAll('#mine .hold .card, #mine .card')].filter((e, i, a) => { if (a.indexOf(e) !== i || !e.getClientRects().length || !e.offsetParent) return false; let op = 1; for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity; return op > .05 && getComputedStyle(e).visibility !== 'hidden' });   // 透明・visibility:hidden の札は数えない（CodeRabbit PR #126）
           const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
           { const e = document.querySelector(need[0]);
-            // 出てくるアニメ（案内の tipIn は opacity 0→1）は終わらせてから測る。測るのは置き場所で、ふわっと出る途中ではない（手元：重い実行機で 450ms たっても opacity 0 のまま止まっていた）
-            try { if (e && e.getAnimations) e.getAnimations().forEach(a => { if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish() }) } catch (x) {}
             if (!vis(e)) return { n: cs.length, over: [], err: need[1] + 'が見えていない（出したのに隠れた・消えた。' + (!e ? '要素なし' : `hidden=${e.hidden}・箱 ${e.getClientRects().length}・visibility ${getComputedStyle(e).visibility}・opacity ${getComputedStyle(e).opacity}`) + '）' } }   // 測る相手が出ていなければ「測れなかった」（CodeRabbit PR #126）
           if (!cs.length) return { n: 0, over: [] };
           const cover = [['#sensei', '師匠の字幕'], ['#tipLine', '案内の箱'], ['#controls', 'ボタンの帯'], ['#between', 'ハンドの間の帯']].map(([q, nm]) => [document.querySelector(q), nm]).filter(([e]) => vis(e));
@@ -431,10 +429,10 @@ async function shoot(browser, file, scene, vp, dir) {
         const a = await MEASURE(['#sensei', '師匠の字幕']);
         // 2) 案内の箱（一番長い案内。ゲームと同じく字幕は待ちになる）
         let b = null; if (!a.err) { const p1 = await putTip(); if (p1.noBar) b = { n: a.n, over: [], lift: a.lift, pos: '案内を置く帯が無い画面（ゲームも案内を出さない）' }; else if (p1.tip) b = { err: '案内の箱を出せなかった（' + p1.tip + '）' };
-          else { await page.waitForTimeout(350); const p2 = await putTip(); await page.waitForTimeout(450); b = p2.tip ? { err: '案内の箱を出せなかった（' + p2.tip + '）' } : await MEASURE(['#tipLine', '案内の箱']);
+          else { await page.waitForTimeout(350); const p2 = await putTip(); await page.waitForTimeout(700); b = p2.tip ? { err: '案内の箱を出せなかった（' + p2.tip + '）' } : await MEASURE(['#tipLine', '案内の箱']);
             // 待つあいだに帯が入れ替わる（ボタンの帯→ハンドの間の帯）と、ゲームが案内を消す。1回だけ出し直して測る。帯が無くなっていたら、ゲームも案内を出さない画面
             for (let k = 0; k < 2 && b.err && !b.noBar; k++) { const p3 = await putTip(); if (p3.noBar) b = { n: a.n, over: [], lift: a.lift, pos: '待つあいだに案内を置く帯が無くなった（ゲームも案内を出さない）' };
-              else if (!p3.tip) { await page.waitForTimeout(450); const b2 = await MEASURE(['#tipLine', '案内の箱']); if (b2.err) { const why = await page.evaluate(() => { const e = $('tipLine'), bar = typeof tipBar === 'function' ? tipBar() : null; return `tipK=${typeof tipK !== 'undefined' ? tipK : '?'}・帯 ${bar ? '#' + bar.id : 'なし'}・案内の親 ${e && e.parentElement ? '#' + e.parentElement.id : 'なし'}` }).catch(() => ''); b = Object.assign(b2, { err: b2.err + `（${k + 1}回出し直しても。` + why + '）' }) } else b = b2 } else b = { err: '案内の箱を出せなかった（' + p3.tip + '）' } }
+              else if (!p3.tip) { await page.waitForTimeout(700); const b2 = await MEASURE(['#tipLine', '案内の箱']); if (b2.err) { const why = await page.evaluate(() => { const e = $('tipLine'), bar = typeof tipBar === 'function' ? tipBar() : null; return `tipK=${typeof tipK !== 'undefined' ? tipK : '?'}・帯 ${bar ? '#' + bar.id : 'なし'}・案内の親 ${e && e.parentElement ? '#' + e.parentElement.id : 'なし'}` }).catch(() => ''); b = Object.assign(b2, { err: b2.err + `（${k + 1}回出し直しても。` + why + '）' }) } else b = b2 } else b = { err: '案内の箱を出せなかった（' + p3.tip + '）' } }
             if (process.env.QA_SUBSHOT) await page.screenshot({ path: path.join(dir, `${scene.key}_${vp.key}_案内.png`) }) } }
         const err = a.err || (b && b.err);
         subHand = err ? { err, n: a.n } : { n: Math.min(a.n, b.n), over: [...a.over.map(x => '字幕のとき ' + x), ...b.over.map(x => '案内のとき ' + x)], lift: a.lift + (b.lift !== a.lift ? '／案内のとき ' + b.lift : ''), pos: '字幕のとき ' + a.pos + '／案内のとき ' + b.pos } } }

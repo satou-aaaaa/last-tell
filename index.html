@@ -9664,7 +9664,8 @@ function tipWant(){const me=S.players[0];if(!me||!me.human)return'';const nv=nov
     if(S.board.length>=3&&!tipSeen('board'))return'board'}
   if(S.handOver&&S.handNo>0&&me.won>0&&!tipSeen('pot'))return'pot';
   return''}
-function tipShow(k){const bar=tipBar();if(!bar)return;tipMark(k);tipK=k;tipAt=performance.now();const e=tipEl();e.textContent=k==='check'&&I18N.lang!=='en'?TIPS[k].replace('そのまま','そ\u2060の\u2060ま\u2060ま'):TIPS[k];bar.insertBefore(e,bar.firstChild);e.hidden=false;
+function tipShow(k){const bar=tipBar();if(!bar)return;tipMark(k);tipK=k;tipAt=performance.now();const e=tipEl();e.textContent=k==='check'&&I18N.lang!=='en'?TIPS[k].replace('そのまま','そ\u2060の\u2060ま\u2060ま'):TIPS[k];bar.insertBefore(e,bar.firstChild);e.hidden=false;try{LT.cssDone(e,500)}catch(x){}   // Safari：出てくるアニメ（tipIn）が進まず透明のまま残ることがある（v0.97.12 CI WebKit：案内が opacity 0 のまま）。時間がたったらアニメを外して必ず見せる
+  
   try{requestAnimationFrame(keepMine)}catch(x){}
   // v66（レビュー 3）：はじめての人の「act」の案内は、最初に操作ボタンを押すまで出しておく。ジンの助言はそのあと
   // v68（v67 レビュー 3）：最初の判断で払う額が 0 なら「act」ではなく「check」の案内を先に出し、同じように押すまで出しておく
@@ -11806,7 +11807,9 @@ try{let mfSayQ=0;const mfSayObs=new MutationObserver(ms=>{if(mfSayQ||$('game').h
   // 見るのは「吹き出しが足された」「.go（出る）が付いた・外れた」ときだけ。置き直しが付ける・外す別のクラスには反応しない
   // （v0.97.11 は .say のクラスが変わるたびに反応し、置き直し→クラス変化→置き直し…が毎コマ回って、オールインの場面で止まった。main の Issue #127・PR #128 の CI）
   const goFlip=m=>m.type==='attributes'&&m.target.classList&&m.target.classList.contains('say')&&/(^|\s)go(\s|$)/.test(m.oldValue||'')!==m.target.classList.contains('go');
-  if(!ms.some(m=>goFlip(m)||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
+  // 出ている吹き出しの字が変わった（「チェック」→「上げる」）ときも。長さが変わるので（PR #128 の CI：PC の6人卓で #vfLog に #say2「黒いスーツ 上げる」がかかった）
+  const sayText=m=>m.type==='childList'&&m.target.closest&&!!m.target.closest('.say');
+  if(!ms.some(m=>goFlip(m)||sayText(m)||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
   const go=()=>{const el=$('mfInner');if(el&&!el.hidden)try{mfPlace()}catch(e){}try{bAvLoop()}catch(e){}try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
   // 出たばかりの吹き出しは小さく透明（LT.sayOn が「見えない」とする）。ふくらみ終わったころにもう一度（v0.97.11 手元：PC の6人卓で、直近の5手に「ミサキ いくよ！」がかかった）
   mfSayQ=requestAnimationFrame(()=>{mfSayQ=0;go()});clearTimeout(mfSayObs.t);mfSayObs.t=setTimeout(go,380)});
