@@ -2193,7 +2193,7 @@ html.pcw #game .t3d{height:100vh;height:100dvh;min-height:0}
 html.pcw .felt .card{--cw:40px}
 html.pcw .spot .card{--cw:52px}
 html.pcw .n6 .spot .card{--cw:46px}
-html.pcw .mine .hold .card{--cw:64px}
+html.pcw .mine .hold .card{--cw:74px}
 html.pcw .felt .boardspot{top:24%}
 /* 顔は大きく、でも頭が画面の上で切れない（胸像の下の端は卓の高さの 37%） */
 html.pcw #busts>.bust{max-width:34vh}
@@ -2207,6 +2207,18 @@ html.pcw .potchips.mess{transform:scale(.68);transform-origin:50% 30%}
 /* WebKit の PC は卓を倒さない（倒すと、部品を測った場所と描かれた場所が 100px 以上ずれ、名札が見せた札にかぶる。Issue #131）。
    倒さなければ WebKit でもずれは 2px（qa/checks/sharp.js の「試した直し：倒さない」）。見た目は真上から見た卓に近くなる */
 html.wk.pcw .felt{transform:scale(.333333)}
+/* PC は師匠の字幕を2行で切らない（右の列は縦に余裕がある。v0.98.0 レビュー：「…」で切れていた） */
+html.pcw #game .sensei p{display:block;-webkit-line-clamp:unset;overflow:visible}
+/* PC：自分の手札を大きく、下の端から少し上へ（v0.98.0 レビュー：下の端 790/800 で小さく、手前の山のほうが大きく見えて3枚め・4枚めの手札に見えた）。
+   配る前の山（.lltools）と捨て札の山（.muckpile）は手前ほど遠近で大きく描かれるので、PC では小さめにする。qa/checks/ui.js の PC 検査（手札・山の大きさ・下の端）で見る */
+html.pcw #game .mine{padding-bottom:18px}
+html.pcw .felt .boardspot>.lltools{scale:.62;transform-origin:0 0}
+html.pcw .felt .boardspot>.muckpile{scale:.62}
+
+/* ===== v0.98.1 PC 向け：部屋の光と煙（js/53_pc_air.js）。卓の布の上・名札の下に重ねる絵。押せない ===== */
+#pcAir{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#pcAir[hidden]{display:none}
+html:not(.pcw) #pcAir{display:none}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2399,7 +2411,7 @@ html.wk.pcw .felt{transform:scale(.333333)}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.0';
+const APP_VERSION='0.98.1';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12258,6 +12270,8 @@ function muckYield(){const m=document.querySelector('.felt .boardspot > .muckpil
 LT.on('layout',()=>{try{muckYield()}catch(e){}});
 // 見せた札が場札に重なるときは、その席の札を上へ逃がす（v91.2 レビュー：6人卓の縦で右の席の見せた札が川の札の上半分にかかった）
 // ハンドの終わりだけ。場札は動かさない（みんなの札なので）。次のハンドで戻す
+// 卓の四角を画面の中に切りつめる（v0.98.1：PC の横長の卓は #table が画面の外まで広がることがあり、「卓の中」でも画面の外へ札を置いた）
+function sybTB(){const r=($('table')||document.body).getBoundingClientRect(),W=innerWidth,H=innerHeight;return {left:Math.max(r.left,0),top:Math.max(r.top,0),right:Math.min(r.right,W),bottom:Math.min(r.bottom,H)}}
 function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot .hand')];
   const on=!!(S&&S.handOver);
   hands.forEach(h=>{if(h.dataset.syb&&(!on||h.classList.contains('folded')||h.classList.contains('muck'))){h.style.translate='';h.style.scale='';h.classList.remove('sybs');delete h.dataset.syb}});
@@ -12276,7 +12290,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
       if(q){const rs=cs.map(R),top=Math.min(...rs.map(r=>r.top)),bot=Math.max(...rs.map(r=>r.bottom)),bt=Math.min(...board.map(r=>r.top)),L=Math.min(...rs.map(r=>r.left)),Rt=Math.max(...rs.map(r=>r.right));
         if(L<q.right&&q.left<Rt&&top<bt&&top+need<q.bottom+1&&q.bottom<bt){const room=bt-3-(q.bottom+1),f=room/(bot-top),
             // v96.1 レビュー：札の高さは 28px より小さくしない（横画面で数字が読めなかった）。0.6倍の下限で縮めきれずに名札の下へ入る回もあった（PC）
-            cH=Math.max(...rs.map(r=>r.height)),fmin=Math.min(1,29/cH);
+            cH=Math.max(...rs.map(r=>r.height)),bH=Math.max(...board.map(r=>r.height)),fmin=Math.min(1,(document.documentElement.classList.contains('pcw')?Math.max(29,bH*.8+1):29)/cH);   // PC は場札の 0.8倍より小さくしない（v0.98.1 CI：第14章の PC で 33px／場札 85px まで縮んだ）
           // 名札の下へ縮めて置く先も、ほかの席の札・山・席番号にかからないか確かめる（CodeRabbit PR #105）。かかるなら下の「横へずらす」へ
           const okF=f>=fmin&&(()=>{const s1=Math.min(1,f),cx=(L+Rt)/2,l1=cx-(cx-L)*s1,r1=cx+(Rt-cx)*s1,t1=q.bottom+1,b1=t1+(bot-top)*s1;
             // ほかの名札の D（.dbadge）も入れる。名札の外にはみ出す（v0.96.4 CI：横でソウゲンの 3♥ の角が左の名札の D にかかった）
@@ -12284,7 +12298,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
           if(okF){sc=Math.min(1,f);need=q.bottom+1-top}
           else{// 名札と場札の間に入らない：28px の大きさで場札のすぐ上に置き、名札の横の空いた方へずらす
             sc=fmin;need=bt-3-top-(bot-top)*sc;
-            if(top+need<q.bottom-1){const cx=(L+Rt)/2,l2=cx-(cx-L)*sc,r2=cx+(Rt-cx)*sc,T=R($('table')||document.body),
+            if(top+need<q.bottom-1){const cx=(L+Rt)/2,l2=cx-(cx-L)*sc,r2=cx+(Rt-cx)*sc,T=sybTB(),
                 t2=top+need,b2=t2+(bot-top)*sc,
                 // ずらした先がほかの席の札・名札・席番号・チップの山（自分の席の山も。v0.96.4 手元：横でカイの札が自分の山の上へ動いた）にかからないか（v0.96.2 手元：横で左上の席の見せた札に重なった）
                 av=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&e.getClientRects().length).map(R).filter(r=>r.width>2),
@@ -12296,7 +12310,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
                 const up=Math.ceil(q.bottom+1-(top+need));if(up>0&&up<=20){pl.style.translate=`0 ${-up}px`;pl.dataset.sybp='1';const pq=R(pl),mx=pq.left+pq.width/2,my=pq.top+pq.height/2,eh=document.elementFromPoint(mx,my);if(pq.bottom>top+need+1||(eh&&!pl.contains(eh)&&!h.contains(eh)&&eh.closest&&eh.closest('#busts'))){pl.style.translate='';delete pl.dataset.sybp;sc=1;need=need0}}else{sc=1;need=need0}}}}}
         // v96.2 レビュー：横の席（PC の右の席）は名札が場札の上にないので上の分かれ道に入らず、伸びた名札（勝ち・役の名前）が札の上の端にかかった。名札の下か上の、空いているほうへ札をずらす
         // 場札からよけた先（need）が名札にかかるときも
-        else if(L<q.right-1&&q.left<Rt-1&&top+need<q.bottom-1&&q.top<bot+need-1){const T=R($('table')||document.body),
+        else if(L<q.right-1&&q.left<Rt-1&&top+need<q.bottom-1&&q.top<bot+need-1){const T=sybTB(),
             av=board.concat([...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), #plates .plate, .llseats i:not([hidden]), .dbadge, #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e!==pl&&e.getClientRects().length).map(R).filter(r=>r.width>2)),
             clr=d=>top+d>=T.top+2&&bot+d<=T.bottom-2&&av.every(r=>!(L<r.right-1&&r.left<Rt-1&&top+d<r.bottom-1&&r.top<bot+d-1)),
             dn=Math.ceil(q.bottom+1-top),up=Math.floor(q.top-1-bot),c=[dn,up].filter(clr).sort((x,y)=>Math.abs(x)-Math.abs(y));
@@ -12307,7 +12321,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
         hitOf=(arr,x,y)=>arr.filter(q=>l+x<q.right-1&&q.left<r+x-1&&t+y<q.bottom-1&&q.top<b+y-1),
         pls=[...document.querySelectorAll('#plates .plate, #plates .dbadge')].filter(e=>e!==pl&&!(pl&&pl.contains(e))&&e.getClientRects().length).map(R).filter(q=>q.width>2),
         hp=hitOf(pls,0,0);
-      if(hp.length){const T=R($('table')||document.body),
+      if(hp.length){const T=sybTB(),
           av=board.concat(pls,[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e.getClientRects().length).map(R).filter(q=>q.width>2)),
           cand=[[0,Math.max(...hp.map(q=>q.bottom))+1-t],[0,Math.min(...hp.map(q=>q.top))-1-b],[Math.max(...hp.map(q=>q.right))+1-l,0],[Math.min(...hp.map(q=>q.left))-1-r,0]]
             .filter(([x,y])=>Math.abs(x)+Math.abs(y)<=40&&l+x>=T.left+2&&r+x<=T.right-2&&t+y>=T.top+2&&b+y<=T.bottom-2&&!hitOf(av,x,y).length)
@@ -12325,14 +12339,14 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
         hitOf=(arr,x,y)=>arr.filter(q=>l+x<q.right-1&&q.left<r+x-1&&t+y<q.bottom-1&&q.top<b+y-1),
         pls=[...document.querySelectorAll('#plates .plate, #plates .dbadge')].filter(e=>e!==pl&&!(pl&&pl.contains(e))&&e.getClientRects().length).map(R).filter(q=>q.width>2),
         hp=hitOf(pls,0,0);
-      if(hp.length){const T=R($('table')||document.body),
+      if(hp.length){const T=sybTB(),
           av=board.concat(pls,[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot), .llseats i:not([hidden]), #dbtn, #felt .spot .mystack')].filter(e=>!h.contains(e)&&e.getClientRects().length).map(R).filter(q=>q.width>2)),
           cand=[[0,Math.max(...hp.map(q=>q.bottom))+1-t],[0,Math.min(...hp.map(q=>q.top))-1-b],[Math.max(...hp.map(q=>q.right))+1-l,0],[Math.min(...hp.map(q=>q.left))-1-r,0]]
             .filter(([x,y])=>Math.abs(x)+Math.abs(y)<=60&&l+x>=T.left+2&&r+x<=T.right-2&&t+y>=T.top+2&&b+y<=T.bottom-2&&!hitOf(av,x,y).length)
             .sort((u,v)=>Math.abs(u[0])+Math.abs(u[1])-Math.abs(v[0])-Math.abs(v[1]));
         if(cand.length){dx+=cand[0][0];need+=cand[0][1];h.style.translate=`${Math.round(dx/(k||1))}px ${Math.round(need/(k||1))}px`}}}}catch(e){}});
   // ほかの席のチップの山（.mystack）が見せた札にかかっていたら、山のほうを横へよける（v0.96.2 手元：第14章で右の席の山がカイの札に乗った。chipAvoid は札が動く前に測っている）
-  try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length).map(([h,rs])=>[h,[{left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right)),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom))}]]),T=R($('table'));   // 札は1枚ずつでなく手札まとめて1つの四角で見る（1枚ずつだと2枚の間を行ったり来たりした）
+  try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length).map(([h,rs])=>[h,[{left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right)),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom))}]]),T=sybTB();   // 札は1枚ずつでなく手札まとめて1つの四角で見る（1枚ずつだと2枚の間を行ったり来たりした）
     document.querySelectorAll('#felt .spot .mystack').forEach(m=>{const cs=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(!cs.length)return;if(R(m).width>2)cs.push(R(m));   // 山の箱（数の札も入る）ごとよける（v0.96.3 手元：箱の端がカイの札にかかった）
       let a={l:Math.min(...cs.map(r=>r.left)),r:Math.max(...cs.map(r=>r.right)),t:Math.min(...cs.map(r=>r.top)),b:Math.max(...cs.map(r=>r.bottom))};
       for(const [h,rs] of sh){if(h.closest('.spot')===m.closest('.spot'))continue;for(const c of rs){if(!(a.l<c.right-1&&c.left<a.r-1&&a.t<c.bottom-1&&c.top<a.b-1))continue;
@@ -13220,6 +13234,68 @@ LT.on('render',()=>{try{p6RaiseHand()}catch(e){}});
 // カードのマーク 案C（2026-10-19 satou が A+B+C+D を選択）：4色のトランプを最初からオンにする。
 // 設定で自分で切り替えた人（保存に c4 がある人）はそのまま
 if(SETTINGS.c4===undefined){SETTINGS.c4=true;try{b4Apply()}catch(e){}}
+
+// ===== v0.98.1 PC 向け：部屋の光と煙（PC 向けリッチ演出 案2、2026-10-21 satou「全部」） =====
+// PC（html.pcw）だけ。卓の上に canvas を1枚重ね、ランプの光の円錐（ゆっくり揺れる）・流れる煙・ポットのチップの光の反射・外側の暗さを描く。
+// 光の色は章の --lamp（20_state.js が章ごとに入れる）。遊び方は何も変えない（押せない・何も隠さない）。
+// 止める：動き「少なめ」（html.ltLite）・prefers-reduced-motion・画面が隠れている間は、1枚だけ描いて止める。
+// 顔（#busts）の上には描かない（卓の板の上端より下だけ）。カメラが顔に寄っている間（camState.i>=0）は煙をさらに薄くする。
+// 重さ：30コマ/秒まで、描く大きさは画面の半分（ぼかした絵なので足りる）。1コマにかかった時間を PCAIR.ms に残す（qa が見る）
+const PCAIR={sk:'',puff:null,vig:null,on:false,ms:0,frames:0,raf:0,last:0,cv:null,g:null,w:0,h:0,puffs:[],t0:0};
+function pcAirOn(){return document.documentElement.classList.contains('pcw')&&!!$('table')&&!$('game').hidden}
+function pcAirStill(){return document.documentElement.classList.contains('ltLite')||reducedMotion()||document.hidden}
+function pcAirMake(){const tb=$('table');if(!tb)return null;let cv=$('pcAir');
+  if(!cv){cv=document.createElement('canvas');cv.id='pcAir';cv.setAttribute('aria-hidden','true');
+    const fw=tb.querySelector('.felt-wrap'),par=fw?fw.parentNode:tb;par.insertBefore(cv,fw?fw.nextSibling:null)}   // カメラ（#cam）の中で、卓の布の上・名札（.plates）の下
+  PCAIR.cv=cv;PCAIR.g=cv.getContext('2d');return cv}
+function pcAirSize(){const cv=PCAIR.cv,tb=$('table');   // 大きさは卓（#table）と同じ（#cam は卓いっぱい）
+ if(!cv||!tb)return;const w=Math.max(1,Math.round(tb.clientWidth/2)),h=Math.max(1,Math.round(tb.clientHeight/2));
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}PCAIR.w=w;PCAIR.h=h;
+  if(!PCAIR.puffs.length){let s=7;const R=()=>(s=(s*16807)%2147483647)/2147483647;
+    for(let i=0;i<28;i++)PCAIR.puffs.push({x:R(),y:.08+R()*.6,r:.06+R()*.12,v:.004+R()*.01,p:R()*6.3})}}
+function pcAirSprites(){const W=PCAIR.w,H=PCAIR.h;if(PCAIR.sk===W+'x'+H)return;PCAIR.sk=W+'x'+H;   // 煙の粒と外側の暗さは、大きさが変わったときだけ描いておく（毎コマ作ると重い）
+  const pf=document.createElement('canvas');pf.width=pf.height=64;const pg=pf.getContext('2d'),sm=pg.createRadialGradient(32,32,0,32,32,32);sm.addColorStop(0,'rgba(205,205,195,1)');sm.addColorStop(1,'rgba(205,205,195,0)');pg.fillStyle=sm;pg.fillRect(0,0,64,64);PCAIR.puff=pf;
+  const vc=document.createElement('canvas');vc.width=W;vc.height=H;const vg2=vc.getContext('2d'),vg=vg2.createRadialGradient(W/2,H*.5,Math.min(W,H)*.35,W/2,H*.5,Math.max(W,H)*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');vg2.fillStyle=vg;vg2.fillRect(0,0,W,H);PCAIR.vig=vc}
+function pcAirLamp(){const v=(($('table')||{}).style||{getPropertyValue:()=>''}).getPropertyValue('--lamp').trim()||'#e2b65b';
+  const m=/^#?([0-9a-f]{6})$/i.exec(v);if(!m)return[226,182,91];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]}
+function pcAirDraw(t){const g=PCAIR.g,W=PCAIR.w,H=PCAIR.h;if(!g||!W)return;const t0=performance.now();
+  g.clearRect(0,0,W,H);const [r,gg,b]=pcAirLamp(),still=pcAirStill(),s=still?0:t/1000;
+  // 顔（#busts）には何も重ねない：卓の板（.felt-wrap）の上端より下だけに描く（第7章のジンの本物のテルも隠さない。v0.98.1 CI で WebKit の顔のアップが 1.44 に下がった）
+  const fw=PCAIR.cv.parentNode&&PCAIR.cv.parentNode.querySelector('.felt-wrap'),top0=fw&&PCAIR.cv.parentNode.offsetHeight?Math.max(0,Math.round(fw.offsetTop/PCAIR.cv.parentNode.offsetHeight*H)):0;
+  g.save();g.beginPath();g.rect(0,top0,W,H-top0);g.clip();
+  let close=false;try{close=typeof camState!=='undefined'&&camState.i>=0}catch(e){}
+  // ランプの光の円錐（上から卓へ）。揺れは横に ±1.5%
+  const lx=W*(.5+.015*Math.sin(s*.55)),top=top0,bot=Math.max(top0+1,H*.62),wt=W*.05,wb=W*.46;
+  g.save();g.globalCompositeOperation='lighter';
+  const cg=g.createLinearGradient(0,top,0,bot);cg.addColorStop(0,`rgba(${r},${gg},${b},.10)`);cg.addColorStop(1,`rgba(${r},${gg},${b},0)`);
+  g.fillStyle=cg;g.beginPath();g.moveTo(lx-wt,top);g.lineTo(lx+wt,top);g.lineTo(lx+wb,bot);g.lineTo(lx-wb,bot);g.closePath();g.fill();
+  // 卓の上の光だまり
+  const pg=g.createRadialGradient(lx,H*.62,H*.02,lx,H*.62,W*.36);pg.addColorStop(0,`rgba(${r},${gg},${b},.10)`);pg.addColorStop(1,`rgba(${r},${gg},${b},0)`);g.fillStyle=pg;g.fillRect(0,0,W,H);
+  // ポットのチップの光の反射（ゆっくり明滅）
+  const pc=$('potChips'),tb=$('table');if(pc&&tb&&pc.getClientRects().length){const a=pc.getBoundingClientRect(),q=tb.getBoundingClientRect();
+    if(a.width>4){const x=(a.left+a.width*.42-q.left)/2,y=(a.top+a.height*.2-q.top)/2,k=.18+.12*Math.sin(s*1.7);
+      const sg=g.createRadialGradient(x,y,0,x,y,Math.max(6,a.width*.12));sg.addColorStop(0,`rgba(255,244,220,${k})`);sg.addColorStop(1,'rgba(255,244,220,0)');g.fillStyle=sg;g.fillRect(x-40,y-40,80,80)}}
+  g.restore();
+  // 煙（顔に寄っている間は薄く）
+  pcAirSprites();g.globalAlpha=close?.012:.035;
+  for(const p of PCAIR.puffs){const x=((p.x+s*p.v)%1.2-.1)*W,y=(p.y+.02*Math.sin(s*.4+p.p))*H,rr=p.r*W;g.drawImage(PCAIR.puff,x-rr,y-rr,2*rr,2*rr)}
+  g.globalAlpha=1;
+  // 外側の暗さ（光の届かない所）
+  g.drawImage(PCAIR.vig,0,0);g.restore();PCAIR.top=top0;
+  const ms=performance.now()-t0;PCAIR.ms=PCAIR.ms?PCAIR.ms*.9+ms*.1:ms;PCAIR.frames++;(PCAIR.hist||(PCAIR.hist=[])).push(ms);if(PCAIR.hist.length>60)PCAIR.hist.shift()}   // hist：qa が真ん中の値を見る（最初の1コマは絵の準備で重い）
+function pcAirLoop(t){PCAIR.raf=0;if(!PCAIR.on)return;
+  if(t-PCAIR.last>=33){PCAIR.last=t;try{pcAirDraw(t)}catch(e){PCAIR.on=false;throw e}}
+  if(!pcAirStill())PCAIR.raf=requestAnimationFrame(pcAirLoop)}
+function pcAirSync(){const on=pcAirOn();
+  if(!on){if(PCAIR.on){PCAIR.on=false;cancelAnimationFrame(PCAIR.raf);PCAIR.raf=0}const cv=$('pcAir');if(cv)cv.hidden=true;return}
+  if(!PCAIR.cv||!PCAIR.cv.isConnected)pcAirMake();if(!PCAIR.cv)return;PCAIR.cv.hidden=false;pcAirSize();
+  PCAIR.on=true;if(pcAirStill()){cancelAnimationFrame(PCAIR.raf);PCAIR.raf=0;pcAirDraw(0)}else if(!PCAIR.raf)PCAIR.raf=requestAnimationFrame(pcAirLoop)}
+LT.on('layout',()=>{try{pcAirSync()}catch(e){}});
+LT.on('startHand',()=>{try{pcAirSync()}catch(e){}});
+LT.on('render',()=>{try{if(!PCAIR.on||!PCAIR.cv||!PCAIR.cv.isConnected)pcAirSync()}catch(e){}});   // 卓が見えた最初の描き直しで始める（startHand の時は卓がまだ隠れている）
+document.addEventListener('visibilitychange',()=>{try{pcAirSync()}catch(e){}});
+mqOn(matchMedia(PCW_Q),()=>{try{pcAirSync()}catch(e){}});
+try{new MutationObserver(()=>{try{pcAirSync()}catch(e){}}).observe(document.documentElement,{attributes:true,attributeFilter:['class']})}catch(e){}
 
 </script>
 <script>

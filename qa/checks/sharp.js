@@ -193,8 +193,11 @@ async function run({ browser, file, dir }) {
     items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
       detail: `ずれ 最大 ${Math.round(r.gap)}px${r.hit && r.hit.n ? `、当たり判定が部品に当たる：描かれた場所 ${r.hit.p}/${r.hit.n}・測った場所 ${r.hit.g}/${r.hit.n}` : ''}${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
-    items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
-      detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
+    // WebKit の PC（soft）は寄る前の顔から柔らかい（1.36〜1.53）。目安 1.45 のまわりで回ごとにぶれて、くり返しの判定で ❌ になった（PR #132）。
+    //   寄ったことでぼやけたか（寄る前の 0.93倍より下）と、引き伸ばしたぼやけ（1.3 未満）を ❌ にする。⚠️ に逃がさない
+    const zSoft = soft(vp) && r.face0 != null, zBad = r.face1 == null || (zSoft ? r.face1 < 1.3 || r.face1 < r.face0 * .93 : r.face1 < ZMIN);
+    items.push({ id: `sharp:zoom:${vp.key}`, title: zSoft ? `顔のアップでもくっきりしている（${vp.key}、寄る前の 0.93倍以上・1.3 以上）` : `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : zSoft ? (zBad ? 'fail' : 'ok') : st(vp, zBad ? 'fail' : 'ok'),
+      detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}${zSoft ? `（${r2(r.face1 / r.face0)}倍）` : ''}` });
     items.push({ id: `sharp:camsx:${vp.key}`, title: `顔のアップの間に卓の大きさが変わらない（${vp.key}）`, status: r.sx0 == null ? 'fail' : r.sx0 !== r.sx1 ? 'fail' : 'ok',
       detail: r.sx0 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `卓の縮め 寄る前 ${r.sx0}px → 寄ったあと ${r.sx1}px${r.sx0 !== r.sx1 ? '：寄って大きく見える場札を「手札にかかる」と測って縮めている（30c の barSync はカメラが寄っている間は判断しない）' : ''}` });
   }
