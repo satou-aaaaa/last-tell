@@ -300,9 +300,9 @@ async function shoot(browser, file, scene, vp, dir) {
     await page.evaluate(scene.prep);
     const t0 = Date.now();
     if (scene.myTurn || scene.handEnd) {
-      await H.startBot(page, { policy: 'call', maxHands: 99 });
-      // ハンドの終わりの場面：自分が飛んでゲームオーバーの画面を撮らないように、ハンドの前に自分のチップを「いちばん多い相手＋最初の持ち分」まで足す（v0.98.2 レビュー：PC のフリー6人_ハンドの終わりが2版続けてゲームオーバーの画面で、撮り直し3回もだめだった）
+      // ハンドの終わりの場面：自分が飛んでゲームオーバーの画面を撮らないように、ボットを動かす前（最初のハンドより前）に登録して、ハンドの前に自分のチップを「いちばん多い相手＋最初の持ち分」まで足す（v0.98.2 レビュー：PC のフリー6人_ハンドの終わりが2版続けてゲームオーバーの画面で、撮り直し3回もだめだった）
       if (scene.handEnd) await page.evaluate(() => LT.on('startHand:before', () => { try { const m = S.players && S.players[0]; if (!m || m.chips <= 0) return; const top = Math.max(0, ...S.players.filter(p => p !== m && !p.out).map(p => p.chips)); if (m.chips < top + m.start) m.chips = top + m.start } catch (e) {} }));
+      await H.startBot(page, { policy: 'call', maxHands: 99 });
       // 自分の番（またはハンドの終わり）が来たら止める
       // street：撮る時点を決めた通り（例 'flop'＝フロップで自分の番）にする。版ごとにプリフロップ・フロップと揺れて「22% 変わった」と出ていた（改善提案 2026-10-14b §1）。30秒で来なければ、どの番でも撮る
       await page.evaluate(([h, st, sb]) => { const B = __bot, t = B.tick, t0 = Date.now(); B.tick = function () { if (h ? (S && S.players && S.handOver && S.handNo >= 1 && !document.getElementById('btnNext').hidden && (!sb || (S.players[sb] && S.players[sb].show && !S.players[sb].folded) || Date.now() - t0 > 45000)) : (S && S.players && !S.handOver && S.toAct === 0 && !document.getElementById('controls').hidden && (!st || S.street === st || Date.now() - t0 > 30000))) { B.done = true; return } t() }; clearInterval(B.timer); B.timer = setInterval(B.tick, 4) }, [!!scene.handEnd, scene.street || '', scene.showBy || 0]);
