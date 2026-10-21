@@ -12557,6 +12557,9 @@ function vfResult(){
 setTimeout(()=>{try{d._place();vfSayYield(d)}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);
   // 置いたあとで卓が動いても（スクロール・名札や指示の箱が出て卓がずれる）、札にかかったら置き直す。出ているあいだ 0.5秒ごとに見る
   // （v0.97.5 CI：6人卓の縦で、置いた時より卓が 60px 下がり、「あなたの負け」の帯が場札の上に残った。前は 2.4秒までと、自分の札・見せた札にかかったときだけ置き直していた）
+  // 札が開いた・出たら、0.5秒の見回りを待たずにすぐ見直す（v0.97.11 手元：第14章の縦で、あとから開いたカイの K♣ の角に「あなたの負け」が乗ったまま測られた）
+  {let q=0;const fe=tb.querySelector('.felt')||tb,mo=new MutationObserver(()=>{if(!d.isConnected){mo.disconnect();return}if(q)return;q=requestAnimationFrame(()=>{q=0;try{if(vfOverCards(d))d._place()}catch(e){}})});
+    mo.observe(fe,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}
   {const iv=setInterval(()=>{if(!d.isConnected){clearInterval(iv);return}try{if(vfOverCards(d))d._place();vfSayYield(d)}catch(e){}},500)}   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
   const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
