@@ -253,7 +253,7 @@ async function paintCover(page) {
 }
 // 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
 const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05))   // 動きの終わりで見えなくなった吹き出しは数えない（v0.97.8 レビュー）
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
         // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
         .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);

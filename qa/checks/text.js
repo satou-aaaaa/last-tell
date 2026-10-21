@@ -41,14 +41,16 @@ async function run({ browser, file, baseline }) {
     detail: fresh.length ? '新しく見つかったセリフ: ' + fresh.slice(0, 5).map(x => `「${x}」`).join('、') : lines.size ? `前から基準に入っている ${lines.size}件（中身を見て、問題なければそのまま）: ` + [...lines].slice(0, 3).map(x => `「${x}」`).join('、') : '0件', list: [...lines] });
   // 配り方を変える関数があるなら、遊び方のページの「公平」の説明（日英）にそのことが書いてある（改善提案 第12回 0-1：10-17 に易しくしたが、説明は「毎回ふつうにシャッフル」のままだった）
   // 配りを変える関数を足したら DEAL_CHANGERS にも足す
-  { const DEAL_CHANGERS = ['dealHelp', 'p6Premium'], has = DEAL_CHANGERS.filter(f => new RegExp('function\\s+' + f + '\\s*\\(').test(src));
-    const hm = [...src.matchAll(/class="hnote">([^`]{0,600}?)<\/p>/g)].map(m => m[1]).find(t => /シャッフル/.test(t)), ja = hm || '';   // 公平の説明＝シャッフルの話をしている hnote
-    // 英語は、その説明の訳（EN_DICT の「シャッフル…弱い手」の行）だけを見る。ほかの所に同じ語句があっても通さない
-    const enHit = [...src.matchAll(/"([^"\n]{0,400}シャッフル[^"\n]{0,400})"\s*:\s*"([^"\n]{0,800})"/g)].some(m => /弱い手/.test(m[1]) && /weak starting hands?/i.test(m[2]));
-    const jaOk = /弱い手/.test(ja);
+  { // 配りを変える関数と、説明に書くべき語（日・英）。配りを変える関数を足したら、ここにも足す（v0.97.8 レビュー：p6Premium の「強い手への入れ替え」が説明に無かった）
+    const DEAL_CHANGERS = { dealHelp: ['弱い手', /weak starting hands?/i], p6Premium: ['強い手', /strong hand/i] },
+      has = Object.keys(DEAL_CHANGERS).filter(f => new RegExp('function\\s+' + f + '\\s*\\(').test(src));
+    const hm = [...src.matchAll(/class="hnote">([^`]{0,800}?)<\/p>/g)].map(m => m[1]).find(t => /シャッフル/.test(t)), ja = hm || '';   // 公平の説明＝シャッフルの話をしている hnote
+    // 英語は、その説明の訳（EN_DICT の「シャッフル…」の行で、日本語が今の説明と同じもの）だけを見る。ほかの所に同じ語句があっても通さない
+    const enRow = [...src.matchAll(/"([^"\n]{0,600}シャッフル[^"\n]{0,600})"\s*:\s*"([^"\n]{0,1200})"/g)].find(m => ja && ja.includes(m[1])), en = enRow ? enRow[2] : '';
+    const miss = has.flatMap(f => { const [j, e] = DEAL_CHANGERS[f]; return [...(ja.includes(j) ? [] : [`日本語に「${j}」がない（${f}）`]), ...(e.test(en) ? [] : [`英語に ${e} がない（${f}）`])] });
     items.push({ id: 'text:fair-note', title: '配り方を変えているときは、遊び方のページの公平の説明（日英）にそのことが書いてある',
-      status: !has.length ? 'ok' : !hm ? 'fail' : jaOk && enHit ? 'ok' : 'fail',
-      detail: !has.length ? '配りを変える関数なし' : !hm ? '遊び方のページの説明（class="hnote"）が見つからない' : jaOk && enHit ? `${has.join('・')} あり、説明に「弱い手」・"weak starting hands" あり` : `配り方を変えたのに、遊び方の説明が古い（${has.join('・')} あり。${jaOk ? '' : '日本語に「弱い手」がない。'}${enHit ? '' : '英語に "weak starting hands" がない'}）` }) }
+      status: !has.length ? 'ok' : !hm ? 'fail' : miss.length ? 'fail' : 'ok',
+      detail: !has.length ? '配りを変える関数なし' : !hm ? '遊び方のページの説明（class="hnote"）が見つからない' : miss.length ? `配り方を変えたのに、遊び方の説明が古い：${miss.join('、')}` : `${has.join('・')} あり、説明（日英）に全部書いてある` }) }
   return { name: '文言', items, baselineOut: { moneyLines: [...lines] } };
 }
 module.exports = { run };
