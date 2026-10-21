@@ -400,7 +400,9 @@ async function shoot(browser, file, scene, vp, dir) {
         const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
         const hit = () => { const cs = [...document.querySelectorAll('#mine .card')].filter(vis).map(e => e.getBoundingClientRect()), q2 = [...['#sensei', '#tipLine'].map(q => document.querySelector(q)), ...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(vis).map(e => e.getBoundingClientRect());
           return cs.some(r => q2.some(q => Math.min(r.right, q.right) - Math.max(r.left, q.left) > 4 && Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) > 4)) };
-        gw._sxPend = 1; gw.style.setProperty('--sx', '0px'); await fr(); const over = hit(); gw.style.setProperty('--sx', sx + 'px'); gw._sxPend = 0; await fr(); return { sx, over } }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
+        // 縮めないときにゲームが置く形で見る：--sx を 0 にして barSync に手札の上げ量（--sbh）を測り直させる（_sxPend の間は --sx を書かない）。前は縮めたときの上げ量のままで見ていて、上げすぎた手札が「かからない」と出た
+        const lift0 = gw.style.getPropertyValue('--sbh'); gw._sxPend = 1; gw.style.setProperty('--sx', '0px'); await fr(); try { barSync() } catch (e) {} await fr(); try { barSync() } catch (e) {} await fr();
+        const over = hit(), lift1 = gw.style.getPropertyValue('--sbh'); gw.style.setProperty('--sx', sx + 'px'); gw._sxPend = 0; try { barSync() } catch (e) {} await fr(); return { sx, over, lift: `${lift0}→縮めないとき ${lift1}` } }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
     if (/^縦/.test(vp.key) && (scene.myTurn || scene.handEnd) && !scene.noSubHand) { step = '字幕×自分の手札';
       const SUB = scene.lang === 'en' ? "A tell only tells you about the one who bet. It says nothing about the players who act after him." : 'クセで分かるのは、賭けたそいつの手だけだ。このあとに動く人の手までは分からん';
       // ゲームでは、案内が出ているあいだ師匠の字幕は待つ（.sensei.mwait＝visibility:hidden）。なので「字幕だけ」と「案内（字幕は待ち）」の2つの状態を別々に測る
@@ -528,7 +530,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 字幕×自分の手札（v0.97.10 レビュー 1）：縦の対戦場面で、字幕と案内を出したときに自分の手札が隠れたら ❌
   for (const r of res) if (r.sxStuck && (r.sxStuck.sx || r.sxStuck.err)) { const x = r.sxStuck, stuck = !x.err && !x.over;
     items.push({ id: `ui:sx:${r.scene}:${r.vp}`, title: `卓を縮めるのは字幕が手札にかかるときだけ（${r.scene}・${r.vp}）`, status: x.err ? 'warn' : stuck ? 'fail' : 'ok', shot: stuck && r.shot ? path.relative(outDir, r.shot) : undefined,
-      detail: x.err ? `測れなかった：${x.err}` : stuck ? `卓を ${x.sx}px 縮めたままだが、縮めなくても手札は字幕・案内・場札・ポットにかからない（一瞬の足りなさで縮めて戻っていない。30c_ui64.js の barSync）` : `卓を ${x.sx}px 縮めている（縮めないと手札がかかる）` }) }
+      detail: x.err ? `測れなかった：${x.err}` : stuck ? `卓を ${x.sx}px 縮めたままだが、縮めなくても手札は字幕・案内・場札・ポットにかからない（手札の上げ量 ${x.lift}。一瞬の足りなさで縮めて戻っていない。30c_ui64.js の barSync）` : `卓を ${x.sx}px 縮めている（縮めないと手札がかかる。手札の上げ量 ${x.lift}）` }) }
   for (const r of res) if (r.subHand) { const x = r.subHand, sc = SCENES.find(s => s.key === r.scene), none = x.n === 0 && sc && sc.myTurn, drifted = !!r.drift && (x.n === 0 || !!x.err), bad = !drifted && (!!x.err || none || (x.over && x.over.length > 0));   // 自分の番で手札が見えない（測れない）のも ❌（CodeRabbit PR #126）。ただし撮り直しても場面がずれたまま（ゲームオーバーなど）なら、ui:drift と同じ ⚠️
     items.push({ id: `ui:subhand:${r.scene}:${r.vp}`, title: `字幕・案内を出しても自分の手札が隠れない（${r.scene}・${r.vp}）`, status: bad ? 'fail' : drifted ? 'warn' : 'ok', shot: bad && r.shot ? path.relative(outDir, r.shot) : undefined,
       detail: drifted ? `場面がずれたまま（${r.drift}）で${x.err ? x.err : '手札が無く'}、測れなかった（ui:drift と同じ ⚠️）` : x.err ? '測れなかった：' + x.err : x.n === 0 ? (none ? '自分の番なのに、見えている手札が無い（測れない）' : '自分の手札なし（降りた・席がない）') : bad ? '隠れた：' + x.over.join('、') + `（手札を上げた量 ${x.lift || '0'}。${x.pos || ''}）` : `手札 ${x.n}枚、字幕・案内・ボタンの帯にかからない（手札を上げた量 ${x.lift || '0'}）` }) }
