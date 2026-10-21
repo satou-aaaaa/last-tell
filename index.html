@@ -13237,7 +13237,7 @@ if(SETTINGS.c4===undefined){SETTINGS.c4=true;try{b4Apply()}catch(e){}}
 // PC（html.pcw）だけ。卓の上に canvas を1枚重ね、ランプの光の円錐（ゆっくり揺れる）・流れる煙・ポットのチップの光の反射・外側の暗さを描く。
 // 光の色は章の --lamp（20_state.js が章ごとに入れる）。遊び方は何も変えない（押せない・何も隠さない）。
 // 止める：動き「少なめ」（html.ltLite）・prefers-reduced-motion・画面が隠れている間は、1枚だけ描いて止める。
-// カメラが顔に寄っている間（camState.i>=0）は煙を薄くする（クセを見る邪魔をしない）。第7章のジンの本物のテルも同じ扱いで、顔の前は薄くなる。
+// 顔（#busts）の上には描かない（卓の板の上端より下だけ）。カメラが顔に寄っている間（camState.i>=0）は煙をさらに薄くする。
 // 重さ：30コマ/秒まで、描く大きさは画面の半分（ぼかした絵なので足りる）。1コマにかかった時間を PCAIR.ms に残す（qa が見る）
 const PCAIR={sk:'',puff:null,vig:null,on:false,ms:0,frames:0,raf:0,last:0,cv:null,g:null,w:0,h:0,puffs:[],t0:0};
 function pcAirOn(){return document.documentElement.classList.contains('pcw')&&!!$('table')&&!$('game').hidden}
@@ -13258,9 +13258,12 @@ function pcAirLamp(){const v=(($('table')||{}).style||{getPropertyValue:()=>''})
   const m=/^#?([0-9a-f]{6})$/i.exec(v);if(!m)return[226,182,91];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]}
 function pcAirDraw(t){const g=PCAIR.g,W=PCAIR.w,H=PCAIR.h;if(!g||!W)return;const t0=performance.now();
   g.clearRect(0,0,W,H);const [r,gg,b]=pcAirLamp(),still=pcAirStill(),s=still?0:t/1000;
+  // 顔（#busts）には何も重ねない：卓の板（.felt-wrap）の上端より下だけに描く（第7章のジンの本物のテルも隠さない。v0.98.1 CI で WebKit の顔のアップが 1.44 に下がった）
+  const fw=PCAIR.cv.parentNode&&PCAIR.cv.parentNode.querySelector('.felt-wrap'),top0=fw&&PCAIR.cv.parentNode.offsetHeight?Math.max(0,Math.round(fw.offsetTop/PCAIR.cv.parentNode.offsetHeight*H)):0;
+  g.save();g.beginPath();g.rect(0,top0,W,H-top0);g.clip();
   let close=false;try{close=typeof camState!=='undefined'&&camState.i>=0}catch(e){}
   // ランプの光の円錐（上から卓へ）。揺れは横に ±1.5%
-  const lx=W*(.5+.015*Math.sin(s*.55)),top=0,bot=H*.62,wt=W*.05,wb=W*.46;
+  const lx=W*(.5+.015*Math.sin(s*.55)),top=top0,bot=Math.max(top0+1,H*.62),wt=W*.05,wb=W*.46;
   g.save();g.globalCompositeOperation='lighter';
   const cg=g.createLinearGradient(0,top,0,bot);cg.addColorStop(0,`rgba(${r},${gg},${b},.10)`);cg.addColorStop(1,`rgba(${r},${gg},${b},0)`);
   g.fillStyle=cg;g.beginPath();g.moveTo(lx-wt,top);g.lineTo(lx+wt,top);g.lineTo(lx+wb,bot);g.lineTo(lx-wb,bot);g.closePath();g.fill();
@@ -13276,7 +13279,7 @@ function pcAirDraw(t){const g=PCAIR.g,W=PCAIR.w,H=PCAIR.h;if(!g||!W)return;const
   for(const p of PCAIR.puffs){const x=((p.x+s*p.v)%1.2-.1)*W,y=(p.y+.02*Math.sin(s*.4+p.p))*H,rr=p.r*W;g.drawImage(PCAIR.puff,x-rr,y-rr,2*rr,2*rr)}
   g.globalAlpha=1;
   // 外側の暗さ（光の届かない所）
-  g.drawImage(PCAIR.vig,0,0);
+  g.drawImage(PCAIR.vig,0,0);g.restore();PCAIR.top=top0;
   const ms=performance.now()-t0;PCAIR.ms=PCAIR.ms?PCAIR.ms*.9+ms*.1:ms;PCAIR.frames++;(PCAIR.hist||(PCAIR.hist=[])).push(ms);if(PCAIR.hist.length>60)PCAIR.hist.shift()}   // hist：qa が真ん中の値を見る（最初の1コマは絵の準備で重い）
 function pcAirLoop(t){PCAIR.raf=0;if(!PCAIR.on)return;
   if(t-PCAIR.last>=33){PCAIR.last=t;try{pcAirDraw(t)}catch(e){PCAIR.on=false;throw e}}

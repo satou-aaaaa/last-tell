@@ -79,6 +79,7 @@ async function run({ browser, file, quick, baseline }) {
       const f0 = await page.evaluate(() => typeof PCAIR !== 'undefined' ? PCAIR.frames : 0); await page.waitForTimeout(1500);   // 測っている間にコマが進んでいるか（1コマ描いて止まったのを見のがさない。CodeRabbit PR #132）
       out.air = await page.evaluate(() => { const c = document.getElementById('pcAir'), r = c && c.getBoundingClientRect(), t = document.getElementById('table').getBoundingClientRect();
         return { has: !!c, pcw: document.documentElement.classList.contains('pcw'), on: typeof PCAIR !== 'undefined' && PCAIR.on, frames: typeof PCAIR !== 'undefined' ? PCAIR.frames : 0, ms: typeof PCAIR !== 'undefined' && PCAIR.hist && PCAIR.hist.length > 1 ? (h => Math.round(h[h.length >> 1] * 100) / 100)(PCAIR.hist.slice(1).sort((a, b) => a - b)) : null,
+          face: (() => { try { if (!c || !PCAIR.top) return 'no-top'; const d = c.getContext('2d').getImageData(0, 0, c.width, Math.max(1, PCAIR.top - 1)).data; let m = 0; for (let i = 3; i < d.length; i += 4) m = Math.max(m, d[i]); return m } catch (e) { return 'err' } })(),
           shown: !!(c && r.width > 0 && getComputedStyle(c).display !== 'none'), pe: c ? getComputedStyle(c).pointerEvents : null, cover: r ? Math.round(r.width * r.height / (t.width * t.height) * 100) : 0 } });
       await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(600);
       out.air.moved = out.air.frames - f0;
@@ -92,9 +93,9 @@ async function run({ browser, file, quick, baseline }) {
     detail: `ファイル ${out.sizeKB}KB${vs('sizeKB')}、読み込み ${out.loadMs}ms、タイトルが出るまで ${out.titleMs}ms${vs('titleMs')}（目安 5000ms 以内）、メモリ ${out.heapLoadMB}MB` });
   items.push({ id: 'perf:sweep', title: `動きの見張り（LT.sweep）1回の重さ（CPU ${SLOW}倍遅く、自動対戦中、平均 2ms 以下、スタイルの計算は除く）`, status: out.sweepErr || !out.sweepN ? 'fail' : out.sweepAvgMs > 2 ? 'warn' : 'ok',
     detail: out.sweepErr ? '測れなかった：' + out.sweepErr : !out.sweepN ? '一度も動かなかった（LT.sweep が無いか、呼ばれていない）' : `平均 ${out.sweepAvgMs}ms、一番長い ${out.sweepMaxMs}ms（${out.sweepN}回）` });
-  { const a = out.air || {}, bad = out.airErr || !a.pcw || !a.has || !a.shown || a.pe !== 'none' || !(a.moved > 0) || a.ms == null || a.mobileShown;
-    items.push({ id: 'perf:pcair', title: 'PC の光と煙：卓の上に出て押せない・1コマ 2ms 以下（真ん中の値）・スマホ幅では出ない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
-      detail: out.airErr ? '測れなかった：' + out.airErr : `PC の印 ${a.pcw ? 'あり' : 'なし'}、絵 ${a.has ? (a.shown ? '出ている' : '隠れている') : '無い'}（卓の ${a.cover}%）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、描いたコマ ${a.frames}（測った 1.5秒で +${a.moved}）、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}` }) }
+  { const a = out.air || {}, bad = out.airErr || !a.pcw || !a.has || !a.shown || a.pe !== 'none' || !(a.moved > 0) || a.ms == null || a.mobileShown || a.face !== 0;
+    items.push({ id: 'perf:pcair', title: 'PC の光と煙：卓の上に出て押せない・顔（卓の板より上）には描かない・1コマ 2ms 以下（真ん中の値）・スマホ幅では出ない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
+      detail: out.airErr ? '測れなかった：' + out.airErr : `PC の印 ${a.pcw ? 'あり' : 'なし'}、絵 ${a.has ? (a.shown ? '出ている' : '隠れている') : '無い'}（卓の ${a.cover}%）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、描いたコマ ${a.frames}（測った 1.5秒で +${a.moved}）、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、顔の所 ${a.face === 0 ? '透明' : '描いている（' + a.face + '）'}` }) }
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
     detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });
