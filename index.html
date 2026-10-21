@@ -12554,8 +12554,10 @@ function vfResult(){
   else{main=en?`${vfName(w)} wins`:`${vfName(w)}の勝ち`;if(inIt)sub=en?'You lose':'あなたの負け'}
   if(ws.length>1){main=en?'Split pot':'引き分け（ポットを分ける）';sub=iWon?`+${fmt(me.won)}`:''}
   const tb=$('table'),bc=$('boardCards');if(!tb||!bc)return;
-  const old=tb.querySelector('.vfres');if(old)old.remove();
+  const old=tb.querySelector('.vfres');if(old){if(old._dispose)old._dispose();else old.remove()}
   const d=document.createElement('div');d.className='vfres'+(iWon?' win':'');d.setAttribute('role','status');
+  // 消すときは1か所で：隠した D を戻して空にし、あとから来るタイマーは何もしない（前の帯のタイマーが、次の帯が隠した D を戻していた。CodeRabbit PR #128）
+  d._dispose=()=>{if(d._dead)return;d._dead=1;d.remove();(d._hid||[]).forEach(e=>e.classList.remove('vfhide'));d._hid=[]};
   const mh=!iWon&&inIt&&sd&&me.score?vfHand(me):'';   // 負けたときは自分の役も（「あなた：ツーペア」）
   const hh=mh&&h?(en?`${vfName(w)}: ${h}`:`${vfName(w)}：${h}`):h;
   // 役（相手・自分）は1つの .hm にまとめる。折り返しても「勝ち負け・額」の1行と「役」の1行の2行まで（v0.97.9 レビュー：縦で3行の箱になり、卓の上の相手の顔にかかった）
@@ -12589,11 +12591,11 @@ setTimeout(()=>{try{d._place();vfSayYield(d)}catch(e){}},300);setTimeout(()=>{tr
     mo.observe(fe,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}
   {const iv=setInterval(()=>{if(!d.isConnected){clearInterval(iv);return}try{if(vfOverCards(d))d._place();vfSayYield(d)}catch(e){}},500)}   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
-  const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>{d.remove();(d._hid||[]).forEach(e=>e.classList.remove('vfhide'))},400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
-  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();(d._hid||[]).forEach(e=>e.classList.remove('vfhide'));LT.off('startHand:before',rm)});
+  const s0=S;if(!(sd&&inIt))setTimeout(()=>{if(d._dead)return;d.classList.add('out');setTimeout(()=>d._dispose(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
+  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d._dispose();LT.off('startHand:before',rm)});
 }
 // 念のため：ハンドが始まったら、前のハンドの勝ち負けの札は残さない
-LT.on('startHand',()=>{try{document.querySelectorAll('#table .vfres').forEach(e=>{if(!S||e.dataset.h!==String(S.handNo))e.remove()})}catch(e){}});
+LT.on('startHand',()=>{try{document.querySelectorAll('#table .vfres').forEach(e=>{if(!S||e.dataset.h!==String(S.handNo)){if(e._dispose)e._dispose();else e.remove()}})}catch(e){}});
 LT.on('render',()=>{try{vfResult();const e=document.querySelector('#table .vfres');if(e&&e._place&&!e._pq){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(e){}});
 
 // ===== A9：フロアのクイズは「ルールを覚える」ためと一言。設定でオフにできる =====

@@ -413,7 +413,10 @@ async function shoot(browser, file, scene, vp, dir) {
         try { barSync() } catch (e) {} return { tip } }).catch(e => ({ tip: '案内を出す処理が失敗：' + String(e.message || e).slice(0, 60) }));
       const MEASURE = need => page.evaluate(need => { const cs = [...document.querySelectorAll('#mine .hold .card, #mine .card')].filter((e, i, a) => { if (a.indexOf(e) !== i || !e.getClientRects().length || !e.offsetParent) return false; let op = 1; for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity; return op > .05 && getComputedStyle(e).visibility !== 'hidden' });   // 透明・visibility:hidden の札は数えない（CodeRabbit PR #126）
           const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
-          { const e = document.querySelector(need[0]); if (!vis(e)) return { n: cs.length, over: [], err: need[1] + 'が見えていない（出したのに隠れた・消えた。' + (!e ? '要素なし' : `hidden=${e.hidden}・箱 ${e.getClientRects().length}・visibility ${getComputedStyle(e).visibility}・opacity ${getComputedStyle(e).opacity}`) + '）' } }   // 測る相手が出ていなければ「測れなかった」（CodeRabbit PR #126）
+          { const e = document.querySelector(need[0]);
+            // 出てくるアニメ（案内の tipIn は opacity 0→1）は終わらせてから測る。測るのは置き場所で、ふわっと出る途中ではない（手元：重い実行機で 450ms たっても opacity 0 のまま止まっていた）
+            try { if (e && e.getAnimations) e.getAnimations().forEach(a => { if (a.effect && a.effect.getComputedTiming().endTime !== Infinity) a.finish() }) } catch (x) {}
+            if (!vis(e)) return { n: cs.length, over: [], err: need[1] + 'が見えていない（出したのに隠れた・消えた。' + (!e ? '要素なし' : `hidden=${e.hidden}・箱 ${e.getClientRects().length}・visibility ${getComputedStyle(e).visibility}・opacity ${getComputedStyle(e).opacity}`) + '）' } }   // 測る相手が出ていなければ「測れなかった」（CodeRabbit PR #126）
           if (!cs.length) return { n: 0, over: [] };
           const cover = [['#sensei', '師匠の字幕'], ['#tipLine', '案内の箱'], ['#controls', 'ボタンの帯'], ['#between', 'ハンドの間の帯']].map(([q, nm]) => [document.querySelector(q), nm]).filter(([e]) => vis(e));
           const over = [];
