@@ -113,7 +113,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
     if (r.negErr.length) bad.push(`チップがマイナス・小数 ${r.negErr.length}回`);
     if (r.hands < 3 && r.status === 'done' && r.result === 'limit') bad.push('ハンドがほとんど進まない');
     items.push({ id: 'fuzz:' + r.mode, title: `自動対戦 ${r.mode}`, status: bad.length ? 'fail' : 'ok',
-      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド` + (r.extra ? `（実行機が遅く、進んでいたので ${r.extra / 1000}秒足した）` : '') + (r.status === 'timeout' ? `（${(r.limit || limit) / 1000}秒で打ち切り。止まってはいない）` : ''), raw: bad.length ? r : undefined });
+      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド` + (r.extra ? `（実行機が遅く、進んでいたので ${r.extra / 1000}秒足した）` : '') + (r.status === 'timeout' ? `（${((r.limit || limit) + (r.extra || 0)) / 1000}秒で打ち切り。止まってはいない）` : ''), raw: bad.length ? r : undefined });
     (r.jp || []).forEach(t => { if (!known.has(t)) newJp.add(t) });
   }
   const allJp = [...new Set(res.flatMap(r => r.jp || []))];

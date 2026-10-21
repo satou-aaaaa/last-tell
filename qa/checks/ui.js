@@ -392,6 +392,15 @@ async function shoot(browser, file, scene, vp, dir) {
     // 字幕×自分の手札（v0.97.10 レビュー 1：main の Issue #124 は、字幕が出た配りのときだけ見つかった）。
     //   縦の対戦場面では毎回、師匠の字幕（2行の長さ）と案内の箱（一番長い案内）を出して、自分の手札が字幕・案内・ボタンの帯に隠れないかを測る
     let subHand = null;
+    // 卓を縮める（--sx）のは、字幕・案内が手札にかかって上げる余地も無いときだけ。縮めたままの画面で、縮めるのをやめても手札が字幕・案内・場札・ポットにかからなければ ❌
+    //   （v0.97.12 CI：札を配る一瞬の足りなさで卓を縮め、そのまま戻らず、相手の伏せ札が場札にかかって画質の検査で見つかった。その場面を直接見る）
+    let sxStuck = null;
+    if (/^縦/.test(vp.key)) { step = '卓の縮め'; sxStuck = await page.evaluate(async () => { const gw = document.querySelector('#game .gwrap'), sx = gw ? +(gw.dataset.sx || 0) : 0; if (!sx) return { sx: 0 };
+        const fr = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
+        const hit = () => { const cs = [...document.querySelectorAll('#mine .card')].filter(vis).map(e => e.getBoundingClientRect()), q2 = [...['#sensei', '#tipLine'].map(q => document.querySelector(q)), ...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, #potChips .chip')].filter(vis).map(e => e.getBoundingClientRect());
+          return cs.some(r => q2.some(q => Math.min(r.right, q.right) - Math.max(r.left, q.left) > 4 && Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) > 4)) };
+        gw._sxPend = 1; gw.style.setProperty('--sx', '0px'); await fr(); const over = hit(); gw.style.setProperty('--sx', sx + 'px'); gw._sxPend = 0; await fr(); return { sx, over } }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
     if (/^縦/.test(vp.key) && (scene.myTurn || scene.handEnd) && !scene.noSubHand) { step = '字幕×自分の手札';
       const SUB = scene.lang === 'en' ? "A tell only tells you about the one who bet. It says nothing about the players who act after him." : 'クセで分かるのは、賭けたそいつの手だけだ。このあとに動く人の手までは分からん';
       // ゲームでは、案内が出ているあいだ師匠の字幕は待つ（.sensei.mwait＝visibility:hidden）。なので「字幕だけ」と「案内（字幕は待ち）」の2つの状態を別々に測る
@@ -428,7 +437,7 @@ async function shoot(browser, file, scene, vp, dir) {
         subHand = err ? { err, n: a.n } : { n: Math.min(a.n, b.n), over: [...a.over.map(x => '字幕のとき ' + x), ...b.over.map(x => '案内のとき ' + x)], lift: a.lift + (b.lift !== a.lift ? '／案内のとき ' + b.lift : ''), pos: '字幕のとき ' + a.pos + '／案内のとき ' + b.pos } } }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, drift, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -516,6 +525,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     items.push({ id: `ui:drift:${r.scene}:${r.vp}`, title: `撮った画面が決めた場面のまま（${r.scene}・${r.vp}）`, status: r.drift || noShot ? 'warn' : 'ok',
       detail: (r.redo ? r.redo + '。' : '') + (r.drift ? `場面がずれた：${r.drift}。この場面の検査はふだんの画面を見ていない` : noShot ? '撮り直しが撮れなかった：' + ((r.issues || []).map(i => i.el).join('、') || '理由不明') : '撮り直した画面は決めた場面') }) }
   // 字幕×自分の手札（v0.97.10 レビュー 1）：縦の対戦場面で、字幕と案内を出したときに自分の手札が隠れたら ❌
+  for (const r of res) if (r.sxStuck && (r.sxStuck.sx || r.sxStuck.err)) { const x = r.sxStuck, stuck = !x.err && !x.over;
+    items.push({ id: `ui:sx:${r.scene}:${r.vp}`, title: `卓を縮めるのは字幕が手札にかかるときだけ（${r.scene}・${r.vp}）`, status: x.err ? 'warn' : stuck ? 'fail' : 'ok', shot: stuck && r.shot ? path.relative(outDir, r.shot) : undefined,
+      detail: x.err ? `測れなかった：${x.err}` : stuck ? `卓を ${x.sx}px 縮めたままだが、縮めなくても手札は字幕・案内・場札・ポットにかからない（一瞬の足りなさで縮めて戻っていない。30c_ui64.js の barSync）` : `卓を ${x.sx}px 縮めている（縮めないと手札がかかる）` }) }
   for (const r of res) if (r.subHand) { const x = r.subHand, sc = SCENES.find(s => s.key === r.scene), none = x.n === 0 && sc && sc.myTurn, drifted = !!r.drift && (x.n === 0 || !!x.err), bad = !drifted && (!!x.err || none || (x.over && x.over.length > 0));   // 自分の番で手札が見えない（測れない）のも ❌（CodeRabbit PR #126）。ただし撮り直しても場面がずれたまま（ゲームオーバーなど）なら、ui:drift と同じ ⚠️
     items.push({ id: `ui:subhand:${r.scene}:${r.vp}`, title: `字幕・案内を出しても自分の手札が隠れない（${r.scene}・${r.vp}）`, status: bad ? 'fail' : drifted ? 'warn' : 'ok', shot: bad && r.shot ? path.relative(outDir, r.shot) : undefined,
       detail: drifted ? `場面がずれたまま（${r.drift}）で${x.err ? x.err : '手札が無く'}、測れなかった（ui:drift と同じ ⚠️）` : x.err ? '測れなかった：' + x.err : x.n === 0 ? (none ? '自分の番なのに、見えている手札が無い（測れない）' : '自分の手札なし（降りた・席がない）') : bad ? '隠れた：' + x.over.join('、') + `（手札を上げた量 ${x.lift || '0'}。${x.pos || ''}）` : `手札 ${x.n}枚、字幕・案内・ボタンの帯にかからない（手札を上げた量 ${x.lift || '0'}）` }) }
