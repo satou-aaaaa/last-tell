@@ -92,7 +92,8 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   const list = split(modes(quick), part), hands = quick ? 15 : 50, limit = LIMIT(quick);
   // WebKit は4つ同時だと実行機（4コア）でページのタイマーが詰まる（PR #80・#82）。3つにする
   if (process.env.QA_BROWSER === 'webkit') parallel = Math.min(parallel, 3);
-  const res = await pool(list.map(m => () => runOne(browser, file, m, hands, /6人/.test(m.id) ? limit * SIX_TIME : limit)), parallel);
+  const limOf = m => /6人/.test(m.id) ? limit * SIX_TIME : limit;   // 6人は1.5倍。打ち切りの表示もこの値で（CodeRabbit PR #122）
+  const res = await pool(list.map(m => () => runOne(browser, file, m, hands, limOf(m)).then(r => ({ ...r, limit: limOf(m) }))), parallel);
   const hasEn = list.some(m => m.lang === 'en');
   const items = [], known = new Set((baseline && baseline.enJapanese) || []);
   const newJp = new Set();
@@ -107,7 +108,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
     if (r.negErr.length) bad.push(`チップがマイナス・小数 ${r.negErr.length}回`);
     if (r.hands < 3 && r.status === 'done' && r.result === 'limit') bad.push('ハンドがほとんど進まない');
     items.push({ id: 'fuzz:' + r.mode, title: `自動対戦 ${r.mode}`, status: bad.length ? 'fail' : 'ok',
-      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド` + (r.status === 'timeout' ? `（${limit / 1000}秒で打ち切り。止まってはいない）` : ''), raw: bad.length ? r : undefined });
+      detail: bad.length ? bad.join('。') : `${r.games}回、計${r.hands}ハンド` + (r.status === 'timeout' ? `（${(r.limit || limit) / 1000}秒で打ち切り。止まってはいない）` : ''), raw: bad.length ? r : undefined });
     (r.jp || []).forEach(t => { if (!known.has(t)) newJp.add(t) });
   }
   const allJp = [...new Set(res.flatMap(r => r.jp || []))];
