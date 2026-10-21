@@ -7,7 +7,7 @@ const { pool } = require('../lib/pool');
 
 // ゲームの関数を包んで、CPUの判断とショーダウンを記録する
 const PROBE = `(() => {
-  if (window.__probe) return; const P = window.__probe = { limp: {}, open: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, twice: 0, twiceAsk: 0, bomb: 0, dealFreeCalls: 0, dealFreeChanged: 0, dealStoryCalls: 0, dealStoryChanged: 0, errs: [] };
+  if (window.__probe) return; const P = window.__probe = { limp: {}, open: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, twice: 0, twiceAsk: 0, bomb: 0, dealFreeCalls: 0, dealFreeChanged: 0, dealStoryCalls: 0, dealStoryChanged: 0, dealEntry: 0, deal: {}, errs: [] };
   const inc = (o, k, f) => { o[k] = o[k] || { n: 0, hit: 0 }; o[k].n++; if (f) o[k].hit++ };
   const _cd = cpuDecide;
   cpuDecide = function (i) {
@@ -45,9 +45,34 @@ const PROBE = `(() => {
     } catch (e) { P.errs.push(e.message) }
     return r;
   };
-  // 配りを変える関数（dealHelp：弱い手の引き直し、そこから呼ぶ p6Premium：強い手への入れ替え）が、フリー対戦で札を変えていないかを数える（改善提案 第12回 0-1）
-  if (typeof dealHelp === 'function') { const _dh = dealHelp; dealHelp = function () { const free = !(CFG && CFG.ch), me = S && S.players && S.players[0], before = me && me.hand ? me.hand.map(c => c.r + c.s).join() : '';
+  // 配りを変える仕組みが、フリー対戦で札を変えていないかを数える（改善提案 第12回 0-1）。
+  // 配りを変える仕組みは全部、入口 LT.dealRun（js/54_deal_mod.js、LT.DEAL_MODS に登録）から呼ばれるので、入口の前後で全員の手札と山を比べる（research/配り札と場札の操作_実装仕様.md §6）。
+  // 入口の無い古い版だけ、前の数え方（dealHelp を包む）
+  const snap = () => { try { return S.players.map(p => (p.hand || []).map(c => c.r + '' + c.s).join()).join('|') + '#' + (S.deck || []).map(c => c.r + '' + c.s).join() } catch (e) { return '' } };
+  if (typeof LT !== 'undefined' && typeof LT.dealRun === 'function') { P.dealEntry = 1; const _dr = LT.dealRun; LT.dealRun = function (when) { const free = !(CFG && CFG.ch), before = snap();
+    const r = _dr.apply(this, arguments); try { const ch = snap() !== before; if (free) { if (when === 'hand') P.dealFreeCalls++; if (ch) P.dealFreeChanged++ } else { if (when === 'hand') P.dealStoryCalls++; if (ch) P.dealStoryChanged++ } } catch (e) { P.errs.push(e.message) } return r } }
+  else if (typeof dealHelp === 'function') { const _dh = dealHelp; dealHelp = function () { const free = !(CFG && CFG.ch), me = S && S.players && S.players[0], before = me && me.hand ? me.hand.map(c => c.r + c.s).join() : '';
     const r = _dh.apply(this, arguments); try { const after = me && me.hand ? me.hand.map(c => c.r + c.s).join() : ''; if (free) { P.dealFreeCalls++; if (after !== before) P.dealFreeChanged++ } else { P.dealStoryCalls++; if (after !== before) P.dealStoryChanged++ } } catch (e) { P.errs.push(e.message) } return r } }
+  // 物語の章の配り（仕様 §6・§7 の「できた」）：章ごとに、弱い手の続き・フロップの絡み・目標の場面の回数・読み勝ちのあとの負け
+  if (P.dealEntry) {
+    const chKey = () => CFG && CFG.ch ? (CFG.ch.p2 ? 10 + CFG.ch.p2 : CFG.ch.no) : 0, D = () => { const k = chKey(); return P.deal[k] = P.deal[k] || { hands: 0, weak2: 0, weak3: 0, flop: 0, air: 0, lesson: 0, lessonBad: 0, rg: 0, rgLost: 0, mods: {} } };
+    const draw4 = (h, b) => { const cs = h.concat(b); for (let s = 0; s < 4; s++) if (cs.filter(c => c.s === s).length >= 4 && h.some(c => c.s === s)) return true;
+      const rs = new Set(cs.map(c => c.r)); if (rs.has(14)) rs.add(1); for (let lo = 1; lo <= 10; lo++) { let n = 0, m = false; for (let r = lo; r < lo + 5; r++) if (rs.has(r)) { n++; if (h.some(c => c.r === r || (r === 1 && c.r === 14))) m = true } if (n >= 4 && m) return true } return false };
+    LT.on('startHand', () => { try { if (!CFG.ch || !LT.dealOk('board')) return; const d = D(), me = S.players[0]; if (!me || me.out || !me.hand || me.hand.length !== 2) return; d.hands++;
+      if (S.mistakeHand === S.handNo) { S.__wr = 0; return }   // ディーラーのミスで配り直したハンドは数えない
+      S.__wr = preTier(me.hand) === 0 ? (S.__wr || 0) + 1 : 0; if (S.__wr === 2) d.weak2++; if (S.__wr === 3) d.weak3++ } catch (e) { P.errs.push(e.message) } });
+    LT.on('nextStreet', () => { try { if (!CFG.ch || S.street !== 'flop' || !LT.dealOk('board')) return; const me = S.players[0]; if (!inHand(me)) return; const d = D(); d.flop++;
+      if (isWeak(me.hand, S.board) && !draw4(me.hand, S.board)) d.air++ } catch (e) { P.errs.push(e.message) } });
+    // 読み勝ち：今のストリートで残っている相手がブラフ（本当がブラフ）のクセで賭け、自分は残っていて、その時点で勝っている（入口の後に呼ばれる合図）
+    LT.on('nextStreet:before', () => { try { if (!CFG.ch || !LT.dealOk('board') || S.handOver || S.board.length < 3 || S.board.length >= 5) return; const me = S.players[0]; if (!inHand(me)) return;
+      const ch = CFG.ch; if (!(ch.p2 || ch.no >= 4)) return; const op = S.players.filter(p => p !== me && inHand(p)); if (!op.length) return;
+      if (!op.some(p => (p.tellLog || []).some(t => t && t.truth === 'bluff' && t.street === S.street))) return;
+      const m = bestN(me.hand.concat(S.board)); if (op.every(p => cmp(m, bestN(p.hand.concat(S.board))) > 0)) S.__rg = S.handNo } catch (e) { P.errs.push(e.message) } });
+    // 配りを変えた記録（S.dealLog はそのハンドの間だけ。場札の分も入るよう、ハンドの終わりに数える）
+    LT.on('endHand', () => { try { if (!CFG.ch || S.__dl === S.handNo) return; S.__dl = S.handNo; const d = D();
+      (S.dealLog || []).forEach(x => { d.mods[x.name] = (d.mods[x.name] || 0) + 1; if (x.name === 'lessonScene') { d.lesson++; if (S.handNo % 3 === 0) d.lessonBad++ } }) } catch (e) { P.errs.push(e.message) } });
+    LT.on('endHand', () => { try { if (S.__rg !== S.handNo || S.__rgDone === S.handNo) return; S.__rgDone = S.handNo; const me = S.players[0]; if (me.folded) return; const d = D(); d.rg++; if (!(me.won > 0)) d.rgLost++ } catch (e) { P.errs.push(e.message) } });
+  }
   const _sh = startHand;
   startHand = function () { if (S) S.__sd = false; const r = _sh.apply(this, arguments);
     try { if (/ボムポット/.test((document.querySelector('#log > *') || {}).textContent || '') || [...document.querySelectorAll('#log > *')].slice(0, 6).some(x => /ボムポット！/.test(x.textContent))) P.bomb++ } catch (e) {} return r };
@@ -74,7 +99,8 @@ async function session(browser, file, start, policy, hands, storage, round = 0) 
 }
 
 const pct = (h) => h && h.n ? Math.round(h.hit / h.n * 100) : null;
-function merge(a, b) { const o = JSON.parse(JSON.stringify(a)); for (const k of ['limp', 'rivBig', 'faceOpen']) for (const n in b[k]) { o[k][n] = o[k][n] || { n: 0, hit: 0 }; o[k][n].n += b[k][n].n; o[k][n].hit += b[k][n].hit } for (const k of ['sdRefundBB', 'sdHands', 'twice', 'twiceAsk', 'bomb', 'hands', 'dealFreeCalls', 'dealFreeChanged', 'dealStoryCalls', 'dealStoryChanged']) o[k] = (o[k] || 0) + (b[k] || 0); return o }
+function merge(a, b) { const o = JSON.parse(JSON.stringify(a)); for (const k of ['limp', 'rivBig', 'faceOpen']) for (const n in b[k]) { o[k][n] = o[k][n] || { n: 0, hit: 0 }; o[k][n].n += b[k][n].n; o[k][n].hit += b[k][n].hit } for (const k of ['sdRefundBB', 'sdHands', 'twice', 'twiceAsk', 'bomb', 'hands', 'dealFreeCalls', 'dealFreeChanged', 'dealStoryCalls', 'dealStoryChanged']) o[k] = (o[k] || 0) + (b[k] || 0);
+  o.dealEntry = (o.dealEntry || 0) + (b.dealEntry || 0); o.deal = o.deal || {}; for (const c in b.deal || {}) { const x = o.deal[c] = o.deal[c] || { mods: {} }, y = b.deal[c]; for (const k in y) if (k === 'mods') { for (const n in y.mods) x.mods[n] = (x.mods[n] || 0) + y.mods[n] } else x[k] = (x[k] || 0) + y[k] } return o }
 
 const STRONG = ['ジン', 'クロウ', 'ハヤト', 'レイカ', 'カオル'];
 // 割合を見る検査は、測れた回数が少ないと1〜2回の違いで外れる（2026-10-14 PR #22 で S2 がジン 11回 45% で ❌、同じ中身の #21 は ✅）。
@@ -120,9 +146,38 @@ async function probeS2(browser, file, round = 0) {
   } catch (e) { return { err: e.message } } finally { await ctx.close() }
 }
 
+// rule:deal-variety（research/配り札と場札の操作_実装仕様.md §8-5）：決まった札の場面（第4・5章の一騎打ち、第5章の最初の1手、第7章の最後）を、ゲームの配り方（setupScript）で各20回配る。
+// 同じページで続けて配る＝保存（shisho-story の deal）を引き継いで続けて遊ぶ形。最後の1手のハンド目は、卓を開き直して20回見る
+async function probeVariety(browser, file) {
+  const { ctx, page } = await H.openGame(browser, file, { fast: 40, storage: H.UNLOCKED, seed: H.seedOf('rules', 'variety', 'direct') });
+  try {
+    return await page.evaluate(async () => {
+      if (typeof kataDeal !== 'function') return { none: true };
+      const key = h => h.map(c => c.r + '' + c.s).join(' '), out = {};
+      const boardOf = () => { const d = S.deck.slice(), b = []; while (b.length < 5) { d.pop(); const n = b.length ? 1 : 3; for (let k = 0; k < n; k++) b.push(d.pop()) } return b };
+      const scenes = [['ch4', 3, () => { S.handNo = 5; S.duelHand = true }], ['ch5', 4, () => { S.handNo = 5; S.duelHand = true }], ['ch5first', 4, () => { S.handNo = 1; S.duelHand = false }], ['ch7', 6, () => { S.handNo = 9; S.finalNext = 9; S.finalRead = false; S.duelHand = false }]];
+      for (const [name, ci, prep] of scenes) {
+        const o = out[name] = { deals: [], picks: [], perms: [], at: [] };
+        startChapter(CHAPTERS[ci], true); await new Promise(r => setTimeout(r, 300));
+        for (let i = 0; i < 20; i++) {
+          S.players.forEach(p => { if (!p.out) p.hand = [] }); prep(); S.dealPick59 = null; setupScript();
+          const pk = S.dealPick59; if (!pk) { o.deals.push('（配られなかった）'); continue }
+          o.deals.push(key(S.players[0].hand) + ' / ' + key(boardOf())); o.picks.push(pk.k); o.perms.push(pk.perm);
+        }
+        S.duelHand = false; S.scriptAI = null; S.finalHand = false;
+      }
+      // 第7章：最後の1手が何ハンド目に来るか（卓を開き直して20回）
+      const at = out.ch7.at;
+      for (let i = 0; i < 20; i++) { startChapter(CHAPTERS[6], true); await new Promise(r => setTimeout(r, 50));
+        let h = 0; for (let n = 1; n <= 12 && !h; n++) { S.handNo = n; S.finalRead = false; setupScript(); if (S.finalHand) h = n; S.finalHand = false; S.scriptAI = null } at.push(h) }
+      return out;
+    });
+  } catch (e) { return { err: e.message } } finally { await ctx.close() }
+}
+
 // 対戦の組（--part で分けるときの単位。結果を混ぜて見る検査ごと）：A = S1・A2、L = A1 リンプ、O = A1 オープンに降りる、R = S2
 // --part k/n では FAM_PARTS の i 番目を (i % n) + 1 番目の組が回す（n=3 なら 1:A、2:L+O、3:R。それぞれ5〜7対戦）
-const FAM_PARTS = [['A'], ['L', 'O'], ['R']];
+const FAM_PARTS = [['A'], ['L', 'O'], ['R'], ['D']];   // D（物語の章の配り）は n=3 なら 1 番目の組（A と一緒）
 
 async function run({ browser, file, quick, part = null }) {
   // リバーの2倍ベット（S2）は、短い版でも強いキャラごとに20回ほど測れるように多めに打つ（CIのチェック充実 案1）
@@ -152,6 +207,11 @@ async function run({ browser, file, quick, part = null }) {
     ['(startP2(PART2[3],true))', 'overbet', H2, st7, 'R'],
     // フリー対戦の札が公平か（改善提案 第12回 0-1）：200ハンド配って、配りを変える関数が1回も札を変えないこと。降りるだけなので速い（かっこで包んで種を変える）
     [`(($('freeSize').value='6',startFree()))`, 'fold', quick ? 60 : 200, , 'A'],
+    // D 物語の章の配り（research/配り札と場札の操作_実装仕様.md §6・§7）：第1〜5章をゲームの CPU と同じ考え方で（弱い手の続き・フロップの絡み・目標の場面）、
+    // 第4・5章・第11〜14章をクセを読んで打つ（読み勝ちのあとに負けない）
+    ...[0, 1, 2, 3, 4].map(k => [`startChapter(CHAPTERS[${k}],true)`, 'cpu', quick ? 60 : 200, , 'D']),
+    ...[3, 4].map(k => [`(startChapter(CHAPTERS[${k}],true))`, 'tell', quick ? 40 : 120, , 'D']),
+    ...[0, 1, 2, 3].map(k => [`startP2(PART2[${k}],true)`, 'tell', quick ? 40 : 100, st7, 'D']),
   ];
   const want = f => !part || FAM_PARTS.findIndex(g => g.includes(f)) % part.n === part.k - 1;
   const skip = unitS1 ? [0, 1] : [], EMPTY = { limp: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, hands: 0, errs: [], errors: [] };
@@ -159,7 +219,7 @@ async function run({ browser, file, quick, part = null }) {
   const both = (a, b) => Object.assign(merge(a, b), { errs: (a.errs || []).concat(b.errs || []), errors: (a.errors || []).concat(b.errors || []) });
   // 4つまで同時に、1つ終わったらすぐ次（CIの高速化 案2。一度に全部だと遅くなりすぎる）
   const play = async (idx, round) => { const got = await pool(idx.map(k => () => session(browser, file, jobs[k][0], jobs[k][1], jobs[k][2], jobs[k][3], round)), 4); idx.forEach((k, j) => { res[k] = round ? both(res[k], got[j]) : got[j] }) };
-  const fams = ['A', 'L', 'O', 'R'].filter(want);
+  const fams = ['A', 'L', 'O', 'R', 'D'].filter(want);
   await play(fams.flatMap(of), 0);
   const sum = f => of(f).map(k => res[k]).reduce(merge, EMPTY);
   // 割合の検査の行：[名前, %, 回数, 当たった回数]
@@ -176,10 +236,10 @@ async function run({ browser, file, quick, part = null }) {
   const note = f => added.includes(f) ? MORE : '';
   if (want('A')) {
     // 途中で止まって数ハンドしか見ていないのに通さない（CodeRabbit PR #122）。負けて早く終わることもあるので、目標の数ではなく最低の数にする
-    { const FAIR_MIN = 20, f = res[jobs.length - 1], st = of('A').map(k => res[k]).reduce(merge, EMPTY);
-      items.push({ id: 'rule:fair-free', title: 'フリー対戦の札は、配りを変える関数（弱い手の引き直し・強い手への入れ替え）で変わらない',
+    { const FAIR_MIN = 20, f = res[jobs.findIndex(j => j[0] === `(($('freeSize').value='6',startFree()))`)], st = of('A').map(k => res[k]).reduce(merge, EMPTY);
+      items.push({ id: 'rule:fair-free', title: 'フリー対戦の札は、配りを変える仕組み（入口 LT.dealRun に登録したもの全部）で変わらない',
         status: f.dealFreeCalls < FAIR_MIN ? 'fail' : f.dealFreeChanged ? 'fail' : 'ok',
-        detail: !f.dealFreeCalls ? `数えられなかった（dealHelp が ${f.hands}ハンドで1回も呼ばれていない。呼ぶ所が変わったら、この検査も直す）` : f.dealFreeCalls < FAIR_MIN ? `フリー対戦が ${f.dealFreeCalls}回しか配られなかった（${FAIR_MIN}回は見たい。途中で止まった？）` : `フリー対戦 ${f.dealFreeCalls}回配って、札が変わったのは ${f.dealFreeChanged}回${f.dealFreeChanged ? '（フリー対戦の札が公平でない）' : ''}（くらべ：物語の章では ${st.dealStoryCalls}回のうち ${st.dealStoryChanged}回変わった）` }) }
+        detail: !f.dealFreeCalls ? `数えられなかった（${f.dealEntry ? '入口 LT.dealRun' : 'dealHelp'} が ${f.hands}ハンドで1回も呼ばれていない。呼ぶ所が変わったら、この検査も直す）` : f.dealFreeCalls < FAIR_MIN ? `フリー対戦が ${f.dealFreeCalls}回しか配られなかった（${FAIR_MIN}回は見たい。途中で止まった？）` : `フリー対戦 ${f.dealFreeCalls}回配って、札が変わったのは ${f.dealFreeChanged}回${f.dealFreeChanged ? '（フリー対戦の札が公平でない）' : ''}（くらべ：物語の章では ${st.dealStoryCalls}回のうち ${st.dealStoryChanged}回変わった）` }) }
     const [s1, s1b, tour6, tour14, ura6] = res;
     // S1 BBアンティ
     const a = merge(s1, s1b);
@@ -222,6 +282,36 @@ async function run({ browser, file, quick, part = null }) {
     else { const rows = rowsD(d); const bad = rows.filter(x => x[1] > 40 || x[1] < 10);   // 降りすぎ（10%未満）もここで止める（上の打って数える方は ⚠️ だけ）
       items.push({ id: 'rule:S2-direct', title: 'リバーの2倍ベットに中くらいの手でコールする割合（直接、プロポーカー S2）', status: bad.length ? 'fail' : 'ok',   // v0.86.0 でカオルを直したので合否にする（v85 交代レビュー）
         detail: rows.map(x => `${x[0]} ${x[1]}%（${x[2]}回${x[3] ? `、弱点で決めた${x[3]}回は除く` : ''}）`).join('、') + '（でたらめな手への勝率45〜75%の手。10%以上40%以下で合格）' + more }) }
+  }
+  // D 物語の章の配り（仕様 §6・§7 の「できた」の条件）
+  if (want('D')) {
+    { const v = await probeVariety(browser, file);
+      if (v.err || v.none) items.push({ id: 'rule:deal-variety', title: '決まった札の場面が、毎回ちがう札に見える（§8）', status: 'warn', detail: v.err ? '測れなかった: ' + v.err : '型で配る仕組み（kataDeal）が無い版なので測っていない' });
+      else { const bad = [], warn = [], rows = [];
+        for (const [n, o] of Object.entries(v)) { const cnt = {}; o.deals.forEach(d => cnt[d] = (cnt[d] || 0) + 1); const dup = o.deals.length - Object.keys(cnt).length, rep = o.picks.filter((k, i) => i && k === o.picks[i - 1]).length, perms = new Set(o.perms).size;
+          if (o.deals.includes('（配られなかった）')) bad.push(`${n} 配られなかった回がある`); if (dup >= 2) bad.push(`${n} まったく同じ札が ${dup}回`); if (rep) bad.push(`${n} 同じ型が続いた ${rep}回`);
+          if (perms < 4) warn.push(`${n} スートの並び ${perms}種`); if (n === 'ch7' && new Set(o.at).size < 2) warn.push(`ch7 最後の1手のハンド目が ${[...new Set(o.at)].join('・')} だけ`);
+          rows.push(`${n} ${o.deals.length}回：ちがう札 ${Object.keys(cnt).length}組、型 ${[...new Set(o.picks)].length}種（${o.picks.join('')}）、スートの並び ${perms}種` + (n === 'ch7' ? `、最後の1手のハンド目 ${[...new Set(o.at)].sort((a, b) => a - b).join('・')}` : '')) }
+        items.push({ id: 'rule:deal-variety', title: '決まった札の場面が、毎回ちがう札に見える（同じ札が2回以上・同じ型が続く は ❌、スート・ハンド目が散らない は ⚠️。§8）', status: bad.length ? 'fail' : warn.length ? 'warn' : 'ok',
+          detail: (bad.length ? bad.join('、') + '。' : '') + (warn.length ? warn.join('、') + '。' : '') + rows.join(' ／ ') }) } }
+    const all = of('D').map(k => res[k]).reduce(merge, EMPTY), dd = all.deal || {}, name = c => c > 10 ? `第二部第${c - 10}章` : `第${c}章`, sumOf = (cs, k) => cs.reduce((a, c) => a + ((dd[c] || {})[k] || 0), 0);
+    if (!all.dealEntry) items.push({ id: 'rule:deal-story', title: '物語の章の配り（入口 LT.dealRun）', status: 'warn', detail: '入口が無い版なので測っていない' });
+    else {
+      const c15 = [1, 2, 3, 4, 5], hands = sumOf(c15, 'hands'), w2 = c15.filter(c => c !== 1).map(c => [c, (dd[c] || {}).weak2 || 0]).filter(x => x[1]), w3 = sumOf(c15, 'weak3');
+      items.push({ id: 'rule:deal-weakrun', title: '物語の章で、弱い手が続かない（2回続くのは第1章だけ、3回続くのは0回）', status: hands < 100 ? 'warn' : (w2.length || w3) ? 'fail' : 'ok',
+        detail: `第1〜5章 ${hands}ハンド：弱い手が2回続いた 第1章 ${(dd[1] || {}).weak2 || 0}回${w2.length ? '、' + w2.map(x => `${name(x[0])} ${x[1]}回`).join('、') + '（第1章のほかで続いた）' : '、ほかの章 0回'}、3回続いた ${w3}回（ディーラーのミスで配り直したハンドは数えない）${hands < 100 ? '（100ハンドは見たい）' : ''}` });
+      const fl = sumOf(c15, 'flop'), air = sumOf(c15, 'air'), pa = fl ? Math.round(air / fl * 100) : 0;
+      items.push({ id: 'rule:deal-flop', title: 'フロップまで残ったハンドで、自分に何も絡まない割合が 25% 以下（第1〜5章）', status: fl < 60 ? 'warn' : pa > 25 ? 'fail' : 'ok',
+        detail: `フロップまで残った ${fl}ハンドのうち、ペア（自分の札で）も4枚のドローも無い ${air}回（${pa}%）${fl < 60 ? '（60ハンドは見たい）' : ''}` });
+      const cl = [2, 3, 4], ln = sumOf(cl, 'lesson'), lb = sumOf(cl, 'lessonBad'), lo = [1, 5].concat([11, 13, 14]).filter(c => (dd[c] || {}).lesson);
+      items.push({ id: 'rule:deal-lesson', title: '章の目標の場面（lessonScene）は第2・3・4章（と第二部第2章）だけ、3ハンドのうち2ハンドまで', status: (lb || lo.length) ? 'fail' : !ln ? 'warn' : 'ok',
+        detail: `第2〜4章 ${sumOf(cl, 'hands')}ハンドで ${ln}回（3の倍数のハンドで起きた ${lb}回）${lo.length ? '、ほかの章で起きた：' + lo.map(name).join('、') : ''}${ln ? '' : '（1回も起きていない）'}` });
+      const rc = [4, 5, 11, 12, 13, 14], rg = sumOf(rc, 'rg'), rl = sumOf(rc, 'rgLost');
+      items.push({ id: 'rule:deal-readguard', title: 'ブラフのクセにコールして、その時点で勝っていたハンドは、最後に負けない（第4・5章、第11〜14章）', status: rl ? 'fail' : rg < 3 ? 'warn' : 'ok',
+        detail: `そのハンド ${rg}回のうち、最後に負けた ${rl}回${rg < 3 ? '（3回は見たい）' : ''}。章ごと：` + rc.filter(c => dd[c]).map(c => `${name(c)} ${(dd[c] || {}).rg || 0}回`).join('、') });
+      items.push({ id: 'rule:deal-mods', title: '物語の章で、配りを変えた回数（参考）', status: 'ok',
+        detail: Object.keys(dd).sort((a, b) => a - b).map(c => `${name(+c)} ${dd[c].hands}ハンド：` + (Object.entries(dd[c].mods || {}).map(([n, v]) => `${n} ${v}`).join('・') || 'なし')).join(' ／ ') });
+    }
   }
   const errs = res.flatMap(x => (x.errs || []).concat(x.errors || []));
   if (errs.length) items.push({ id: 'rule:probe-errors', title: '再発チェック中のエラー', status: 'fail', detail: [...new Set(errs)].slice(0, 3).join(' / ') });

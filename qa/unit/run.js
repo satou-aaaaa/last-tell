@@ -5,7 +5,7 @@
 'use strict';
 const path = require('path');
 const { load } = require('./load');
-const TESTS = ['eval', 'pots', 'betting', 'seats', 'reads'];
+const TESTS = ['eval', 'pots', 'betting', 'seats', 'reads', 'deal'];
 function run(target) {
   const G = load(target), items = [];
   for (const t of TESTS) {
