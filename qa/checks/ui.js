@@ -182,6 +182,8 @@ const INSPECT = `(() => {
   if (!modal && document.documentElement.classList.contains('pcw')) {
     const own = [...document.querySelectorAll('#mine .hold .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
     const bh = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect().height).filter(h => h > 2).sort((x, y) => x - y), ref = bh.length ? bh[bh.length >> 1] : 0;
+    // 自分の番（降りるボタンが出ている）なのに手札が1枚も見えないのも ✕（CodeRabbit #132：番の間に手札が消えても、上の検査は「手札なし」で素通りしていた）
+    { const bf = document.getElementById('btnFold'); if (bf && shown(bf) && vis(bf) && ![...document.querySelectorAll('#mine .hold .card:not(.slot)')].some(e => shown(e) && vis(e))) out.push({ kind: '隠れ', el: '自分の手札', by: '自分の番なのに手札が見えない（PC）' }) }
     if (own.length) { const oh = Math.min(...own.map(r => r.height)), ob = Math.max(...own.map(r => r.bottom));
       if (ref && oh < ref - .5) out.push({ kind: '小さすぎ', el: '自分の手札', by: '高さ ' + Math.round(oh) + 'px（PC は場札 ' + Math.round(ref) + 'px 以上）' });
       if (ob > Hh - 8) out.push({ kind: 'はみ出し', el: '自分の手札', by: '下の端 ' + Math.round(ob) + '/' + Hh + 'px（PC は下から 8px 以上内側）' });
