@@ -564,6 +564,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     items.push(...r.items) }
   catch (e) { items.push({ id: 'sharp:error', title: '画質（高精細の画面でくっきりしているか）の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
   finally { if (own) await own.close().catch(() => {}) }
+  // 2026-10-21 satou「スマホは諦めてPCでやることを基本にする」→「最低限だけ」（ok 14:02）：スマホ（縦・横・スマホ3倍）は ❌ でなく ⚠️ にして公開を止めない。
+  //   ただし遊べなくなる崩れ（止まる・エラー・撮れない・ボタンが隠れて押せない）は ❌ のまま
+  for (const it of items) if (it.status === 'fail' && /(縦_|横_|スマホ)/.test(it.id) && !/^ui:stall:/.test(it.id) && !/エラー|撮れなかった|落ちた|隠れ: (button|#btn|#acts|#controls|#between)/.test(it.detail || '')) { it.status = 'warn'; it.detail = '（スマホは最低限：遊べなくなる崩れではないので ⚠️）' + (it.detail || '') }
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };

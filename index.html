@@ -8125,7 +8125,9 @@ function bAvoid(){const L=$('sayLayer');if(!L||$('game').hidden)return false;con
       for(const [x,y] of C){const X=x-ax,Y=y-ay;if(!okB(X,Y))continue;if(!hitH(X,Y)&&(!full||!sft(X,Y))){e._ax=x;e._ay=y;return}}}});
   return true}
 // クセの札は小さい所から大きくなり、カメラも寄るので、掛け合いの吹き出しが出ているあいだは 0.3 秒ごとに見直す
-let bAvT=0;const bAvLoop=()=>{clearTimeout(bAvT);let on=false;try{on=bAvoid()}catch(e){}if(on)bAvT=setTimeout(bAvLoop,300)};
+let bAvT=0;const bAvLoop=()=>{clearTimeout(bAvT);let on=false;try{on=bAvoid()}catch(e){}if(on)bAvT=setTimeout(bAvLoop,300);
+  // 吹き出しを動かしたあとで、直近の5手も置き直す（吹き出しが動いた先に直近の5手があった。PR #128 の CI：#say3「赤縁の眼鏡 オールイン！」）
+  try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
 // 動作の重さの改善 案3：描き直しの直後ではなく、位置合わせ（36_layout_pass）の最後に1回目を回す（クセの札の位置が決まってから測る）
 // カットイン・クイズ・案内などが出ているあいだは待つ
 function bBlocked(){return tourI>=0||['toast','quiz','cutin','camBand','mieta','foolStamp'].some(id=>$(id)&&!$(id).hidden)||$('game').hidden}
