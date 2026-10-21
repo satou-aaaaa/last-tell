@@ -119,7 +119,8 @@ if (prevVers.length >= 2) {
     g.items.splice(g.items.indexOf(it) + 1, 0, it3); all.push(it3) } }
 
 // main の QA が ❌ のまま（v0.97.9 レビュー：main の ❌ の Issue #124 が開いたまま、次の版の PR が ✅ で出ていった）
-//   ラベル ci-failure の開いた Issue があれば、PR のまとめの一番上に「main ❌ のまま（#番号）」を出す。読めなかったら ⚠️（黙って飛ばさない）
+//   ラベル ci-failure の開いた Issue があれば、PR のまとめの一番上に「main の CI ❌ のまま（#番号）」を出す。読めなかったら ⚠️（黙って飛ばさない）
+//   QA だけでなく、公開・リンク・サイトの見張りなどの Issue も出す（どれも main が壊れたままという知らせ。CodeRabbit PR #125 で QA だけと誤って読める題を直した）
 let mainRed = '';
 if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
   const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -132,9 +133,9 @@ if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
       raw.push(...page); if (page.length < 100) break }
     const iss = raw.filter(i => !i.pull_request);
     if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
-      const it = { id: 'ci:main-red', title: 'main の QA が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く` };
+      const it = { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く` };
       all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
-  } catch (e) { const it = { id: 'ci:main-red', title: 'main の QA が ❌ のままかの確認', status: 'warn', detail: 'CI 失敗の Issue を読めなかった：' + String(e && e.message || e).split('\n')[0].slice(0, 120) };
+  } catch (e) { const it = { id: 'ci:main-red', title: 'main の CI が ❌ のままかの確認', status: 'warn', detail: 'CI 失敗の Issue を読めなかった：' + String(e && e.message || e).split('\n')[0].slice(0, 120) };
     all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
 }
 
@@ -143,7 +144,7 @@ const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
 const fails = all.filter(i => i.status === 'fail'), warns = all.filter(i => i.status === 'warn').sort((a, b) => (b.repeat || 0) - (a.repeat || 0)), fixed = all.filter(i => i.fixed);   // くり返しの ⚠️ を上に
 const line = i => `- ${i.title}：${String(i.detail).replace(/\n/g, ' ')}${i.shot ? `（${i.shot.replace(/\.png$/, '.jpg')}）` : ''}`;
 const sha = (process.env.GITHUB_SHA || '').slice(0, 7), when = new Date().toISOString().slice(0, 16).replace('T', ' ');
-const head = (mainRed ? `> **⚠️ main ❌ のまま（${mainRed}）**\n\n` : '') + `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
+const head = (mainRed ? `> **⚠️ main の CI ❌ のまま（${mainRed}）**\n\n` : '') + `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
   `**${fails.length ? '❌ 不合格' : '✅ 合格'}**　✅ ${cnt('ok')}　❌ ${fails.length}　⚠️ ${warns.length}　🟡 修正待ち・前からある ${cnt('known')}\n\n`;
 
 // 画面の変化
