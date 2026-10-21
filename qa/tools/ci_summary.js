@@ -128,7 +128,7 @@ if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
     const raw = [];
     for (let pg = 1; pg <= 10; pg++) {
       const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues?labels=ci-failure&state=open&per_page=100&page=${pg}`];
-      const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+      const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 }));   // 100件の本文が 1MB（既定）を超えても読めるように（CodeRabbit PR #125）
       raw.push(...page); if (page.length < 100) break }
     const iss = raw.filter(i => !i.pull_request);
     if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
