@@ -10337,6 +10337,9 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   //   縮め始めるのは、足りない状態が 0.3秒続いたときだけ（札を配る・チップが動くあいだの一瞬の足りなさで縮め、そのまま戻らなかった。
   //   v0.97.12 CI：第2章のフロップの縦で卓が縮み、相手の伏せ札が場札にかかって画質の検査が ❌）
   if(barSync.anim){barSync.anim=0;clearTimeout(barSync.at);barSync.at=setTimeout(()=>{try{barSync()}catch(e){}},300)}   // 動いていた分は、止まってから測り直す
+  // カメラが寄っている間は卓が拡大されて場札が手札に近づくので、縮める・戻すの判断をしない（そのまま）。
+  //   v0.97.12 CI：PC の顔のアップ中に「足りない」と測って卓を 94px 縮め、顔の絵が引き伸ばされて画質の検査が ❌
+  const camIn=(()=>{try{return camState.i>=0}catch(e){return false}})();if(camIn){gw._dfcAt=0;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},400);return}   // 引いたら測り直す
   const sx0=+(gw.dataset.sx||0);let dfcOk=dfc>6;
   if(sb&&!sx0&&dfc>6){const now=performance.now();if(!gw._dfcAt){gw._dfcAt=now;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},320)}if(now-gw._dfcAt<300)dfcOk=false}else if(!(dfc>6))gw._dfcAt=0;
   // 自分の札が見えていない（降りた・席がない・配る前）ときは測らない（PR #128 の CI：6人卓のハンドの終わりで、札の無い手札の箱から足りないと測って 52px 縮めていた）。
