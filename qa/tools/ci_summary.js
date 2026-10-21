@@ -113,9 +113,9 @@ if (prevVers.length >= 2) {
     const ps = prevWr(it.id); if (ps.length < 2) continue;
     const gs = [it.games, ...ps.map(i => i.games)].join('').replace(/E/g, ''), w = (gs.match(/W/g) || []).length, n = gs.length, rate = n ? w / n : 0;
     const base = baseline.winrate && baseline.winrate['ch' + m[1]]; if (!base || !n) continue;
-    const se = Math.sqrt(Math.max(base.rate * (1 - base.rate), 0.05) * (1 / base.n + 1 / n)), tol = 2 * se, out3 = Math.abs(rate - base.rate) > tol;
+    const se = Math.sqrt(Math.max(base.rate * (1 - base.rate), 0.05) * (1 / base.n + 1 / n)), tol = 2 * se, low3 = base.rate >= 0.1 && rate < base.rate / 3, out3 = Math.abs(rate - base.rate) > tol || low3;   // 下の線：幅の下端が 0 未満になる章（第2章 基準17%±22）は外れが出ないので、基準の 1/3 より下も ⚠️（v0.97.10 レビュー 3）
     const it3 = { id: 'winrate3:ch' + m[1], title: `第${m[1]}章の勝率（3版まとめ）`, status: out3 ? 'warn' : 'ok', warnOnly: '3版まとめは版が重なるので ⚠️ だけ（v0.97.9 レビュー）',
-      detail: `勝率 ${Math.round(rate * 100)}%（${w}/${n}、今の版と ${ps.length}版前まで）、基準 ${Math.round(base.rate * 100)}%（許す幅 ±${Math.round(tol * 100)}）${out3 ? `：3版続けて基準から外れている。章の強さか、打ち手（qa の自動の打ち手）を見る` : ''}` };
+      detail: `勝率 ${Math.round(rate * 100)}%（${w}/${n}、今の版と ${ps.length}版前まで）、基準 ${Math.round(base.rate * 100)}%（許す幅 ±${Math.round(tol * 100)}${base.rate - tol < 0 ? `、下は基準の1/3＝${Math.round(base.rate / 3 * 100)}%` : ''}）${out3 ? `：3版続けて基準から外れている。章の強さか、打ち手（qa の自動の打ち手）を見る` : ''}` };
     g.items.splice(g.items.indexOf(it) + 1, 0, it3); all.push(it3) } }
 
 // main の QA が ❌ のまま（v0.97.9 レビュー：main の ❌ の Issue #124 が開いたまま、次の版の PR が ✅ で出ていった）
