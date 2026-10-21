@@ -99,6 +99,7 @@ async function measure(browser, file, scene, vp) {
 }
 
 // 測る項目。worse = 前の版より悪いか、target = 目標を満たすか
+// strict = 1場面ずつ 0/1 で数える項目。揺れの許容（5%か2個）を使わず、1つ増えたら悪くなった（CodeRabbit PR #130：前の版0件から1〜2場面増えても ⚠️ にならなかった）
 const METRICS = [
   { key: 'offFirstView', title: '大事な部品（3つのボタン・自分の手・相手の名札・タイトルの3ボタン）が最初の画面にある', unit: '個が外', list: 'offList', target: v => v === 0 },
   { key: 'smallTargets', title: '押しやすい大きさ（スマホ44px・PC24px以上）', unit: '個が小さい', list: 'smallList', target: v => v === 0 },
@@ -107,7 +108,7 @@ const METRICS = [
   { key: 'unlabeled', title: '記号だけのボタンに名前（aria-label か title）がある', unit: '個に名前が無い', list: 'unlabeledList', target: v => v === 0 },
   { key: 'screens', title: '対戦中の画面が1画面に収まる（UI整理 案3の条件）', unit: '画面ぶんの高さ', game: true, target: v => v <= 1.01, max: true },
   { key: 'buttons', title: '最初の画面で押せる部品の数（ごちゃごちゃ度）', unit: '個', target: () => true, max: true },
-  { key: 'tableNarrow', title: 'PC で卓が画面の幅の6割以上を使っている（PC 向けリッチ演出 案1）', unit: '場面で狭い', list: 'tableList', game: true, target: v => v === 0 },
+  { key: 'tableNarrow', title: 'PC で卓が画面の幅の6割以上を使っている（PC 向けリッチ演出 案1）', unit: '場面で狭い', list: 'tableList', game: true, strict: true, target: v => v === 0 },
   { key: 'bubbles', title: '吹き出しが同時に2つ以上出ていない', unit: '個', target: v => v <= 1, max: true },
 ];
 const GAME = /自分の番|レイズを開く|ハンドの終わり/;
@@ -130,7 +131,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     let was = base[M.key], cmp = now;
     if (bp && !M.max) { const ks = Object.keys(per).filter(k => k in bp); was = ks.reduce((a, k) => a + bp[k], 0); cmp = ks.reduce((a, k) => a + per[k], 0); }
     const bad = rows.filter(r => !M.target(val(r)));
-    const worse = was !== undefined && cmp > was + (M.key === 'screens' ? .05 : M.key === 'buttons' ? 2 : M.max ? 0 : Math.max(2, Math.ceil(was * .05)));  // 配られる札で少し揺れるので、合計は5%か2個までは同じとみなす
+    const worse = was !== undefined && cmp > was + (M.strict ? 0 : M.key === 'screens' ? .05 : M.key === 'buttons' ? 2 : M.max ? 0 : Math.max(2, Math.ceil(was * .05)));  // 配られる札で少し揺れるので、合計は5%か2個までは同じとみなす
     const status = worse ? 'warn' : bad.length ? 'known' : 'ok';
     const top = bad.sort((a, b) => val(b) - val(a)).slice(0, 3).map(r => `${r.scene}（${r.vp.split('_')[0]}）${val(r)}${M.unit}${M.list && r.m[M.list].length ? '：' + r.m[M.list].slice(0, 3).join('、') : ''}`);
     items.push({ id: 'uiux:' + M.key, title: M.title, status,

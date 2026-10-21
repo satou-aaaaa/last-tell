@@ -2191,10 +2191,10 @@ html.pcw #game .gwrap{max-width:none;margin:0;width:auto;padding-right:calc(var(
 html.pcw #game .t3d{height:100vh;height:100dvh;min-height:0}
 /* 卓の中の札：場札は奥に置いて少し小さく、相手の見せた札は場札の 0.8倍以上（v0.97.12 レビュー：27px で名札に隠れた） */
 html.pcw .felt .card{--cw:40px}
-html.pcw .spot .card{--cw:40px}
-html.pcw .n6 .spot .card{--cw:32px}
+html.pcw .spot .card{--cw:52px}
+html.pcw .n6 .spot .card{--cw:46px}
 html.pcw .mine .hold .card{--cw:64px}
-html.pcw .felt .boardspot{top:21%}
+html.pcw .felt .boardspot{top:24%}
 /* 顔は大きく、でも頭が画面の上で切れない（胸像の下の端は卓の高さの 37%） */
 html.pcw #busts>.bust{max-width:34vh}
 /* 名札と右の列の字は PC の大きさに */
@@ -2203,6 +2203,7 @@ html.pcw .plate .nm{font-size:.9rem}html.pcw .plate .chp{font-size:.92rem}html.p
 html.pcw #game .tbar h1{font-size:.95rem}html.pcw #game .tbar .tbmeta{font-size:.78rem}
 html.pcw #game .sensei p{font-size:.95rem}
 html.pcw #game .gwrap>.sensei{max-height:36vh}
+html.pcw .potchips.mess{transform:scale(.68);transform-origin:50% 30%}
 
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -7495,7 +7496,7 @@ function afterAct(i,type,toCall){
 }
 // ===== カメラ演出 案2 =====
 const camSet=()=>SETTINGS.cam||(reducedMotion()?'soft':'strong');
-const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4,pcw:1.2},tell:{port:2.7,land:2.2,pc:2.4,pcw:1.8}};
+const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4,pcw:1.2},tell:{port:2.7,land:2.2,pc:2.4,pcw:1.6}};
 const camView=()=>matchMedia(PCW_Q).matches?'pcw':matchMedia(LAND_Q).matches?'land':innerWidth<700?'port':'pc';   // pcw：PC の横長の卓（顔が大きいので寄りは控えめ）
 // テルの場所：顔の中心からのずれ（顔の大きさに対する割合）。chips は相手の前のチップの山
 const CAM_SPOT={sweat:{dx:.15,dy:-.18},smile:{dx:0,dy:.14},talk:{dx:0,dy:.14},stare:{dx:0,dy:-.1},still:{dx:0,dy:0,z:2},
