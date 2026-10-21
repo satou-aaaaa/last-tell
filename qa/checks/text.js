@@ -39,6 +39,14 @@ async function run({ browser, file, baseline }) {
   const fresh = [...lines].filter(x => !known.has(x));
   items.push({ id: 'text:money', title: '会話にお金の話がない', status: fresh.length ? 'fail' : lines.size ? 'known' : 'ok',
     detail: fresh.length ? '新しく見つかったセリフ: ' + fresh.slice(0, 5).map(x => `「${x}」`).join('、') : lines.size ? `前から基準に入っている ${lines.size}件（中身を見て、問題なければそのまま）: ` + [...lines].slice(0, 3).map(x => `「${x}」`).join('、') : '0件', list: [...lines] });
+  // 配り方を変える関数があるなら、遊び方のページの「公平」の説明（日英）にそのことが書いてある（改善提案 第12回 0-1：10-17 に易しくしたが、説明は「毎回ふつうにシャッフル」のままだった）
+  // 配りを変える関数を足したら DEAL_CHANGERS にも足す
+  { const DEAL_CHANGERS = ['dealHelp', 'p6Premium'], has = DEAL_CHANGERS.filter(f => new RegExp('function\\s+' + f + '\\s*\\(').test(src));
+    const hm = [...src.matchAll(/class="hnote">([^`]{0,600}?)<\/p>/g)].map(m => m[1]).find(t => /シャッフル/.test(t)), ja = hm || '', enHit = /weak starting hands?/i.test(src);   // 公平の説明＝シャッフルの話をしている hnote
+    const jaOk = /弱い手/.test(ja);
+    items.push({ id: 'text:fair-note', title: '配り方を変えているときは、遊び方のページの公平の説明（日英）にそのことが書いてある',
+      status: !has.length ? 'ok' : !hm ? 'fail' : jaOk && enHit ? 'ok' : 'fail',
+      detail: !has.length ? '配りを変える関数なし' : !hm ? '遊び方のページの説明（class="hnote"）が見つからない' : jaOk && enHit ? `${has.join('・')} あり、説明に「弱い手」・"weak starting hands" あり` : `配り方を変えたのに、遊び方の説明が古い（${has.join('・')} あり。${jaOk ? '' : '日本語に「弱い手」がない。'}${enHit ? '' : '英語に "weak starting hands" がない'}）` }) }
   return { name: '文言', items, baselineOut: { moneyLines: [...lines] } };
 }
 module.exports = { run };

@@ -1,6 +1,7 @@
 // 公開サイトとしての検査（2026-10-14 CIのチェック充実 案4）：テスト公開のリポジトリ（index.html のとなりに sw.js・manifest がある所）でだけ回す
 //   1. manifest とアイコン：名前・start_url・display・アイコンのファイルがある
 //   2. オフライン：一度開いたあと、ネットを切って開き直してもタイトルが出る（sw.js）
+//   2b. 電波が弱いとき：一度開いたあと、index.html の返事が止まっても6秒以内にタイトルが出る（sw.js が4秒で保存した版を出す）
 //   3. リンク切れ：となりの .html（プライバシー・利用規約・サポート）と index.html の、手元のファイルへのリンク
 //   4. Lighthouse の点（速さ・読みやすさ・作法・検索）：QA_LIGHTHOUSE=1 のときだけ（CI）。前の版より5点以上下がったら ⚠️
 'use strict';
@@ -15,10 +16,11 @@ function serve(root) {
   return new Promise(res => {
     const srv = http.createServer((q, r) => {
       let p = decodeURIComponent(new URL(q.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html';
+      if (srv.stall && /index\.html$/.test(p)) { srv.hung.push(r); return }   // 2b：返事をしない（電波はあるのに返事が来ないとき）
       const f = path.join(root, p);
       if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end('not found') }
       r.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
-    }).listen(0, '127.0.0.1', () => res(srv));
+    }); srv.hung = []; srv.listen(0, '127.0.0.1', () => res(srv));
   });
 }
 
@@ -55,6 +57,23 @@ async function run({ browser, file, baseline }) {
         if (!detail) { ok = await page.evaluate(() => { const t = document.getElementById('title'); return !!t && !t.hidden }).catch(() => false); if (!ok) detail = 'ネットを切ったら、タイトルが出なかった' }
       }
     } finally { await ctx.close() }
+    // 2b. 電波が弱いとき（改善提案 第12回 0-2：オフラインの検査はすぐ失敗が返る場合しか見ておらず、返事が来ないと20秒以上真っ白なのを見逃した）
+    { const c2 = await browser.newContext({ serviceWorkers: 'allow' }); let d2 = '', ok2 = false, ms = 0;
+      try {
+        const page = await c2.newPage();
+        await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+        await page.goto(url, { waitUntil: 'load' });
+        const ready = await page.evaluate(() => navigator.serviceWorker ? Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(r => setTimeout(() => r(false), 15000))]) : false);
+        if (!ready) d2 = 'sw.js が動き出さなかった';
+        else {
+          await page.waitForTimeout(1500); srv.stall = true;
+          const t0 = Date.now(); page.reload({ waitUntil: 'load', timeout: 12000 }).catch(() => {});
+          while (Date.now() - t0 < 9000) { await page.waitForTimeout(250); const vis = page.evaluate(() => { const t = document.getElementById('title'); return !!t && !t.hidden }).catch(() => false);   // 読み込みが止まっている間は evaluate も返らないことがあるので、待つのは1秒まで
+            if (await Promise.race([vis, new Promise(r => setTimeout(() => r(false), 1000))])) { ok2 = true; break } }
+          ms = Date.now() - t0; if (ok2 && ms > 6000) { ok2 = false; d2 = `タイトルが出るまで ${(ms / 1000).toFixed(1)}秒（6秒以内）` } else if (!ok2) d2 = '返事が来ないと、9秒たってもタイトルが出なかった（sw.js が待ち続けている）';
+        }
+      } finally { srv.stall = false; srv.hung.splice(0).forEach(r => { try { r.destroy() } catch (e) {} }); await Promise.race([c2.close().catch(() => {}), new Promise(r => setTimeout(r, 10000))]) }
+      items.push({ id: 'site:slow', title: '電波が弱くても開ける（一度開いたあと、index.html の返事が止まっても6秒以内にタイトルが出る）', status: ok2 ? 'ok' : 'fail', detail: ok2 ? `${(ms / 1000).toFixed(1)}秒でタイトルが出た` : d2 }) }
     items.push({ id: 'site:offline', title: 'ネットが無くても開ける（一度開いたあと、オフラインで開き直してタイトルが出る）', status: ok ? 'ok' : 'fail', detail: ok ? 'オフラインで開き直してタイトルが出た' : detail });
 
     // 3. リンク切れ（手元のファイルへのリンクだけ。外のサイトは数だけ）
