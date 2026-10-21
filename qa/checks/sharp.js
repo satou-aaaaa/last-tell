@@ -82,7 +82,7 @@ async function measure(page, sel, n, k) {
 }
 const r2 = v => v == null ? '—' : v.toFixed(2);
 // 顔の細かさは、息づかい・まばたきの動きで1枚ごとにぶれる（WebKit PC で寄る前 1.36〜1.64）。3枚撮って真ん中の値で見る（v0.98.3 CI：寄る前 1.57 の1枚に当たって 0.91倍で ❌）
-async function measureMid(page, sel, k) { const v = []; for (let i = 0; i < 3; i++) { if (i) await page.waitForTimeout(180); const q = (await measure(page, sel, 1, k)).q; if (q != null) v.push(q) } v.sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null }
+async function measureMid(page, sel, k) { const v = []; for (let i = 0; i < 3; i++) { if (i) await page.waitForTimeout(180); const q = (await measure(page, sel, 1, k)).q; if (q != null) v.push(q) } v.sort((a, b) => a - b); return v.length === 3 ? v[1] : null }   // 3枚そろわなければ測れなかった扱い（1枚欠けて上側の値で通さない。CodeRabbit #134）
 
 const bad = v => v == null || v < QMIN;
 // ぼやけたときに試す CSS（表示だけ。判定には使わない）
