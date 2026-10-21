@@ -103,12 +103,42 @@ if (prevVers.length) {
     else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }
     else it.detail = `くり返し（${it.repeat}回目）：` + it.detail } }
 
+// 3版まとめの勝率（v0.97.9 レビュー：第2章が 13%→0%→0% と3版続いたが、1版8回だと許す幅が ±38 もあり、どの版も ✅ だった）
+//   今の版と直近の公開版（qa-results の v<版>/result.json）の勝ち負け（games）を足して、基準と比べる。回数が増えるので幅は 2×標準誤差（最低の 15 ポイントは付けない）
+//   ⚠️ だけ（版が重なるので、くり返しで ❌ に上げない）
+if (prevVers.length >= 2) {
+  const prevWr = id => prevVers.slice(-2).map(r => (r.groups || []).flatMap(g => g.items || []).find(i => i.id === id)).filter(i => i && i.games);
+  const g = groups.find(x => x.key === 'winrate');
+  for (const it of g ? [...g.items] : []) { const m = /^winrate:ch(\d+)$/.exec(it.id); if (!m || !it.games) continue;
+    const ps = prevWr(it.id); if (ps.length < 2) continue;
+    const gs = [it.games, ...ps.map(i => i.games)].join('').replace(/E/g, ''), w = (gs.match(/W/g) || []).length, n = gs.length, rate = n ? w / n : 0;
+    const base = baseline.winrate && baseline.winrate['ch' + m[1]]; if (!base || !n) continue;
+    const se = Math.sqrt(Math.max(base.rate * (1 - base.rate), 0.05) * (1 / base.n + 1 / n)), tol = 2 * se, out3 = Math.abs(rate - base.rate) > tol;
+    const it3 = { id: 'winrate3:ch' + m[1], title: `第${m[1]}章の勝率（3版まとめ）`, status: out3 ? 'warn' : 'ok', warnOnly: '3版まとめは版が重なるので ⚠️ だけ（v0.97.9 レビュー）',
+      detail: `勝率 ${Math.round(rate * 100)}%（${w}/${n}、今の版と ${ps.length}版前まで）、基準 ${Math.round(base.rate * 100)}%（許す幅 ±${Math.round(tol * 100)}）${out3 ? `：3版続けて基準から外れている。章の強さか、打ち手（qa の自動の打ち手）を見る` : ''}` };
+    g.items.splice(g.items.indexOf(it) + 1, 0, it3); all.push(it3) } }
+
+// main の QA が ❌ のまま（v0.97.9 レビュー：main の ❌ の Issue #124 が開いたまま、次の版の PR が ✅ で出ていった）
+//   ラベル ci-failure の開いた Issue があれば、PR のまとめの一番上に「main ❌ のまま（#番号）」を出す。読めなかったら ⚠️（黙って飛ばさない）
+let mainRed = '';
+if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
+  const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
+  try {
+    const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues?labels=ci-failure&state=open&per_page=20`];
+    const iss = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })).filter(i => !i.pull_request);
+    if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
+      const it = { id: 'ci:main-red', title: 'main の QA が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く` };
+      all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
+  } catch (e) { const it = { id: 'ci:main-red', title: 'main の QA が ❌ のままかの確認', status: 'warn', detail: 'CI 失敗の Issue を読めなかった：' + String(e && e.message || e).split('\n')[0].slice(0, 120) };
+    all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
+}
+
 const cnt = s => all.filter(i => i.status === s).length;
 const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
 const fails = all.filter(i => i.status === 'fail'), warns = all.filter(i => i.status === 'warn').sort((a, b) => (b.repeat || 0) - (a.repeat || 0)), fixed = all.filter(i => i.fixed);   // くり返しの ⚠️ を上に
 const line = i => `- ${i.title}：${String(i.detail).replace(/\n/g, ' ')}${i.shot ? `（${i.shot.replace(/\.png$/, '.jpg')}）` : ''}`;
 const sha = (process.env.GITHUB_SHA || '').slice(0, 7), when = new Date().toISOString().slice(0, 16).replace('T', ' ');
-const head = `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
+const head = (mainRed ? `> **⚠️ main ❌ のまま（${mainRed}）**\n\n` : '') + `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
   `**${fails.length ? '❌ 不合格' : '✅ 合格'}**　✅ ${cnt('ok')}　❌ ${fails.length}　⚠️ ${warns.length}　🟡 修正待ち・前からある ${cnt('known')}\n\n`;
 
 // 画面の変化

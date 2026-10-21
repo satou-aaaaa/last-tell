@@ -137,6 +137,11 @@ const INSPECT = `(() => {
       for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
         const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
         if (w > 1 && h > 1 && !out.some(o => o.kind === '重なり' && o.el === desc(el) && String(o.by || '').startsWith(desc(bt)))) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
+    // 勝ち負けの帯が相手の顔（目・口のあたり：顔の箱の横の真ん中 6割・縦 3〜8割）にかからないか（v0.97.9 レビュー：縦で3行の帯が上の端の相手のあご・首にかかった。COVER_BY は札が隠れるかだけを見ていた）
+    for (const el of document.querySelectorAll('#table > .vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect();
+      for (const f of document.querySelectorAll('#busts .bust .face')) { if (!okv(f)) continue; const q = f.getBoundingClientRect(), c = { left: q.left + q.width * .2, right: q.right - q.width * .2, top: q.top + q.height * .3, bottom: q.top + q.height * .8 };
+        const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 4 && h > 4) { out.push({ kind: '重なり', el: desc(el), by: '相手の顔（目・口）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
@@ -253,12 +258,15 @@ async function paintCover(page) {
 }
 // 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
 const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05))   // 動きの終わりで見えなくなった吹き出しは数えない（v0.97.8 レビュー）
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (typeof LT === 'undefined' || !LT.sayOn ? (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05) : LT.sayOn(x)))   // 見えなくなった・消えかけ（残り 0.5秒以下）の吹き出しは数えない。ゲームと同じ LT.sayOn で見る（v0.97.8・v0.97.9 レビュー）
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
         // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
         .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
           const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
-          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) };
+          // 吹き出しは、場所・不透明度・動きの残りも書く（v0.97.9 レビュー：画像に写っていない #say2 が出て、何なのか分からなかった）
+          let ex = ''; if (x.classList.contains('say')) { const an = (x.getAnimations ? x.getAnimations() : []).find(a => /^say/.test(a.animationName || '')); const t = an && an.effect.getComputedTiming();
+            ex = `（${Math.round(q.left)},${Math.round(q.top)}・不透明度 ${(+getComputedStyle(x).opacity).toFixed(2)}${t ? `・動きの残り ${Math.round((t.endTime || 0) - (+t.localTime || 0))}ms` : '・動きなし'}）` }
+          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' + ex }) };
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
