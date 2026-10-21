@@ -23,5 +23,19 @@ const LT={_h:{},errors:0,
     return a},
   // CSS の animation（fill both で出てくる動き：vfIn・ltFlop/ltTurn・ltDeal）も、ms たっても動いていたら終わりの形にする
   cssFinish(el){try{if(!el||!el.isConnected||!el.getAnimations)return;el.getAnimations().forEach(a=>{const t=a.effect&&a.effect.getComputedTiming();if(t&&isFinite(t.endTime)&&a.playState==='running')a.finish()})}catch(e){}},
-  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)}
+  cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)},
+  // 見張り（v0.97.3 レビュー）：画面のすべての動き（CSS の animation・transition、script の動き）を 250ms ごとに見て、
+  // 最初に見た時からの残り時間＋300ms をすぎても動いていれば、終わりの形にする。Safari で動きが止まっても、透明・横向き・途中のまま残らない。
+  // 一つずつ LT.cssDone を足すのでは抜けが出た（v0.97.3：見せた札の flip/flipSlow が透明のまま）ので、全部まとめて見る。終わりのない動き（infinite）と止めた動きは見ない
+  _sw:typeof WeakMap!=='undefined'?new WeakMap():null,
+  sweep(){if(!this._sw||!document.getAnimations)return;const now=performance.now();if(now-(this._swAt||0)<240)return;
+    this._swAt=now;   // qa は setInterval を速めるので、実の時間で 240ms ごとに
+    for(const a of document.getAnimations()){try{if(a.playState!=='running'){this._sw.delete(a);continue}const t=a.effect&&a.effect.getComputedTiming();if(!t||!isFinite(t.endTime))continue;
+      let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
+      if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
+// 見張りは画を描いた直後に動かす（v0.97.7：途中で呼ぶと getAnimations が画面全体のスタイルの計算をその場でさせ、手の始まりなどで1回 40ms 以上かかっていた）
+// 描く前の予約は1つだけ（画面を隠している間は requestAnimationFrame が止まるので、戻ったときに何本もたまらないように。CodeRabbit PR #121）
+// Safari で画が止まると requestAnimationFrame も来ない（v0.97.7 CI：WebKit で見張りが動かず、止まった動きが残った）。予約から 500ms 来なければ、待たずに見張る
+let ltSwAt=0;
+setInterval(()=>{const now=performance.now();if(!ltSwAt){ltSwAt=now;requestAnimationFrame(()=>setTimeout(()=>{ltSwAt=0;LT.sweep()},0))}else if(now-ltSwAt>=500)LT.sweep()},250);

@@ -56,11 +56,26 @@ async function run({ browser, file, quick, baseline }) {
       out.errors = await page.evaluate(() => __qa.errors.slice(0, 3));
     } finally { await ctx.close() }
   }
+  // 3. 動きの見張り（LT.sweep、250ms ごとに画面の動きを全部見る）の重さ（v0.97.4 レビュー）：CPU 4倍遅くで自動対戦しながら、1回の時間を測る。平均 2ms 超で ⚠️
+  {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 20 });
+    try {
+      await cdp(page);
+      await page.evaluate(() => { window.__sw = []; const f = LT.sweep; LT.sweep = function () { try { if (performance.now() - (this._swAt || 0) >= 240) document.getAnimations() } catch (e) {} const t = performance.now(), at = this._swAt; const r = f.apply(this, arguments); if (this._swAt !== at) __sw.push(performance.now() - t); return r } });   // 間引いた回は数えない。先にスタイルの計算を済ませておく（v0.97.7：前は getComputedStyle(根元) で済ませていたが、それは根元の分しか計算しないので、画面全体の計算が見張りの重さに入っていた。同じ getAnimations を先に呼んで済ませる。getAnimations はたまった計算を先に行い、それは次のコマでも要る分なので、見張りの重さに入れない）
+      await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);
+      await H.startBot(page, { policy: 'mix', maxHands: quick ? 4 : 10 });
+      await H.runUntilDone(page, { timeoutMs: 180000, stallMs: 40000 });
+      const sw = await page.evaluate(() => __sw);
+      out.sweepN = sw.length; out.sweepAvgMs = sw.length ? Math.round(sw.reduce((a, x) => a + x, 0) / sw.length * 100) / 100 : null; out.sweepMaxMs = sw.length ? Math.round(Math.max(...sw) * 10) / 10 : null;
+    } catch (e) { out.sweepErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
+  }
   const b = (baseline && baseline.perf) || {};
   const worse = (k, f = 1.3, add = 0) => b[k] != null && out[k] > b[k] * f + add;
   const vs = k => b[k] != null ? `（前の版 ${b[k]}）` : '';
   items.push({ id: 'perf:load', title: `起動の速さ（CPU ${SLOW}倍遅く、スマホ縦）`, status: worse('titleMs', 1.3, 300) || out.titleMs > 5000 ? 'warn' : 'ok',
     detail: `ファイル ${out.sizeKB}KB${vs('sizeKB')}、読み込み ${out.loadMs}ms、タイトルが出るまで ${out.titleMs}ms${vs('titleMs')}（目安 5000ms 以内）、メモリ ${out.heapLoadMB}MB` });
+  items.push({ id: 'perf:sweep', title: `動きの見張り（LT.sweep）1回の重さ（CPU ${SLOW}倍遅く、自動対戦中、平均 2ms 以下、スタイルの計算は除く）`, status: out.sweepErr || !out.sweepN ? 'fail' : out.sweepAvgMs > 2 ? 'warn' : 'ok',
+    detail: out.sweepErr ? '測れなかった：' + out.sweepErr : !out.sweepN ? '一度も動かなかった（LT.sweep が無いか、呼ばれていない）' : `平均 ${out.sweepAvgMs}ms、一番長い ${out.sweepMaxMs}ms（${out.sweepN}回）` });
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
     detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });

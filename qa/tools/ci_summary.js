@@ -19,6 +19,7 @@ let ver = 'unknown', quick = true;
 // --part で分けた組（CIの高速化 案1）：結果の届いた「検査#組」と、勝率の生の結果（章ごとに混ぜてから判定する）
 const done = new Set(), wrRaw = {};
 const J = require('../lib/winrate_judge');
+const knownW = (() => { try { return JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8')) } catch (e) { return {} } })();   // WebKit の組の修正待ち（下）
 for (const d of dirs) {
   const r = JSON.parse(fs.readFileSync(path.join(inDir, d, 'result.json'), 'utf8'));
   ver = r.ver || ver; quick = r.quick;
@@ -26,7 +27,12 @@ for (const d of dirs) {
   if (/webkit/i.test(d)) for (const g of r.groups) {
     g.key = 'webkit-' + g.key; g.name = 'WebKit（iPhone の Safari）：' + g.name; delete g.baselineOut;
     for (const it of g.items) { it.id = 'webkit:' + it.id; it.title = 'WebKit：' + it.title; if (it.shot) it.shot = it.shot.replace(/([^/]+)$/, 'WebKit_$1');
-      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:stall:/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail } }
+      if (it.status === 'fail' && /^ui:/.test(it.id.slice(7)) && !/^ui:(stall|shown|cover):/.test(it.id.slice(7)) && !/エラー|撮れなかった/.test(it.detail)) { it.status = 'warn'; it.detail = '（WebKit は字の幅が違うので ⚠️）' + it.detail }
+      // WebKit だけの修正待ち：known.json に「webkit:」つきの名前で入れたものは、ここで 🟡 にする（run_all は「webkit:」をつける前に known.json を見るので当たらなかった。v0.97.5 CI）
+      //   「webkit:」つきは期限（「期限 YYYY-MM-DD」）が要る。期限が無い・過ぎたものは 🟡 にしない（❌・⚠️ のまま。CodeRabbit PR #119）
+      const kw = knownW[it.id], kwExp = kw && (String(kw).match(/期限\s*(\d{4}-\d{2}-\d{2})/) || [])[1], kwOk = kwExp && kwExp >= new Date().toISOString().slice(0, 10);
+      if (kw && (it.status === 'fail' || it.status === 'warn')) { if (kwOk) { it.status = 'known'; it.detail += `（修正待ち：${kw}）` } else it.detail += kwExp ? `（known.json の期限 ${kwExp} が過ぎた）` : '（known.json に期限がない）' }
+      else if (kw && it.status === 'ok') { it.fixed = true; it.detail += '（直った。known.json から外してよい）' } }
   }
   for (const g of r.groups) {
     done.add(g.key + (r.part ? '#' + r.part : ''));
@@ -71,9 +77,35 @@ try {
 if (missing.length) groups.unshift({ key: 'ci', name: 'CI', items: missing.map(n => ({ id: 'ci:' + n, title: `組「${n}」の結果が無い（止まった・時間切れ・入れる段階で失敗）`, status: 'fail', detail: 'Actions の画面でその組のログを見る' })) });
 
 const all = groups.flatMap(g => g.items);
+// くり返し出る ⚠️（v0.97.4 レビュー：心の声の字幕の ⚠️ が v0.97.1・v0.97.2・v0.97.4 と出たり消えたりしながら、誰も直さなかった）
+//   直近に公開した3版（ブランチ qa-results の v<版>/result.json）に同じ項目の ⚠️・❌・🟡 があれば「くり返し（n回目）」を付けて一番上に出す。
+//   3回目（前の2版以上＋今）は ❌：直すか、known.json に期限付き（「期限 YYYY-MM-DD」）で入れる。期限が過ぎたら また ❌
+let prevErr = '';
+const prevVers = (() => { try {
+  const vk = v => v.replace(/^v/, '').split('.').map(Number), cmp = (a, b) => { const x = vk(a), y = vk(b); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0 };
+  if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && v !== 'v' + ver && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
+  const git = (...a) => require('child_process').execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 });   // 引数は配列で渡す（シェルを通さない）
+  git('fetch', '-q', '--depth', '1', 'origin', 'qa-results');
+  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
+    .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { prevErr += (prevErr ? '／' : '') + `${v} が読めない（${String(e && e.message || e).split('\n')[0].slice(0, 60)}）`; return null } }).filter(Boolean);   // 読めない版は黙って飛ばさず ⚠️ に出す（CodeRabbit PR #119）
+} catch (e) { prevErr += (prevErr ? '／' : '') + String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
+if (prevErr) { const it = { id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr };
+  all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }   // result.json・report.md にも残す（CodeRabbit PR #119）
+if (prevVers.length) {
+  const knownAll = (() => { try { return JSON.parse(fs.readFileSync(path.join(qaDir, 'known.json'), 'utf8')) } catch (e) { return {} } })(), today = new Date().toISOString().slice(0, 10);
+  const seen = prevVers.map(r => new Set((r.groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok').map(i => i.id)));
+  for (const it of all) { if (it.status !== 'warn') continue; const n = seen.filter(s => s.has(it.id)).length; if (!n) continue;
+    it.repeat = n + 1; const k = knownAll[it.id], exp = k && (String(k).match(/期限\s*(\d{4}-\d{2}-\d{2})/) || [])[1];
+    // 「⚠️ だけ」と決めた検査（項目の warnOnly に、だれがいつ決めたか）は、くり返しても ❌ に上げない。くり返しの回数は出す（v0.97.5 レビュー：ゲーム内 S2）
+    if (it.warnOnly) { it.detail = `くり返し（${it.repeat}回目。⚠️ だけの検査：${it.warnOnly}）：` + it.detail; continue }
+    if (it.repeat >= 3 && k && exp && exp >= today)   // 期限のない登録は通さない（CodeRabbit PR #119）
+      { it.status = 'known'; it.detail = `くり返し（${it.repeat}回目、修正待ち：${k}）` + it.detail }
+    else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }
+    else it.detail = `くり返し（${it.repeat}回目）：` + it.detail } }
+
 const cnt = s => all.filter(i => i.status === s).length;
 const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
-const fails = all.filter(i => i.status === 'fail'), warns = all.filter(i => i.status === 'warn'), fixed = all.filter(i => i.fixed);
+const fails = all.filter(i => i.status === 'fail'), warns = all.filter(i => i.status === 'warn').sort((a, b) => (b.repeat || 0) - (a.repeat || 0)), fixed = all.filter(i => i.fixed);   // くり返しの ⚠️ を上に
 const line = i => `- ${i.title}：${String(i.detail).replace(/\n/g, ' ')}${i.shot ? `（${i.shot.replace(/\.png$/, '.jpg')}）` : ''}`;
 const sha = (process.env.GITHUB_SHA || '').slice(0, 7), when = new Date().toISOString().slice(0, 16).replace('T', ' ');
 const head = `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +

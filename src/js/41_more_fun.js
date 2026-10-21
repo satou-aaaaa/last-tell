@@ -53,7 +53,7 @@ function mfInner(text){const tb=$('table');if(!tb||!text)return;
   mfPlace();clearTimeout(el._p);el._p=setTimeout(()=>{try{mfPlace()}catch(e){}},900);   // 札が配り終わって止まってから、もう1回置き直す
   clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('go');el.hidden=true},MF.innerMs*(typeof SPEED==='function'?Math.max(.6,SPEED()):1))}
 function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)return;
-  el.classList.remove('side');el.style.left='';el.style.width='';   // 右の列に出していても、卓の中の幅で測り直す
+  el.classList.remove('side');el.style.left='';el.style.width='';el.style.translate='';   // 右の列に出していても、卓の中の幅で測り直す
   const T=tb.getBoundingClientRect(),h=el.offsetHeight||28,vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2;
   const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip, #dbtn, .dbadge, .llseats i')].filter(vis).map(e=>e.getBoundingClientRect());
   // D ボタンと席番号（.llseats i）も避ける（v86.4 レビュー：横で D と席4・5を隠した）
@@ -75,6 +75,14 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   let best=ys[0],bc=Infinity;for(const y of ys){const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}
   // まだ少し重なるなら、その近くを 4px ずつ上下にずらして重ならない所を探す（v86.3 レビュー：縦で吹き出しの上の余白に 3px）
   if(bc>0){const b0=best;for(let d=4;d<=48&&bc>0;d+=4)for(const y of [b0-d,b0+d]){if(y<T.top+2||y+h>T.bottom-2)continue;const c=cost(y);if(c<bc){bc=c;best=y}if(!c)break}}
+  // それでも重なるなら、幅を詰めて（折り返す）・左右に少しずらして探す（v0.97.4 レビュー：縦で右端が6番席の席番号の丸に 17px かかった）
+  if(bc>0){let bw='',bdx=0;const ok=y=>y>=T.top+2;
+    for(const f of [0,.8,.66,.54]){if(f)el.style.width=Math.round(Math.min(T.width*f,w)-1)+'px';const w2=el.offsetWidth,h2=el.offsetHeight||h,L0=T.left+(T.width-w2)/2;if(f&&w2>=w)continue;
+      const c2=(x,y)=>avoid.reduce((a,r)=>a+(r.k||1)*Math.max(0,Math.min(x+w2,r.right)-Math.max(x,r.left))*Math.max(0,Math.min(y+h2,r.bottom)-Math.max(y,r.top)),0);
+      const yy=[...new Set([...ys,best].flatMap(y=>[y,y-4,y+4,y-8,y+8,y-16,y+16]))].filter(y=>ok(y)&&y+h2<=T.bottom-2);
+      for(const dx of [0,-16,16,-32,32,-56,56,-80,80]){const x=L0+dx;if(x<T.left+2||x+w2>T.right-2)continue;
+        for(const y of yy){const c=c2(x,y);if(c<bc){bc=c;best=y;bw=f?el.style.width:'';bdx=dx}if(!c)break}if(!bc)break}if(!bc)break}
+    el.style.width=bw;el.style.translate=bdx?bdx+'px 0':''}
   el.style.top=(best-T.top).toFixed(0)+'px'}
 LT.on('layout',()=>{try{mfPlace()}catch(e){}});
 // 心の声が出ているあいだに吹き出しが後から出たら置き直す（v85.1 レビュー：横でケンジの「チェック！」と重なった）

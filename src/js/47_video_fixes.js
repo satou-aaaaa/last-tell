@@ -33,6 +33,10 @@ function vfMine(){
   const turn=!quiet&&!S.handOver&&S.toAct===0&&!S.autoMe&&!$('controls').hidden&&!me.folded;
   if(turn&&!t){t=document.createElement('span');t.className='vfturn';t.textContent='あなたの番';l.prepend(t)}
   if(t)t.hidden=!turn;
+  // 卓の右下の「💬 揺さぶる」などのボタンにかからないよう、横へよける（v0.97.7 CI：WebKit は字が広く、PC で 4px かかった）。ずらしたあと測って、残りを1回足す
+  if(t&&turn)try{t.style.marginLeft='';const R=e=>e.getBoundingClientRect(),bs=[...document.querySelectorAll('#table .needlerow button')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(R);
+    const need=()=>{const a=R(t);let d=0;for(const c of bs)if(a.left<c.right+2&&c.left<a.right+2&&a.top<c.bottom+2&&c.top<a.bottom+2){const l=c.left-2-a.right,r=c.right+2-a.left;d=(c.left+c.right)/2>(a.left+a.right)/2?Math.min(d||0,l):Math.max(d||0,r)}return d};
+    let d=need();for(let i=0;i<2&&d;i++){t.style.marginLeft=((parseFloat(t.style.marginLeft)||0)+d)+'px';d=need()}}catch(e){}
   // 席のマーク
   let b=ava.querySelector(':scope > .vfpos');
   const steal=!!(CFG.goal&&CFG.goal.type==='steal'),sb=S.sbI===0,bb=S.bbI===0;
@@ -69,6 +73,15 @@ potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   if(sd&&ws.length===1){const w=ws[0],h=vfHand(w);t=en?`${w.human?'You win':vfName(w)+' wins'} with ${h}`:`${h}で、${vfName(w)}の勝ちです`}
   else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
+// .vfres が札（場札・自分の札・見せた札）にかかっているか。かかっていたら置き直す（場札も見る：v0.97.5 CI）
+// v0.97.5 CI：6人卓の縦で、帯が前の「オールイン！」の吹き出しにかかったまま残った。帯を置き直しても重なるなら、読み終わった吹き出しのほうを下げる（読みかけは切らない）
+function vfSayYield(d){const D=d.getBoundingClientRect(),now=performance.now(),ov=sy=>{const q=sy.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1};
+  let ss=[...document.querySelectorAll('#sayLayer .say.go,#plates .say.go')].filter(sy=>(sy.textContent||'').trim()&&ov(sy));if(!ss.length)return;
+  try{d._place()}catch(e){}ss=ss.filter(ov);
+  ss.forEach(sy=>{const need=typeof skRead==='function'?skRead(sy.textContent):1100;if(now-(sy._shown||sy._t||0)>=need)sy.classList.remove('go')})}
+// 卓の左下のボタン（💬 話す など）も見る（v0.97.8 CI：WebKit の第14章・縦で、置いたあとに「💬 話す」が出て上へ動き、「あなたの勝ち」の帯の左に 12×11px かかったまま残った。
+// 前は札だけ見ていた。置くとき place() でよける物のうち、あとから出たり動いたりする物はここにも入れる）
+function vfOverCards(d){const D=d.getBoundingClientRect();return [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back), #table .needlerow button:not([hidden])')].some(c=>{if(c.tagName==='BUTTON'&&getComputedStyle(c).visibility==='hidden')return false;const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})}
 function vfResult(){
   // S.vf は次のハンドの分（startHand:before で h＝次の番号）。前のハンドの終わりのまま描き直されたときは出さない（v0.97.0 PR #111：次のハンドの合図の途中で前のハンドの札を作り、次のハンドの勝ち負けが出ずに前の札が残った）
   if(!S||!S.handOver||!S.vf||S.vf.res||S.vf.h!==S.handNo||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
@@ -90,7 +103,7 @@ function vfResult(){
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
   const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
-    const cs=[...document.querySelectorAll('#table .card, #mine .card, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, .felt .spot .mystack, #table .needlerow button, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go')].filter(e=>(e.offsetParent||e.getClientRects().length)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:e.tagName==='BUTTON'?6:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
     const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v*q.k:0)},0)};
@@ -102,8 +115,11 @@ function vfResult(){
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
-  tb.appendChild(d);d._place();LT.cssDone(d,600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
-setTimeout(()=>{try{d._place()}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
+  tb.appendChild(d);d._place();try{vfSayYield(d)}catch(e){}LT.cssDone(d,600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
+setTimeout(()=>{try{d._place();vfSayYield(d)}catch(e){}},300);setTimeout(()=>{try{d._place()}catch(e){}},1200);setTimeout(()=>{try{d._place()}catch(e){}},2400);
+  // 置いたあとで卓が動いても（スクロール・名札や指示の箱が出て卓がずれる）、札にかかったら置き直す。出ているあいだ 0.5秒ごとに見る
+  // （v0.97.5 CI：6人卓の縦で、置いた時より卓が 60px 下がり、「あなたの負け」の帯が場札の上に残った。前は 2.4秒までと、自分の札・見せた札にかかったときだけ置き直していた）
+  {const iv=setInterval(()=>{if(!d.isConnected){clearInterval(iv);return}try{if(vfOverCards(d))d._place();vfSayYield(d)}catch(e){}},500)}   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
   const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
   d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();LT.off('startHand:before',rm)});
@@ -162,5 +178,5 @@ LT.on('renderLine',()=>{try{if(!SC)return;const l=SC.lines[SC.i];if(!Array.isArr
 // ===== D6：人だかりの声は誰の声か分かるように =====
 CROWD.lines=CROWD.lines.map(t=>'（周りの客）'+t);
 // v96.1 CI：6人卓の縦で、勝ち負けの札を置いたあとに自分の札（オールインで開いた札）が上がってきて重なった。layout のたびに、札にかかっていたら置き直す
-LT.on('layout',()=>{try{const e=document.querySelector('#table .vfres');if(!e||!e._place||e._pq)return;const D=e.getBoundingClientRect();
-  if([...document.querySelectorAll('#mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(x){}});
+LT.on('layout',()=>{try{const e=document.querySelector('#table .vfres');if(!e||!e._place||e._pq)return;
+  if(vfOverCards(e)){e._pq=1;requestAnimationFrame(()=>{e._pq=0;try{e._place()}catch(x){}})}}catch(x){}});

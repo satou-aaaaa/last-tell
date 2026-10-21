@@ -127,11 +127,16 @@ const INSPECT = `(() => {
   // 名札の下の行動の語（.ltact、アクションのわかりやすさ 案1）が、席番号・D・チップ・吹き出し・ポットの額・札に重ならないか（その席の伏せ札の上に重ねるのは決めた置き方なので見ない）
   if (!modal) { const okv = e => { if (!e || e.hidden || e.closest('[hidden]')) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') return false; for (let q = e; q && q !== document.body; q = q.parentElement) { const t = getComputedStyle(q); if (t.display === 'none' || +t.opacity === 0) return false } const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2 };
     const acts = [...document.querySelectorAll('.ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off)')].filter(okv);   // .vf*：動画のツッコミの直し（2026-10-17、js/47_video_fixes.js）。#vfLog：直近の5手（js/48_bet_log.js）
-    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
+    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText, #table .needlerow button')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
     for (const el of acts) { const a = el.getBoundingClientRect(); for (const o of others) { if (o === el || o.contains(el) || el.contains(o)) continue; const c = o.getBoundingClientRect();
       const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
       const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
       if (w > 4 && h > 4 && (!chip || w * h > .25 * a.width * a.height)) { out.push({ kind: '重なり', el: desc(el), by: desc(o) + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
+    // 一覧の足し忘れに備えて：勝ち負けの帯と、見えている押せる部品すべてを箱で比べ、1px でも重なれば ❌（v0.97.5 レビュー：一覧に無かった 💬 揺さぶるが帯の頭に乗った。点で見ると細い重なりを外す：CodeRabbit PR #120）
+    for (const el of document.querySelectorAll('.vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect(); if (a.width < 4) continue;
+      for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
+        const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 1 && h > 1 && !out.some(o => o.kind === '重なり' && o.el === desc(el) && String(o.by || '').startsWith(desc(bt)))) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
@@ -217,12 +222,48 @@ const INSPECT = `(() => {
 
 // 場所の記録（本線が手元で再現できないブラウザの崩れを、数字で見るため）。ui/rects.json（WebKit は rects_WebKit.json）
 // 足したいときは QA_RECTS="セレクタ,セレクタ" で増やせる
-const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '.spot .mystack', '#mine .me-r'].concat((process.env.QA_RECTS || '').split(',').filter(Boolean));
+const RECT_SELS = ['#felt', '#boardCards', '#boardCards .card', '#felt .spot .hand .card', '.spot .mystack', '#mine .me-r'].concat((process.env.QA_RECTS || '').split(',').filter(Boolean));
 const RECTS = `(()=>{const o={};for(const q of ${JSON.stringify(RECT_SELS)}){const a=[...document.querySelectorAll(q)].slice(0,8).map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),ow:e.offsetWidth,oh:e.offsetHeight,tf:c.transform==='none'?undefined:c.transform,ts:c.transformStyle==='flat'?undefined:c.transformStyle,pv:c.perspective==='none'?undefined:c.perspective,spot:(e.closest('.spot')||{}).id,tl:e.style.translate||undefined,ca:e.dataset.ca}});if(a.length)o[q]=a}return o})()`;
 
+// 描かれた場所で、場札・見せた札に何かがかぶっていないか（v0.97.4 レビュー）
+//   WebKit は zoom:3 の卓の中を getBoundingClientRect とずれた所に描き、場所の数字で見る検査がすべて ✅ のまま、場札に「あなたの勝ち」の帯がかぶっていた。
+//   場札・見せた札を赤紫に塗って撮り、上に乗る部品（帯・名札・顔）を消してもう一度撮る。赤紫の点が消すと増えた分＝かぶって隠れていた分。
+//   どの部品かは、1種類ずつ消して増えた分で名前を出す（ブラウザによらず同じ物差し）
+const COVER_PX = 150, COVER_FRAC = .04;
+const COVER_MARK = '#boardCards .card:not(.slot):not(.back), #board2 .card:not(.slot):not(.back), .felt .spot .hand:not(.folded):not(.muck):not(.mucked-away) .card:not(.back)';
+const COVER_BY = [['「あなたの勝ち・負け」の帯', '.vfres'], ['名札', '#plates .plate'], ['顔', '#busts .bust']];
+async function paintCover(page) {
+  const count = async () => { const b = await page.screenshot({ scale: 'css' }); return page.evaluate(async b64 => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode(); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let o = 0; o < d.length; o += 4) { const r = d[o], g = d[o + 1], bb = d[o + 2]; if (r > 60 && bb > 60 && g < .45 * Math.min(r, bb) && Math.abs(r - bb) < .35 * Math.max(r, bb)) n++ } return n }, b.toString('base64')) };
+  const hide = sel => page.evaluate(s => { let st = document.getElementById('qaCoverHide'); if (!st) { st = document.createElement('style'); st.id = 'qaCoverHide'; document.head.appendChild(st) } st.textContent = s ? s + '{visibility:hidden!important}' : '' }, sel);
+  try {
+    const n = await page.evaluate(sel => { const st = document.createElement('style'); st.id = 'qaCoverMark'; st.textContent = '[data-qa-cover],[data-qa-cover] *{background:#ff00ff!important;fill:#ff00ff!important;color:#ff00ff!important;box-shadow:none!important;border-color:#ff00ff!important;opacity:1!important;filter:none!important;text-shadow:none!important}'; document.head.appendChild(st);
+      let k = 0; document.querySelectorAll(sel).forEach(e => { if (e.offsetParent && e.getBoundingClientRect().width > 2) { e.setAttribute('data-qa-cover', ''); k++ } }); return k }, COVER_MARK);
+    if (!n) return { n: 0 };
+    await page.waitForTimeout(120);
+    const shown = await count();
+    await hide(COVER_BY.map(x => x[1]).join(','));
+    await page.waitForTimeout(120);
+    const all = await count();
+    const by = [];
+    if (all - shown > 40) for (const [nm, sel] of COVER_BY) { await hide(sel); await page.waitForTimeout(80); const c = await count(); if (c - shown > 20) by.push(`${nm} ${c - shown}px²`) }
+    return { n, shown, all, lost: all - shown, by };
+  } catch (e) { return { err: String(e.message || e).slice(0, 80) } }
+  finally { await page.evaluate(() => { document.querySelectorAll('[data-qa-cover]').forEach(e => e.removeAttribute('data-qa-cover')); for (const id of ['qaCoverMark', 'qaCoverHide']) { const s = document.getElementById(id); if (s) s.remove() } }).catch(() => {}) }
+}
+// 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
+const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
+        // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
+        .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+          const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
+          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) };
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
+  // どこで落ちたかを残す（v0.97.6 CI：WebKit で「フリー6人_ハンドの終わり・縦」だけ、撮り直しても4回続けてページが閉じた）
+  let step = '開く', crashed = false, closed = false; page.on('crash', () => { crashed = true }); page.on('close', () => { closed = true });
   try {
     await page.evaluate(scene.prep);
     const t0 = Date.now();
@@ -259,22 +300,27 @@ async function shoot(browser, file, scene, vp, dir) {
         vf: !!v, vfOn: !!(v && vis(v) && vr.width > 2 && vr.top >= 0 && vr.bottom <= innerHeight && vr.left >= 0 && vr.right <= innerWidth), vfTop: v ? v.style.top : '', vfOut: !!(v && v.classList.contains('out')), vfDone: !!(S.vf && S.vf.res),
         vfWin: !!(v && v.classList.contains('win')), vfH: v ? (v.dataset.h || '') : '', hand: S.handNo, fb: !!(typeof CFG !== 'undefined' && CFG.flashback), vfText: v ? v.textContent.slice(0, 40) : '',
         chips: pc ? [...pc.querySelectorAll('.chip')].filter(vis).length : -1, sign: vis(ps) && /\d/.test((ps && ps.textContent) || ''), quiet: typeof VF !== 'undefined' && VF.quiet ? !!VF.quiet() : null,
+        shownBad: (() => { const out = []; S.players.forEach((p, i) => { if (!i || !p || p.out || p.folded || !p.show) return; const sp = $('spot' + i); if (sp && sp.querySelector('.hand.mucked-away')) return; const cs = sp ? [...sp.querySelectorAll('.hand .card')] : [];   // 負けて集められた手は見ない
+          if (!cs.length) { out.push((p.name || '席' + (i + 1)) + '：札なし'); return }
+          cs.forEach((c, k) => { let op = 1; for (let x = c; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity; const r = c.getBoundingClientRect(), run = c.getAnimations ? c.getAnimations().filter(a => a.playState === 'running').map(a => a.animationName || a.transitionProperty || 'script') : [];
+            if (op < .9 || r.width < 8 || run.length) out.push((p.name || '席' + (i + 1)) + ' ' + (k + 1) + '枚め：' + [op < .9 ? '不透明度 ' + op.toFixed(2) : '', r.width < 8 ? '幅 ' + Math.round(r.width) + 'px（横向きのまま）' : '', run.length ? '動きの途中 ' + run.join('/') : ''].filter(Boolean).join('・')) }) }); return out })(),
         dbg: `pushing=${!!S.potPushing} potfly=${document.querySelectorAll('#table .potfly').length} potmove=${document.querySelectorAll('#table .potmove').length}${v ? ` vf=${v.className}/${(+getComputedStyle(v).opacity).toFixed(2)}/${[vr.left, vr.top, vr.width, vr.height].map(Math.round).join(',')}` : ''} wonPile=${document.querySelectorAll('#table .won-pile').length}${S.wonPile ? '(' + Object.keys(S.wonPile.amt).join(',') + ')' : ''} anim=${document.getAnimations ? document.getAnimations().map(a => a.playState).join(',').slice(0, 60) : '?'} potPile=${S.potPile ? S.potPile.chips : '-'}` } }).catch(e => ({ err: String(e.message).slice(0, 80) }));
     const hsReady = x => !x || x.err || !((x.won > 0 && (x.chips > 0 || x.sign)) || (x.iWon && !x.quiet && !x.vfOn && !x.vfOut));
     // 何を待ったか（チップ・額・勝ち負けの札）を残す（v0.97.1 PR #112：WebKit で 1.5〜3秒待ったが、何が遅いのか分からなかった）
     const hsWhy = x => !x || x.err ? '' : [x.won > 0 && x.chips > 0 ? `チップ${x.chips}枚` : '', x.won > 0 && x.sign ? '額' : '', x.iWon && !x.quiet && !x.vfOn && !x.vfOut ? (x.vf ? '札が画面の外か透明' : '札なし') : ''].filter(Boolean).join('+');
     let hs0 = null, waitMs = 0, waitWhy = '', lastWhy = '';
     if (scene.handEnd) { const tw = Date.now(); hs0 = await readHs(); while (!hsReady(hs0) && Date.now() - tw < 4000) { const w = hsWhy(hs0); if (w && w !== lastWhy) lastWhy = w, waitWhy += (waitWhy ? ' → ' : '') + `${Date.now() - tw}ms:${w}`; await page.waitForTimeout(100); hs0 = await readHs() } waitMs = Date.now() - tw }
-    const issues = await page.evaluate(INSPECT);
+    step = '重なりを見る'; const issues = await page.evaluate(INSPECT);
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
-    if (scene.measure === 'inner') face = await page.evaluate(sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
-        .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
-        // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
-        .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
-          const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
-          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) }, scene.sel || '#mfInner');
+    if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
+    // 心の声：D（ディーラーの印）を全席に動かして、そのたびに置き直して測る（v0.97.4 レビュー：D の位置しだいで字幕が D と席番号にかかり、版ごとに ⚠️ が出たり消えたりした）
+    let innerD = null;
+    if (scene.key === 'フリー6人_心の声') { innerD = [];
+      const n = await page.evaluate(() => S.players.length), d0 = await page.evaluate(() => S.dealer);
+      for (let d = 0; d < n; d++) { await page.evaluate(d => { S.dealer = d; render(); try { layoutSoon() } catch (e) {} }, d); await page.waitForTimeout(400); await page.evaluate(() => { try { mfPlace() } catch (e) {} }); await page.waitForTimeout(150);
+        const ov = await page.evaluate(INNER_OV, '#mfInner'); if (Array.isArray(ov) && ov.length) innerD.push(`D が席${d + 1}：` + ov.join('、')) }
+      await page.evaluate(d => { S.dealer = d; render(); try { layoutSoon() } catch (e) {} }, d0); await page.waitForTimeout(400) }
     if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
       const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
     // ディーラーの呼び名：#dcall に席番号（.sn）と「〜さん／〜の方」が入っているか
@@ -295,7 +341,7 @@ async function shoot(browser, file, scene, vp, dir) {
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent || (e.classList.contains('say') && !(e.textContent || '').trim())) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
       return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen), tip: typeof tipK !== 'undefined' && tipK ? String(tipK) : '', mwait: !!($('sensei') && $('sensei').classList.contains('mwait')) } }) : null;
-    const rects = await page.evaluate(RECTS);
+    step = '場所を測る・撮る'; const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
     // 止まった動き（v0.97.3 レビュー：WebKit で動きが途中で止まり、終わったら消す・見せる処理が走らなかった。ポットの山・札が重なったまま・透明の「あなたの負け」）
@@ -304,14 +350,21 @@ async function shoot(browser, file, scene, vp, dir) {
     const plates = await page.evaluate(() => { try { const tb = document.getElementById('table'); if (!tb || !tb.offsetParent || (document.getElementById('game') || {}).hidden) return null; const miss = []; (S.players || []).forEach((p, i) => { if (!i || !p || p.out) return; const e = document.getElementById('plate' + i); let op = 1;
       for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity;
       const r = e && e.getBoundingClientRect(), ok = e && e.offsetParent && !e.hidden && getComputedStyle(e).visibility !== 'hidden' && r.width > 2 && r.height > 2 && op > .05 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
-      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return null } }).catch(() => null);
-    const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => ({ a, ct: a.currentTime })); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return -1 } }).catch(() => -1);
-    let stall = null;
-    if (stallRem >= 0) { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
-      stall = await page.evaluate(() => { const out = []; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected) continue;
-        const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）',   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
-        who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
-        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return out }).catch(() => null) }
+      if (!ok) miss.push((p.name || '席' + (i + 1)) + (!e ? '（名札なし）' : !e.offsetParent || e.hidden || getComputedStyle(e).visibility === 'hidden' ? '（表示なし）' : op <= .05 ? '（透明）' : r.width <= 2 ? '（大きさ0）' : '（画面の外）')) }); return miss } catch (e) { return { err: String(e.message || e).slice(0, 80) } } }).catch(e => ({ err: String(e.message || e).slice(0, 80) }));   // 検査の失敗は ❌ にする（null は場面が対象外のときだけ。CodeRabbit PR #116）
+    step = '止まった動き'; const stallRem = await page.evaluate(() => { try { window.__qaSt = document.getAnimations().filter(a => { const t = a.effect && a.effect.getComputedTiming(); return a.playState === 'running' && t && isFinite(t.endTime) }).map(a => { const t = a.effect.getComputedTiming(); return { a, ct: a.currentTime, rem: t.endTime - (t.localTime || 0) } }); window.__qaSt0 = performance.now(); return Math.max(0, ...window.__qaSt.map(x => { const t = x.a.effect.getComputedTiming(); return t.endTime - (t.localTime || 0) })) } catch (e) { return 'err:' + String(e.message || e).slice(0, 80) } }).catch(e => 'err:' + String(e.message || e).slice(0, 80));
+    let stall = typeof stallRem === 'string' ? { err: stallRem.slice(4) } : null;
+    // 残りの長い動きも見落とさない（CodeRabbit PR #118）：止まっていて期限前のものがあれば、期限（最大6秒）まで待って見直す。それでも期限前のものは「見きれず」として結果に残す
+    let stallLong = [];
+    if (typeof stallRem === 'number') { await page.waitForTimeout(Math.min(2500, stallRem + 1000));
+      const STALL_EVAL = () => { const out = [], wait = [], long = []; const waited = performance.now() - window.__qaSt0; for (const x of window.__qaSt || []) { const a = x.a, el = a.effect && a.effect.target; if (a.playState !== 'running' || a.currentTime !== x.ct || !el || !el.isConnected) continue;
+        const nm = typeof CSSTransition !== 'undefined' && a instanceof CSSTransition ? 'transition:' + a.transitionProperty : a.animationName || a.id || '動き（script）';   // CSS の transition は script の動きと分ける（v0.97.3 CI：#cam・.pupils の transition が「script」と出た）
+        if (x.rem + 700 > waited) { wait.push(x.rem + 700 - waited); long.push(nm); continue }   // ゲームの見張り（LT.sweep）が終わらせるまでの時間（残り＋300ms＋見る間隔）をすぎたものだけ
+        const who = el.id ? '#' + el.id : (el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''));
+        const s = nm + '←' + who; if (!out.includes(s)) out.push(s) } return { out, wait: Math.max(0, ...wait), long: [...new Set(long)] } };
+      let sr = await page.evaluate(STALL_EVAL).catch(e => ({ err: String(e.message || e).slice(0, 80) }));
+      if (!sr.err && sr.long.length) { const spent = await page.evaluate(() => performance.now() - window.__qaSt0).catch(() => 6000), more = Math.min(sr.wait + 100, 6000 - spent);
+        if (more > 0) { await page.waitForTimeout(more); sr = await page.evaluate(STALL_EVAL).catch(e => ({ err: String(e.message || e).slice(0, 80) })) } }
+      stall = sr.err ? sr : sr.out; stallLong = sr.err ? [] : sr.long }
     // 撮ったあとでもう一度、見せた札の角を測る（v96.2 レビュー：測ったあとで名札が伸び、撮った画面では札が名札の下に入っていた）
     if (scene.handEnd) for (const x of await page.evaluate(INSPECT)) if (/^見せた札の角/.test(x.el || '') && !issues.some(y => y.el === x.el && y.by === x.by)) issues.push(x);
     // 再発防止（v0.97.0）：名札は撮ったあとにも伸びる（勝ち・役の名前・フォールド）。1秒たっても見せた札の角が隠れたままなら、人にもそう見えている。
@@ -321,11 +374,12 @@ async function shoot(browser, file, scene, vp, dir) {
     // WebKit の .felt の中は getBoundingClientRect が描かれる場所とずれるので、場所でなく状態で見る（両ブラウザで同じ物差し）
     // 撮ってから1秒あとの状態も残す（撮った時の状態は hs0）
     const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
+    step = '描かれた場所のかぶり'; const cover = scene.handEnd ? await paintCover(page) : null;   // 描かれた場所で場札・見せた札にかぶるもの（v0.97.4 レビュー）
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, lite, call, rs, hs, stall, plates, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
-    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) }], shot: null, errors: [] };
+    return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
 }
 
@@ -393,12 +447,22 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
       if (bad.length) bad.push(`［${x.dbg}］`) }
     items.push({ id: `ui:handend-state:${r.scene}:${r.vp}`, title: `ハンドの終わりにポットが勝った人へ渡り、勝ったら「あなたの勝ち」が出る（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : wait > 1500 ? 'warn' : 'ok',
       detail: (bad.length ? bad.join('・') + '（4秒待っても、そろわなかった）' + why : wait > 1500 ? `ポットが渡り終わるまで ${wait}ms 待った${why}（1.5秒より長い。Mac の Safari でももたついて見える見込み）［${x.dbg}］` : wait >= 200 ? `撮る前に ${wait}ms 待った` : '') + ((r.errors || []).length ? '。ページのエラー：' + r.errors.slice(0, 2).join(' / ').slice(0, 160) : '') }) }
-  for (const r of res) if (r.plates) items.push({ id: `ui:plates:${r.scene}:${r.vp}`, title: `座っている相手の名札が全員見えている（${r.scene}・${r.vp}）`, status: r.plates.length ? 'fail' : 'ok', detail: r.plates.length ? '見えない名札：' + r.plates.join('、') : '' });
+  for (const r of res) if (r.plates) items.push({ id: `ui:plates:${r.scene}:${r.vp}`, title: `座っている相手の名札が全員見えている（${r.scene}・${r.vp}）`, status: r.plates.err || r.plates.length ? 'fail' : 'ok', detail: r.plates.err ? '測れなかった：' + r.plates.err : r.plates.length ? '見えない名札：' + r.plates.join('、') : '' });
   // 止まった動き：ゲームが時間で終わらせるはずの動き（script の動き＝LT.anim、CSS の vfIn・ltFlop/ltTurn/ltBack・ltDeal）が止まっていたら ❌、ほかの CSS の動きは ⚠️（v0.97.3）
-  const STALL_OWN = /^(動き（script）|vfIn|ltFlop|ltTurn|ltBack|ltBackT|ltDeal|llDealBack2?)←/;
-  for (const r of res) if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
-    items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length ? 'warn' : 'ok',
-      detail: r.stall.length ? '1秒以上進まない動き：' + r.stall.slice(0, 5).join('、') + (r.stall.length > 5 ? ` ほか${r.stall.length - 5}` : '') + (own.length ? '（ゲームが時間で終えるはずの動き。LT.anim / LT.cssDone を通っていない）' : '') : '' }) }
+  // v0.97.3 レビュー後：ゲームの見張り（LT.sweep）がすべての終わりのある動きを時間で終えるので、止まった動きは種類を問わず ❌（WebKit でも）
+  const STALL_OWN = /./;
+  for (const r of res) if (r.innerD) items.push({ id: `ui:innerD:${r.vp}`, title: `心の声の字幕が、D がどの席にあっても重ならない（${r.vp}）`, status: r.innerD.length ? 'warn' : 'ok', detail: r.innerD.slice(0, 4).join(' ／ ') + (r.innerD.length > 4 ? ` ほか${r.innerD.length - 4}` : '') });
+  // 描かれた場所で場札・見せた札にかぶる部品（v0.97.4 レビュー）。隠れた点が 塗った点の COVER_FRAC 以上、かつ COVER_PX 以上で ❌（ブラウザによらない）
+  for (const r of res) if (r.cover) { const c = r.cover, bad = c.err || c.lost >= COVER_PX && c.lost >= COVER_FRAC * c.all;
+    items.push({ id: `ui:cover:${r.scene}:${r.vp}`, title: `場札・見せた札に帯・名札・顔がかぶっていない（描かれた場所で。${r.scene}・${r.vp}）`, status: bad ? 'fail' : 'ok',
+      detail: c.err ? '測れなかった：' + c.err : !c.n ? '' : `札 ${c.n}枚、隠れた点 ${c.lost}px²／${c.all}px²` + (c.by && c.by.length ? '：' + c.by.join('、') : '') }) }
+  for (const r of res) if (r.stall && r.stall.err) items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: 'fail', detail: '測れなかった：' + r.stall.err });
+  else if (r.stall) { const own = r.stall.filter(x => STALL_OWN.test(x)), other = r.stall.filter(x => !STALL_OWN.test(x));
+    items.push({ id: `ui:stall:${r.scene}:${r.vp}`, title: `止まったままの動きがない（${r.scene}・${r.vp}）`, status: own.length ? 'fail' : other.length || (r.stallLong || []).length ? 'warn' : 'ok',
+      detail: (r.stall.length ? '1秒以上進まない動き：' + r.stall.slice(0, 5).join('、') + (r.stall.length > 5 ? ` ほか${r.stall.length - 5}` : '') + (own.length ? '（LT.sweep が時間で終えるはずの動き）' : '') : '') + ((r.stallLong || []).length ? `${r.stall.length ? '／' : ''}止まっているが残りが長く6秒では見きれなかった：` + r.stallLong.slice(0, 5).join('、') : '') }) }
+  // 見せた相手の札が見える（不透明度 0.9 以上・幅 8px 以上・動きが終わっている。高さは卓の奥行きで 22px ほどになる札もあるので見ない）（v0.97.3 レビュー：WebKit 6人卓の縦で、勝った相手の見せた札が透明・横向きのまま。状態で見るので WebKit でも ❌）
+  for (const r of res) if (r.hs && !r.hs.err) { const x = r.hs; const bad = x.shownBad || [];
+    items.push({ id: `ui:shown:${r.scene}:${r.vp}`, title: `見せた相手の札が見える（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : 'ok', detail: bad.length ? '見えない札：' + bad.slice(0, 4).join('、') + '（撮って1秒あと）' : '' }) }
   for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
     status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',

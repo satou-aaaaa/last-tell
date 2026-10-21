@@ -14,7 +14,7 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
   hands.forEach(h=>{if(h.dataset.syb&&(!on||h.classList.contains('folded')||h.classList.contains('muck'))){h.style.translate='';h.style.scale='';h.classList.remove('sybs');delete h.dataset.syb}});
   document.querySelectorAll('#plates [data-sybp]').forEach(p=>{p.style.translate='';delete p.dataset.sybp});   // 前に上へ逃がした名札を戻してから測る
   if(!on)return;
-  const R=e=>e.getBoundingClientRect(),board=[...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(!board.length)return;
+  const R=e=>e.getBoundingClientRect(),board=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(!board.length)return;
   let moved=0;
   hands.forEach(h=>{if(h.classList.contains('folded')||h.classList.contains('muck'))return;
     const cs=[...h.querySelectorAll('.card:not(.back):not(.slot)')].filter(e=>e.offsetParent);if(!cs.length)return;
@@ -95,7 +95,12 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
           // 山どうしが重ならない先を選ぶ。どこもなければ、札を隠すよりは山どうしが重なるほうを選ぶ
           let ds=d2.filter(d=>!hit(d,ot));if(!ds.length)ds=d2.filter(d=>!hit(d,[]));if(!ds.length)continue;const d=ds[0];
         const sp=m.closest('.spot'),kx=sp&&sp.offsetWidth?R(sp).width/sp.offsetWidth:1,[x0,y0]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);
-        m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
+        m.style.translate=`${(x0+d/(kx||1)).toFixed(1)}px ${y0}px`;
+        // 卓は3Dで倒してあるので、席の幅から出した倍率（kx）は奥行きで変わり、ずらした量が足りないことがある（v0.97.7 CI：6人卓の横で 9px 足りず、隣の見せた札の角に乗った）。
+        // ずらしたあとの場所を測って、狙った場所との差を2回まで足し直す
+        const goal=a.l+d,bx=()=>{const q=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(R(m).width>2)q.push(R(m));return q.length?Math.min(...q.map(r=>r.left)):null};
+        for(let it=0;it<2;it++){const nl=bx();if(nl==null)break;const res=goal-nl;if(Math.abs(res)<=1)break;const [x1]=(m.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);m.style.translate=`${(x1+res/(kx||1)).toFixed(1)}px ${y0}px`}
+        a={l:a.l+d,r:a.r+d,t:a.t,b:a.b}}}})}catch(e){}
   // 札を動かしたら、勝ち負けの札（.vfres）も置き直す（v96.1 CI：6人卓の縦で、動いた見せた札に .vfres がかかった）
   if(moved){const v=document.querySelector('#table .vfres');if(v&&v._place)try{v._place()}catch(e){}
     // 席番号も、動いた札の横に置き直す（v96.4 レビュー：WebKit で席番号「3」「4」が場札に乗った）
@@ -112,3 +117,9 @@ if(typeof chipAvoid==='function'){const _ca=chipAvoid;chipAvoid=function(){const
 if(typeof ResizeObserver==='function'){const _sybRO=new ResizeObserver(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}});
   const _sybObs=()=>{document.querySelectorAll('#plates .plate').forEach(p=>{if(!p._sybRO){p._sybRO=1;_sybRO.observe(p)}})};
   LT.on('layout',()=>{try{_sybObs()}catch(e){}})}
+// ハンドの終わりのあいだ 0.5秒ごとに、チップの山がほかの席の見せた札にかかっていないかを見て、かかっていたら置き直す（1ハンドに3回まで）
+// （v0.97.5 CI：6人卓の横で、700ms・1600ms の測り直しのあとに山が見せた札の角にかかったまま残った。時間で決めた回数だけでは、あとの動きに追いつかない）
+setInterval(()=>{try{if(!S||!S.handOver||$('game').hidden)return;if(S._sybW!==S.handNo){S._sybW=S.handNo;S._sybN=0}if(S._sybN>=3)return;
+  const R=e=>e.getBoundingClientRect(),sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.back):not(.slot)')].map(c=>[c.closest('.spot'),R(c)]).filter(x=>x[1].width>2);if(!sh.length)return;
+  const bad=[...document.querySelectorAll('#felt .spot .mystack')].some(m=>{const a=R(m),sp=m.closest('.spot');return a.width>2&&sh.some(([s,c])=>s!==sp&&a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)});
+  if(bad){S._sybN++;showYieldBoard()}}catch(e){}},500);
