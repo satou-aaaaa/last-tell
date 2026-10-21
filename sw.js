@@ -1,10 +1,10 @@
 // LAST TELL のオフライン用 Service Worker。
-// ゲーム本体（index.html）はネット優先：つながるときは常に最新版、つながらないとき・4秒待っても返事が来ないときは保存した版で起動する。
+// ゲーム本体（index.html）はネット優先：つながるときは常に最新版、つながらないとき・3秒待っても返事が来ないときは保存した版で起動する。
 // プライバシーポリシー・利用規約・サポート（日本語・英語）とフォントのライセンス全文も最初に保存し、オフラインでも開けるようにする。
 // 保存していないページをオフラインで開いたときは、ゲームではなく「オフラインです」を出す。
 // アイコンとフォントは保存した版を優先する。
 // VERSION は tools/build_index.py が公開のたびに書き換える。
-const VERSION = 'lt-20261021022030';
+const VERSION = 'lt-20261021024601';
 // ゲームから開くページを足したら、ここにも足す（qa/checks/pages.js が、足りないと ❌ にする）
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
@@ -51,14 +51,17 @@ self.addEventListener('fetch', e => {
     const scope = new URL(self.registration.scope).pathname;
     const isTop = url.pathname === scope || url.pathname === scope + 'index.html';
     const saved = () => caches.match(req, { ignoreSearch: true }).then(r => r || (isTop ? caches.match('./index.html') : undefined));
-    // ネットの返事は届いたら保存する（4秒を過ぎて保存した版を出したあとも、読み込みは続けて次に開くときの版にする）
+    // ネットの返事は届いたら保存する（3秒を過ぎて保存した版を出したあとも、読み込みは続けて次に開くときの版にする）
+    let saving = Promise.resolve();
     const net = fetch(req).then(res => {
-      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+      if (res.ok) { const copy = res.clone(); saving = caches.open(VERSION).then(c => c.put(req, copy)); }   // 写しは返す前に取る（返した本体は読まれてしまう）
       return res;
     });
+    // 保存（put）が終わるまで e.waitUntil で待たせる。保存した版を先に出したあと、sw が止められて新しい版を保存しそこねないように（v0.97.8 レビュー）
+    e.waitUntil(net.then(() => saving).catch(() => {}));
     // 電波はあるのに返事が来ない（地下鉄・混んだ Wi-Fi）と fetch は失敗せず待ち続け、画面が真っ白のままになる（改善提案 第12回 0-2）。
-    // 待つのは4秒まで。それより遅ければ保存した版を出す。保存した版がない初回は、そのままネットを待つ
-    const late = new Promise(r => setTimeout(r, 4000)).then(saved).then(r => r || net);
+    // 待つのは3秒まで（v0.97.9：4秒だとタイトルが出るまで約5.2秒で、検査の6秒に近かった）。それより遅ければ保存した版を出す。保存した版がない初回は、そのままネットを待つ
+    const late = new Promise(r => setTimeout(r, 3000)).then(saved).then(r => r || net);
     e.respondWith(Promise.race([net, late])
       .catch(() => saved().then(r => r || offline())));
     return;
