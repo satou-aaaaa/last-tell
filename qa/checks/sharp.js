@@ -141,12 +141,15 @@ async function shoot(browser, file, vp, dir) {
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });
     const faceSel = `#bust${seat} .body svg`;
     const face0 = seat > 0 ? (await measure(page, faceSel, 1, k)).q : null;
-    let face1 = null;
+    let face1 = null, sx0 = null, sx1 = null;   // 寄る前・寄ったあとの卓の縮め（--sx）。寄っている間に変わったら ❌（v0.97.12 CI：顔のアップ中に卓を縮めてぼやけた）
     if (seat > 0 && await page.evaluate(() => typeof camTo === 'function' && !!document.getElementById('cam'))) {
+      const sxOf = () => page.evaluate(() => { const g = document.querySelector('#game .gwrap'); return g ? g.dataset.sx || '0' : '0' });
+      sx0 = await sxOf();
       await page.evaluate(i => camTo(i, 'tell'), seat);
       for (let last = '', t1 = Date.now(); Date.now() - t1 < 4000; await page.waitForTimeout(250)) { const t = await page.evaluate(() => getComputedStyle(document.getElementById('cam')).transform); if (t === last) break; last = t }
       await page.waitForTimeout(500);
       face1 = (await measure(page, faceSel, 1, k)).q;
+      sx1 = await sxOf();
     }
     // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
     let gapTries = null, hitKeep = null;
@@ -166,7 +169,7 @@ async function shoot(browser, file, vp, dir) {
       }
       gapMax = keep; await page.waitForTimeout(300) }
     const hit = hitKeep || hitStat; hitStat = null;
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries, hit };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, sx0, sx1, seat, tries, gap: gapMax, gapTries, hit };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
   } finally { await ctx.close() }
 }
 
@@ -192,6 +195,8 @@ async function run({ browser, file, dir }) {
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
     items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
       detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
+    items.push({ id: `sharp:camsx:${vp.key}`, title: `顔のアップの間に卓の大きさが変わらない（${vp.key}）`, status: r.sx0 == null ? 'fail' : r.sx0 !== r.sx1 ? 'fail' : 'ok',
+      detail: r.sx0 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `卓の縮め 寄る前 ${r.sx0}px → 寄ったあと ${r.sx1}px${r.sx0 !== r.sx1 ? '：寄って大きく見える場札を「手札にかかる」と測って縮めている（30c の barSync はカメラが寄っている間は判断しない）' : ''}` });
   }
   return { name: '画質（高精細の画面でくっきりしているか）', items };
 }

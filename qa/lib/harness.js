@@ -187,12 +187,15 @@ async function startBot(page, opts = {}) {
 
 // 終わるまで待つ。手が進まないまま stallMs 過ぎたら「止まった」とする
 async function runUntilDone(page, { timeoutMs = 120000, stallMs = 15000 } = {}) {
-  const t0 = Date.now();
+  const t0 = Date.now(), tks = []; let starved = 0;
   while (true) {
     await page.waitForTimeout(250);
-    const st = await page.evaluate(() => ({ done: __bot.done, hands: __bot.hands, idle: Date.now() - __bot.stuckAt }));
+    const st = await page.evaluate(() => ({ done: __bot.done, hands: __bot.hands, idle: Date.now() - __bot.stuckAt, tk: __bot.tickN || 0 }));
+    tks.push([Date.now(), st.tk]); while (tks.length > 2 && tks[1][0] < Date.now() - 20000) tks.shift();
     if (st.done) return { status: 'done' };
-    if (st.idle > stallMs) return { status: 'stalled' };
+    // ボットのタイマー（4ms ごと）が 20秒で 200回も回っていないときは、ゲームが止まったのでなくページ全体が詰まっている（実行機が混んでいる）。
+    // 自動対戦（checks/fuzz.js）と同じく 60秒まで待ち足す（PR #128 の CI：rules のフリー対戦が1ハンド目で「止まった」が、長い処理が合計19秒だった）
+    if (st.idle > stallMs) { if (st.tk - tks[0][1] < 200) { if (!starved) starved = Date.now(); if (Date.now() - starved < 60000) continue } return { status: 'stalled', starvedMs: starved ? Date.now() - starved : 0 } }   // 待ち足すのは実際の時間で60秒まで（CodeRabbit PR #128）
     if (Date.now() - t0 > timeoutMs) return { status: 'timeout' };
   }
 }
