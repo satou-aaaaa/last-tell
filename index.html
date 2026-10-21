@@ -2411,7 +2411,7 @@ html:not(.pcw) #pcAir{display:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.2';
+const APP_VERSION='0.98.3';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -13376,8 +13376,9 @@ Rules.kata={
     return Object.assign(Rules.kata.base(k),{perm:[0,1,2,3],alt:'',ord:[0,1,2]})},
   // 保存の「直近の型」を配列に（前の版は数字1つ）。最大3つ、古い順
   recent(v){const a=Array.isArray(v)?v:v===undefined||v===null||v===''?[]:[v];return a.filter(x=>typeof x==='number'||typeof x==='string'&&x.trim()!=='').map(x=>+x).filter(x=>Number.isInteger(x)&&x>=0).slice(-3)},
-  // 直近に使った型を避けて選ぶ（直近3回。型が4つ以下なら直近 型の数−1 回）
-  pick(n,recent,rnd){const ex=recent.slice(-Math.min(3,n-1)),c=[];for(let i=0;i<n;i++)if(!ex.includes(i))c.push(i);const l=c.length?c:[...Array(n).keys()];return l[Math.floor(rnd()*l.length)]},
+  // 直近に使った型を避けて選ぶ（直近 ex(n) 回。いつも2つ以上から選べるように 型の数−2 回まで。3型なら直前の1つだけ外す。v0.98.2 は 型の数−1 回で、3型が 012012… と決まった順に回った）
+  ex(n){return Math.max(1,Math.min(3,n-2))},
+  pick(n,recent,rnd){const ex=recent.slice(-Rules.kata.ex(n)),c=[];for(let i=0;i<n;i++)if(!ex.includes(i))c.push(i);const l=c.length?c:[...Array(n).keys()];return l[Math.floor(rnd()*l.length)]},
 };
 // @unit-end deal_mod
 

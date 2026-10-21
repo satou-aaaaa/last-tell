@@ -81,6 +81,8 @@ async function measure(page, sel, n, k) {
   return { q: out.length ? Math.min(...out) : null, n: out.length };   // いちばん甘い部品で判定する（平均にすると、ぼやけた1枚が隠れる。CodeRabbit PR #107）。測れた数も返す
 }
 const r2 = v => v == null ? '—' : v.toFixed(2);
+// 顔の細かさは、息づかい・まばたきの動きで1枚ごとにぶれる（WebKit PC で寄る前 1.36〜1.64）。3枚撮って真ん中の値で見る（v0.98.3 CI：寄る前 1.57 の1枚に当たって 0.91倍で ❌）
+async function measureMid(page, sel, k) { const v = []; for (let i = 0; i < 3; i++) { if (i) await page.waitForTimeout(180); const q = (await measure(page, sel, 1, k)).q; if (q != null) v.push(q) } v.sort((a, b) => a - b); return v.length === 3 ? v[1] : null }   // 3枚そろわなければ測れなかった扱い（1枚欠けて上側の値で通さない。CodeRabbit #134）
 
 const bad = v => v == null || v < QMIN;
 // ぼやけたときに試す CSS（表示だけ。判定には使わない）
@@ -140,7 +142,7 @@ async function shoot(browser, file, vp, dir) {
     // 顔：寄る前と、寄ったあと（カメラの動きが終わってから）
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });
     const faceSel = `#bust${seat} .body svg`;
-    const face0 = seat > 0 ? (await measure(page, faceSel, 1, k)).q : null;
+    const face0 = seat > 0 ? await measureMid(page, faceSel, k) : null;
     let face1 = null, sx0 = null, sx1 = null;   // 寄る前・寄ったあとの卓の縮め（--sx）。寄っている間に変わったら ❌（v0.97.12 CI：顔のアップ中に卓を縮めてぼやけた）
     if (seat > 0 && await page.evaluate(() => typeof camTo === 'function' && !!document.getElementById('cam'))) {
       const sxOf = () => page.evaluate(() => { const g = document.querySelector('#game .gwrap'); return g ? g.dataset.sx || '0' : '0' });
@@ -148,7 +150,7 @@ async function shoot(browser, file, vp, dir) {
       await page.evaluate(i => camTo(i, 'tell'), seat);
       for (let last = '', t1 = Date.now(); Date.now() - t1 < 4000; await page.waitForTimeout(250)) { const t = await page.evaluate(() => getComputedStyle(document.getElementById('cam')).transform); if (t === last) break; last = t }
       await page.waitForTimeout(500);
-      face1 = (await measure(page, faceSel, 1, k)).q;
+      face1 = await measureMid(page, faceSel, k);
       sx1 = await sxOf();
     }
     // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
