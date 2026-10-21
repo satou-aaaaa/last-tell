@@ -63,13 +63,15 @@ module.exports = G => {
       L.forEach((k, i) => { for (const alt of [''].concat(k.alt ? k.alt.split(' ') : [])) for (const ord of P3) for (const perm of P4) { n++; const v = K.apply(k, perm, alt, ord); if (!K.same(k, v)) { badK.push(`${key}[${i}] ${alt || '数字そのまま'} 並び${ord.join('')} スート${perm.join('')}${v ? '' : '（札が重なる）'}`); return } } }) }
     out.push({ id: 'unit:kata-shape', title: '決まった札の型は、ばらしても勝つ側と役の種類が型どおり（§8-1。数字の幅×フロップの並び×スート）', ok: !badK.length, detail: badK.length ? badK.slice(0, 5).join(' / ') : `${n}通り、全部型どおり` });
     out.push({ id: 'unit:kata-count', title: '型の数：第4・5章の一騎打ちと第7章の最後は5型以上、第5章の最初の1手・第二部の2場面は3型以上', ok: !few.length, detail: few.length ? few.join('、') : Object.keys(NEED).map(k => `${k} ${(K.KATA[k] || []).length}型`).join('、') });
-    // 直近の型を避ける：100回続けて選んで、直近 min(3, 型の数−1) 回と同じ型が出ない。前の版の保存（数字1つ）も配列で読む
-    const rep = [];
-    for (const m of [3, 5]) { let rec = []; for (let t = 0; t < 100; t++) { const k = K.pick(m, rec, G.rand); if (rec.slice(-Math.min(3, m - 1)).includes(k)) rep.push(`${m}型で ${t}回目`); rec = rec.concat(k).slice(-3) } }
+    // 直近の型を避ける：200回続けて選んで、直近 ex(型の数) 回と同じ型が出ない。3型以上では次の型がいつも1つに決まらない（周期的に回らない。v0.98.2 の 012012…）。前の版の保存（数字1つ）も配列で読む
+    const rep = [], cyc = [], exOf = m => typeof K.ex === 'function' ? K.ex(m) : Math.min(3, m - 1);
+    for (const m of [3, 4, 5]) { let rec = []; const seq = []; for (let t = 0; t < 200; t++) { const k = K.pick(m, rec, G.rand); if (rec.slice(-exOf(m)).includes(k) || (rec.length && rec[rec.length - 1] === k)) rep.push(`${m}型で ${t}回目`); seq.push(k); rec = rec.concat(k).slice(-3) }
+      const next = {}; for (let i = 1; i < seq.length; i++) (next[seq[i - 1]] = next[seq[i - 1]] || new Set()).add(seq[i]);
+      if (Object.values(next).every(v => v.size < 2)) cyc.push(`${m}型 ${seq.slice(0, 12).join('')}…`) }
     const mig = [K.recent(2).join(), K.recent('1').join(), K.recent([0, 4, 2, 1]).join(), K.recent(undefined).join(), K.recent([null, 'x', 3]).join()];
     const migOk = mig.join('|') === '2|1|4,2,1||3';
-    out.push({ id: 'unit:kata-pick', title: '同じ型が続かない（直近3回、型が4つ以下なら直近 型の数−1 回は選ばない）。前の版の保存（数字1つ）も読める', ok: !rep.length && migOk,
-      detail: (rep.length ? '続いた：' + rep.slice(0, 3).join('、') + '。' : '3型・5型で各100回、続かなかった。') + `保存の読み方 ${mig.map(x => `[${x}]`).join(' ')}${migOk ? '' : '（期待 [2] [1] [4,2,1] [] [3]）'}` });
+    out.push({ id: 'unit:kata-pick', title: '同じ型が続かず、決まった順にも回らない（直近 型の数−2 回まで外す。3型なら直前の1つ）。前の版の保存（数字1つ）も読める', ok: !rep.length && !cyc.length && migOk,
+      detail: (rep.length ? '続いた：' + rep.slice(0, 3).join('、') + '。' : '3型・4型・5型で各200回、続かなかった。') + (cyc.length ? '決まった順に回った：' + cyc.join('、') + '。' : '') + `保存の読み方 ${mig.map(x => `[${x}]`).join(' ')}${migOk ? '' : '（期待 [2] [1] [4,2,1] [] [3]）'}` });
     // vary は型どおりのものを返す（50回でだめなら型のまま）
     let vb = 0; for (const key in K.KATA) K.KATA[key].forEach(k => { for (let t = 0; t < 20; t++) if (!K.same(k, K.vary(k, G.rand))) vb++ });
     out.push({ id: 'unit:kata-vary', title: '配るときのばらし（vary）は、いつも型どおりの札を返す', ok: !vb, detail: `${Object.values(K.KATA).reduce((a, l) => a + l.length, 0)}型×20回、型どおりでない ${vb}回` });

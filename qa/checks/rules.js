@@ -290,9 +290,11 @@ async function run({ browser, file, quick, part = null }) {
       else { const bad = [], warn = [], rows = [];
         for (const [n, o] of Object.entries(v)) { const cnt = {}; o.deals.forEach(d => cnt[d] = (cnt[d] || 0) + 1); const dup = o.deals.length - Object.keys(cnt).length, rep = o.picks.filter((k, i) => i && k === o.picks[i - 1]).length, perms = new Set(o.perms).size;
           if (o.deals.includes('（配られなかった）')) bad.push(`${n} 配られなかった回がある`); if (dup >= 2) bad.push(`${n} まったく同じ札が ${dup}回`); if (rep) bad.push(`${n} 同じ型が続いた ${rep}回`);
-          if (perms < 4) warn.push(`${n} スートの並び ${perms}種`); if (n === 'ch7' && new Set(o.at).size < 2) warn.push(`ch7 最後の1手のハンド目が ${[...new Set(o.at)].join('・')} だけ`);
+          if (perms < 4) warn.push(`${n} スートの並び ${perms}種`);
+          { const nx = {}; o.picks.forEach((k, i) => { if (i) (nx[o.picks[i - 1]] = nx[o.picks[i - 1]] || new Set()).add(k) }); const ks = new Set(o.picks).size;   // 型が3つ以上あるのに、次の型がいつも1つに決まる＝決まった順に回る（v0.98.2 の ch5first 012012…）
+            if (ks >= 3 && o.picks.length >= 6 && Object.values(nx).every(v => v.size < 2)) warn.push(`${n} 型が決まった順に回る（${o.picks.slice(0, 9).join('')}…）`) } if (n === 'ch7' && new Set(o.at).size < 2) warn.push(`ch7 最後の1手のハンド目が ${[...new Set(o.at)].join('・')} だけ`);
           rows.push(`${n} ${o.deals.length}回：ちがう札 ${Object.keys(cnt).length}組、型 ${[...new Set(o.picks)].length}種（${o.picks.join('')}）、スートの並び ${perms}種` + (n === 'ch7' ? `、最後の1手のハンド目 ${[...new Set(o.at)].sort((a, b) => a - b).join('・')}` : '')) }
-        items.push({ id: 'rule:deal-variety', title: '決まった札の場面が、毎回ちがう札に見える（同じ札が2回以上・同じ型が続く は ❌、スート・ハンド目が散らない は ⚠️。§8）', status: bad.length ? 'fail' : warn.length ? 'warn' : 'ok',
+        items.push({ id: 'rule:deal-variety', title: '決まった札の場面が、毎回ちがう札に見える（同じ札が2回以上・同じ型が続く は ❌、スート・ハンド目が散らない・型が決まった順に回る は ⚠️。§8）', status: bad.length ? 'fail' : warn.length ? 'warn' : 'ok',
           detail: (bad.length ? bad.join('、') + '。' : '') + (warn.length ? warn.join('、') + '。' : '') + rows.join(' ／ ') }) } }
     const all = of('D').map(k => res[k]).reduce(merge, EMPTY), dd = all.deal || {}, name = c => c > 10 ? `第二部第${c - 10}章` : `第${c}章`, sumOf = (cs, k) => cs.reduce((a, c) => a + ((dd[c] || {})[k] || 0), 0);
     if (!all.dealEntry) items.push({ id: 'rule:deal-story', title: '物語の章の配り（入口 LT.dealRun）', status: 'warn', detail: '入口が無い版なので測っていない' });
