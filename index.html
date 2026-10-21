@@ -8047,6 +8047,9 @@ function talkPlace(){const row=$('askRow'),b=$('btnNeedle');row.style.translate=
   if(mr&&mr.offsetParent){const vis=[...nr.children].filter(x=>!x.hidden&&x.offsetParent);if(vis.length){const m=mr.getBoundingClientRect();let top=Infinity,bot=-Infinity,l=Infinity,rr=-Infinity;vis.forEach(x=>{const q=x.getBoundingClientRect();top=Math.min(top,q.top);bot=Math.max(bot,q.bottom);l=Math.min(l,q.left);rr=Math.max(rr,q.right)});
     let dy=0;if(rr>m.left&&l<m.right&&bot>m.top-4)dy=bot-m.top+6;
     const ps=$('potSign');if(dy&&ps&&!ps.hidden&&ps.offsetParent){const q=ps.getBoundingClientRect();if(q.right>l&&q.left<rr&&bot-dy>q.top-4&&top-dy<q.bottom+4)dy=bot-q.top+6}
+    // 上げても場札にはかけない（PR #128 手元：第14章の縦で、字幕のぶん手札の列が上がり、「黙る」が場札の 2♣ に乗った）
+    if(dy>0){const bc=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden').map(c=>c.getBoundingClientRect()).filter(q=>q.right>l&&q.left<rr&&q.bottom<=bot);
+      if(bc.length){const lim=top-Math.max(...bc.map(q=>q.bottom))-4;dy=Math.min(dy,Math.max(0,lim))}}
     if(dy>0)nr.style.translate=`0 ${(-dy).toFixed(1)}px`}}
   const tgt=!row.hidden?row:(S.handOver&&!b.hidden&&b.dataset.mode==='chat')?b:null;if(!tgt)return;
   const r=tgt.getBoundingClientRect();let lim=Infinity;const hold=$('mine').querySelector('.hold');if(hold&&hold.offsetParent)lim=hold.getBoundingClientRect().top;
@@ -10313,7 +10316,7 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}
   // 自分の札（.hold）も、帯にかかるなら上げる。上げすぎて場札・ポットにかからない所まで（v0.97.8 main QA・Issue #124：WebKit の縦で帯が2行になり、
   // 前の「最大 26px」では足りず、師匠のひとことが自分の Q♣ を隠した）
-  let sh2=Math.min(sb,26),dfc=0;if(sb){try{const hd=document.querySelector('#mine .hold');if(hd&&hd.getClientRects().length){const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
+  let sh2=Math.min(sb,26),dfc=0,noHand=true;if(sb){try{const hd=document.querySelector('#mine .hold');noHand=!(hd&&[...hd.querySelectorAll('.card')].some(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden'&&+getComputedStyle(c).opacity>.05));if(!noHand){const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
     const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
     if(need>sh2)sh2=Math.max(sh2,Math.min(need,room));dfc=Math.max(need,sh2)-room}}catch(e){}}
   if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}
@@ -10326,7 +10329,9 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(barSync.anim){barSync.anim=0;clearTimeout(barSync.at);barSync.at=setTimeout(()=>{try{barSync()}catch(e){}},300)}   // 動いていた分は、止まってから測り直す
   const sx0=+(gw.dataset.sx||0);let dfcOk=dfc>6;
   if(sb&&!sx0&&dfc>6){const now=performance.now();if(!gw._dfcAt){gw._dfcAt=now;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},320)}if(now-gw._dfcAt<300)dfcOk=false}else if(!(dfc>6))gw._dfcAt=0;
-  const sx=sb&&(sx0>0||dfcOk)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
+  // 自分の札が見えていない（降りた・席がない・配る前）ときは測らない（PR #128 の CI：6人卓のハンドの終わりで、札の無い手札の箱から足りないと測って 52px 縮めていた）。
+  //   縮めたあとは、配り直しで札が一瞬消えても戻さない（毎ハンド卓が伸び縮みしないように）
+  const sx=sb&&(sx0>0||dfcOk&&!noHand)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
   // 書くのは次のコマで（barSync は ResizeObserver からも呼ばれる。その中で卓の大きさを変えると「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
   if(sx!==sx0&&!gw._sxPend){gw.dataset.sx=String(sx);gw._sxPend=1;requestAnimationFrame(()=>{gw._sxPend=0;gw.style.setProperty('--sx',(+gw.dataset.sx||0)+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}})});
     // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）
