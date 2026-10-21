@@ -10320,10 +10320,12 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   //   一度縮めたら帯が消えるまで戻さない（縮めると余地も変わるので、測り直して戻すと行ったり来たりする）。縮めてもまだ足りなければ、
   //   足りない分だけ足す（増やすだけ・帯の高さの2倍まで。これ以上は卓が小さくなりすぎるので止める。CodeRabbit PR #128）
   const sx0=+(gw.dataset.sx||0),sx=sb&&(sx0>0||dfc>0)?Math.min(2*seh,Math.max(seh,sx0+Math.max(0,Math.ceil(dfc)))):0;
-  if(sx!==sx0){gw.dataset.sx=String(sx);gw.style.setProperty('--sx',sx+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}});
+  // 書くのは次のコマで（barSync は ResizeObserver からも呼ばれる。その中で卓の大きさを変えると「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+  if(sx!==sx0&&!gw._sxPend){gw.dataset.sx=String(sx);gw._sxPend=1;requestAnimationFrame(()=>{gw._sxPend=0;gw.style.setProperty('--sx',(+gw.dataset.sx||0)+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}})});
     // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）
     try{layoutSoon();clearTimeout(barSync.lt);barSync.lt=setTimeout(()=>{try{layoutSoon()}catch(e){}},260)}catch(e){}}}
-try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
+// ResizeObserver の中では書かず、次のコマで（中で --sb・--sbh・--sx を書くと、名札・ポットの額を見張る ResizeObserver へ続き「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+try{let roQ=0;const ro=new ResizeObserver(()=>{if(!roQ)roQ=requestAnimationFrame(()=>{roQ=0;try{barSync()}catch(e){}})});ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
 // v74：師匠の帯は mwait（待ってから出す）が外れた時にも「あなたのチップ」の列を上げ直す（タイマーで外れるので render が来ないことがある）
 try{new MutationObserver(()=>barSync()).observe($('sensei'),{attributes:true,attributeFilter:['class','hidden']});$('sensei').addEventListener('animationend',()=>barSync())}catch(e){}
 // 動作の重さの改善 案3：0.25秒ごとの見回りはやめ、位置合わせ（36_layout_pass）で呼ぶ
@@ -11795,11 +11797,14 @@ LT.on('endHand',()=>{try{if(!mfReplayOk()||S.mfReplayed)return;S.mfReplayed=true
 // 置いたあとに出た吹き出しは、2秒後の置き直しまで重なったままだった）
 // 直近の5手（#vfLog）も、吹き出しが出たら置き直す。吹き出しのほうは見せた札をよける（bAvLoop）（v0.97.11：撮り直したハンドの終わりで重なった）
 try{let mfSayQ=0;const mfSayObs=new MutationObserver(ms=>{if(mfSayQ||$('game').hidden)return;
-  if(!ms.some(m=>m.target&&m.target.classList&&m.target.classList.contains('say')||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
+  // 見るのは「吹き出しが足された」「.go（出る）が付いた・外れた」ときだけ。置き直しが付ける・外す別のクラスには反応しない
+  // （v0.97.11 は .say のクラスが変わるたびに反応し、置き直し→クラス変化→置き直し…が毎コマ回って、オールインの場面で止まった。main の Issue #127・PR #128 の CI）
+  const goFlip=m=>m.type==='attributes'&&m.target.classList&&m.target.classList.contains('say')&&/(^|\s)go(\s|$)/.test(m.oldValue||'')!==m.target.classList.contains('go');
+  if(!ms.some(m=>goFlip(m)||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
   const go=()=>{const el=$('mfInner');if(el&&!el.hidden)try{mfPlace()}catch(e){}try{bAvLoop()}catch(e){}try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
   // 出たばかりの吹き出しは小さく透明（LT.sayOn が「見えない」とする）。ふくらみ終わったころにもう一度（v0.97.11 手元：PC の6人卓で、直近の5手に「ミサキ いくよ！」がかかった）
   mfSayQ=requestAnimationFrame(()=>{mfSayQ=0;go()});clearTimeout(mfSayObs.t);mfSayObs.t=setTimeout(go,380)});
-  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}});
+  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class']})}});
   mfSayHook();LT.on('startHand',mfSayHook)}catch(e){}
 
 /* ---------- ライブポーカーらしい見た目（2026-10-15、satou「全部かなりいいですね」。research/ライブポーカーらしい見た目_実装仕様.md） ---------- */
@@ -12285,7 +12290,7 @@ LT.on('layout',()=>{try{showYieldBoard()}catch(e){}
 if(typeof chipAvoid==='function'){const _ca=chipAvoid;chipAvoid=function(){const r=_ca.apply(this,arguments);try{if(S&&S.handOver)showYieldBoard()}catch(e){}return r}}
 // v96.2 レビュー：ハンドの終わりに名札が伸びる（名前を出した金の枠 .nm-on）と、置き直したあとで札が名札の下に入った。名札の大きさが変わったら置き直す
 // ResizeObserver は描く前に呼ばれるので、待たずにその場で置き直す（v0.97.0 手元：60ms 待つ間に撮られ、名札が札の角にかかって写った。名札の位置しか変えないので、ここから大きさは変わらず、くり返さない）
-if(typeof ResizeObserver==='function'){const _sybRO=new ResizeObserver(()=>{try{if(S&&S.handOver)showYieldBoard()}catch(e){}});
+if(typeof ResizeObserver==='function'){let _sybQ=0;const _sybRO=new ResizeObserver(()=>{if(!_sybQ)_sybQ=requestAnimationFrame(()=>{_sybQ=0;try{if(S&&S.handOver)showYieldBoard()}catch(e){}})});   // v0.97.12：中で書くと「ResizeObserver loop」のエラーになるので、次のコマの頭で（描く前なので見た目は同じ）
   const _sybObs=()=>{document.querySelectorAll('#plates .plate').forEach(p=>{if(!p._sybRO){p._sybRO=1;_sybRO.observe(p)}})};
   LT.on('layout',()=>{try{_sybObs()}catch(e){}})}
 // ハンドの終わりのあいだ 0.5秒ごとに、チップの山がほかの席の見せた札にかかっていないかを見て、かかっていたら置き直す（1ハンドに3回まで）
@@ -12572,7 +12577,9 @@ setTimeout(()=>{try{d._place();vfSayYield(d)}catch(e){}},300);setTimeout(()=>{tr
   // 置いたあとで卓が動いても（スクロール・名札や指示の箱が出て卓がずれる）、札にかかったら置き直す。出ているあいだ 0.5秒ごとに見る
   // （v0.97.5 CI：6人卓の縦で、置いた時より卓が 60px 下がり、「あなたの負け」の帯が場札の上に残った。前は 2.4秒までと、自分の札・見せた札にかかったときだけ置き直していた）
   // 札が開いた・出たら、0.5秒の見回りを待たずにすぐ見直す（v0.97.11 手元：第14章の縦で、あとから開いたカイの K♣ の角に「あなたの負け」が乗ったまま測られた）
-  {let q=0;const fe=tb.querySelector('.felt')||tb,mo=new MutationObserver(()=>{if(!d.isConnected){mo.disconnect();return}if(q)return;q=requestAnimationFrame(()=>{q=0;try{if(vfOverCards(d))d._place()}catch(e){}})});
+  {let q=0;const fe=tb.querySelector('.felt')||tb,mo=new MutationObserver(ms=>{if(!d.isConnected){mo.disconnect();return}if(q)return;
+    // 札が足された・札のクラス（開く・伏せる）が変わったときだけ。置き直しが変える席番号・D の札などには反応しない（毎コマ回らないように。PR #128 の CI）
+    if(!ms.some(m=>m.type==='childList'||m.target.classList&&m.target.classList.contains('card')))return;q=requestAnimationFrame(()=>{q=0;try{if(vfOverCards(d))d._place()}catch(e){}})});
     mo.observe(fe,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}
   {const iv=setInterval(()=>{if(!d.isConnected){clearInterval(iv);return}try{if(vfOverCards(d))d._place();vfSayYield(d)}catch(e){}},500)}   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
@@ -12890,7 +12897,8 @@ function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetPa
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
 // 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
 // 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
-{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{try{c35PotTight()}catch(e){}});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
+// ResizeObserver の中では書かず次のコマで（中で額の幅を変えると、帯・名札を見張る ResizeObserver へ続き「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{if(!c35RO.q)c35RO.q=requestAnimationFrame(()=>{c35RO.q=0;try{c35PotTight()}catch(e){}})});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
 let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});
 
 /* ---------- クセの読める範囲（改善提案 2026-10-18 §1 案A「台詞と印」、satou 2026-10-18 02:35Z 決定） ---------- */
