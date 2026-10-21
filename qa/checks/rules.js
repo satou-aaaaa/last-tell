@@ -7,7 +7,7 @@ const { pool } = require('../lib/pool');
 
 // ゲームの関数を包んで、CPUの判断とショーダウンを記録する
 const PROBE = `(() => {
-  if (window.__probe) return; const P = window.__probe = { limp: {}, open: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, twice: 0, twiceAsk: 0, bomb: 0, errs: [] };
+  if (window.__probe) return; const P = window.__probe = { limp: {}, open: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, twice: 0, twiceAsk: 0, bomb: 0, dealFreeCalls: 0, dealFreeChanged: 0, dealStoryCalls: 0, dealStoryChanged: 0, errs: [] };
   const inc = (o, k, f) => { o[k] = o[k] || { n: 0, hit: 0 }; o[k].n++; if (f) o[k].hit++ };
   const _cd = cpuDecide;
   cpuDecide = function (i) {
@@ -45,6 +45,9 @@ const PROBE = `(() => {
     } catch (e) { P.errs.push(e.message) }
     return r;
   };
+  // 配りを変える関数（dealHelp：弱い手の引き直し、そこから呼ぶ p6Premium：強い手への入れ替え）が、フリー対戦で札を変えていないかを数える（改善提案 第12回 0-1）
+  if (typeof dealHelp === 'function') { const _dh = dealHelp; dealHelp = function () { const free = !(CFG && CFG.ch), me = S && S.players && S.players[0], before = me && me.hand ? me.hand.map(c => c.r + c.s).join() : '';
+    const r = _dh.apply(this, arguments); try { const after = me && me.hand ? me.hand.map(c => c.r + c.s).join() : ''; if (free) { P.dealFreeCalls++; if (after !== before) P.dealFreeChanged++ } else { P.dealStoryCalls++; if (after !== before) P.dealStoryChanged++ } } catch (e) { P.errs.push(e.message) } return r } }
   const _sh = startHand;
   startHand = function () { if (S) S.__sd = false; const r = _sh.apply(this, arguments);
     try { if (/ボムポット/.test((document.querySelector('#log > *') || {}).textContent || '') || [...document.querySelectorAll('#log > *')].slice(0, 6).some(x => /ボムポット！/.test(x.textContent))) P.bomb++ } catch (e) {} return r };
@@ -71,7 +74,7 @@ async function session(browser, file, start, policy, hands, storage, round = 0) 
 }
 
 const pct = (h) => h && h.n ? Math.round(h.hit / h.n * 100) : null;
-function merge(a, b) { const o = JSON.parse(JSON.stringify(a)); for (const k of ['limp', 'rivBig', 'faceOpen']) for (const n in b[k]) { o[k][n] = o[k][n] || { n: 0, hit: 0 }; o[k][n].n += b[k][n].n; o[k][n].hit += b[k][n].hit } for (const k of ['sdRefundBB', 'sdHands', 'twice', 'twiceAsk', 'bomb', 'hands']) o[k] = (o[k] || 0) + (b[k] || 0); return o }
+function merge(a, b) { const o = JSON.parse(JSON.stringify(a)); for (const k of ['limp', 'rivBig', 'faceOpen']) for (const n in b[k]) { o[k][n] = o[k][n] || { n: 0, hit: 0 }; o[k][n].n += b[k][n].n; o[k][n].hit += b[k][n].hit } for (const k of ['sdRefundBB', 'sdHands', 'twice', 'twiceAsk', 'bomb', 'hands', 'dealFreeCalls', 'dealFreeChanged', 'dealStoryCalls', 'dealStoryChanged']) o[k] = (o[k] || 0) + (b[k] || 0); return o }
 
 const STRONG = ['ジン', 'クロウ', 'ハヤト', 'レイカ', 'カオル'];
 // 割合を見る検査は、測れた回数が少ないと1〜2回の違いで外れる（2026-10-14 PR #22 で S2 がジン 11回 45% で ❌、同じ中身の #21 は ✅）。
@@ -147,6 +150,8 @@ async function run({ browser, file, quick, part = null }) {
     ['startP2(PART2[3],true)', 'overbet', H2, st7, 'R'],
     // v84 から S2 は1対1のリバーだけ数えるので、クロウは11回しか測れなかった（v85 交代レビュー）。第14章をもう1回打って20回以上にする（かっこで包んで種を変える）
     ['(startP2(PART2[3],true))', 'overbet', H2, st7, 'R'],
+    // フリー対戦の札が公平か（改善提案 第12回 0-1）：200ハンド配って、配りを変える関数が1回も札を変えないこと。降りるだけなので速い（かっこで包んで種を変える）
+    [`(($('freeSize').value='6',startFree()))`, 'fold', quick ? 60 : 200, , 'A'],
   ];
   const want = f => !part || FAM_PARTS.findIndex(g => g.includes(f)) % part.n === part.k - 1;
   const skip = unitS1 ? [0, 1] : [], EMPTY = { limp: {}, rivBig: {}, faceOpen: {}, sdRefundBB: 0, sdHands: 0, hands: 0, errs: [], errors: [] };
@@ -170,6 +175,11 @@ async function run({ browser, file, quick, part = null }) {
   if (added.length) await play(added.flatMap(of), 1);
   const note = f => added.includes(f) ? MORE : '';
   if (want('A')) {
+    // 途中で止まって数ハンドしか見ていないのに通さない（CodeRabbit PR #122）。負けて早く終わることもあるので、目標の数ではなく最低の数にする
+    { const FAIR_MIN = 20, f = res[jobs.length - 1], st = of('A').map(k => res[k]).reduce(merge, EMPTY);
+      items.push({ id: 'rule:fair-free', title: 'フリー対戦の札は、配りを変える関数（弱い手の引き直し・強い手への入れ替え）で変わらない',
+        status: f.dealFreeCalls < FAIR_MIN ? 'fail' : f.dealFreeChanged ? 'fail' : 'ok',
+        detail: !f.dealFreeCalls ? `数えられなかった（dealHelp が ${f.hands}ハンドで1回も呼ばれていない。呼ぶ所が変わったら、この検査も直す）` : f.dealFreeCalls < FAIR_MIN ? `フリー対戦が ${f.dealFreeCalls}回しか配られなかった（${FAIR_MIN}回は見たい。途中で止まった？）` : `フリー対戦 ${f.dealFreeCalls}回配って、札が変わったのは ${f.dealFreeChanged}回${f.dealFreeChanged ? '（フリー対戦の札が公平でない）' : ''}（くらべ：物語の章では ${st.dealStoryCalls}回のうち ${st.dealStoryChanged}回変わった）` }) }
     const [s1, s1b, tour6, tour14, ura6] = res;
     // S1 BBアンティ
     const a = merge(s1, s1b);
