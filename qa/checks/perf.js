@@ -87,6 +87,42 @@ async function run({ browser, file, quick, baseline }) {
       out.air.mobileShown = await page.evaluate(() => { const c = document.getElementById('pcAir'); return !!(c && c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none') });
     } catch (e) { out.airErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
   }
+  // 5. PC のディーラーの手（v0.98.4、PC 向けリッチ演出 案3、js/55_pc_hand.js）：配る・燃やし札・場札・ポットの押し出しで手が出る。顔（卓の板より上）には描かない。押せない。
+  //    スマホ幅・動きを減らす設定では描かない。
+  //    CI の画面は自動対戦の間ほとんどコマが進まない（手元で 3秒に 9コマ）ので、短い動き（配る 0.4秒など）を自動対戦の中で待って見ると、出ていても見のがす。
+  //    そこで、フロップまで打って止め、動きの状態（S.ltDealAt・S.ltBoardAt・.llburn・.potmove）を1つずつ作って、手の絵を直接描かせて canvas を読む。
+  //    ポットの押し出しは、卓の板の上端より上へ飛ぶ形も作る（手が顔の所へ出ないか＝描く所を切っているか）
+  {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 20, lite: false, settings: { motion: 'full' } });
+    try {
+      await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);
+      await H.startBot(page, { policy: 'call', maxHands: 3 });
+      const t0 = Date.now(); while (Date.now() - t0 < 40000 && !(await page.evaluate(() => S && S.board && S.board.length >= 3 && !S.handOver))) await page.waitForTimeout(30);
+      await page.evaluate(() => clearInterval(__bot.timer)); await page.waitForTimeout(400);
+      out.hand = await page.evaluate(() => {
+        if (typeof PCHAND === 'undefined' || typeof pcHandFrame !== 'function') return { defined: false };
+        pcHandSync(); const c = PCHAND.cv, res = {}, tb = document.getElementById('table');
+        const read = () => { const top = PCHAND.top, g = c.getContext('2d'); let face = 0, low = 0; if (top > 0) { const d = g.getImageData(0, 0, c.width, top).data; for (let i = 3; i < d.length; i += 4) face = Math.max(face, d[i]) } const d2 = g.getImageData(0, top, c.width, c.height - top).data; for (let i = 3; i < d2.length; i += 4) low = Math.max(low, d2[i]); return { face, low, kind: PCHAND.kind } };
+        const run = (name, set, undo) => { const keep = { a: S.ltDealAt, o: S.ltOrder, b: S.ltBoardAt, f: S.ltBoardFrom }; PCHAND.h1 = PCHAND.h2 = null; let el = null;
+          try { el = set(); for (let i = 0; i < 12; i++) pcHandFrame(performance.now()); res[name] = read() } catch (e) { res[name] = { err: String(e.message).slice(0, 80) } }
+          try { if (el) el.remove(); if (undo) undo() } catch (e) {} S.ltDealAt = keep.a; S.ltOrder = keep.o; S.ltBoardAt = keep.b; S.ltBoardFrom = keep.f; for (let i = 0; i < 20; i++) pcHandFrame(performance.now()) };
+        const mid = e => { const r = e.getBoundingClientRect(), t = tb.getBoundingClientRect(); return [r.left - t.left + r.width / 2, r.top - t.top + r.height / 2] };
+        const fake = (cls, parent, x, y) => { const e = document.createElement('div'); e.className = cls; e.style.cssText = `position:absolute;left:${x - 30}px;top:${y - 15}px;width:60px;height:30px`; parent.appendChild(e); return e };
+        run('deal', () => { S.ltOrder = ltDealOrder(); S.ltDealAt = performance.now() - 10 });
+        run('board', () => { S.ltDealAt = 0; S.ltBoardFrom = 0; S.ltBoardAt = performance.now() - 10 });
+        run('burn', () => { S.ltDealAt = S.ltBoardAt = 0; const dk = document.querySelector('.felt .lltools .ddeck'), p = dk ? mid(dk) : mid(document.getElementById('boardCards')); return fake('llburn', fxLayer(), p[0], p[1]) });
+        run('push', () => { S.ltDealAt = S.ltBoardAt = 0; const p = mid(document.getElementById('potChips')); return fake('potmove', tb, p[0], p[1]) });
+        // 卓の板の上端のすぐ上へ飛ぶチップ（顔の所）：手はそこへ出ても、上端より上には描かない
+        run('pushTop', () => { S.ltDealAt = S.ltBoardAt = 0; const fw = c.parentNode.querySelector('.felt-wrap').getBoundingClientRect(), t = tb.getBoundingClientRect(); return fake('potmove', tb, t.width / 2, fw.top - t.top - 20) });
+        return { defined: true, res, pe: getComputedStyle(c).pointerEvents, shown: getComputedStyle(c).display !== 'none', ms: PCHAND.hist.length > 1 ? (h => Math.round(h[h.length >> 1] * 100) / 100)(PCHAND.hist.slice().sort((a, b) => a - b)) : null, seenLive: PCHAND.seen, errors: __qa.errors.slice(0, 3) } });
+      await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(600);
+      out.hand.mobileShown = await page.evaluate(() => { const c = document.getElementById('pcHand'); return !!(c && c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none') });
+    } catch (e) { out.handErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
+    // 動きを減らす設定（prefers-reduced-motion）：1ハンド打っても1コマも描かない
+    const r2 = await H.openGame(browser, file, { fast: 20 });
+    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 1 }); await H.runUntilDone(r2.page, { timeoutMs: 60000, stallMs: 30000 });
+      out.handLite = await r2.page.evaluate(() => typeof PCHAND !== 'undefined' ? PCHAND.frames : -1) } catch (e) { out.handLite = 'err' } finally { await r2.ctx.close() }
+  }
   const b = (baseline && baseline.perf) || {};
   const worse = (k, f = 1.3, add = 0) => b[k] != null && out[k] > b[k] * f + add;
   const vs = k => b[k] != null ? `（前の版 ${b[k]}）` : '';
@@ -97,6 +133,10 @@ async function run({ browser, file, quick, baseline }) {
   { const a = out.air || {}, bad = out.airErr || !a.pcw || !a.has || !a.shown || a.pe !== 'none' || !(a.moved > 0) || a.ms == null || a.mobileShown || a.face !== 0 || !a.on || !(a.painted > 0) || (a.errors || []).length;
     items.push({ id: 'perf:pcair', title: 'PC の光と煙：卓の上に出て押せない・顔（卓の板より上）には描かない・1コマ 2ms 以下（真ん中の値）・スマホ幅では出ない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
       detail: out.airErr ? '測れなかった：' + out.airErr : `PC の印 ${a.pcw ? 'あり' : 'なし'}、絵 ${a.has ? (a.shown ? '出ている' : '隠れている') : '無い'}（卓の ${a.cover}%）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、描いたコマ ${a.frames}（測った 1.5秒で +${a.moved}）、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、顔の所 ${a.face === 0 ? '透明' : '描いている（' + a.face + '）'}、卓の所 ${a.painted > 0 ? '描いている' : '透明（描いていない）'}、動いている ${a.on ? 'はい' : 'いいえ（止まった）'}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
+  { const a = out.hand || {}, R = a.res || {}, K = ['deal', 'board', 'burn', 'push'], miss = K.filter(k => !(R[k] && R[k].low > 0 && R[k].kind === k)), face = Object.entries(R).filter(([k, v]) => v.face > 0).map(([k]) => k), errs = Object.entries(R).filter(([k, v]) => v.err).map(([k, v]) => `${k}: ${v.err}`);
+    const bad = out.handErr || !a.defined || !a.shown || a.pe !== 'none' || miss.length || face.length || errs.length || !(R.pushTop && R.pushTop.kind === 'push') || a.mobileShown || out.handLite !== 0 || (a.errors || []).length;
+    items.push({ id: 'perf:pchand', title: 'PC のディーラーの手：配る・燃やし札・場札・ポットの押し出しで出る・顔（卓の板より上）には描かない・押せない・スマホ幅と動きを減らす設定では描かない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
+      detail: out.handErr ? '測れなかった：' + out.handErr : !a.defined ? 'ディーラーの手（PCHAND・pcHandFrame）が無い版' : `${K.map(k => `${k} ${R[k] && R[k].low > 0 && R[k].kind === k ? '出た' : '出ない（' + ((R[k] || {}).kind || '何もしていない') + '）'}`).join('・')}、顔の所 ${face.length ? '描いている（' + face.join('・') + '）' : '透明（上端の上へ飛ぶチップでも）'}、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、動きを減らす設定で描いたコマ ${out.handLite}、自動対戦の中で出た ${Object.entries(a.seenLive || {}).map(([k, v]) => `${k} ${v}コマ`).join('・') || 'なし'}（参考：CI はコマが少ない）${errs.length ? '、エラー ' + errs.join(' / ') : ''}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
     detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });
