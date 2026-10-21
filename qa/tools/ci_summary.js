@@ -124,8 +124,13 @@ let mainRed = '';
 if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
   const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
   try {
-    const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues?labels=ci-failure&state=open&per_page=20`];
-    const iss = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })).filter(i => !i.pull_request);
+    // ページをたどる（PR も Issue の一覧に混ざるので、PR を除く前に全部読む。CodeRabbit PR #125）
+    const raw = [];
+    for (let pg = 1; pg <= 10; pg++) {
+      const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues?labels=ci-failure&state=open&per_page=100&page=${pg}`];
+      const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+      raw.push(...page); if (page.length < 100) break }
+    const iss = raw.filter(i => !i.pull_request);
     if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
       const it = { id: 'ci:main-red', title: 'main の QA が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く` };
       all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
