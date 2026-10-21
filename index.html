@@ -10317,8 +10317,9 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
     if(need>sh2)sh2=Math.max(sh2,Math.min(need,room));dfc=Math.max(need,sh2)-room}}catch(e){}}
   if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}
   // v0.97.11：場札・ポットが近くて上げる余地が足りないとき（第4章の3人以上の縦）は、案内の箱が出たときと同じく、帯の高さだけ卓を縮める（--sx）。
-  //   一度縮めたら帯が消えるまでそのまま（縮めると余地も変わるので、測り直して戻すと行ったり来たりする）
-  const sx0=+(gw.dataset.sx||0),sx=sb&&(sx0>0||dfc>0)?seh:0;
+  //   一度縮めたら帯が消えるまで戻さない（縮めると余地も変わるので、測り直して戻すと行ったり来たりする）。縮めてもまだ足りなければ、
+  //   足りない分だけ足す（増やすだけ・帯の高さの2倍まで。これ以上は卓が小さくなりすぎるので止める。CodeRabbit PR #128）
+  const sx0=+(gw.dataset.sx||0),sx=sb&&(sx0>0||dfc>0)?Math.min(2*seh,Math.max(seh,sx0+Math.max(0,Math.ceil(dfc)))):0;
   if(sx!==sx0){gw.dataset.sx=String(sx);gw.style.setProperty('--sx',sx+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}});
     // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）
     try{layoutSoon();clearTimeout(barSync.lt);barSync.lt=setTimeout(()=>{try{layoutSoon()}catch(e){}},260)}catch(e){}}}
@@ -12550,7 +12551,7 @@ function vfResult(){
   d.innerHTML=`<b>${esc(main)}</b>${hh||mh?`<span class="hm">${hh?`<span class="h">${esc(hh)}</span>`:''}${mh?`<span class="m">${esc((en?'You: ':'あなた：')+mh)}</span>`:''}</span>`:''}${sub?`<span class="n">${esc(sub)}</span>`:''}`;
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
-  const place=()=>{if(!d.isConnected)return;document.querySelectorAll('.vfhide').forEach(e=>e.classList.remove('vfhide'));const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
+  const place=()=>{if(!d.isConnected)return;(d._hid||[]).forEach(e=>e.classList.remove('vfhide'));d._hid=[];const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
     const cs=[...document.querySelectorAll('#table .card, #mine .card, .felt .spot .mystack, #table .needlerow button, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #busts .bust .face')].filter(e=>(e.offsetParent||e.getClientRects().length)&&LT.sayOn(e)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:e.classList.contains('face')?8:e.tagName==='BUTTON'||e.id==='dbtn'||e.classList.contains('dbadge')?6:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
@@ -12560,8 +12561,9 @@ function vfResult(){
     const c=[[B2.b+6,0]];for(const dx of [40,-40,80,-80])c.push([B2.b+6,dx]);c.push([B2.t-h-6,0]);for(let k=1;k<=8;k++){c.push([B2.b+6+k*10,0],[B2.t-h-6-k*10,0]);for(const dx of [40,-40,80,-80])c.push([B2.b+6+k*10,dx])}
     let best=null,bx=0,bv=1e9;for(const [y,dx] of c){if(y<T.top+2||y+h>innerHeight-2||dx&&(cx-W/2+dx<T.left+2||cx+W/2+dx>T.right-2))continue;const v=hit(y,dx);if(v<bv){bv=v;best=y;bx=dx}if(!v)break}
     if(best==null)best=Math.max(T.top+2,Math.min(B2.b+6,innerHeight-2-h));d.style.top=Math.round(best-T.top)+'px';d.style.marginLeft=bx?bx+'px':'';
+    // 戻すのは、この帯が隠した D（d._hid）だけ（前のハンドのタイマーが次のハンドの D を戻さない。CodeRabbit PR #128）
     // どこに置いても D の札にかかるとき（第14章の縦：上は顔と名札、下は伏せた札）は、ハンドが終わっているので D の札を隠す（次のハンドの描き直しで戻る。v0.97.11 手元）
-    if(bv){const D=d.getBoundingClientRect();document.querySelectorAll('#dbtn, .dbadge').forEach(e=>{const q=e.getBoundingClientRect();if(q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1)e.classList.add('vfhide')})}if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
+    if(bv){const D=d.getBoundingClientRect();document.querySelectorAll('#dbtn, .dbadge').forEach(e=>{const q=e.getBoundingClientRect();if(q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1){e.classList.add('vfhide');d._hid.push(e)}})}if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
     {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
@@ -12574,8 +12576,8 @@ setTimeout(()=>{try{d._place();vfSayYield(d)}catch(e){}},300);setTimeout(()=>{tr
     mo.observe(fe,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}
   {const iv=setInterval(()=>{if(!d.isConnected){clearInterval(iv);return}try{if(vfOverCards(d))d._place();vfSayYield(d)}catch(e){}},500)}   // 2.4秒：自分の札を開く動きのあとにもう1回（v96.1 CI：6人卓の縦で自分の札にかかった）
   
-  const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>{d.remove();document.querySelectorAll('.vfhide').forEach(e=>e.classList.remove('vfhide'))},400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
-  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();document.querySelectorAll('.vfhide').forEach(e=>e.classList.remove('vfhide'));LT.off('startHand:before',rm)});
+  const s0=S;if(!(sd&&inIt))setTimeout(()=>{d.classList.add('out');setTimeout(()=>{d.remove();(d._hid||[]).forEach(e=>e.classList.remove('vfhide'))},400)},2800);   // 自分が最後まで残った勝負は、次のハンドまで出したまま
+  d.dataset.h=S.handNo;LT.on('startHand:before',function rm(){d.remove();(d._hid||[]).forEach(e=>e.classList.remove('vfhide'));LT.off('startHand:before',rm)});
 }
 // 念のため：ハンドが始まったら、前のハンドの勝ち負けの札は残さない
 LT.on('startHand',()=>{try{document.querySelectorAll('#table .vfres').forEach(e=>{if(!S||e.dataset.h!==String(S.handNo))e.remove()})}catch(e){}});
