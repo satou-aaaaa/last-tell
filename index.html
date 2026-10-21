@@ -11835,7 +11835,9 @@ try{let mfSayQ=0;const mfSayObs=new MutationObserver(ms=>{if(mfSayQ||$('game').h
   const go=()=>{const el=$('mfInner');if(el&&!el.hidden)try{mfPlace()}catch(e){}try{bAvLoop()}catch(e){}try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
   // 出たばかりの吹き出しは小さく透明（LT.sayOn が「見えない」とする）。ふくらみ終わったころにもう一度（v0.97.11 手元：PC の6人卓で、直近の5手に「ミサキ いくよ！」がかかった）
   mfSayQ=requestAnimationFrame(()=>{mfSayQ=0;go()});clearTimeout(mfSayObs.t);mfSayObs.t=setTimeout(go,380)});
-  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class']})}});
+  // 吹き出しがふくらみ終わった（アニメ・transition の終わり）ときにも置き直す。380ms では間に合わない重い端末があった（PR #128 手元：第14章の終わりで #say2「カイ チェック！」が直近の5手にかかった）
+  const mfSayEnd=ev=>{const t=ev.target;if(!(t&&t.closest&&t.closest('.say'))||$('game').hidden)return;clearTimeout(mfSayEnd.t);mfSayEnd.t=setTimeout(()=>{try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}try{const el=$('mfInner');if(el&&!el.hidden)mfPlace()}catch(e){}},30)};
+  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});e.addEventListener('animationend',mfSayEnd);e.addEventListener('transitionend',mfSayEnd)}});
   mfSayHook();LT.on('startHand',mfSayHook)}catch(e){}
 
 /* ---------- ライブポーカーらしい見た目（2026-10-15、satou「全部かなりいいですね」。research/ライブポーカーらしい見た目_実装仕様.md） ---------- */
