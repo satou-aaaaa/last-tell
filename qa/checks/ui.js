@@ -177,6 +177,20 @@ const INSPECT = `(() => {
     const ref = bh.length ? bh[bh.length >> 1] : 0;
     if (ref) for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back)')].filter(e => vis(e))) { const a = el.getBoundingClientRect(); if (a.width < 3) continue;
       if (a.height < ref * .8 - .5) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（PC は場札 ' + Math.round(ref) + 'px の 0.8倍以上）' }); break } } }
+  // PC の自分の手札（v0.98.0 レビュー：下の端 790/800 で小さく、手前の配る前の山・捨て札の山のほうが大きく見え、3枚め・4枚めの手札に見えた）
+  //   手札の高さ ≥ 場札、山・捨て札の山の札 < 手札、手札の下の端が画面の下から 8px 以上内側
+  if (!modal && document.documentElement.classList.contains('pcw')) {
+    const own = [...document.querySelectorAll('#mine .hold .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
+    const bh = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect().height).filter(h => h > 2).sort((x, y) => x - y), ref = bh.length ? bh[bh.length >> 1] : 0;
+    if (own.length) { const oh = Math.min(...own.map(r => r.height)), ob = Math.max(...own.map(r => r.bottom));
+      if (ref && oh < ref - .5) out.push({ kind: '小さすぎ', el: '自分の手札', by: '高さ ' + Math.round(oh) + 'px（PC は場札 ' + Math.round(ref) + 'px 以上）' });
+      if (ob > Hh - 8) out.push({ kind: 'はみ出し', el: '自分の手札', by: '下の端 ' + Math.round(ob) + '/' + Hh + 'px（PC は下から 8px 以上内側）' });
+      const pile = [...document.querySelectorAll('.felt .lltools:not(.off) .ddeck .card, .felt .boardspot > .muckpile .muckcard')].filter(e => vis(e)).map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 2).sort((x, y) => y[1].height - x[1].height)[0];
+      if (pile && pile[1].height >= oh) out.push({ kind: '大きすぎ', el: (pile[0].closest('.lltools') ? '配る前の山' : '捨て札の山') + ' ' + desc(pile[0]), by: '高さ ' + Math.round(pile[1].height) + 'px（PC は自分の手札 ' + Math.round(oh) + 'px より小さく）' }) }
+  }
+  // PC で文字の箱の中で文が切れていないか（v0.98.0 レビュー：師匠の字幕が2行で「…」になっていた。重なりは測っていたが、箱の中で切れるのを見ていなかった）
+  if (!modal && document.documentElement.classList.contains('pcw')) for (const el of [...document.querySelectorAll('#sensei p, #table > .vfres, #plates .plate .nm, #plates .plate .tag')].filter(e => shown(e) && vis(e))) {
+    if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) { out.push({ kind: '切れ', el: desc(el), by: '「' + (el.textContent || '').trim().slice(0, 24) + '」 中身 ' + el.scrollWidth + '×' + el.scrollHeight + ' / 箱 ' + el.clientWidth + '×' + el.clientHeight }); break } }
   // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）
   {const tb = document.getElementById('table'), tr = tb && vis(tb) ? tb.getBoundingClientRect() : { left: 0, right: W, top: 0, bottom: Hh };
     const L = Math.max(0, tr.left), R = Math.min(W, tr.right);
