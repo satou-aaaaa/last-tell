@@ -8222,8 +8222,12 @@ function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect()
   const ys=[0];if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
   // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
   const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
-  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}
-  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)&&!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
+  // どこにも空きがないときは、かかる面積がいちばん小さい所へ（場札は3倍に数える）。前は元の場所のままで、手札の列を上げたぶん場札の 2♣ に「黙る」が乗った（PR #128 の CI 第14章の縦）
+  const ar=(x,y,o)=>Math.max(0,Math.min(r0.right+x,o.right)-Math.max(r0.left+x,o.left))*Math.max(0,Math.min(r0.bottom+y,o.bottom)-Math.max(r0.top+y,o.top));
+  const cost=(x,y)=>obs.reduce((a,o)=>a+ar(x,y,o),0)+bc.reduce((a,o)=>a+2*ar(x,y,o),0);let best=null;
+  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)){if(!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
+  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)){if(!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
+  if(best&&(best.x||best.y)&&best.c<cost(0,0))row.style.translate=`${best.x.toFixed(1)}px ${best.y.toFixed(1)}px`}
 // v71（改善提案§1）：席の前の賭けチップ（.chipwrap）と持ち点の塔（.mystack。自分の欄の分も）、1対1では相手の伏せ札・D の札も（v70 レビュー）、場札にかかるときは、bPlace と同じく空いた所を探して席の側へ寄せる。
 // 寄せる向きは「場札の真ん中→席」、横（席のある側・反対側）、縦（席の側・反対側）の順。席の札・名札・ポットの山にかからない、いちばん近い所。位置合わせ（36_layout_pass）で fitTable の後に呼ぶ
 function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot .hand,#dbtn';document.querySelectorAll(MS).forEach(e=>{if(e.style.translate)e.style.translate=''});   // 自分の欄・相手の伏せ札・D の札は fitTable が戻さないので、ここで戻す
@@ -10316,8 +10320,12 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}
   // 自分の札（.hold）も、帯にかかるなら上げる。上げすぎて場札・ポットにかからない所まで（v0.97.8 main QA・Issue #124：WebKit の縦で帯が2行になり、
   // 前の「最大 26px」では足りず、師匠のひとことが自分の Q♣ を隠した）
-  let sh2=Math.min(sb,26),dfc=0,noHand=true;if(sb){try{const hd=document.querySelector('#mine .hold');noHand=!(hd&&[...hd.querySelectorAll('.card')].some(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden'&&+getComputedStyle(c).opacity>.05));if(!noHand){const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
-    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
+  // 手札が上がりきるのに要る量（need）と、場札・ポットまでの余地（room）を測る（手札の上げ分 translate は引いて、元の位置で）
+  const meas=()=>{const hd=document.querySelector('#mine .hold');if(!(hd&&[...hd.querySelectorAll('.card')].some(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden'&&+getComputedStyle(c).opacity>.05)))return null;
+    const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
+    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom);
+    return{need,room:Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4)}};
+  let sh2=Math.min(sb,26),dfc=0,noHand=true,m=null;if(sb){try{m=meas();noHand=!m;if(m){const{need,room}=m;
     if(need>sh2)sh2=Math.max(sh2,Math.min(need,room));dfc=Math.max(need,sh2)-room}}catch(e){}}
   if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}
   // v0.97.11：場札・ポットが近くて上げる余地が足りないとき（第4章の3人以上の縦）は、案内の箱が出たときと同じく、帯の高さだけ卓を縮める（--sx）。
@@ -10331,7 +10339,15 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(sb&&!sx0&&dfc>6){const now=performance.now();if(!gw._dfcAt){gw._dfcAt=now;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},320)}if(now-gw._dfcAt<300)dfcOk=false}else if(!(dfc>6))gw._dfcAt=0;
   // 自分の札が見えていない（降りた・席がない・配る前）ときは測らない（PR #128 の CI：6人卓のハンドの終わりで、札の無い手札の箱から足りないと測って 52px 縮めていた）。
   //   縮めたあとは、配り直しで札が一瞬消えても戻さない（毎ハンド卓が伸び縮みしないように）
-  const sx=sb&&(sx0>0||dfcOk&&!noHand)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
+  // 縮めたときより字幕が低くなった（次の字幕が1行など）ら、いったん戻す。まだ足りなければ 0.3秒後にまた縮める（PR #128 の CI：第14章の縦で、前の長い字幕のときの縮めが残っていた）
+  const shorter=sx0>0&&seh<(gw._sxSeh||0)-4;if(shorter)gw._dfcAt=0;
+  // 縮めたあとも、縮めなくても手札が上がりきる（8px の余裕つき）ようになったら戻す。--sx を 0 にして同じコマの中で測り、すぐ戻す（描かれないので見た目は動かない）。
+  //   場札・ポットの額は動くので、縮めた時は足りなくても、あとで足りるようになることがある（PR #128 手元：第14章の縦、フロップでポットの額が動く間に 11px 足りず縮め、止まったあとも縮めたままだった）
+  let fits=false;if(sx0>0&&!gw._sxPend&&m&&!shorter){const now=performance.now();if(now-(gw._prAt||0)>500){gw._prAt=now;let p=null;try{gw.style.setProperty('--sx','0px');p=meas()}catch(e){}gw.style.setProperty('--sx',sx0+'px');fits=!!p&&p.room-8>=p.need}
+    clearTimeout(barSync.rt);barSync.rt=setTimeout(()=>{try{barSync()}catch(e){}},700)}   // 縮めている間は、きっかけが無くても時々見直す
+  if(fits)gw._dfcAt=0;
+  const sx=sb&&!shorter&&!fits&&(sx0>0||dfcOk&&!noHand)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
+  if(sx>0&&!sx0)gw._sxSeh=seh;
   // 書くのは次のコマで（barSync は ResizeObserver からも呼ばれる。その中で卓の大きさを変えると「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
   if(sx!==sx0&&!gw._sxPend){gw.dataset.sx=String(sx);gw._sxPend=1;requestAnimationFrame(()=>{gw._sxPend=0;gw.style.setProperty('--sx',(+gw.dataset.sx||0)+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}})});
     // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）
@@ -11472,8 +11488,9 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
     if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
     lpTry(()=>{talkPlace();const row=$('askRow');
+      // 場札にかかったときも（PR #128 の CI：第14章の縦で「黙る」が場札の 2♣ に乗った）
       // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
-      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
+      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot)')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
       if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row);
       // 手札は配る動きのあとで場所が決まる。少しあとにもう一度だけ確かめる（v0.96.4 CI）
       if(row&&!row.hidden&&typeof bPlace==='function'){clearTimeout(LP._askT);LP._askT=setTimeout(()=>{try{const r=$('askRow');if(r&&!r.hidden&&onMine(r))bPlace(r)}catch(e){}},700)}});
