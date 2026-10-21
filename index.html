@@ -2373,7 +2373,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.12';
+const APP_VERSION='0.97.13';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -6541,6 +6541,8 @@ const Rules={
   // 自分がレイズするときに選べる額（オールインより上は選べない）
   raiseBounds(cur,minRaise,bet,chips){const maxTo=bet+chips;return{minTo:Math.min(cur+minRaise,maxTo),maxTo}},
   // アンティを除いた、賭けた額（BBアンティは死に金なので、だれのものでもない）
+  // 「ブラフを見抜いた！」を出してよいか：コールした自分が勝ち、賭けた相手は何も取らなかった（分けたときは出さない。v0.97.12 レビュー：第14章で引き分けなのに出た）
+  readCaught:(meWon,agWon,bluffy)=>meWon>0&&!(agWon>0)&&!!bluffy,
   betOf:p=>p.total-(p.ante||0),
   // コールされなかった賭け：いちばん多く出した人の、2番目との差。ほかに誰も出していないときは返さない
   uncalled(ps){const b=Rules.betOf,c=ps.map((p,j)=>j).filter(j=>ps[j].total>0).sort((x,y)=>b(ps[y])-b(ps[x]));
@@ -7657,7 +7659,7 @@ function showdown(){
   if(CFG.ch&&!CFG.ura&&!CFG.ch.p2&&CFG.ch.no===4&&!S.bookSaid&&contS.some(p=>!p.human&&(p.tellLog||[]).length)){S.bookSaid=true;jinNote("クセは人それぞれだ。本に書いてある意味を信じるな",0)}
   if(CFG.tells||CFG.ch)renderNotes();
   const ag=S.players[S.aggr];
-  if(S.aggr>0&&S.lastCalled===S.aggr&&ag&&!ag.extra&&ag.show&&S.players[0].won>0&&(ag.lastState==='bluff'||isWeak(ag.hand,S.board))){S.reads=(S.reads||0)+1;S.readMsg=true}
+  if(S.aggr>0&&S.lastCalled===S.aggr&&ag&&!ag.extra&&ag.show&&Rules.readCaught(S.players[0].won,ag.won,ag.lastState==='bluff'||isWeak(ag.hand,S.board))){S.reads=(S.reads||0)+1;S.readMsg=true}
   const ws=S.players.filter(p=>p.won>0);
   ws.forEach(w=>log(`${w.name}が ${fmt(w.won)} を獲得`));
   S.msg=ws.map(w=>`${w.name}の勝ち（${w.hname}・+${fmt(w.won)}）`).join(' / ');
