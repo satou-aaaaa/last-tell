@@ -175,10 +175,11 @@ async function run({ browser, file, quick, part = null }) {
   if (added.length) await play(added.flatMap(of), 1);
   const note = f => added.includes(f) ? MORE : '';
   if (want('A')) {
-    { const f = res[jobs.length - 1], st = of('A').map(k => res[k]).reduce(merge, EMPTY);
+    // 途中で止まって数ハンドしか見ていないのに通さない（CodeRabbit PR #122）。負けて早く終わることもあるので、目標の数ではなく最低の数にする
+    { const FAIR_MIN = 20, f = res[jobs.length - 1], st = of('A').map(k => res[k]).reduce(merge, EMPTY);
       items.push({ id: 'rule:fair-free', title: 'フリー対戦の札は、配りを変える関数（弱い手の引き直し・強い手への入れ替え）で変わらない',
-        status: !f.dealFreeCalls ? 'fail' : f.dealFreeChanged ? 'fail' : 'ok',
-        detail: !f.dealFreeCalls ? `数えられなかった（dealHelp が ${f.hands}ハンドで1回も呼ばれていない。呼ぶ所が変わったら、この検査も直す）` : `フリー対戦 ${f.dealFreeCalls}回配って、札が変わったのは ${f.dealFreeChanged}回${f.dealFreeChanged ? '（フリー対戦の札が公平でない）' : ''}（くらべ：物語の章では ${st.dealStoryCalls}回のうち ${st.dealStoryChanged}回変わった）` }) }
+        status: f.dealFreeCalls < FAIR_MIN ? 'fail' : f.dealFreeChanged ? 'fail' : 'ok',
+        detail: !f.dealFreeCalls ? `数えられなかった（dealHelp が ${f.hands}ハンドで1回も呼ばれていない。呼ぶ所が変わったら、この検査も直す）` : f.dealFreeCalls < FAIR_MIN ? `フリー対戦が ${f.dealFreeCalls}回しか配られなかった（${FAIR_MIN}回は見たい。途中で止まった？）` : `フリー対戦 ${f.dealFreeCalls}回配って、札が変わったのは ${f.dealFreeChanged}回${f.dealFreeChanged ? '（フリー対戦の札が公平でない）' : ''}（くらべ：物語の章では ${st.dealStoryCalls}回のうち ${st.dealStoryChanged}回変わった）` }) }
     const [s1, s1b, tour6, tour14, ura6] = res;
     // S1 BBアンティ
     const a = merge(s1, s1b);

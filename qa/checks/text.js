@@ -42,7 +42,9 @@ async function run({ browser, file, baseline }) {
   // 配り方を変える関数があるなら、遊び方のページの「公平」の説明（日英）にそのことが書いてある（改善提案 第12回 0-1：10-17 に易しくしたが、説明は「毎回ふつうにシャッフル」のままだった）
   // 配りを変える関数を足したら DEAL_CHANGERS にも足す
   { const DEAL_CHANGERS = ['dealHelp', 'p6Premium'], has = DEAL_CHANGERS.filter(f => new RegExp('function\\s+' + f + '\\s*\\(').test(src));
-    const hm = [...src.matchAll(/class="hnote">([^`]{0,600}?)<\/p>/g)].map(m => m[1]).find(t => /シャッフル/.test(t)), ja = hm || '', enHit = /weak starting hands?/i.test(src);   // 公平の説明＝シャッフルの話をしている hnote
+    const hm = [...src.matchAll(/class="hnote">([^`]{0,600}?)<\/p>/g)].map(m => m[1]).find(t => /シャッフル/.test(t)), ja = hm || '';   // 公平の説明＝シャッフルの話をしている hnote
+    // 英語は、その説明の訳（EN_DICT の「シャッフル…弱い手」の行）だけを見る。ほかの所に同じ語句があっても通さない
+    const enHit = [...src.matchAll(/"([^"\n]{0,400}シャッフル[^"\n]{0,400})"\s*:\s*"([^"\n]{0,800})"/g)].some(m => /弱い手/.test(m[1]) && /weak starting hands?/i.test(m[2]));
     const jaOk = /弱い手/.test(ja);
     items.push({ id: 'text:fair-note', title: '配り方を変えているときは、遊び方のページの公平の説明（日英）にそのことが書いてある',
       status: !has.length ? 'ok' : !hm ? 'fail' : jaOk && enHit ? 'ok' : 'fail',

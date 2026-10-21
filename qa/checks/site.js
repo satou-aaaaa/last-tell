@@ -54,7 +54,7 @@ async function run({ browser, file, baseline }) {
         await page.waitForTimeout(1500);   // 保存（install）が終わるのを待つ
         await ctx.setOffline(true);
         await page.reload({ waitUntil: 'load' }).catch(e => { detail = '開き直せない: ' + String(e.message).slice(0, 80) });
-        if (!detail) { ok = await page.evaluate(() => { const t = document.getElementById('title'); return !!t && !t.hidden }).catch(() => false); if (!ok) detail = 'ネットを切ったら、タイトルが出なかった' }
+        if (!detail) { ok = await page.evaluate(() => { const t = document.getElementById('title'); return !window.__beforeReload && !!t && !t.hidden }).catch(() => false); if (!ok) detail = 'ネットを切ったら、タイトルが出なかった' }
       }
     } finally { await ctx.close() }
     // 2b. 電波が弱いとき（改善提案 第12回 0-2：オフラインの検査はすぐ失敗が返る場合しか見ておらず、返事が来ないと20秒以上真っ白なのを見逃した）
@@ -66,9 +66,9 @@ async function run({ browser, file, baseline }) {
         const ready = await page.evaluate(() => navigator.serviceWorker ? Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(r => setTimeout(() => r(false), 15000))]) : false);
         if (!ready) d2 = 'sw.js が動き出さなかった';
         else {
-          await page.waitForTimeout(1500); srv.stall = true;
+          await page.waitForTimeout(1500); await page.evaluate(() => { window.__beforeReload = 1 }); srv.stall = true;   // 開き直す前のページに印。印が残っているページ（＝まだ開き直せていない）のタイトルは数えない（CodeRabbit PR #122）
           const t0 = Date.now(); page.reload({ waitUntil: 'load', timeout: 12000 }).catch(() => {});
-          while (Date.now() - t0 < 9000) { await page.waitForTimeout(250); const vis = page.evaluate(() => { const t = document.getElementById('title'); return !!t && !t.hidden }).catch(() => false);   // 読み込みが止まっている間は evaluate も返らないことがあるので、待つのは1秒まで
+          while (Date.now() - t0 < 9000) { await page.waitForTimeout(250); const vis = page.evaluate(() => { const t = document.getElementById('title'); return !window.__beforeReload && !!t && !t.hidden }).catch(() => false);   // 読み込みが止まっている間は evaluate も返らないことがあるので、待つのは1秒まで
             if (await Promise.race([vis, new Promise(r => setTimeout(() => r(false), 1000))])) { ok2 = true; break } }
           ms = Date.now() - t0; if (ok2 && ms > 6000) { ok2 = false; d2 = `タイトルが出るまで ${(ms / 1000).toFixed(1)}秒（6秒以内）` } else if (!ok2) d2 = '返事が来ないと、9秒たってもタイトルが出なかった（sw.js が待ち続けている）';
         }

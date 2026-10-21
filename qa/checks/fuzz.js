@@ -35,6 +35,10 @@ const JP_SCAN = `(() => { const out = new Set(); const re = /[\\u3040-\\u30ff\\u
 // 時間切れでも、ハンドが進んでいてエラー・チップのずれが無ければ止まってはいないので ✅（何ハンドまで進んだかを書く）
 const LIMIT = (quick) => (quick ? 180 : 420) * (process.env.QA_BROWSER === 'webkit' ? 1.5 : 1) * 1000;
 const ENOUGH = 15;
+// 6人の卓は1ハンドが長い（5人の CPU が順に打つ）。CI の混んだ実行機では、止まっていなくても 180秒で15ハンドに届かないことがある
+// （PR #109・#122 で フリー6人・straddle が「時間切れ（14ハンドまで）」。手元で同時4つ：v0.97.7 も v0.97.8 も 109〜127秒で、版の差ではない）。
+// 6人のモードは時間だけ 1.5倍にする（見るハンド数・エラーの判定は同じ）
+const SIX_TIME = 1.5;
 
 async function runOne(browser, file, mode, hands, limit) {
   const { ctx, page } = await H.openGame(browser, file, { lang: mode.lang || 'ja', storage: mode.storage, seed: H.seedOf('fuzz', mode.id, mode.lang || 'ja') });
@@ -88,7 +92,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   const list = split(modes(quick), part), hands = quick ? 15 : 50, limit = LIMIT(quick);
   // WebKit は4つ同時だと実行機（4コア）でページのタイマーが詰まる（PR #80・#82）。3つにする
   if (process.env.QA_BROWSER === 'webkit') parallel = Math.min(parallel, 3);
-  const res = await pool(list.map(m => () => runOne(browser, file, m, hands, limit)), parallel);
+  const res = await pool(list.map(m => () => runOne(browser, file, m, hands, /6人/.test(m.id) ? limit * SIX_TIME : limit)), parallel);
   const hasEn = list.some(m => m.lang === 'en');
   const items = [], known = new Set((baseline && baseline.enJapanese) || []);
   const newJp = new Set();
