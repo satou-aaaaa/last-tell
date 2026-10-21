@@ -172,7 +172,7 @@ const INSPECT = `(() => {
     const h = el.closest('.hand'); if (h && h.style.scale && a.height < 27) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（縮めた札は 28px 以上）' }); break } }
   // PC（マウス・広い画面）は、相手の見せた札が場札の 0.8倍以上の高さか（v0.97.12 レビュー：PC で見せた札が 27〜28px、場札は約47px。読めない大きさ）。
   //   線を画面ごとに分ける：スマホは上の「縮めた札は 28px 以上」だけ、PC はこちらも
-  if (!modal && matchMedia('(hover:hover) and (pointer:fine)').matches && W >= 1100) {
+  if (!modal && document.documentElement.classList.contains('pcw')) {
     const bh = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect().height).filter(h => h > 2).sort((x, y) => x - y);
     const ref = bh.length ? bh[bh.length >> 1] : 0;
     if (ref) for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back)')].filter(e => vis(e))) { const a = el.getBoundingClientRect(); if (a.width < 3) continue;

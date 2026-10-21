@@ -63,7 +63,7 @@ const MEASURE = `(() => {
   for (const sel of [...new Set(need)]) { const els = [...document.querySelectorAll(sel)].filter(vis); if (!els.length) continue; for (const e of els) if (!inView(e)) miss.push(desc(e)) }
   m.offFirstView = miss.length; m.offList = [...new Set(miss)].slice(0, 6);
   // 9. PC で卓が画面の幅をどれだけ使っているか（v0.97.12 レビュー：PC 1280px で卓は真ん中の 560px だけ。6割未満は 🟡）
-  { const tb = document.getElementById('table'), pc = !mobile && matchMedia('(hover:hover) and (pointer:fine)').matches;
+  { const tb = document.getElementById('table'), pc = document.documentElement.classList.contains('pcw');   // PC の卓（html.pcw）と同じ判定
     const r = pc && tb && vis(tb) && !modal ? box(tb) : null, k = r ? r.width / W : 1;
     m.tableNarrow = k < .6 ? 1 : 0; m.tableList = r ? ['卓の幅 ' + Math.round(r.width) + 'px ＝ 画面の ' + Math.round(k * 100) + '%'] : [] }
   // 8. 同時に出ている吹き出し
