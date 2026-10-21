@@ -2041,7 +2041,8 @@ html.ingame #game{height:100%}
 /* A1：押せるのはオールインだけ */
 #controls.vfone #btnCall{flex:1 1 100%}
 /* A7・A8：勝ち負けの一行（場札の下） */
-.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;
+/* 負けたときは「あなたの負け／相手の役／自分の役」と長くなり、スマホ縦で画面より広くなって左右が切れた（v0.97.8 手元の検査：幅 426px）。卓の幅までにして、語のまとまりごとに折り返す */
+.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;max-width:calc(100% - 12px);box-sizing:border-box;flex-wrap:wrap;justify-content:center;row-gap:0;
   padding:4px 12px;border-radius:6px;background:rgba(10,11,14,.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:700 13px/1.3 var(--display,inherit);color:#e8e4da;
   animation:vfIn .3s ease-out both;transition:opacity .4s}
 .vfres.win{box-shadow:inset 0 0 0 1px var(--gold,#e2b65b)}
@@ -2368,7 +2369,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.8';
+const APP_VERSION='0.97.9';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -12493,7 +12494,9 @@ function vfSayYield(d){const D=d.getBoundingClientRect(),now=performance.now(),o
   let ss=[...document.querySelectorAll('#sayLayer .say.go,#plates .say.go')].filter(sy=>(sy.textContent||'').trim()&&ov(sy));if(!ss.length)return;
   try{d._place()}catch(e){}ss=ss.filter(ov);
   ss.forEach(sy=>{const need=typeof skRead==='function'?skRead(sy.textContent):1100;if(now-(sy._shown||sy._t||0)>=need)sy.classList.remove('go')})}
-function vfOverCards(d){const D=d.getBoundingClientRect();return [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back)')].some(c=>{const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})}
+// 卓の左下のボタン（💬 話す など）も見る（v0.97.8 CI：WebKit の第14章・縦で、置いたあとに「💬 話す」が出て上へ動き、「あなたの勝ち」の帯の左に 12×11px かかったまま残った。
+// 前は札だけ見ていた。置くとき place() でよける物のうち、あとから出たり動いたりする物はここにも入れる）
+function vfOverCards(d){const D=d.getBoundingClientRect();return [...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #mine .card, .felt .spot .hand:not(.folded):not(.muck) .card:not(.back), #table .needlerow button:not([hidden])')].some(c=>{if(c.tagName==='BUTTON'&&getComputedStyle(c).visibility==='hidden')return false;const q=c.getBoundingClientRect();return q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1})}
 function vfResult(){
   // S.vf は次のハンドの分（startHand:before で h＝次の番号）。前のハンドの終わりのまま描き直されたときは出さない（v0.97.0 PR #111：次のハンドの合図の途中で前のハンドの札を作り、次のハンドの勝ち負けが出ずに前の札が残った）
   if(!S||!S.handOver||!S.vf||S.vf.res||S.vf.h!==S.handNo||(CFG.flashback&&(CFG.flash==='jin'||!S.players.some(p=>p.show&&!p.human)))||VF.quiet()||$('game').hidden)return;   // 回想も、相手の手が開いたら勝ち負けと役を出す（録画 #9）。ジンの席の回想は除く
