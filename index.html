@@ -2371,7 +2371,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.10';
+const APP_VERSION='0.97.11';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2420,7 +2420,8 @@ const LT={_h:{},errors:0,
   // よける相手として数えてよいか。吹き出し（.say）は .go が付いたまま2.6秒の動きの最後で見えなくなるので、不透明度で見る（v0.97.8 レビュー：もう見えない吹き出しを
   // 心の声の字幕がよけて、右上に寄って折り返した）。吹き出しでなければ true。'.say.go' をよける一覧に入れるときは必ずこれも通す（lint が見る）（say-go-ok）
   // 消える途中（動きの残りが 0.5秒以下）も見えていない扱い（v0.97.9 レビュー：消えかけの吹き出しを字幕がよけ、検査は ⚠️ を出した。ゲームと検査で同じ線にする。qa/checks/ui.js の INNER_OV も同じ）
-  sayOn(e){if(!e||!e.classList||!e.classList.contains('say'))return true;if(+getComputedStyle(e).opacity<=.05)return false;
+  sayOn(e){if(!e||!e.classList||!e.classList.contains('say'))return true;if(+getComputedStyle(e).opacity<=.05)return false;{const r=e.getBoundingClientRect();if(r.width<14||r.height<14||!(e.textContent||'').trim())return false}   // 中身のない・出はじめの細い吹き出し（v0.97.11 手元：#say2 が幅 4px で心の声に「重なり」）
+    
     try{for(const a of e.getAnimations())if(/^say/.test(a.animationName||'')&&a.playState==='running'){const d=a.effect.getComputedTiming(),left=(d.endTime||0)-(+d.localTime||0);if(left<=500)return false}}catch(x){}return true},
   // 見張り（v0.97.3 レビュー）：画面のすべての動き（CSS の animation・transition、script の動き）を 250ms ごとに見て、
   // 最初に見た時からの残り時間＋300ms をすぎても動いていれば、終わりの形にする。Safari で動きが止まっても、透明・横向き・途中のまま残らない。
@@ -8103,12 +8104,12 @@ function bMark(b){const B=bState(),z=bLoad();z.seen[b.id]=(+z.seen[b.id]||0)+1;b
 // 掛け合いの吹き出しが、クセの札・カード・チップ・ボタンにかからないよう、少し横か上へずらす（クセの札は吹き出しより奥の層にあるため）
 // 位置そのものは sayFollow が毎フレーム決める。ここではずらす量（_ax,_ay）だけを決め、sayFollow がそれを足す
 function bAvoid(){const L=$('sayLayer');if(!L||$('game').hidden)return false;const R=e=>e.getBoundingClientRect();
-  const ss=[...L.querySelectorAll('.say')],live=e=>e.classList.contains('bt')&&e.classList.contains('go')&&performance.now()-(e._t||0)<3700;
+  const ss=[...L.querySelectorAll('.say')],live=e=>e.classList.contains('go')&&performance.now()-(e._t||0)<(e.classList.contains('bt')||e.classList.contains('long')?3700:2800)&&LT.sayOn(e);   // 掛け合いだけでなく、ふつうのひとことも（v0.97.11：ハンドの終わりで「ついていく！」が見せた札の角に乗った）
   ss.forEach(e=>{if(!live(e))e._ax=e._ay=0});
   const act=ss.filter(live);if(!act.length)return false;
   // 必ずよける：クセの札・場札・自分の手札・チップ・ポット・ボタン・ほかの吹き出し／できればよける：相手の伏せ札・名札
   const q=sel=>[...document.querySelectorAll(sel)].filter(e=>e.offsetParent&&R(e).width);
-  const hard=q('#plates .cue,#boardCards .card,#mine .card,.chipwrap .chips,#potSign,#acts button,#askRow button,#street').concat(q('#msg').filter(e=>e.textContent.trim())).map(R),soft=q('.spot .card,#plates .plate').map(R);
+  const hard=q('#plates .cue,#boardCards .card,#mine .card,.chipwrap .chips,#potSign,#acts button,#askRow button,#street,.felt .spot .hand:not(.folded):not(.muck) .card:not(.back)').concat(q('#msg').filter(e=>e.textContent.trim())).map(R),soft=q('.spot .card,#plates .plate,#vfLog:not(.off)').map(R);
   const tb=R($('table')),top=(()=>{try{return sayTopPad()}catch(e){return 2}})();const C=[];for(let dy=-40;dy<=48;dy+=8)for(let dx=-120;dx<=120;dx+=8)C.push([dx,dy]);C.sort((a,b)=>Math.abs(a[0])+2*Math.abs(a[1])-Math.abs(b[0])-2*Math.abs(b[1]));
   act.forEach(e=>{const r=R(e),ax=e._ax||0,ay=e._ay||0,oth=ss.filter(x=>x!==e&&x.classList.contains('go')&&performance.now()-(x._t||0)<3700).map(R);
     const ov=(L,x,y)=>L.some(o=>r.left+x<o.right-1&&o.left<r.right+x-1&&r.top+y<o.bottom-1&&o.top<r.bottom+y-1);
@@ -10310,7 +10311,7 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   // 自分の札（.hold）も、帯にかかるなら上げる。上げすぎて場札・ポットにかからない所まで（v0.97.8 main QA・Issue #124：WebKit の縦で帯が2行になり、
   // 前の「最大 26px」では足りず、師匠のひとことが自分の Q♣ を隠した）
   let sh2=Math.min(sb,26);if(sb){try{const hd=document.querySelector('#mine .hold');if(hd&&hd.getClientRects().length){const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
-    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, .felt .potzone')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
+    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
     if(need>sh2)sh2=Math.max(sh2,Math.min(need,room))}}catch(e){}}
   if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}}
 try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
@@ -11781,6 +11782,14 @@ function mfReplay(b){let el=$('mfReplay');if(!el){el=document.createElement('div
   const close=()=>{clearTimeout(el._t);el.onclick=null;el.hidden=true;el.innerHTML=''};
   el.onclick=close;el._t=setTimeout(close,MF_REPLAY.ms)}
 LT.on('endHand',()=>{try{if(!mfReplayOk()||S.mfReplayed)return;S.mfReplayed=true;mfReplay(S.tw.best)}catch(e){}});
+// 心の声が出ている間に、あとから出た吹き出しにかかったら置き直す（v0.97.11：v0.97.10 の手元の検査で #say2 に 4×18px。
+// 置いたあとに出た吹き出しは、2秒後の置き直しまで重なったままだった）
+// 直近の5手（#vfLog）も、吹き出しが出たら置き直す。吹き出しのほうは見せた札をよける（bAvLoop）（v0.97.11：撮り直したハンドの終わりで重なった）
+try{let mfSayQ=0;const mfSayObs=new MutationObserver(ms=>{if(mfSayQ||$('game').hidden)return;
+  if(!ms.some(m=>m.target&&m.target.classList&&m.target.classList.contains('say')||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
+  mfSayQ=requestAnimationFrame(()=>{mfSayQ=0;const el=$('mfInner');if(el&&!el.hidden)try{mfPlace()}catch(e){}try{bAvLoop()}catch(e){}try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}})});
+  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeFilter:['class']})}});
+  mfSayHook();LT.on('startHand',mfSayHook)}catch(e){}
 
 /* ---------- ライブポーカーらしい見た目（2026-10-15、satou「全部かなりいいですね」。research/ライブポーカーらしい見た目_実装仕様.md） ---------- */
 // 1.0 は案1〜案5（案5は止まった絵）。重さのため filter は使わない。動くのはバーン・めくり・飲み物だけ。
@@ -12532,7 +12541,7 @@ function vfResult(){
   if(!iWon&&inIt)d.classList.add('lose');
   // 第6章の録画 #8：次のハンドまで残すので、場札・見せた札・自分の札にかからない高さを探す（場札の下 → 上 → 少しずつ離す）
   const place=()=>{if(!d.isConnected)return;const T=tb.getBoundingClientRect(),B=bc.getBoundingClientRect();if(!B.height)return;
-    const cs=[...document.querySelectorAll('#table .card, #mine .card, .felt .spot .mystack, #table .needlerow button, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #busts .bust .face')].filter(e=>(e.offsetParent||e.getClientRects().length)&&LT.sayOn(e)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:e.classList.contains('face')?8:e.tagName==='BUTTON'?6:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
+    const cs=[...document.querySelectorAll('#table .card, #mine .card, .felt .spot .mystack, #table .needlerow button, #potSign, #dbtn, .dbadge, #plates .plate, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #busts .bust .face')].filter(e=>(e.offsetParent||e.getClientRects().length)&&LT.sayOn(e)&&!d.contains(e)&&!e.closest('.lltools')&&(!e.classList.contains('say')||(e.textContent||'').trim())).map(e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,k:e.classList.contains('card')?12:e.classList.contains('face')?8:e.tagName==='BUTTON'||e.id==='dbtn'||e.classList.contains('dbadge')?6:1}}).filter(r=>r.width>2);   // 札にかかるのは名札・席番号にかかるより12倍まずい（v0.97.2 CI：6人卓の縦で、下も上も何かにかかり、面積の小さい場札の上が選ばれた）
     cs.forEach(r=>{if(r.top<B.bottom&&r.bottom>B.top&&r.left<B.right&&r.right>B.left){B2.t=Math.min(B2.t,r.top);B2.b=Math.max(B2.b,r.bottom)}});
     const h=d.offsetHeight||22,W=d.offsetWidth||200,cx=T.left+T.width/2;
     const hit=(y,dx)=>{const l=cx-W/2+dx,r=l+W;return cs.reduce((a,q)=>{const w=Math.min(r,q.right)-Math.max(l,q.left),v=Math.min(y+h,q.bottom)-Math.max(y,q.top);return a+(w>0&&v>0?w*v*q.k:0)},0)};
