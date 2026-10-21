@@ -4,5 +4,7 @@
  "webkit:ui:cover:第2章_ハンドの終わり:PC_1280x800": "WebKit では 3D で倒した卓の中の部品の getBoundingClientRect が、描かれた場所から 60〜80px ずれる（v0.97.5 の sharp:gap で見つけた）。場所の数字で札をよける処理がずれる。次の版で直す（試した直しの「倒さない」が縦で 3px）。期限 2026-10-27",
  "webkit:sharp:gap:スマホ縦_3倍": "WebKit では 3D で倒した卓の中の部品の getBoundingClientRect が、描かれた場所から 60〜80px ずれる（v0.97.5 の sharp:gap で見つけた）。場所の数字で札をよける処理がずれる。次の版で直す（試した直しの「倒さない」が縦で 3px）。期限 2026-10-27",
  "webkit:sharp:gap:PC_2倍": "WebKit では 3D で倒した卓の中の部品の getBoundingClientRect が、描かれた場所から 60〜80px ずれる（v0.97.5 の sharp:gap で見つけた）。場所の数字で札をよける処理がずれる。次の版で直す（試した直しの「倒さない」が縦で 3px）。期限 2026-10-27",
- "webkit:ui:cover:第14章_ハンドの終わり:縦_390x844": "WebKit では 3D で倒した卓の中の部品の getBoundingClientRect が、描かれた場所から 60〜80px ずれる（v0.97.5 の sharp:gap で見つけた）。場所の数字で札をよける処理がずれる。次の版で直す（試した直しの「倒さない」が縦で 3px）。期限 2026-10-27"
+ "webkit:ui:cover:第14章_ハンドの終わり:縦_390x844": "WebKit では 3D で倒した卓の中の部品の getBoundingClientRect が、描かれた場所から 60〜80px ずれる（v0.97.5 の sharp:gap で見つけた）。場所の数字で札をよける処理がずれる。次の版で直す（試した直しの「倒さない」が縦で 3px）。期限 2026-10-27",
+ "webkit:sharp:table:PC_2倍": "WebKit の PC（2倍）で、ポットのチップのくっきり度が 1.34（自分のチップ 1.87）。試した直し（3D なし・zoom なし・will-change など）でどれも変わらず、Mac の Safari が全体に柔らかく描くため。卓の場所のずれ（webkit:sharp:gap）を直すときに一緒に見直し、それでも変わらなければ WebKit の PC の基準を下げる。期限 2026-10-27",
+ "webkit:sharp:zoom:PC_2倍": "WebKit の PC（2倍）で、顔に寄ってもくっきり度が上がらない（寄る前 1.35 → 寄ったあと 1.36）。上と同じ Mac の Safari の柔らかさ。卓の場所のずれを直すときに一緒に見直す。期限 2026-10-27"
 }
