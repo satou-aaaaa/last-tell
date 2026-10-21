@@ -1016,7 +1016,7 @@ kbd.k{display:none}
 
 
 /* スマホ横向き：ボタンとジンのひとことを右の列に出し、卓を画面の高さに収める */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
  #game .gwrap{max-width:none;margin:0;width:auto;box-sizing:border-box;padding-right:calc(var(--side) + 6px)}
  #game{--side:min(320px,42vw)}
  #game .actionbar{position:fixed;right:0;top:auto;bottom:0;width:var(--side);max-height:100vh;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
@@ -1036,7 +1036,7 @@ kbd.k{display:none}
 #raiseWord{white-space:normal;text-wrap:balance}
 .n6 .plate .chp{font-size:.7rem}
 @media (max-width:699px){.n6 .felt .boardspot{top:30%;gap:0}.n6 .felt .potzone{min-height:60px;margin-top:-8px}.n6 .potchips.mess{transform:scale(.8);transform-origin:50% 25%}}
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
  .felt .boardspot{top:31%;gap:0}
  .felt .potzone{min-height:64px;margin-top:-6px}.potchips.mess{transform:scale(.8);transform-origin:50% 30%}
  .felt .spot:not(#spot0){top:9%!important}
@@ -1099,7 +1099,7 @@ kbd.k{display:none}
 .t3d .needlerow .askrow[hidden]{display:none}
 .t3d .needlerow .askrow .needle{opacity:1;background:#1d1726f0;border-color:#a58fd0;min-height:34px;padding:6px 12px;max-width:min(230px,52vw);white-space:normal;text-align:right;line-height:1.25}
 .t3d .needlerow .askrow .needle.quiet{border-color:#ffffff40;color:#cfc8dc}
-@media (orientation:landscape) and (max-height:520px){.t3d .needlerow .askrow{gap:3px}.t3d .needlerow .askrow .needle{min-height:28px;padding:4px 10px;font-size:.68rem}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){.t3d .needlerow .askrow{gap:3px}.t3d .needlerow .askrow .needle{min-height:28px;padding:4px 10px;font-size:.68rem}}
 .talkpicks{position:absolute;inset:0;z-index:8;pointer-events:none}
 .talkpicks .talkpick{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;font:700 .7rem/1 inherit;padding:4px 10px;border-radius:999px;background:#2a2333f2;border:1px solid #c9a0ff;color:#efe8ff;cursor:pointer;white-space:nowrap;min-height:24px;min-width:44px}
 @media (prefers-reduced-motion:no-preference){.talkpicks .talkpick{animation:talkpick .35s ease-out}@keyframes talkpick{from{opacity:0}to{opacity:1}}}
@@ -1225,7 +1225,7 @@ body.en #game button.act.fold:not(:disabled) small{visibility:hidden}
 @media (max-width:699px) and (orientation:portrait){#game button.act.fold small{font-size:clamp(.58rem,2.45vw,.85rem);letter-spacing:-.02em;min-width:0}}
 /* v67：自分の顔の D は左上へ（右上だと顔の右の 💬 に重なった） */
 .mine .me-ava .dbadge{right:auto;left:-6px}
-@media (orientation:landscape) and (max-height:520px){#game #controls button.act.fold small{letter-spacing:-.04em}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){#game #controls button.act.fold small{letter-spacing:-.04em}}
 #game button.act.call{background:linear-gradient(180deg,#3f8b77,#25594c 60%,#1c4a3f)}
 #game button.act.raise{background:linear-gradient(180deg,#f04a5f,#c01f34 55%,#9b1729)}
 #game button.act.raise.open{background:linear-gradient(180deg,#f7dc95,#e2b65b 55%,#b98a35);color:#111;text-shadow:none}
@@ -1309,7 +1309,7 @@ body.ltTitle::after{opacity:.6}
 }
 @keyframes lpeek{0%,40%,100%{transform:translateX(-50%) rotate(18deg)}55%,85%{transform:translateX(-38%) rotate(24deg) translateY(-6px)}}
 .hero .tagname{z-index:2}
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #game .actionbar{box-shadow:inset 1.5px 0 0 rgba(226,182,91,.6),-4px 0 16px rgba(215,38,61,.25),-8px 0 24px rgba(0,0,0,.45)}
 }
 @media (prefers-reduced-motion:reduce){
@@ -1447,7 +1447,7 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
   #between .acts.acts3 #btnNext{grid-column:1/-1}
 }
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
-@media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
+@media (max-width:699px),(orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
 @media (max-width:699px){html.fbig #game #btnFold b{letter-spacing:0!important}html.fbig #game #btnFold small{letter-spacing:-.13em!important}}
 /* 改善提案 第5回 §1：注意書きを「遊んだことは？」の箱に同居 */
 #novDlg .novnote{font-size:.85rem;color:var(--ink);line-height:1.6;padding-bottom:10px;border-bottom:1px solid #ffffff1a}
@@ -1666,7 +1666,7 @@ html.ingame #game{height:100%}
 #game header.g,#game .gwrap>.settings{display:none}
 /* レイズ欄は卓の下側（自分の手札のあたり）に重ねる。卓の上の相手は動かない（24 の fitRaise が付ける位置を打ち消す） */
 @media not all and (orientation:landscape) and (max-height:520px){
-  #game .raisepanel{position:absolute!important;left:0;right:0;bottom:100%;z-index:31}
+  html:not(.pcw) #game .raisepanel{position:absolute!important;left:0;right:0;bottom:100%;z-index:31}
 }
 /* §B-2 上のバー（44px）：≡・章の名前・ブラインドとハンド数・目標 ▾・⚙ */
 .tbar{flex:none;height:44px;display:flex;align-items:center;gap:6px;min-width:0;padding:0 2px;box-sizing:border-box;
@@ -1767,7 +1767,7 @@ html.ingame #game{height:100%}
 
 /* §C-1 タイトル：スマホでは説明の文を出さない。横画面はロゴを左、3つのボタンを右に縦並び */
 @media (max-width:620px){#title .logo>p{display:none}}
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #title{grid-template-columns:minmax(0,1fr);padding-block:8px 4px;min-height:calc(100vh - 36px);align-content:center}
   #title .hero{position:absolute;right:0;top:0;bottom:0;width:auto;height:100%;opacity:.22;pointer-events:none;z-index:-1}
   #title .hero .tagname{display:none}
@@ -1820,7 +1820,7 @@ html.ingame #game{height:100%}
 /* 相手の前のチップ：塔は20枚まで積むので、札より大きくならないよう小さめに置く（手札の上端より上には出ない） */
 .spot .mystack{transform:scale(.55)}
 .n6 .spot .mystack{transform:scale(.48);transform-origin:50% 0}
-@media (orientation:landscape) and (max-height:520px){.spot .mystack{transform:scale(.45)}.n6 .spot .mystack{transform:scale(.4)}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){.spot .mystack{transform:scale(.45)}.n6 .spot .mystack{transform:scale(.4)}}
 /* 案3：勝った分の山（崩れたまま）。名札・賭けチップの位置には触れない */
 #mine .mystack{position:relative}
 .won-pile{position:absolute;left:50%;top:100%;height:22px;margin-top:6px;transform:translateX(-50%);pointer-events:none;z-index:2}
@@ -1830,7 +1830,7 @@ html.ingame #game{height:100%}
 .potfly.wonfly .chip{position:static;display:block}
 
 /* ===== スマホ横（高さ520px以下）：右の列を上から「バー」「助言」「レイズ欄」「ボタン」。卓は左いっぱい ===== */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #game .gwrap{display:block;height:100%}
   #game .gwrap>.t3d{height:100vh;height:100dvh}
   #game .tbar{position:fixed;top:0;right:0;width:var(--side);z-index:33;padding:0 6px;border-left:2px solid var(--crimson)}
@@ -1845,13 +1845,13 @@ html.ingame #game{height:100%}
   #game .t3d .hud{padding:4px 8px 8px}
 }
 /* v71（改善提案§2）：横画面では、語りの字幕（#msg）を右の列の空き（上の帯とボタンの間）に出す。相手の目にかからない */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #game .t3d .hud .msg{position:fixed;right:0;top:calc(44px + var(--sh,0px));width:var(--side);box-sizing:border-box;padding:12px 16px;font-size:.9rem;line-height:1.65;text-align:left;
     max-height:calc(100vh - 56px - var(--sh,0px) - var(--ab,0px));overflow:hidden;z-index:30;pointer-events:none}
 }
 /* v71（改善提案§2）：横画面の1対1だけ、卓の縁（と名札）を少し下げる。相手の頭のてっぺんが画面に入り、口までは縁にかからない（胸像の大きさは 30c の faceFit が合わせる）。
    場札は卓の中で少し上げて、手前の札・ポットの札との間を保つ */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #game .t3d.hu1 .felt-wrap{top:40%}
   #game .t3d.hu1 .plate{top:42%}
   #game .t3d.hu1 .felt .boardspot{top:28.5%}
@@ -1872,14 +1872,14 @@ html.ingame #game{height:100%}
 #chapters .extras{grid-template-columns:minmax(0,1fr)}#chapters .exbox{min-width:0}@media (min-width:760px){#chapters .extras{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media (max-width:420px){.tbar{gap:4px}.tbar .tbmeta{font-size:.68rem;letter-spacing:0}.tbar button.tgoal{padding:0 7px}}
 /* 横向きの右の列：ボタンの下の小さい字（英語の Choose amount など）が切れないように */
-@media (orientation:landscape) and (max-height:520px){#game #controls button.act{padding-inline:4px}#game #controls button.act small{font-size:.72rem;letter-spacing:0;white-space:nowrap}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){#game #controls button.act{padding-inline:4px}#game #controls button.act small{font-size:.72rem;letter-spacing:0;white-space:nowrap}}
 
 /* ===== v66：テスター目線の検証（v60）の残り ===== */
 /* 8・9：確認の窓・クイズの窓が画面の端にくっつく／はみ出す（内側の余白を幅に含める） */
 .qin{box-sizing:border-box}
 @media (max-width:480px){#quiz .qopts{grid-template-columns:minmax(0,1fr)}}
 /* 7：スマホ横で、今日の1ハンドと席選びが下で切れる */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
  .dailyin{width:min(100%,760px);padding:8px 14px}
  .dailyin .dq{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"o b" "s y" "p y";gap:4px 16px;padding:8px 10px;align-items:center}
  .dailyin .dq>.dopp{grid-area:o}.dailyin .dq>.dsit{grid-area:s;line-height:1.5;font-size:.85rem}.dailyin .dq>.dpot{grid-area:p}
@@ -1896,7 +1896,7 @@ html.ingame #game{height:100%}
 .ch.c64>.chmore>summary{width:44px;height:44px}
 #betweenHint:empty{display:none}
 /* v66（CI）：スマホ横では自分の手札の欄（#mine）の透明な上の部分が場札・相手の見せ札にかぶり、押せなくなる。欄の空きは押し通す */
-@media (orientation:landscape) and (max-height:520px){#game #mine{pointer-events:none}#game #mine>:not(.mybet){pointer-events:auto}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){#game #mine{pointer-events:none}#game #mine>:not(.mybet){pointer-events:auto}}
 
 /* ---------- 動作の重さの改善 案4（v67）：01b_style_ui64.css の後に読む ---------- */
 /* 揺れ（sway）は番の相手・テルが出ている相手・にらみ中だけ。呼吸（breathe）は残す（テル「じっと」は呼吸を止めて見せるため） */
@@ -1935,7 +1935,7 @@ html.ingame #game{height:100%}
 .n6 .bust{transition:scale .35s ease-out,opacity .5s,filter .2s}
 .n6 .bust.lean{scale:1.3;z-index:3}
 .ring6 .bust.lean{scale:1.2}
-@media (orientation:landscape) and (max-height:520px){.n6 .bust.lean{scale:1.2}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){.n6 .bust.lean{scale:1.2}}
 @media (prefers-reduced-motion:reduce){.n6 .bust{transition:none}}
 /* 左右の2人の札とチップは、名札の下・ボードの外側に置く */
 .ring6 #spot1 .card,.ring6 #spot5 .card{--cw:18px}
@@ -2182,6 +2182,28 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
    今は要らないので平らにして、卓の板の絵にまとめる。Chromium の見た目は同じ（画面の差 0%） */
 .felt .boardspot,.felt .potzone{transform-style:flat}
 
+/* ===== v0.98.0 PC 向け：横長の卓（PC 向けリッチ演出 案1、2026-10-21 satou「全部」） =====
+   html.pcw（幅1100px以上・高さ640px以上・マウス。00b_hooks.js の PCW_Q）のときは、スマホ横と同じ「右の列」の配置
+   （上の帯・師匠の字幕・直近の5手・ボタンは右の列、卓は左いっぱい）にして、大きさだけ PC に合わせる。スマホは今のまま */
+html.pcw #game{--side:clamp(340px,24vw,440px)}
+html.pcw.ingame .wrap{max-width:none;padding-inline:0}
+html.pcw #game .gwrap{max-width:none;margin:0;width:auto;padding-right:calc(var(--side) + 6px)}
+html.pcw #game .t3d{height:100vh;height:100dvh;min-height:0}
+/* 卓の中の札：場札は奥に置いて少し小さく、相手の見せた札は場札の 0.8倍以上（v0.97.12 レビュー：27px で名札に隠れた） */
+html.pcw .felt .card{--cw:40px}
+html.pcw .spot .card{--cw:40px}
+html.pcw .n6 .spot .card{--cw:32px}
+html.pcw .mine .hold .card{--cw:64px}
+html.pcw .felt .boardspot{top:21%}
+/* 顔は大きく、でも頭が画面の上で切れない（胸像の下の端は卓の高さの 37%） */
+html.pcw #busts>.bust{max-width:34vh}
+/* 名札と右の列の字は PC の大きさに */
+html.pcw .plate{max-width:24%}
+html.pcw .plate .nm{font-size:.9rem}html.pcw .plate .chp{font-size:.92rem}html.pcw .plate .tag{font-size:.8rem;padding:0 6px}
+html.pcw #game .tbar h1{font-size:.95rem}html.pcw #game .tbar .tbmeta{font-size:.78rem}
+html.pcw #game .sensei p{font-size:.95rem}
+html.pcw #game .gwrap>.sensei{max-height:36vh}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2373,7 +2395,7 @@ html[lang="en"] #prerow::before{content:'Pre-select (while others act)'}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.97.13';
+const APP_VERSION='0.98.0';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2400,6 +2422,9 @@ addEventListener('unhandledrejection',e=>{try{window.LT_PLATFORM.reportError(e.r
 // 合図を出す関数の一覧は js/35_hooks_wire.js（全部のファイルの後で1回だけ包む）。
 // 登録した関数でエラーが出ても、ほかの登録やゲームは止まらない（console.error に出るので qa の fuzz が拾う）。
 // 状態は S の下に自分の区画を作って入れる（例 S.talk={…}）。消すのも自分の startHand 合図の中で（案7）。
+// v0.98.0 PC 向け（横長の卓）：スマホ横と同じ「右の列」の配置を、大きい PC の画面（マウス）でも使う。CSS の @media も同じ2つの条件（片方を変えたらもう片方も。build.py の lint が確かめる）
+const LAND_Q='(orientation:landscape) and (max-height:520px)',PCW_Q='(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine)',SIDE_Q=LAND_Q+', '+PCW_Q;
+{const q=matchMedia(PCW_Q),f=()=>document.documentElement.classList.toggle('pcw',q.matches);f();try{q.addEventListener('change',f)}catch(e){}}
 const LT={_h:{},errors:0,
   on(n,f){(this._h[n]=this._h[n]||[]).push(f);return f},
   off(n,f){const a=this._h[n];if(a){const i=a.indexOf(f);if(i>=0)a.splice(i,1)}},
@@ -7470,8 +7495,8 @@ function afterAct(i,type,toCall){
 }
 // ===== カメラ演出 案2 =====
 const camSet=()=>SETTINGS.cam||(reducedMotion()?'soft':'strong');
-const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4},tell:{port:2.7,land:2.2,pc:2.4}};
-const camView=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches?'land':innerWidth<700?'port':'pc';
+const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4,pcw:1.2},tell:{port:2.7,land:2.2,pc:2.4,pcw:1.8}};
+const camView=()=>matchMedia(PCW_Q).matches?'pcw':matchMedia(LAND_Q).matches?'land':innerWidth<700?'port':'pc';   // pcw：PC の横長の卓（顔が大きいので寄りは控えめ）
 // テルの場所：顔の中心からのずれ（顔の大きさに対する割合）。chips は相手の前のチップの山
 const CAM_SPOT={sweat:{dx:.15,dy:-.18},smile:{dx:0,dy:.14},talk:{dx:0,dy:.14},stare:{dx:0,dy:-.1},still:{dx:0,dy:0,z:2},
   glance:{chips:.45,zk:.8},fast:{chips:1},glove:{dx:-.28,dy:.42},scar:{dx:.06,dy:.16},release:{dx:.06,dy:.16}};
@@ -8927,7 +8952,7 @@ function confirmRaise(){
   clearArm();raiseOpen=false;quickPick=0;buzz();act(0,'raise',v)}
 function buzz(){if(SETTINGS.sound&&navigator.vibrate)try{navigator.vibrate(8)}catch(e){}}
 // A：（v64）卓とボタンが1画面に収まったので、自分の番に卓へ自動でスクロールしない。名前は呼び出し元のために残す
-const LAND=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+const LAND=()=>matchMedia(SIDE_Q).matches;   // 右の列の配置（スマホ横・PC の横長の卓）
 function keepMine(){}
 // I：自分の番の合図
 function turnCue(){requestAnimationFrame(keepMine);const a=$('acts');a.classList.remove('cue');void a.offsetWidth;a.classList.add('cue');
@@ -10198,7 +10223,7 @@ try{RS_SKIP.push('wonPile')}catch(e){}
 
 const u64={};
 const inGame=()=>!$('game').hidden;
-const LAND64=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+const LAND64=()=>matchMedia(SIDE_Q).matches;   // 右の列の配置（スマホ横・PC の横長の卓）
 
 // ---------- §B-1：対戦中はページを動かさない ----------
 function ingameSync(){const on=!$('game').hidden;document.documentElement.classList.toggle('ingame',on);if(on&&(scrollX||scrollY))scrollTo(0,0)}
@@ -12960,7 +12985,10 @@ const rsNarrow=()=>innerWidth<520&&innerHeight>innerWidth;
 function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n&&!(rsNarrow()&&n.length>4)?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
 // v94.1 レビュー：はじめての人の案内（30b の tipShow）が師匠の帯を止めている間は言わない（見たことにもしない）。案内が消えた後の描き直しで言う
 const rsTipHeld=()=>{try{const s=$('sensei');return !!(typeof tipK!=='undefined'&&tipK)||!!(s&&s.classList.contains('mwait'))}catch(e){return false}};
-function rsLine(){if(S.rsSaid||rsTipHeld())return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
+// 待ち（案内・「見えた！」の帯の待ち）で言えなかったときは、待ちが明けたら描き直して言う（v0.98.0 手元：PC の横長の卓で「見えた！」の待ち 1.8秒の間に
+//   描き直しが1回だけ来て、そのあと自分の番で描き直しが来ず、ひとことが出なかった）
+function rsRetry(){clearTimeout(rsRetry.t);rsRetry.t=setTimeout(()=>{try{if(!S||!S.players||S.rsSaid||S.handOver)return;if(rsTipHeld())return rsRetry();render()}catch(e){}},400)}
+function rsLine(){if(S.rsSaid)return;if(rsTipHeld()){rsRetry();return}const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
   if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
   jinNote(READ_SCOPE_LINE_JA,0);saveSet(RS_KEY,{v:1,seen:true},1);
   // v94 レビュー 1：描き直しの中で決めるので、#senseiText はもう書かれている。もう一度描いて、このハンドのうちに出す（41_more_fun の mfBigFirst と同じ）。

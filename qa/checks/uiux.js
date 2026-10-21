@@ -62,6 +62,10 @@ const MEASURE = `(() => {
   const miss = [];
   for (const sel of [...new Set(need)]) { const els = [...document.querySelectorAll(sel)].filter(vis); if (!els.length) continue; for (const e of els) if (!inView(e)) miss.push(desc(e)) }
   m.offFirstView = miss.length; m.offList = [...new Set(miss)].slice(0, 6);
+  // 9. PC で卓が画面の幅をどれだけ使っているか（v0.97.12 レビュー：PC 1280px で卓は真ん中の 560px だけ。6割未満は 🟡）
+  { const tb = document.getElementById('table'), pc = !mobile && matchMedia('(hover:hover) and (pointer:fine)').matches;
+    const r = pc && tb && vis(tb) && !modal ? box(tb) : null, k = r ? r.width / W : 1;
+    m.tableNarrow = k < .6 ? 1 : 0; m.tableList = r ? ['卓の幅 ' + Math.round(r.width) + 'px ＝ 画面の ' + Math.round(k * 100) + '%'] : [] }
   // 8. 同時に出ている吹き出し
   m.bubbles = [...document.querySelectorAll('.say')].filter(vis).length;
   return m;
@@ -103,6 +107,7 @@ const METRICS = [
   { key: 'unlabeled', title: '記号だけのボタンに名前（aria-label か title）がある', unit: '個に名前が無い', list: 'unlabeledList', target: v => v === 0 },
   { key: 'screens', title: '対戦中の画面が1画面に収まる（UI整理 案3の条件）', unit: '画面ぶんの高さ', game: true, target: v => v <= 1.01, max: true },
   { key: 'buttons', title: '最初の画面で押せる部品の数（ごちゃごちゃ度）', unit: '個', target: () => true, max: true },
+  { key: 'tableNarrow', title: 'PC で卓が画面の幅の6割以上を使っている（PC 向けリッチ演出 案1）', unit: '場面で狭い', list: 'tableList', game: true, target: v => v === 0 },
   { key: 'bubbles', title: '吹き出しが同時に2つ以上出ていない', unit: '個', target: v => v <= 1, max: true },
 ];
 const GAME = /自分の番|レイズを開く|ハンドの終わり/;
