@@ -3,7 +3,9 @@
 'use strict';
 module.exports = G => {
   const D = G.Rules && G.Rules.deal;
-  if (!D) return [{ id: 'unit:deal', title: '配りを変える入口の計算', ok: null, detail: 'このゲームのファイルには Rules.deal（js/54_deal_mod.js）がまだ無い' }];
+  // 入口（@unit-begin deal_mod）がある版で Rules.deal・pick・Rules.kata・KATA が欠けたら ❌（ゲームは守りなしで呼ぶので、欠けると配りで止まる。CodeRabbit #133）。入口の無い古い版だけ ⚠️ で飛ばす
+  const cur = (G.blocks || []).includes('deal_mod');
+  if (!D || (cur && typeof D.pick !== 'function')) return [{ id: 'unit:deal', title: '配りを変える入口の計算', ok: cur ? false : null, detail: cur ? '入口（deal_mod）があるのに Rules.deal' + (D ? '.pick' : '') + ' が無い' : 'このゲームのファイルには Rules.deal（js/54_deal_mod.js）がまだ無い' }];
   const S = '♠♥♦♣', c = t => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[t[0]] || +t[0], s: S.indexOf(t[1]) }), cs = s => s.split(' ').map(c);
   const out = [], bad = [];
   const eq = (name, got, want) => { if (got !== want) bad.push(`${name}（期待 ${want}、実際 ${got}）`) };
@@ -53,7 +55,7 @@ module.exports = G => {
     out.push({ id: 'unit:deal-pick', title: '山から条件に合う2枚を選ぶ', ok: !!k && k.join() === '0,1' && k0 === null, detail: `AK を選んだ位置 ${k && k.join()}、合う札が無いとき ${k0}` }) }
   // §8 決まった札の型：型ごとに、数字の幅（alt）×フロップの並び6通り×スートの入れ替え24通りを全部ばらしても、形（勝つ側・自分と相手の役の種類・preTier）が型どおり
   const K = G.Rules.kata;
-  if (!K) out.push({ id: 'unit:kata', title: '決まった札の型', ok: null, detail: 'このゲームのファイルには Rules.kata がまだ無い' });
+  if (!K || (cur && !K.KATA)) out.push({ id: 'unit:kata', title: '決まった札の型', ok: cur ? false : null, detail: cur ? '入口（deal_mod）があるのに Rules.kata' + (K ? '.KATA' : '') + ' が無い' : 'このゲームのファイルには Rules.kata がまだ無い' });
   else {
     const perms = n => n <= 1 ? [[0]] : perms(n - 1).flatMap(p => [...Array(n).keys()].map(i => { const a = p.slice(); a.splice(i, 0, n - 1); return a }));
     const P4 = perms(4), P3 = perms(3), NEED = { 4: 5, 5: 5, 7: 5, bb: 3, rush: 3, mf: 3 }, badK = [], few = []; let n = 0;

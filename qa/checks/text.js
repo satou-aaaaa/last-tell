@@ -60,7 +60,25 @@ async function run({ browser, file, baseline }) {
     // 決まった札だと分かる言葉を、画面の文字とログに出さない（§8-3・8-5。satou 2026-10-21 18:33Z「固定されたものを配っていると、遊んでいる人が気付かないように」）。
     // ゲームの中の文字（コメントの外）を見る。公平の説明の文（上の hnote とその英訳）はこの検査の外
     const skip = [hm ? [src.indexOf(hm), src.indexOf(hm) + hm.length] : null, enRow ? [enRow.index, enRow.index + enRow[0].length] : null].filter(Boolean);
-    const inComment = i => { const ls = src.lastIndexOf('\n', i) + 1, pre = src.slice(ls, i); if (/(^|[\s;,{}()])\/\//.test(pre)) return true; const b = src.lastIndexOf('/*', i); if (b >= 0 && b > src.lastIndexOf('*/', i)) return true; const h = src.lastIndexOf('<!--', i); return h >= 0 && h > src.lastIndexOf('-->', i) };
+    // コメントの場所は、文字列（' " `）の中を飛ばして前から1回なめて決める。文字列の中の「/*」「//」をコメントの始まりと見ない（CodeRabbit #133：'image/*' の後ろの禁止語を見逃した）
+    //   ' と " の文字列は行の終わりで閉じる（JS の文字列は行をまたがない。HTML の文の「Don't」などで先まで飲み込まない）
+    const cmt = (() => { const R = [], st = []; let i = 0, q = null, depth = 0; const n = src.length;   // st：テンプレート文字列の ${ } の入れ子（戻り先の深さ）
+      while (i < n) { const c = src[i];
+        if (q) { if (c === '\\') { i += 2; continue }
+          if (q === '`' && c === '$' && src[i + 1] === '{') { st.push(depth); depth = 0; q = null; i += 2; continue }
+          if (c === q || (c === '\n' && q !== '`')) q = null; i++; continue }
+        if (c === '{') { depth++; i++; continue }
+        if (c === '}') { if (depth === 0 && st.length) { depth = st.pop(); q = '`' } else if (depth > 0) depth--; i++; continue }
+        if (c === "'" || c === '"' || c === '`') { q = c; i++; continue }
+        if (c === '/' && src[i + 1] === '*') { const e = src.indexOf('*/', i + 2), j = e < 0 ? n : e + 2; R.push([i, j]); i = j; continue }
+        if (c === '/' && src[i + 1] === '/' && (i === 0 || /[\s;,{}()]/.test(src[i - 1]))) { const e = src.indexOf('\n', i), j = e < 0 ? n : e; R.push([i, j]); i = j; continue }
+        if (c === '<' && src.startsWith('<!--', i)) { const e = src.indexOf('-->', i + 4), j = e < 0 ? n : e + 3; R.push([i, j]); i = j; continue }
+        if (c === '/') { let k = i - 1; while (k >= 0 && (src[k] === ' ' || src[k] === '\t')) k--;   // 正規表現 /…/ の中の ' " ` を文字列の始まりと見ない（d="([^"]*)" など）
+          if (k < 0 || '(,=:[!&|?{};+-*%<>~^\n'.includes(src[k])) { let j = i + 1, cls = false; for (; j < n && src[j] !== '\n'; j++) { const d = src[j]; if (d === '\\') { j++; continue } if (d === '[') cls = true; else if (d === ']') cls = false; else if (d === '/' && !cls) break }
+            if (j < n && src[j] === '/') { i = j + 1; continue } } }
+        i++ }
+      return R })();
+    const inComment = i => { let lo = 0, hi = cmt.length - 1; while (lo <= hi) { const m = (lo + hi) >> 1; if (cmt[m][1] <= i) lo = m + 1; else if (cmt[m][0] > i) hi = m - 1; else return true } return false };
     const BAN = [/物語の一手/g, /決まった札/g, /自動で進みます/g, /story hand/gi, /fixed cards/gi, /plays automatically/gi], found = [];
     for (const re of BAN) for (const m of src.matchAll(re)) { if (inComment(m.index) || skip.some(([a, b]) => m.index >= a && m.index < b)) continue; found.push(src.slice(Math.max(0, m.index - 20), m.index + m[0].length + 20).replace(/\s+/g, ' ')) }
     items.push({ id: 'text:deal-hidden', title: '画面とログに、決まった札だと分かる言葉（物語の一手・決まった札・自動で進みます／story hand・fixed cards・plays automatically）が無い',
