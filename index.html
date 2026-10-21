@@ -10313,7 +10313,7 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   // 自分の札（.hold）も、帯にかかるなら上げる。上げすぎて場札・ポットにかからない所まで（v0.97.8 main QA・Issue #124：WebKit の縦で帯が2行になり、
   // 前の「最大 26px」では足りず、師匠のひとことが自分の Q♣ を隠した）
   let sh2=Math.min(sb,26),dfc=0;if(sb){try{const hd=document.querySelector('#mine .hold');if(hd&&hd.getClientRects().length){const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
-    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
+    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom),room=Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4);
     if(need>sh2)sh2=Math.max(sh2,Math.min(need,room));dfc=Math.max(need,sh2)-room}}catch(e){}}
   if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}
   // v0.97.11：場札・ポットが近くて上げる余地が足りないとき（第4章の3人以上の縦）は、案内の箱が出たときと同じく、帯の高さだけ卓を縮める（--sx）。
@@ -10325,7 +10325,7 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   if(barSync.anim){barSync.anim=0;clearTimeout(barSync.at);barSync.at=setTimeout(()=>{try{barSync()}catch(e){}},300)}   // 動いていた分は、止まってから測り直す
   const sx0=+(gw.dataset.sx||0);let dfcOk=dfc>6;
   if(sb&&!sx0&&dfc>6){const now=performance.now();if(!gw._dfcAt){gw._dfcAt=now;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},320)}if(now-gw._dfcAt<300)dfcOk=false}else if(!(dfc>6))gw._dfcAt=0;
-  const sx=sb&&(sx0>0||dfcOk)?Math.min(2*seh,Math.max(seh,sx0+Math.max(0,Math.ceil(dfc)))):0;
+  const sx=sb&&(sx0>0||dfcOk)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
   // 書くのは次のコマで（barSync は ResizeObserver からも呼ばれる。その中で卓の大きさを変えると「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
   if(sx!==sx0&&!gw._sxPend){gw.dataset.sx=String(sx);gw._sxPend=1;requestAnimationFrame(()=>{gw._sxPend=0;gw.style.setProperty('--sx',(+gw.dataset.sx||0)+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}})});
     // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）

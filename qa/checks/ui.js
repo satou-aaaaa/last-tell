@@ -398,7 +398,7 @@ async function shoot(browser, file, scene, vp, dir) {
     if (/^縦/.test(vp.key)) { step = '卓の縮め'; sxStuck = await page.evaluate(async () => { const gw = document.querySelector('#game .gwrap'), sx = gw ? +(gw.dataset.sx || 0) : 0; if (!sx) return { sx: 0 };
         const fr = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
         const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
-        const hit = () => { const cs = [...document.querySelectorAll('#mine .card')].filter(vis).map(e => e.getBoundingClientRect()), q2 = [...['#sensei', '#tipLine'].map(q => document.querySelector(q)), ...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, #potChips .chip')].filter(vis).map(e => e.getBoundingClientRect());
+        const hit = () => { const cs = [...document.querySelectorAll('#mine .card')].filter(vis).map(e => e.getBoundingClientRect()), q2 = [...['#sensei', '#tipLine'].map(q => document.querySelector(q)), ...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(vis).map(e => e.getBoundingClientRect());
           return cs.some(r => q2.some(q => Math.min(r.right, q.right) - Math.max(r.left, q.left) > 4 && Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) > 4)) };
         gw._sxPend = 1; gw.style.setProperty('--sx', '0px'); await fr(); const over = hit(); gw.style.setProperty('--sx', sx + 'px'); gw._sxPend = 0; await fr(); return { sx, over } }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
     if (/^縦/.test(vp.key) && (scene.myTurn || scene.handEnd) && !scene.noSubHand) { step = '字幕×自分の手札';
