@@ -126,7 +126,7 @@ async function shoot(browser, file, vp, dir) {
     let tries = null;
     if (bad(board) || bad(chips)) {
       tries = [];
-      const hitNormal = hitStat; hitStat = null;   // 画質の候補を試す間の当たり判定は数えない（CodeRabbit PR #121）
+      const hitNormal = hitStat, gapNormal = gapMax; hitStat = null;   // 画質の候補を試す間の当たり判定は数えない（CodeRabbit PR #121）。場所のずれも数えない（「zoomなし」などを入れたままの場所を、元の場所のずれに混ぜていた：PR #142 CI で WebKit PC 125px と ❌。直しを外すと 2px）
       try {
       for (const [name, css] of TRIES) {
         await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
@@ -137,7 +137,7 @@ async function shoot(browser, file, vp, dir) {
       if (dir) for (const [nm, sel] of [['場札', '#boardCards .card:not(.back):not(.slot)'], ['ポットのチップ', '#potChips'], ['相手のチップ', '.felt .spot .mystack']]) {
         const c = (await rectsOf(page, sel, 1))[0]; if (c) await page.screenshot({ clip: c, path: require('path').join(dir, `画質_${process.env.QA_BROWSER || 'chromium'}_${vp.key}_${nm}.png`) }).catch(() => {});
       }
-      } finally { hitStat = hitNormal }
+      } finally { hitStat = hitNormal; gapMax = gapNormal }
     }
     // 顔：寄る前と、寄ったあと（カメラの動きが終わってから）
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });

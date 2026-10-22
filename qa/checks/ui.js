@@ -26,7 +26,7 @@ const SCENES = [
   // noSubHand：額を選ぶ間は自分の手札を出さない作り（手札が見えないので、字幕×手札は測らない）
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()`, noSubHand: true },
   // deal：配る札を固定（v88.2 レビュー：Chromium と WebKit で結果が違い比べられなかった）。配り 32・CPU の種 1007 は、左の席（相手1）があなたとのショーダウンで勝ち、あなたは残る手（ゲームが終わらない）。手元の Chromium で4回とも同じ勝ち負け
-  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, showStrict: true },   // いちばん左の席（1）が札を見せたハンドの終わりで撮る（v0.98.5 CI：PC でその席の勝った札が画面の左の端から出た。配りしだいで見のがしていた）
+  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, showStrict: true, sameSeed: 'PC_1280x800' },   // いちばん左の席（1）が札を見せたハンドの終わりで撮る（v0.98.5 CI：PC でその席の勝った札が画面の左の端から出た。配りしだいで見のがしていた）
   // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
   { key: '第2章_ハンドの終わり', prep: `startChapter(CHAPTERS[1],true)`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
@@ -383,6 +383,8 @@ async function shoot(browser, file, scene, vp, dir) {
       // showStrict：決めた席が札を見せた回でなければ「ずれた」にして、配りを変えて撮り直す（CodeRabbit PR #138：45秒で別のハンドを撮って ✅ になっていた）
       if (sb && !(S.players[sb] && S.players[sb].show && !S.players[sb].folded)) r.push(`席${sb}が札を見せていない`);
       return r.join('・') } catch (e) { return '' } }, [!!scene.myTurn, scene.showStrict ? scene.showBy : 0]).catch(() => '') : '';
+    // 場面の中身（同じ種なら同じ場面かを比べる。改善提案 2026-10-22 §0-1）：座る人・チップ・何ハンド目か・場札・見せた札
+    const fp = await page.evaluate(() => { try { const c = x => x ? x.r + x.s : '?'; return JSON.stringify({ h: S.handNo, p: S.players.map(p => p.name + ':' + p.chips + (p.folded ? 'f' : '') + (p.show && p.hand ? '[' + p.hand.map(c).join(' ') + ']' : '')), b: (S.board || []).map(c).join(' ') }) } catch (e) { return 'err:' + String(e.message || e).slice(0, 60) } }).catch(() => '');
     step = '場所を測る・撮る'; const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
@@ -468,7 +470,7 @@ async function shoot(browser, file, scene, vp, dir) {
         subHand = err ? { err, n: a.n } : { n: Math.min(a.n, b.n), over: [...a.over.map(x => '字幕のとき ' + x), ...b.over.map(x => '案内のとき ' + x)], lift: a.lift + (b.lift !== a.lift ? '／案内のとき ' + b.lift : ''), pos: '字幕のとき ' + a.pos + '／案内のとき ' + b.pos } } }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, fp, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -500,9 +502,21 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     res[i].retried = true;
   }
   if (own) await own.close().catch(() => {});
+  // 同じ種なら同じ場面（改善提案 2026-10-22 §0-1）。ページが閉じた場面の撮り直しのあとで比べる（CodeRabbit PR #142）：sameSeed の場面をもう一度撮り、座る人・チップ・何ハンド目か・場札・見せた札を比べる。
+  //   違えば ❌（検査の乱数が演出に取られて、main と PR で別の場面を見ている）。前は main だけ ❌ が出て初めて気づいていた
+  const same = [];
+  for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
+    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i];
+    // 撮影中にブラウザごと落ちていたら、新しいブラウザで撮る（CodeRabbit PR #142）
+    let sb = browser, mine = null; try { if (!browser.isConnected()) sb = mine = await H.launch() } catch (e) {}
+    let b; try { b = await shoot(sb, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { if (mine) await mine.close().catch(() => {}) }
+    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '' }) }
+  const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;
+    items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo || (!ok && x.lost) ? 'warn' : ok ? 'ok' : 'fail',
+      detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : x.lost ? '2回目が撮れなかったので比べられなかった：' + x.lost : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
   const rects = {}; for (const r of res) if (r.rects) rects[`${r.scene}_${r.vp}`] = r.rects;
   fs.writeFileSync(path.join(dir, process.env.QA_BROWSER === 'webkit' ? 'rects_WebKit.json' : 'rects.json'), JSON.stringify(rects));
-  const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [];
+  const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [...items0];
   // 基準を作ったときに撮っていなかった場面（uiScenes が無い古い基準では、案2で足した場面）
   const ADDED = ['第7章_ハンドの終わり', '第11章_自分の番', '店で遊ぶ_自分の番', '裏の卓_自分の番', '英語_第1章の会話'];
   const isNewScene = k => baseline && baseline.uiScenes ? !baseline.uiScenes.includes(k) : ADDED.includes(k);

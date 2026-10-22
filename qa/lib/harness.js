@@ -10,8 +10,11 @@ const FAST = 25; // 待ち時間を 1/25 にする
 // ページが読み込まれる前に入れる：時間の早回し、エラーの記録、設定
 function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {}) {
   return `(() => {
-    // seed を決めたときは、配られる札などを毎回同じにする（画面チェック用）
-    if (${seed === null ? 'false' : 'true'}) { let a = ${Number(seed) >>> 0 || 1}; Math.random = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
+    // seed を決めたときは、配られる札などを毎回同じにする（画面チェック用）。Math.random を呼んだ場所（関数と呼び元の行）ごとに別の乱数の列にする：
+    //   スタックの1行目が「Error」なのは Chromium だけ（WebKit は呼ばれた関数の行から始まる）なので、それを飛ばしてから「呼び元とその呼び元」の2行を使う（CodeRabbit PR #142）
+    //   1本の列だと、タイマーで動く演出が実行機の速さしだいで先に乱数を取り、同じ種でも座る人・CPU の打ち方が変わった（改善提案 2026-10-22 §0-1）
+    if (${seed === null ? 'false' : 'true'}) { const S0 = ${Number(seed) >>> 0 || 1}, st = new Map(); const h = s => { let x = S0 ^ 0x9E3779B9; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 0x01000193); return x >>> 0 };
+      Math.random = () => { const L = (new Error().stack || '').split(String.fromCharCode(10)), k = L.slice(/^Error/.test(L[0]) ? 2 : 1).slice(0, 2).map(l => l.replace(/^.*[/]/, '')).join('<'); let a = st.has(k) ? st.get(k) : h(k); a = a + 0x6D2B79F5 | 0; st.set(k, a); let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
     window.__qa = { errors: [], logs: [] };
     window.addEventListener('error', e => window.__qa.errors.push(String(e.message) + ' @' + (e.lineno||'')));
     window.addEventListener('unhandledrejection', e => window.__qa.errors.push('promise: ' + String(e.reason && e.reason.message || e.reason)));
