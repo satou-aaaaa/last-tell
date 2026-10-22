@@ -131,7 +131,7 @@ async function run({ browser, file, quick, baseline, outDir }) {
           try { if (el) el.remove(); if (undo) undo() } catch (e) {} S.ltDealAt = keep.a; S.ltOrder = keep.o; S.ltBoardAt = keep.b; S.ltBoardFrom = keep.f; for (let i = 0; i < 20; i++) pcHandFrame(performance.now()) };
         const mid = e => { const r = e.getBoundingClientRect(), t = tb.getBoundingClientRect(); return [r.left - t.left + r.width / 2, r.top - t.top + r.height / 2] };
         const fake = (cls, parent, x, y) => { const e = document.createElement('div'); e.className = cls; e.style.cssText = `position:absolute;left:${x - 30}px;top:${y - 15}px;width:60px;height:30px`; parent.appendChild(e); return e };
-        run('deal', () => { S.ltOrder = ltDealOrder(); S.ltDealAt = performance.now() - 10 });
+        run('deal', () => { S.ltBoardAt = 0; S.ltBoardFrom = 0; S.ltOrder = ltDealOrder(); S.ltDealAt = performance.now() - 10 });   // 直前に開いた場札の動き（S.ltBoardAt）が残っていると、手は場札のほうへ行く。配りだけを見るので消す（PR #144 CI：deal が board と出た）
         run('board', () => { S.ltDealAt = 0; S.ltBoardFrom = 0; S.ltBoardAt = performance.now() - 10 });
         run('burn', () => { S.ltDealAt = S.ltBoardAt = 0; const dk = document.querySelector('.felt .lltools .ddeck'), p = dk ? mid(dk) : mid(document.getElementById('boardCards')); return fake('llburn', fxLayer(), p[0], p[1]) });
         run('push', () => { S.ltDealAt = S.ltBoardAt = 0; const p = mid(document.getElementById('potChips')); return fake('potmove', tb, p[0], p[1]) });
