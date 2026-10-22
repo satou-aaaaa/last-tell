@@ -5109,7 +5109,9 @@ function pickSeat(done){
     <div class="seats">${opps.map((p,k)=>`<button class="seatbtn" data-k="${k}"><span class="sava">${avatar(p.name)}</span>
       <b>${esc(seatWho(p.name))}の左</b><span>${esc(seatWho(p.name))}のすぐあとに動く</span>${roughOf(p)?'<i class="rough">荒い</i>':''}${usual===p.name?'<i>いつもの席</i>':''}</button>`).join('')}</div></div>`;
   v.hidden=false;
+  let picked=false;   // 1回だけ（v0.98.9 CI：WebKit の第5章で席のボタンが2回押され、ハンドが始まったあとに席を並べ替えて、相手の番のまま止まった）
   v.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+    if(picked)return;picked=true;
     const k=+b.dataset.k,pick=opps[k];
     S.players=[S.players[0]].concat(opps.slice(k+1),opps.slice(0,k+1));
     S.dealer=Math.floor(Math.random()*S.players.length);
