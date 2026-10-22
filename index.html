@@ -2442,7 +2442,7 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.9';
+const APP_VERSION='0.98.10';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -8786,7 +8786,8 @@ function presetValues(pot,toCall){
 }
 function log(text,head){
   const li=document.createElement('li');li.textContent=text;if(head)li.className='hd';
-  $('log').prepend(li);
+  // 長く遊ぶと行が増え続けた（v0.98.9 レビュー：50ハンドで約1600行。WebKit で落ちる場面の調べ）。古い行から消して1500行までにする
+  const L=$('log');L.prepend(li);while(L.childElementCount>1500)L.lastElementChild.remove();
 }
 
 /* ---------- 操作 ---------- */
