@@ -2204,9 +2204,10 @@ html.pcw #game .tbar h1{font-size:.95rem}html.pcw #game .tbar .tbmeta{font-size:
 html.pcw #game .sensei p{font-size:.95rem}
 html.pcw #game .gwrap>.sensei{max-height:36vh}
 html.pcw .potchips.mess{transform:scale(.68);transform-origin:50% 30%}
-/* WebKit の PC は卓を倒さない（倒すと、部品を測った場所と描かれた場所が 100px 以上ずれ、名札が見せた札にかぶる。Issue #131）。
+/* WebKit（Safari・iPhone の全ブラウザ）は、PC でもスマホでも卓を倒さない（倒すと、部品を測った場所と描かれた場所がずれる。PC は 100px 以上で名札が見せた札にかぶった：Issue #131。
+   スマホ縦は 60〜80px で「勝ち・負け」の帯や D ボタンが札にかぶった：v0.97.5〜v0.98.7 の WebKit 縦）。
    倒さなければ WebKit でもずれは 2px（qa/checks/sharp.js の「試した直し：倒さない」）。見た目は真上から見た卓に近くなる */
-html.wk.pcw .felt{transform:scale(.333333)}
+html.wk .felt{transform:scale(.333333)}
 /* PC は師匠の字幕を2行で切らない（右の列は縦に余裕がある。v0.98.0 レビュー：「…」で切れていた） */
 html.pcw #game .sensei p{display:block;-webkit-line-clamp:unset;overflow:visible}
 /* PC：自分の手札を大きく、下の端から少し上へ（v0.98.0 レビュー：下の端 790/800 で小さく、手前の山のほうが大きく見えて3枚め・4枚めの手札に見えた）。
@@ -2439,7 +2440,7 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.7';
+const APP_VERSION='0.98.8';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2469,7 +2470,7 @@ addEventListener('unhandledrejection',e=>{try{window.LT_PLATFORM.reportError(e.r
 // v0.98.0 PC 向け（横長の卓）：スマホ横と同じ「右の列」の配置を、大きい PC の画面（マウス）でも使う。CSS の @media も同じ2つの条件（片方を変えたらもう片方も。build.py の lint が確かめる）
 const LAND_Q='(orientation:landscape) and (max-height:520px)',PCW_Q='(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine)',SIDE_Q=LAND_Q+', '+PCW_Q;
 // WebKit（Safari・iPhone の全ブラウザ）の印 html.wk。WebKit は 3D で倒した卓の中の部品を、測った場所（getBoundingClientRect）と違う所に描く（v0.97.5 sharp:gap）。
-// PC はこの印で卓を倒さずに描き（01n_style_pcwide.css）、測った場所と描かれた場所をそろえる（Issue #131、PR #130）
+// この印で卓を倒さずに描き（01n_style_pcwide.css。PC：Issue #131、PR #130。スマホも v0.98.8 から）、測った場所と描かれた場所をそろえる
 {const ua=navigator.userAgent||'';if(/AppleWebKit/.test(ua)&&!/(Chrome|Chromium|Edg|OPR)\//.test(ua))document.documentElement.classList.add('wk')}
 function mqOn(q,f){try{if(typeof q.addEventListener==='function')q.addEventListener('change',f);else if(typeof q.addListener==='function')q.addListener(f)}catch(e){}}   // 画面の条件の変わり目（古い Safari は addListener だけ）
 {const q=matchMedia(PCW_Q),f=()=>document.documentElement.classList.toggle('pcw',q.matches);f();mqOn(q,f)}
@@ -11485,7 +11486,13 @@ function potSignPlaceWide(){const s=$('potSign'),p=$('potChips'),t=$('table'),c=
   s.style.top=(Math.min(b+3,lim)-tr.top)+'px'}
 // クセの札：相手の胸像の右上（今まで render の中で決めていた位置と同じ式）。全部測ってから全部書く
 // v73（改善提案 2026-10-14 §1）：ディーラーの声（#dcall）がクセの札（.cue）に重なるときは、声を左上へ寄せる（札は動かさない）
-function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';return}
+// 置いたあとも、クセの札にかかっていたら（吹き出しをよけて動いた先が札だった・字の幅が測った時と違う）、左へ寄せて札の手前で折り返す（v0.98.7 CI：WebKit PC で #cue2 に 25×19px）
+function dcallPlace(){dcallPlace0();const d=$('dcall');if(!d||!d.classList.contains('go'))return;
+  const R=e=>e.getBoundingClientRect(),hit=(r,c)=>Math.min(r.right,c.right)-Math.max(r.left,c.left)>0&&Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top)>0;
+  const cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);let r=R(d),hc=cs.filter(c=>hit(r,c));if(!hc.length)return;
+  if(!d.classList.contains('dleft')){d.style.top='';d.style.right='';d.classList.add('dleft');r=R(d);hc=cs.filter(c=>hit(r,c));if(!hc.length)return}
+  const mw=Math.min(...hc.map(c=>c.left))-r.left-8;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}
+function dcallPlace0(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';return}
   const R=e=>e.getBoundingClientRect(),cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);
   d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';if(!cs.length)return dcSayLift(d);
   const hit=r=>c=>{const w=Math.min(r.right,c.right)-Math.max(r.left,c.left),h=Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top);return w>0&&h>0};
@@ -11841,6 +11848,8 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   avoid.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>{const r=e.getBoundingClientRect();return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
   // ポットの額も読めなくなるので吹き出しと同じ重み（v86.2 レビュー：スマホ縦で「ポット 約1万」の真上に乗った）
   {const ps=$('potSign');if(vis(ps)){const r=ps.getBoundingClientRect();avoid.push({left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2,k:4})}}
+  // 勝ち負けの帯（.vfres）も同じ重み（v0.98.7 レビュー：人だかりの声が帯に重なった。心の声も同じ所に出るので一緒に）
+  {const vr=document.querySelector('#table > .vfres');if(vis(vr)){const r=vr.getBoundingClientRect();avoid.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
   // 横向きは右の操作の列（指示の箱の下・ボタンの上）に空きがあれば、まずそこに出す（v85.2 レビュー。v86.4 レビュー：卓の上だと D と席番号を隠すので先に試す）
   const C=$('controls'),sn=$('sensei');
   const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
@@ -11974,6 +11983,7 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   const k=String(S.players.length);if(L&&L.dataset.k===k)return;
   if(!L){L=document.createElement('div');L.className='llseats';L.setAttribute('aria-hidden','true');tb.appendChild(L)}
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
+const LL_SEAT_NEAR=64;   // 席番号の丸の上の端は、名札の下の端から 64px 以内（ふだんは 40px ほど）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
   const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
@@ -11985,7 +11995,9 @@ function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$
     if(!r&&i){const sp=$('spot'+i);if(sp){const q=R(sp);r={left:q.left+q.width/2-14,right:q.left+q.width/2+14,top:q.top,bottom:q.top+20,height:20}}}
     if(!r||!p||p.out){el.hidden=true;return}
     const cy=r.top+(r.height-z)/2,cs=i?[[r.left-z-6,cy],[r.right+6,cy]]:[];
-    let c=cs.find(([x,y])=>ok(x,y));
+    // 名札から離れすぎた横は使わない（v0.98.7 レビュー：ターンを配る途中で、席の札の箱が場札の列まで伸びて測られ、③④ が場札の上に出た）
+    const pl=i&&$('plate'+i),pr=vis(pl)?R(pl):null,near=([x,y])=>!pr||y<=pr.bottom+LL_SEAT_NEAR;
+    let c=cs.find(([x,y])=>near([x,y])&&ok(x,y));
     // 横に場所がなければ名札（自分は顔）の左上の角に重ねて付ける（席の札のように）
     // 横に場所がなければ名札（自分は顔）の左上、だめなら右上の角に重ねる。D・場札・札に重なるなら出さない（v85 レビュー）
     if(!c){const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(vis(t)){const q=R(t);c=[[q.left-z/2,q.top-z/2],[q.right-z/2,q.top-z/2]].find(([x,y])=>okCorner(x,y))}}
@@ -12042,7 +12054,9 @@ let llSeatChkAt=0;
 function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
-  return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
+  if(nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom)))return true;
+  // 名札から離れすぎていても置き直す（v0.98.7 レビュー：配る途中の箱で測って、場札の列の高さに残った）
+  return [...L.children].some(e=>{if(e.hidden||!vis(e))return false;const i=+e.dataset.i,pl=i&&$('plate'+i);return !!(pl&&vis(pl)&&R(e).top>R(pl).bottom+LL_SEAT_NEAR)})}
 // 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
 function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
 LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const w=1000-(Date.now()-llSeatChkAt);if(w<=0)llSeatChk();else if(!llSeatChk.t)llSeatChk.t=setTimeout(llSeatChk,w);return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});
@@ -12234,6 +12248,8 @@ function crowdPlace(){const v=$('crowdSay'),tb=$('table');if(!v||v.hidden||!tb)r
   const T=tb.getBoundingClientRect(),h=v.offsetHeight||22,w=v.offsetWidth,vis=e=>e&&e.getClientRects().length&&e.getBoundingClientRect().width>2&&getComputedStyle(e).visibility!=='hidden',R=e=>e.getBoundingClientRect();
   const av=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, [id^=plate]:not(#plates), #dcall.go, #mine .card, #potChips .chip, #dbtn, .dbadge, .llseats i, .felt .boardspot > .lltools:not(.off)')].filter(vis).map(e=>{const r=R(e);return{left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2}});
   av.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #potSign')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>{const r=R(e);return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  // 勝ち負けの帯（.vfres）も重く避ける（v0.98.7 レビュー：PC の4人オールインで「すげえな」が「あなたの負け」の帯の真ん中に重なり、両方読めなかった）。帯があとから置き直されたら帯の側から crowdPlace を呼ぶ（47_video_fixes.js）
+  {const vr=document.querySelector('#table > .vfres');if(vis(vr)){const r=R(vr);av.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
   // 相手の顔（目と口）も避ける（v89 レビュー：iPhone の横で、真ん中の人の口元にかかっていた）
   {const L0=$('sayLayer'),lr=L0&&R(L0);if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);if(f)av.push({left:lr.left+f.l,right:lr.left+f.r,top:lr.top+f.t,bottom:lr.top+f.b,k:3})})}
   const bd=$('boardCards'),bb=vis(bd)?R(bd):null,ys=[];
@@ -12688,7 +12704,9 @@ function vfResult(){
     // 戻すのは、この帯が隠した D（d._hid）だけ（前のハンドのタイマーが次のハンドの D を戻さない。CodeRabbit PR #128）
     // どこに置いても D の札にかかるとき（第14章の縦：上は顔と名札、下は伏せた札）は、ハンドが終わっているので D の札を隠す（次のハンドの描き直しで戻る。v0.97.11 手元）
     if(bv){const D=d.getBoundingClientRect();document.querySelectorAll('#dbtn, .dbadge').forEach(e=>{const q=e.getBoundingClientRect();if(q.width>2&&q.left<D.right-1&&D.left<q.right-1&&q.top<D.bottom-1&&D.top<q.bottom-1){e.classList.add('vfhide');d._hid.push(e)}})}if(bv&&typeof llSeatsPlace==='function')try{llSeatsPlace()}catch(e){}
-    {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
+    {const t=document.querySelector('.felt .boardspot > .lltools:not(.off)');if(t&&typeof llToolsPlace==='function'){const q=t.getBoundingClientRect(),D=d.getBoundingClientRect();if(q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{llToolsPlace()}catch(e){}}}
+    // 人だかりの声・心の声は帯をよけて置き直す（帯が動いたあと。v0.98.7 レビュー：PC の4人オールインで「すげえな」が帯の真ん中に重なった）
+    {const D=d.getBoundingClientRect();for(const [id,fn] of [['crowdSay',typeof crowdPlace==='function'?crowdPlace:null],['mfInner',typeof mfPlace==='function'?mfPlace:null]]){const e=$(id);if(e&&!e.hidden&&fn){const q=e.getBoundingClientRect();if(q.width>2&&q.left<D.right&&D.left<q.right&&q.top<D.bottom&&D.top<q.bottom)try{fn()}catch(e2){}}}}};   // 飾りの山は .vfres をよけて置き直す（v96 レビュー）   // どこも重なるときは席番号のほうをよける（v96 CI）
   const B2={t:1e9,b:-1e9};{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom}
   d._place=()=>{const B=bc.getBoundingClientRect();B2.t=B.top;B2.b=B.bottom;place()};
   tb.appendChild(d);d._place();try{vfSayYield(d)}catch(e){}LT.cssDone(d,600);   // Safari：出てくるアニメが進まず透明のまま残ることがある（v0.97.2 CI WebKit 第14章）。時間がたったらアニメを外して必ず見せる
