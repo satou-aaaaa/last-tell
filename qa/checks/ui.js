@@ -506,11 +506,14 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   //   違えば ❌（検査の乱数が演出に取られて、main と PR で別の場面を見ている）。前は main だけ ❌ が出て初めて気づいていた
   const same = [];
   for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
-    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i], b = await shoot(browser, file, s, v, d2);
-    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo }) }
+    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i];
+    // 撮影中にブラウザごと落ちていたら、新しいブラウザで撮る（CodeRabbit PR #142）
+    let sb = browser, mine = null; try { if (!browser.isConnected()) sb = mine = await H.launch() } catch (e) {}
+    let b; try { b = await shoot(sb, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { if (mine) await mine.close().catch(() => {}) }
+    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '' }) }
   const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;
-    items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo ? 'warn' : ok ? 'ok' : 'fail',
-      detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
+    items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo || (!ok && x.lost) ? 'warn' : ok ? 'ok' : 'fail',
+      detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : x.lost ? '2回目が撮れなかったので比べられなかった：' + x.lost : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
   const rects = {}; for (const r of res) if (r.rects) rects[`${r.scene}_${r.vp}`] = r.rects;
   fs.writeFileSync(path.join(dir, process.env.QA_BROWSER === 'webkit' ? 'rects_WebKit.json' : 'rects.json'), JSON.stringify(rects));
   const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [...items0];
