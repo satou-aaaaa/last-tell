@@ -43,6 +43,9 @@ const SCENES = [
   { key: '読み勝ちの見返し', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 3400,
     after: `(MF_REPLAY.ms=1e7,(()=>{const o=S.players.find(p=>!p.human&&!p.out&&p.hand&&p.hand.length);mfReplay({pot:1,name:o.name,cue:'smile',act:'call',hand:o.hand.slice(),board:S.board.slice(),hand2:S.players[0].hand.slice()})})())` },
   // 改善提案 2026-10-15b 案4：人だかり（オールインがコールされたとき）。影と「おお……」の声が札・名札・ボタンに重ならないか
+  // v0.98.7 レビュー：オールインの決着（PC）で、人だかりの声が「あなたの負け」の帯の真ん中に重なった。帯の出るハンドの終わりで声を出し、帯にかからないかを見る
+  { key: 'フリー6人_人だかりと勝ち負け', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, settle: 900, needVfres: true,
+    after: `(CROWD.afterMs=1e7,(()=>{const c=document.querySelector('#table .ltcrowd');if(c)clearTimeout(c._t)})(),crowdSay(CROWD.lines[2]),setTimeout(()=>{const d=document.querySelector('#table > .vfres');if(d&&d._place)d._place()},50))`, measure: 'inner', sel: '#crowdSay' },
   { key: 'フリー6人_人だかり', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', settle: 1400,
     after: `(S.runout=true,render(),S.runout=false,crowdSay(CROWD.lines[1]))`, measure: 'inner', sel: '#crowdSay' },
   // アクションのわかりやすさ 案2：ディーラーの声に呼び名と席番号（.sn）。声がほかの部品に重ならないか（v91.2 レビュー）
@@ -283,7 +286,7 @@ async function paintCover(page) {
 }
 // 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
 const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (typeof LT === 'undefined' || !LT.sayOn ? (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05) : LT.sayOn(x)))   // 見えなくなった・消えかけ（残り 0.5秒以下）の吹き出しは数えない。ゲームと同じ LT.sayOn で見る（v0.97.8・v0.97.9 レビュー）
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden]), #table > .vfres')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (typeof LT === 'undefined' || !LT.sayOn ? (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05) : LT.sayOn(x)))   // 見えなくなった・消えかけ（残り 0.5秒以下）の吹き出しは数えない。ゲームと同じ LT.sayOn で見る（v0.97.8・v0.97.9 レビュー）
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
         // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
         .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
@@ -349,6 +352,9 @@ async function shoot(browser, file, scene, vp, dir) {
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
+    // 勝ち負けの帯が出ていることが前提の場面は、帯が出ているかも残す（帯が無いと、重なり 0 でも見たことにならない。CodeRabbit PR #144）
+    const vfresOn = scene.needVfres ? await page.evaluate(() => { const v = document.querySelector('#table > .vfres'); if (!v) return false; const r = v.getBoundingClientRect(), s = getComputedStyle(v);   // 透明・隠れ・画面の外も「出ていない」（CodeRabbit PR #144）
+      return !v.hidden && s.display !== 'none' && s.visibility !== 'hidden' && +s.opacity > .05 && r.width > 2 && r.height > 2 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }) : null;
     // 心の声：D（ディーラーの印）を全席に動かして、そのたびに置き直して測る（v0.97.4 レビュー：D の位置しだいで字幕が D と席番号にかかり、版ごとに ⚠️ が出たり消えたりした）
     let innerD = null;
     if (scene.key === 'フリー6人_心の声') { innerD = [];
@@ -470,7 +476,7 @@ async function shoot(browser, file, scene, vp, dir) {
         subHand = err ? { err, n: a.n } : { n: Math.min(a.n, b.n), over: [...a.over.map(x => '字幕のとき ' + x), ...b.over.map(x => '案内のとき ' + x)], lift: a.lift + (b.lift !== a.lift ? '／案内のとき ' + b.lift : ''), pos: '字幕のとき ' + a.pos + '／案内のとき ' + b.pos } } }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, fp, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, vfresOn, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, fp, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -538,8 +544,10 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
-  for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`, status: r.face === 0 ? 'ok' : 'warn',
-    detail: r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
+  for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_人だかりと勝ち負け' ? 'crowdres' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_人だかりと勝ち負け' ? '人だかりの声（勝ち負けの帯が出ているとき）' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`,
+    // 人だかりの声が勝ち負けの帯に重なると両方読めないので、PC では ❌（v0.98.7 レビュー）。スマホは最低限なので ⚠️
+    status: SCENES.find(s => s.key === r.scene).needVfres && !r.vfresOn ? (/^PC/.test(r.vp) ? 'fail' : 'warn') : r.face === 0 ? 'ok' : r.scene === 'フリー6人_人だかりと勝ち負け' && /^PC/.test(r.vp) && (r.innerParts || []).some(t => /vfres/.test(t)) ? 'fail' : 'warn',
+    detail: SCENES.find(s => s.key === r.scene).needVfres && !r.vfresOn ? '勝ち負けの帯が出ていなかったので、帯との重なりを見られなかった（帯の出るハンドの終わりが来なかった）' : r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
   for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
     items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.shown && x.seen ? 'ok' : 'fail',
       detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') + (x.line && x.seen ? '' : `（4秒待った。案内 ${x.tip || 'なし'}・帯の待ち ${x.mwait ? 'あり' : 'なし'}）`) });
