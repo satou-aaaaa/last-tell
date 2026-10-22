@@ -63,6 +63,15 @@ module.exports = G => {
       L.forEach((k, i) => { for (const alt of [''].concat(k.alt ? k.alt.split(' ') : [])) for (const ord of P3) for (const perm of P4) { n++; const v = K.apply(k, perm, alt, ord); if (!K.same(k, v)) { badK.push(`${key}[${i}] ${alt || '数字そのまま'} 並び${ord.join('')} スート${perm.join('')}${v ? '' : '（札が重なる）'}`); return } } }) }
     out.push({ id: 'unit:kata-shape', title: '決まった札の型は、ばらしても勝つ側と役の種類が型どおり（§8-1。数字の幅×フロップの並び×スート）', ok: !badK.length, detail: badK.length ? badK.slice(0, 5).join(' / ') : `${n}通り、全部型どおり` });
     out.push({ id: 'unit:kata-count', title: '型の数：第4・5章の一騎打ちと第7章の最後は5型以上、第5章の最初の1手・第二部の2場面は3型以上', ok: !few.length, detail: few.length ? few.join('、') : Object.keys(NEED).map(k => `${k} ${(K.KATA[k] || []).length}型`).join('、') });
+    // 札と台詞が合う（Godot 移植の報告 2026-10-22：第5章の最初の1手は AA・KK・QQ のどれかなのに、台詞が「AAが来た」に決め打ちだった）。
+    //   第5章の最初の1手（bb）の型を全部ばらして、自分の手札の名前（AA など）の台詞が日本語・英語とも揃っていて、台詞の中の名前が手札と同じ
+    if (typeof K.pairName === 'function' && K.BB_LINES) { const miss = [], seen = new Set();
+      (K.KATA.bb || []).forEach((k, i) => { for (const alt of [''].concat(k.alt ? k.alt.split(' ') : [])) for (const ord of P3) for (const perm of P4) { const v = K.apply(k, perm, alt, ord); if (!v) continue;
+        const nm = K.pairName(v.h), L = nm && K.BB_LINES[nm]; seen.add(nm || '（ペアでない）');
+        if (!L) { miss.push(`bb[${i}] ${alt || '数字そのまま'} → ${nm || 'ペアでない'} の台詞が無い`); continue }
+        for (const key of ['deal', 'ask', 'jin']) { const x = L[key]; if (!x || !x[0] || !x[1] || !x[0].includes(nm) || K.bbLine(v.h, key) !== x[0]) miss.push(`${nm} の ${key}：${x ? x[0] : '無い'}`) } } });
+      out.push({ id: 'unit:kata-line', title: '第5章の最初の1手：配られた手札と台詞（AA・KK・QQ）が合う', ok: !miss.length, detail: miss.length ? [...new Set(miss)].slice(0, 5).join(' / ') : `出る手札 ${[...seen].join('・')}、どれも日本語・英語の台詞あり` }) }
+    else if (cur) out.push({ id: 'unit:kata-line', title: '第5章の最初の1手：配られた手札と台詞が合う', ok: false, detail: 'Rules.kata.pairName・BB_LINES が無い（台詞が手札に合わせられない）' });
     // 直近の型を避ける：200回続けて選んで、直近 ex(型の数) 回と同じ型が出ない。3型以上では次の型がいつも1つに決まらない（周期的に回らない。v0.98.2 の 012012…）。前の版の保存（数字1つ）も配列で読む
     const rep = [], cyc = [], exOf = m => typeof K.ex === 'function' ? K.ex(m) : Math.min(3, m - 1);
     for (const m of [3, 4, 5]) { let rec = []; const seq = []; for (let t = 0; t < 200; t++) { const k = K.pick(m, rec, G.rand); if (rec.slice(-exOf(m)).includes(k) || (rec.length && rec[rec.length - 1] === k)) rep.push(`${m}型で ${t}回目`); seq.push(k); rec = rec.concat(k).slice(-3) }

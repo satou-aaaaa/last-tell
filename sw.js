@@ -4,7 +4,7 @@
 // 保存していないページをオフラインで開いたときは、ゲームではなく「オフラインです」を出す。
 // アイコンとフォントは保存した版を優先する。
 // VERSION は tools/build_index.py が公開のたびに書き換える。
-const VERSION = 'lt-20261022093605';
+const VERSION = 'lt-20261022104426';
 // ゲームから開くページを足したら、ここにも足す（qa/checks/pages.js が、足りないと ❌ にする）
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
