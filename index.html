@@ -7427,7 +7427,7 @@ function roundComplete(){
 function proceed(){
   const live=S.players.filter(inHand);
   if(live.length===1)return winUncontested(live[0]);
-  const hold=S.hold||0;S.hold=0;
+  const hold=S.hold||0;S.hold=0;S.procAt=Date.now();S.procN=(S.procN||0)+1;   // 止まったときに調べるため（qa の自動対戦が読む：v0.98.9 WebKit 第5章の1ハンド目の止まり）
   const s0=S,h0=S.handNo; // 章を出入りしたあとに古いタイマーが動かないように
   if(roundComplete()){
     S.toAct=-1; // 通りの区切りでは誰の番でもない（待っている間にボタンを押せないように）
@@ -7482,7 +7482,8 @@ function proceed(){
     const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.8:1)+hold+rdT;   // 客の降りは少しだけ速く（.5 だと「早い早い」：第6章の録画 #21）
     if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
       setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)askQuiz(angle==='faketap'?'tap':'onechip',()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}})},wait+1300*SPEED());return}
-    setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
+    S.cpuQ={i,w:Math.round(wait),at:Date.now(),h:S.handNo};
+    setTimeout(()=>{S.cpuQ&&(S.cpuQ.ran=Date.now());if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
   }
 }
 function act(i,type,to){

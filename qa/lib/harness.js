@@ -216,6 +216,10 @@ async function botState(page) {
       gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
         sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden,
         lt: window.__qaLong ? Math.round(__qaLong.ms / 1000) + "秒/" + __qaLong.n + "回（最長" + Math.round(__qaLong.max) + 'ms）' : '',
+        // 相手の番の予約（proceed の最後・相手の動きのタイマー）と、待ちを延ばす値（v0.98.9 WebKit 第5章：相手の番のまま止まった）
+        pr: S.procAt ? Math.round((Date.now() - S.procAt) / 100) / 10 + '秒前' + (S.procN ? '（' + S.procN + '回）' : '') : 'なし',
+        cq: S.cpuQ ? '席' + S.cpuQ.i + '・ハンド' + S.cpuQ.h + '・待ち' + S.cpuQ.w + 'ms・' + Math.round((Date.now() - S.cpuQ.at) / 100) / 10 + '秒前' + (S.cpuQ.ran ? '・動いた' : '・まだ') : 'なし',
+        fl: ['hold', 'stare', 'reveal', 'runout', 'angleActing', 'tease'].filter(k => S[k] != null && S[k] !== false && S[k] !== 0 && S[k] !== -1).map(k => k + '=' + String(S[k]).slice(0, 12)).join(' ') + (S.scriptAI ? ' scriptAI' : '') + (typeof CFG !== 'undefined' && CFG.flashback ? ' flashback' : ''),
         sc: (typeof SC !== 'undefined' && SC) ? (SC.i + '/' + (SC.lines ? SC.lines.length : '?')) : '', btns: [...document.querySelectorAll('#scene button, #vs button, #between button')].filter(vis).map(b => b.id || b.textContent.trim().slice(0, 6)).slice(0, 5).join('/') } : null };
   });
 }
