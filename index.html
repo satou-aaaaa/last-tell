@@ -13618,7 +13618,7 @@ LT.pcBigRiver=()=>{try{return pcBigOk()&&!pcBigStill()&&S.players.filter(inHand)
 LT.on('startHand',()=>{try{PCBIG.hno=-1;pcBigOff()}catch(e){}});
 LT.on('render',()=>{try{
   if(!S||!S.players||S.handOver)return;
-  if(PCBIG.hno===S.handNo){if(pcBigOk())pcBigDraw();else pcBigOff();return}   // 降りた人が出たら抜く所を描き直す。PC でなくなったら消す
+  if(PCBIG.hno===S.handNo){if(!pcBigOk()){pcBigOff();return}const cv=$('pcBig');if(cv&&cv.classList.contains('on'))pcBigDraw();else pcBigOn();return}   // 降りた人が出たら抜く所を描き直す。PC でなくなったら消し、同じハンドで PC に戻ったらまた出す（CodeRabbit PR #138）
   if(!pcBigOk())return;
   if(!(S.runout||(S.street==='river'&&potTotal()>=PCBIG.BB*BB())))return;
   if(S.players.filter(inHand).length<2)return;
