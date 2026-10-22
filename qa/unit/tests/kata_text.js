@@ -8,6 +8,7 @@
 const vm = require('vm');
 const CARD = /(?<![A-Za-z0-9])(?:[AKQJT][AKQJT2-9]?s?|[2-9]{2})(?![A-Za-z0-9])|ペア|セット|トリップス|フラッシュ|ストレート|フルハウス|フォーカード|エース|キング|クイーン|ジャック|ハート|スペード|ダイヤ|クラブ|[♠♥♦♣]/;
 const JA = /[ぁ-んァ-ン一-龯]/;
+const EN_CARD = /\b(?:aces?|kings?|queens?|jacks?|tens?|pairs?|sets?|trips|flush(?:es)?|straights?|full house|quads)\b/i;   // 英訳（EN_DICT）の札の名前。CARD に /i を付けると英語の a まで拾うので分ける
 const BOSSES = ['ハヤト', 'レイカ', 'ジン', 'カイ', '師匠'];
 function objAt(text, name) {   // const NAME={...} の {...} を括弧の数で切り出す（文字列の中の括弧も数えないように）
   const i = text.indexOf('const ' + name + '=');
@@ -52,7 +53,11 @@ module.exports = G => {
     seg = seg.replace(/\/\/[^\n]*/g, '');
     for (const s of seg.matchAll(/'([^'\n]*)'|`([^`\n]*)`/g)) lines.push(['台本 ' + m[1], s[1] || s[2] || '']);
   }
-  const bad = lines.filter(([, s]) => JA.test(s) && CARD.test(s)).map(([w, s]) => `${w}「${s.slice(0, 30)}」（${s.match(CARD)[0]}）`);
+  // 英訳も見る（日本語の台詞に対応する EN_DICT の訳。CodeRabbit #149）
+  const en = evalObj(objAt(text, 'EN_DICT') || '');
+  if (!en) gone.push('EN_DICT');
+  const checked = lines.filter(([, s]) => JA.test(s)).flatMap(([w, s]) => [[w, s, CARD]].concat(en && typeof en[s] === 'string' ? [[w + '（英語）', en[s], EN_CARD]] : []));
+  const bad = checked.filter(([, s, re]) => re.test(s)).map(([w, s, re]) => `${w}「${s.slice(0, 30)}」（${s.match(re)[0]}）`);
   return [{ id: 'unit:kata-text', title: '型で配る場面の台詞に札の名前が無い（配る札が毎回変わるため）', ok: !bad.length && !gone.length,
-    detail: gone.length ? '見る場所が見つからない：' + gone.join('、') : bad.length ? bad.slice(0, 5).join(' / ') + (bad.length > 5 ? ` ほか${bad.length - 5}件` : '') : `${lines.length}行を見た` }];
+    detail: gone.length ? '見る場所が見つからない：' + gone.join('、') : bad.length ? bad.slice(0, 5).join(' / ') + (bad.length > 5 ? ` ほか${bad.length - 5}件` : '') : `${checked.length}行を見た（英訳 ${checked.length - lines.filter(([, s]) => JA.test(s)).length}行を含む）` }];
 };
