@@ -21,11 +21,13 @@ for i in 1 2 3 4 5; do
   # 置き場所を入れ替える
   g rm -r -q -f --cached --ignore-unmatch -- "$key" >/dev/null
   [ -n "$vkey" ] && g rm -r -q -f --cached --ignore-unmatch -- "$vkey" >/dev/null
-  rm -rf /tmp/qa-w && mkdir -p "/tmp/qa-w/$key" && cp -r "$src"/. "/tmp/qa-w/$key/"
-  git --git-dir="$ws/.git" --work-tree=/tmp/qa-w -C /tmp/qa-w add -A -f -- "$key"
+  # 載せる段で失敗したら置かない（消しただけの木を push しない）
+  fail() { unset GIT_INDEX_FILE; echo "::warning title=qa-results に置けなかった::$1。結果は Actions の成果物にある"; exit 0; }
+  { rm -rf /tmp/qa-w && mkdir -p "/tmp/qa-w/$key" && cp -r "$src"/. "/tmp/qa-w/$key/"; } || fail "まとめを写せなかった"
+  git --git-dir="$ws/.git" --work-tree=/tmp/qa-w -C /tmp/qa-w add -A -f -- "$key" || fail "git add に失敗した"
   if [ -n "$vkey" ]; then
     # 同じ中身を v<版>/ にも載せる（read-tree --prefix は全部の blob を落とすので使わない）
-    g ls-files -s -z -- "$key/" | sed -z "s#\t$key/#\t$vkey/#" | g update-index -z --index-info
+    g ls-files -s -z -- "$key/" | sed -z "s#\t$key/#\t$vkey/#" | g update-index -z --index-info || fail "$vkey に写せなかった"
   fi
   # pr/・branch/ の14日より古いもの（run.txt の at で見る。run.txt の中身だけまとめて取る）
   now=$(date +%s)
