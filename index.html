@@ -2215,6 +2215,8 @@ html.pcw #game .sensei p{display:block;-webkit-line-clamp:unset;overflow:visible
 html.pcw #game .mine{padding-bottom:18px}
 html.pcw .felt .boardspot>.lltools{scale:.62;transform-origin:0 0}
 html.pcw .felt .boardspot>.muckpile{scale:.62}
+/* v0.98.9：Safari では瞳の transition が途中で止まることがある（v0.98.8 CI：WebKit PC 第14章で止まったまま残った）。瞳は動かさずに置く（見え方は変わらない位置へ一度で） */
+html.wk .bust.look .av .pupils,html.wk .bust.c35away .av.real .eyes .pupils{transition:none}
 
 /* ===== v0.98.1 PC 向け：部屋の光と煙（js/53_pc_air.js）。卓の布の上・名札の下に重ねる絵。押せない ===== */
 #pcAir{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
@@ -2506,8 +2508,6 @@ const LT={_h:{},errors:0,
   sweep(){if(!this._sw||!document.getAnimations)return;const now=performance.now();if(now-(this._swAt||0)<240)return;
     this._swAt=now;   // qa は setInterval を速めるので、実の時間で 240ms ごとに
     for(const a of document.getAnimations()){try{if(a.playState!=='running'){this._sw.delete(a);continue}const t=a.effect&&a.effect.getComputedTiming();if(!t||!isFinite(t.endTime))continue;
-      // 始まった時刻がわかる動きは、最初に見た時を待たずに「始まり＋長さ＋300ms」で終える（v0.98.8 CI：WebKit で止まった瞳の transition を見張りが遅れて見つけ、検査の待ち時間をこえて残った）
-      const tl=document.timeline&&document.timeline.currentTime;if(a.startTime!=null&&tl!=null&&(tl-a.startTime)*Math.abs(a.playbackRate||1)>t.endTime+300&&(+t.localTime||0)<t.endTime){this._sw.delete(a);a.finish();continue}
       let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
       if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
