@@ -155,8 +155,8 @@ async function run({ browser, file, quick, baseline, outDir }) {
     } catch (e) { out.handErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
     // 動きを減らす設定（prefers-reduced-motion）：1ハンド打っても1コマも描かない
     const r2 = await H.openGame(browser, file, { fast: 20 });
-    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 1 }); await H.runUntilDone(r2.page, { timeoutMs: 60000, stallMs: 30000 });
-      out.handLite = await r2.page.evaluate(() => typeof PCHAND !== 'undefined' ? PCHAND.frames : -1);
+    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 1 }); const done1 = await H.runUntilDone(r2.page, { timeoutMs: 60000, stallMs: 30000 });
+      out.handLite = done1.status !== 'done' ? 'err:' + done1.status : await r2.page.evaluate(() => typeof PCHAND !== 'undefined' ? PCHAND.frames : -1);
       // 場札をめくっている途中で動きを減らす設定になっても、めくりの印（S.ltBoardAt）を残さない（残ると PC の手が空回りした。PR #136）
       out.boardRm = await r2.page.evaluate(() => { if (!reducedMotion()) return 'rm-off'; S.ltBoardFrom = 0; S.ltBoardAt = performance.now() - 10; ltBoardAnim(); const v = S.ltBoardAt; S.ltBoardAt = 0; return v === 0 ? 'cleared' : 'left' }) } catch (e) { out.handLite = 'err' } finally { await r2.ctx.close() }
   }
@@ -240,8 +240,8 @@ async function run({ browser, file, quick, baseline, outDir }) {
     } catch (e) { out.touchErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
     // 動きを減らす設定（prefers-reduced-motion）：1ハンド打っても投げない・散らさない
     const r2 = await H.openGame(browser, file, { fast: 20 });
-    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 1 }); await H.runUntilDone(r2.page, { timeoutMs: 60000, stallMs: 30000 });
-      out.touchLite = await r2.page.evaluate(() => typeof PCTOUCH !== 'undefined' ? PCTOUCH.thrown + PCTOUCH.scat : -1) } catch (e) { out.touchLite = 'err' } finally { await r2.ctx.close() }
+    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 1 }); const done = await H.runUntilDone(r2.page, { timeoutMs: 60000, stallMs: 30000 });   // 1ハンド終わらなかったら数えない（0 のまま ✅ にしない。CodeRabbit PR #143）
+      out.touchLite = done.status !== 'done' ? 'err:' + done.status : await r2.page.evaluate(() => typeof PCTOUCH !== 'undefined' ? PCTOUCH.thrown + PCTOUCH.scat : -1) } catch (e) { out.touchLite = 'err' } finally { await r2.ctx.close() }
   }
   const b = (baseline && baseline.perf) || {};
   const worse = (k, f = 1.3, add = 0) => b[k] != null && out[k] > b[k] * f + add;
