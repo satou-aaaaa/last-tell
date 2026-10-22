@@ -2506,6 +2506,8 @@ const LT={_h:{},errors:0,
   sweep(){if(!this._sw||!document.getAnimations)return;const now=performance.now();if(now-(this._swAt||0)<240)return;
     this._swAt=now;   // qa は setInterval を速めるので、実の時間で 240ms ごとに
     for(const a of document.getAnimations()){try{if(a.playState!=='running'){this._sw.delete(a);continue}const t=a.effect&&a.effect.getComputedTiming();if(!t||!isFinite(t.endTime))continue;
+      // 始まった時刻がわかる動きは、最初に見た時を待たずに「始まり＋長さ＋300ms」で終える（v0.98.8 CI：WebKit で止まった瞳の transition を見張りが遅れて見つけ、検査の待ち時間をこえて残った）
+      const tl=document.timeline&&document.timeline.currentTime;if(a.startTime!=null&&tl!=null&&(tl-a.startTime)*Math.abs(a.playbackRate||1)>t.endTime+300&&(+t.localTime||0)<t.endTime){this._sw.delete(a);a.finish();continue}
       let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
       if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
@@ -8292,12 +8294,16 @@ function bAnswer(k,late){const st=S.bAsk;if(!st||st.stage!==1)return;const a=st.
     row.hidden=false;row.classList.add('bask');b.hidden=true;$('table').classList.remove('talkpick');row._bp=1;layoutSoon()}
   else{row.classList.remove('bask');if(row.dataset.k&&row.dataset.k[0]==='b'&&!askLive()){row.hidden=true;row.dataset.k='';row.innerHTML=''}}}catch(e){}return r}}
 // 3つのボタンが場札・自分の手札・チップ・ポット表示にかからない場所を探して、少しずらす
-function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row),tb=R($('table'));if(!r0.width)return;
+// 開いている額の枠（#raisePanel）の上端。開いていない・横にずれている（PC で枠が別の列）ときは Infinity
+function askPanelTop(a){const p=$('raisePanel');if(!p||p.hidden||!p.offsetParent)return Infinity;const q=p.getBoundingClientRect();return q.width>2&&(!a||a.left<q.right&&q.left<a.right)?q.top:Infinity}
+function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row);let tb=R($('table'));if(!r0.width)return;
+  // v0.98.8 CI：額を選ぶ枠（#raisePanel）は卓の下側に重なって開く。枠の上を卓の下端とみなし、枠のすぐ上を先に試す（WebKit の縦で「強いよ」が枠の「あなたの手」の下に隠れた）
+  const pt=askPanelTop(r0);if(pt<tb.bottom)tb={left:tb.left,right:tb.right,top:tb.top,bottom:pt};
   const obs=[...document.querySelectorAll('#boardCards .card,#mine .card,#mine .mystack,#mine .hold,#potSign,.chipwrap .chips,.spot .card,#board2 .card')].filter(e=>e.offsetParent&&R(e).width).map(R);
   const bc=[...document.querySelectorAll('#boardCards .card')].filter(e=>e.offsetParent).map(R);
   const hit=(x,y)=>obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
   const inT=(x,y)=>r0.left+x>=tb.left+4&&r0.right+x<=tb.right-2&&r0.top+y>=tb.top+2&&r0.bottom+y<=tb.bottom-2;
-  const ys=[0];if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
+  const ys=[0];if(pt<Infinity)ys.push(pt-6-r0.bottom);if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
   // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
   const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
   // どこにも空きがないときは、かかる面積がいちばん小さい所へ（場札は3倍に数える）。前は元の場所のままで、手札の列を上げたぶん場札の 2♣ に「黙る」が乗った（PR #128 の CI 第14章の縦）
@@ -11569,7 +11575,8 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(()=>{talkPlace();const row=$('askRow');
       // 場札にかかったときも（PR #128 の CI：第14章の縦で「黙る」が場札の 2♣ に乗った）
       // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
-      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot)')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
+      const onMine=r=>{const a=r.getBoundingClientRect();if(a.bottom>askPanelTop(a)+1)return true;   // 額の枠にかかったときも（v0.98.8 CI）
+        return [...document.querySelectorAll('#mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot)')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
       if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row);
       // 手札は配る動きのあとで場所が決まる。少しあとにもう一度だけ確かめる（v0.96.4 CI）
       if(row&&!row.hidden&&typeof bPlace==='function'){clearTimeout(LP._askT);LP._askT=setTimeout(()=>{try{const r=$('askRow');if(r&&!r.hidden&&onMine(r))bPlace(r)}catch(e){}},700)}});
