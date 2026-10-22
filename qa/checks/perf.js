@@ -9,7 +9,7 @@ const SLOW = 4;
 async function cdp(page, rate = SLOW) { const c = await page.context().newCDPSession(page); await c.send('Emulation.setCPUThrottlingRate', { rate }); await c.send('Performance.enable'); return c }
 async function heapMB(c) { try { await c.send('HeapProfiler.collectGarbage') } catch (e) {} const m = (await c.send('Performance.getMetrics')).metrics; return Math.round((m.find(x => x.name === 'JSHeapUsedSize') || {}).value / 1e5) / 10 }
 
-async function run({ browser, file, quick, baseline }) {
+async function run({ browser, file, quick, baseline, outDir }) {
   const items = [], out = {};
   out.sizeKB = Math.round(fs.statSync(file).size / 1024);
   // 1. 起動：本物の速さ（早回しなし）、動きあり。タイトルの3ボタンが出るまで
@@ -108,7 +108,12 @@ async function run({ browser, file, quick, baseline }) {
           const top = Math.max(0, Math.min(c.height, Math.ceil((fr.top - cr.top) / cr.height * c.height))); let face = 0, low = 0;
           if (top > 0) { const d = g.getImageData(0, 0, c.width, top).data; for (let i = 3; i < d.length; i += 4) face = Math.max(face, d[i]) } else face = 255;
           if (top < c.height) { const d2 = g.getImageData(0, top, c.width, c.height - top).data; for (let i = 3; i < d2.length; i += 4) low = Math.max(low, d2[i]) }
-          return { face, low, kind: PCHAND.kind } };
+          // 腕が相手の伏せ札・名札の上を通らないか（v0.98.4 レビュー：押し出しの腕がタロウの伏せ札の真上から下りた）。札と名札の中の 3×3 点の濃さの最大
+          const cr2 = c.getBoundingClientRect(), kx = c.width / cr2.width, ky = c.height / cr2.height; let over = 0, overAt = '';
+          for (const e of document.querySelectorAll('#felt .spot .hand .card:not(.slot), #plates .plate')) { if (!e.getClientRects().length) continue; const r = e.getBoundingClientRect(); if (!(r.width > 2)) continue;
+            for (let a = 1; a <= 3; a++) for (let b = 1; b <= 3; b++) { const x = Math.round((r.left + r.width * a / 4 - cr2.left) * kx), y = Math.round((r.top + r.height * b / 4 - cr2.top) * ky); if (x < 0 || y < 0 || x >= c.width || y >= c.height) continue;
+              const v = g.getImageData(x, y, 1, 1).data[3]; if (v > over) { over = v; overAt = (e.closest('.spot') || e).id } } }
+          return { face, low, kind: PCHAND.kind, over, overAt, root: PCHAND.root ? PCHAND.root.map(Math.round) : null } };
         const run = (name, set, undo) => { const keep = { a: S.ltDealAt, o: S.ltOrder, b: S.ltBoardAt, f: S.ltBoardFrom }; PCHAND.h1 = PCHAND.h2 = null; let el = null;
           try { el = set(); for (let i = 0; i < 12; i++) pcHandFrame(performance.now()); res[name] = read() } catch (e) { res[name] = { err: String(e.message).slice(0, 80) } }
           try { if (el) el.remove(); if (undo) undo() } catch (e) {} S.ltDealAt = keep.a; S.ltOrder = keep.o; S.ltBoardAt = keep.b; S.ltBoardFrom = keep.f; for (let i = 0; i < 20; i++) pcHandFrame(performance.now()) };
@@ -121,6 +126,16 @@ async function run({ browser, file, quick, baseline }) {
         // 卓の板の上端のすぐ上へ飛ぶチップ（顔の所）：手はそこへ出ても、上端より上には描かない
         run('pushTop', () => { S.ltDealAt = S.ltBoardAt = 0; const fw = c.parentNode.querySelector('.felt-wrap').getBoundingClientRect(), t = tb.getBoundingClientRect(); return fake('potmove', tb, t.width / 2, fw.top - t.top - 20) });
         return { defined: true, res, pe: getComputedStyle(c).pointerEvents, shown: getComputedStyle(c).display !== 'none', ms: PCHAND.hist.length > 1 ? (h => Math.round(h[h.length >> 1] * 100) / 100)(PCHAND.hist.slice().sort((a, b) => a - b)) : null, seenLive: PCHAND.seen, errors: __qa.errors.slice(0, 3) } });
+      // 出ている瞬間を1枚残す（CI の画面の一覧には写らない。v0.98.4 レビュー）：ポットを押し出す手
+      if (outDir && out.hand && out.hand.defined) try {
+        await page.evaluate(() => { const tb = document.getElementById('table'), pc = document.getElementById('potChips'), r = pc.getBoundingClientRect(), t = tb.getBoundingClientRect(), e = document.createElement('div');
+          e.className = 'potmove'; e.id = 'qaPm'; e.style.cssText = `position:absolute;left:${r.left - t.left + r.width / 2 - 30}px;top:${r.top - t.top + r.height / 2 - 15}px;width:60px;height:30px`; tb.appendChild(e);
+          PCHAND.h1 = PCHAND.h2 = null; for (let i = 0; i < 12; i++) pcHandFrame(performance.now()) });
+        const d = require('path').join(outDir, 'ui'); fs.mkdirSync(d, { recursive: true });
+        await page.locator('#table').screenshot({ path: require('path').join(d, '演出_ディーラーの手_PC.jpg'), type: 'jpeg', quality: 70 });
+        out.hand.shot = 'ui/演出_ディーラーの手_PC.jpg';
+        await page.evaluate(() => { const e = document.getElementById('qaPm'); if (e) e.remove(); for (let i = 0; i < 20; i++) pcHandFrame(performance.now()) });
+      } catch (e) { out.hand.shotErr = String(e.message || e).slice(0, 80) }
       await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(600);
       out.hand.mobileShown = await page.evaluate(() => { const c = document.getElementById('pcHand'); return !!(c && c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none') });
     } catch (e) { out.handErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
@@ -185,10 +200,10 @@ async function run({ browser, file, quick, baseline }) {
   { const a = out.air || {}, bad = out.airErr || !a.pcw || !a.has || !a.shown || a.pe !== 'none' || !(a.moved > 0) || a.ms == null || a.mobileShown || a.face !== 0 || !a.on || !(a.painted > 0) || (a.errors || []).length;
     items.push({ id: 'perf:pcair', title: 'PC の光と煙：卓の上に出て押せない・顔（卓の板より上）には描かない・1コマ 2ms 以下（真ん中の値）・スマホ幅では出ない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
       detail: out.airErr ? '測れなかった：' + out.airErr : `PC の印 ${a.pcw ? 'あり' : 'なし'}、絵 ${a.has ? (a.shown ? '出ている' : '隠れている') : '無い'}（卓の ${a.cover}%）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、描いたコマ ${a.frames}（測った 1.5秒で +${a.moved}）、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、顔の所 ${a.face === 0 ? '透明' : '描いている（' + a.face + '）'}、卓の所 ${a.painted > 0 ? '描いている' : '透明（描いていない）'}、動いている ${a.on ? 'はい' : 'いいえ（止まった）'}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
-  { const a = out.hand || {}, R = a.res || {}, K = ['deal', 'board', 'burn', 'push'], miss = K.filter(k => !(R[k] && R[k].low > 0 && R[k].kind === k)), face = Object.entries(R).filter(([k, v]) => v.face > 0).map(([k]) => k), errs = Object.entries(R).filter(([k, v]) => v.err).map(([k, v]) => `${k}: ${v.err}`);
-    const bad = out.handErr || !a.defined || !a.shown || a.pe !== 'none' || miss.length || face.length || errs.length || !(R.pushTop && R.pushTop.kind === 'push') || a.mobileShown || out.handLite !== 0 || out.boardRm !== 'cleared' || (a.errors || []).length;
-    items.push({ id: 'perf:pchand', title: 'PC のディーラーの手：配る・燃やし札・場札・ポットの押し出しで出る・顔（卓の板より上）には描かない・押せない・スマホ幅と動きを減らす設定では描かない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
-      detail: out.handErr ? '測れなかった：' + out.handErr : !a.defined ? 'ディーラーの手（PCHAND・pcHandFrame）が無い版' : `${K.map(k => `${k} ${R[k] && R[k].low > 0 && R[k].kind === k ? '出た' : '出ない（' + ((R[k] || {}).kind || '何もしていない') + '）'}`).join('・')}、顔の所 ${face.length ? '描いている（' + face.join('・') + '）' : '透明（上端の上へ飛ぶチップでも）'}、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、動きを減らす設定で描いたコマ ${out.handLite}・めくりの印 ${out.boardRm === 'cleared' ? '消えた' : '残った（' + out.boardRm + '）'}、自動対戦の中で出た ${Object.entries(a.seenLive || {}).map(([k, v]) => `${k} ${v}コマ`).join('・') || 'なし'}（参考：CI はコマが少ない）${errs.length ? '、エラー ' + errs.join(' / ') : ''}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
+  { const a = out.hand || {}, R = a.res || {}, K = ['deal', 'board', 'burn', 'push'], overs = Object.entries(a.res || {}).filter(([k, v]) => v.over > 24).map(([k, v]) => `${k}（${v.overAt} ${v.over}）`), rootsAll = Object.values(a.res || {}).map(v => v.root), roots = rootsAll.filter(Boolean), rootOk = roots.length >= 4 && roots.length === rootsAll.length && roots.every(r => Math.abs(r[0] - roots[0][0]) <= 3 && Math.abs(r[1] - roots[0][1]) <= 3), miss = K.filter(k => !(R[k] && R[k].low > 0 && R[k].kind === k)), face = Object.entries(R).filter(([k, v]) => v.face > 0).map(([k]) => k), errs = Object.entries(R).filter(([k, v]) => v.err).map(([k, v]) => `${k}: ${v.err}`);
+    const bad = out.handErr || a.shotErr || !a.defined || !a.shown || a.pe !== 'none' || miss.length || face.length || errs.length || !(R.pushTop && R.pushTop.low > 0 && R.pushTop.kind === 'push') || a.mobileShown || out.handLite !== 0 || out.boardRm !== 'cleared' || overs.length || !rootOk || (a.errors || []).length;
+    items.push({ id: 'perf:pchand', title: 'PC のディーラーの手：配る・燃やし札・場札・ポットの押し出しで出る・顔（卓の板より上）には描かない・押せない・スマホ幅と動きを減らす設定では描かない', shot: a.shot, status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
+      detail: out.handErr ? '測れなかった：' + out.handErr : !a.defined ? 'ディーラーの手（PCHAND・pcHandFrame）が無い版' : `${K.map(k => `${k} ${R[k] && R[k].low > 0 && R[k].kind === k ? '出た' : '出ない（' + ((R[k] || {}).kind || '何もしていない') + '）'}`).join('・')}、顔の所 ${face.length ? '描いている（' + face.join('・') + '）' : '透明（上端の上へ飛ぶチップでも）'}、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、動きを減らす設定で描いたコマ ${out.handLite}・めくりの印 ${out.boardRm === 'cleared' ? '消えた' : '残った（' + out.boardRm + '）'}、相手の札・名札の上 ${overs.length ? '通った（' + overs.join('・') + '）' : '通らない'}、腕の根元 ${rootOk ? '毎回同じ所' : 'ばらばら（' + roots.map(r => r.join(',')).join(' / ') + '）'}、自動対戦の中で出た ${Object.entries(a.seenLive || {}).map(([k, v]) => `${k} ${v}コマ`).join('・') || 'なし'}（参考：CI はコマが少ない）${errs.length ? '、エラー ' + errs.join(' / ') : ''}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}${a.shotErr ? '、画像を残せなかった：' + a.shotErr : ''}` }) }
   { const a = out.big || {}, litBad = (a.lit || []).filter(v => v == null || v > 60), darkBad = (a.dark || []).filter(v => v == null || v < 100);
     const bad = out.bigErr || !a.defined || !a.on || !a.shown || !(a.op > .5) || a.pe !== 'none' || !(a.lit || []).length || !(a.dark || []).length || litBad.length || darkBad.length || !a.crowdBig || a.crowdN !== a.crowdWant || a.riverLow !== false || a.riverHigh !== true || !out.bigLiteShown || a.backShown !== true || !(a.slow > a.norm && a.slow <= 1200) || a.norm !== a.normWant || !a.river || a.ch7 !== false || a.mobileShown || out.bigLite !== false || (a.errors || []).length;
     items.push({ id: 'perf:pcbig', title: 'PC の大勝負の間：オールインで部屋が暗くなり、勝負している相手の顔は明るいまま・降りた相手は暗い・人だかりが大きい・最後の札は 1.2秒まで・第7章の最後の手とスマホ幅と動きを減らす設定では出ない', status: bad ? 'fail' : 'ok',

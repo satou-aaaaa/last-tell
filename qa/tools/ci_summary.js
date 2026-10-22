@@ -133,7 +133,19 @@ if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
       raw.push(...page); if (page.length < 100) break }
     const iss = raw.filter(i => !i.pull_request);
     if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
-      const it = { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く` };
+      // PR では、どの Issue も「本文に Closes #番号」か「Issue に人（ボットでない）の書き込み＝直さない理由」が無ければ ❌（v0.98.5 レビュー：#131・#139 と2回、決まりを書いただけでは守られなかった）
+      //   本文を直しても CI は回り直さない（qa.yml の types）ので、Closes は PR を作るときに書く。main への push では ⚠️ のまま
+      let ev = {}; try { ev = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')) } catch (e) {}
+      const pr = ev.pull_request, body = String(pr && pr.body || ''), unhandled = [];
+      if (pr) for (const i of iss) {
+        if (new RegExp(`\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\s+#${i.number}\\b`, 'i').test(body)) continue;
+        let cm = []; try { for (let pg = 1; pg <= 10; pg++) {   // 書き込みも全ページ読む（100件を超えた理由を見落とさない。CodeRabbit PR #140）
+            const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues/${i.number}/comments?per_page=100&page=${pg}`];
+            const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 })); cm.push(...page); if (page.length < 100) break } } catch (e) { cm = null }
+        if (cm && cm.some(c => c.user && c.user.type !== 'Bot' && /(直さない理由|\breason)\s*[:：]\s*\S{2,}/i.test(String(c.body || '')))) continue;   // 「直さない理由：<説明>」「reason: <説明>」の形の人の書き込みだけ（「再現しました」「理由はありません」では通さない。CodeRabbit PR #140）
+        unhandled.push(`#${i.number}${cm ? '' : '（書き込みを読めなかった）'}`) }
+      const it = unhandled.length ? { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'fail', detail: `開いている CI 失敗の Issue：${mainRed}。${unhandled.join('・')} は、この PR の本文に「Closes #番号」も、Issue に「直さない理由：…」の書き込みも無い。直すなら PR の本文に「Closes #番号」、直さないなら Issue に「直さない理由：…」と書いてから CI を回し直す` }
+        : { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。${pr ? 'どれもこの PR の本文の Closes か Issue の理由の書き込みがある' : 'この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く'}` };
       all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
   } catch (e) { const it = { id: 'ci:main-red', title: 'main の CI が ❌ のままかの確認', status: 'warn', detail: 'CI 失敗の Issue を読めなかった：' + String(e && e.message || e).split('\n')[0].slice(0, 120) };
     all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }

@@ -2430,7 +2430,7 @@ html.pcw #table .ltcrowd.cr-big.cr-edge i.cr3,html.pcw #table .ltcrowd.cr-big.cr
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.5';
+const APP_VERSION='0.98.6';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -10402,9 +10402,9 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   //   縮めたあとは、配り直しで札が一瞬消えても戻さない（毎ハンド卓が伸び縮みしないように）
   // 縮めたときより字幕が低くなった（次の字幕が1行など）ら、いったん戻す。まだ足りなければ 0.3秒後にまた縮める（PR #128 の CI：第14章の縦で、前の長い字幕のときの縮めが残っていた）
   const shorter=sx0>0&&seh<(gw._sxSeh||0)-4;if(shorter)gw._dfcAt=0;
-  // 縮めたあとも、縮めなくても手札が上がりきる（8px の余裕つき）ようになったら戻す。--sx を 0 にして同じコマの中で測り、すぐ戻す（描かれないので見た目は動かない）。
+  // 縮めたあとも、縮めなくても手札が字幕に 4px より深くかからないようになったら戻す（検査 ui:sx と同じ見方。v0.98.6 CI：8px の余裕を求めていたので、0〜12px の間で縮めたまま戻らず、検査が「縮めなくてもかからない」と ❌）。縮め始めは 6px より足りないときなので、行ったり来たりしない。--sx を 0 にして同じコマの中で測り、すぐ戻す（描かれないので見た目は動かない）。
   //   場札・ポットの額は動くので、縮めた時は足りなくても、あとで足りるようになることがある（PR #128 手元：第14章の縦、フロップでポットの額が動く間に 11px 足りず縮め、止まったあとも縮めたままだった）
-  let fits=false;if(sx0>0&&!gw._sxPend&&m&&!shorter){const now=performance.now();if(now-(gw._prAt||0)>500){gw._prAt=now;let p=null;try{gw.style.setProperty('--sx','0px');p=meas()}catch(e){}gw.style.setProperty('--sx',sx0+'px');fits=!!p&&p.room-8>=p.need}
+  let fits=false;if(sx0>0&&!gw._sxPend&&m&&!shorter){const now=performance.now();if(now-(gw._prAt||0)>500){gw._prAt=now;let p=null;try{gw.style.setProperty('--sx','0px');p=meas()}catch(e){}gw.style.setProperty('--sx',sx0+'px');fits=!!p&&p.room+4>=p.need}
     clearTimeout(barSync.rt);barSync.rt=setTimeout(()=>{try{barSync()}catch(e){}},700)}   // 縮めている間は、きっかけが無くても時々見直す
   if(fits)gw._dfcAt=0;
   const sx=sb&&!shorter&&!fits&&(sx0>0||dfcOk&&!noHand)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
@@ -12358,7 +12358,12 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
           cand=[[0,Math.max(...hp.map(q=>q.bottom))+1-t],[0,Math.min(...hp.map(q=>q.top))-1-b],[Math.max(...hp.map(q=>q.right))+1-l,0],[Math.min(...hp.map(q=>q.left))-1-r,0]]
             .filter(([x,y])=>Math.abs(x)+Math.abs(y)<=60&&l+x>=T.left+2&&r+x<=T.right-2&&t+y>=T.top+2&&b+y<=T.bottom-2&&!hitOf(av,x,y).length)
             .sort((u,v)=>Math.abs(u[0])+Math.abs(u[1])-Math.abs(v[0])-Math.abs(v[1]));
-        if(cand.length){dx+=cand[0][0];need+=cand[0][1];h.style.translate=`${Math.round(dx/(k||1))}px ${Math.round(need/(k||1))}px`}}}}catch(e){}});
+        if(cand.length){dx+=cand[0][0];need+=cand[0][1];h.style.translate=`${Math.round(dx/(k||1))}px ${Math.round(need/(k||1))}px`}}}}catch(e){}
+    // 最後に、置いたあとの本当の位置で、画面（卓）の左右の端から出ていないかを確かめ、出ていれば内側へ寄せ直す（2回まで）。
+    //   卓は傾いていて横と縦で縮み方が違うので、縦の比（k）で割った横のずらしでは足りなかった（v0.98.6 CI：PC の6人卓で、いちばん左の席の J♣ が画面の左の端から出た）
+    try{const T=sybTB(),cur=(h.style.translate||'0px 0px').split(' ').map(v=>parseFloat(v)||0);let tx=cur[0],ty=cur[1]||0;
+      for(let it=0;it<2;it++){const rs=cs.map(R).filter(r=>r.width>2);if(!rs.length)break;const l=Math.min(...rs.map(r=>r.left)),r=Math.max(...rs.map(r=>r.right)),fx=l<T.left+4?T.left+4-l:r>T.right-4?T.right-4-r:0;if(!fx)break;
+        const hw=h.offsetWidth,kx=hw?R(h).width/(hw*(sc||1)):1;tx+=Math.round(fx/(kx||1))+(fx>0?1:-1);h.style.translate=`${tx}px ${ty}px`}}catch(e){}});
   // ほかの席のチップの山（.mystack）が見せた札にかかっていたら、山のほうを横へよける（v0.96.2 手元：第14章で右の席の山がカイの札に乗った。chipAvoid は札が動く前に測っている）
   try{const sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck)')].map(h=>[h,[...h.querySelectorAll('.card:not(.back):not(.slot)')].map(R).filter(r=>r.width>2)]).filter(x=>x[1].length).map(([h,rs])=>[h,[{left:Math.min(...rs.map(r=>r.left)),right:Math.max(...rs.map(r=>r.right)),top:Math.min(...rs.map(r=>r.top)),bottom:Math.max(...rs.map(r=>r.bottom))}]]),T=sybTB();   // 札は1枚ずつでなく手札まとめて1つの四角で見る（1枚ずつだと2枚の間を行ったり来たりした）
     document.querySelectorAll('#felt .spot .mystack').forEach(m=>{const cs=[...m.querySelectorAll('.chip')].map(R).filter(r=>r.width>1);if(!cs.length)return;if(R(m).width>2)cs.push(R(m));   // 山の箱（数の札も入る）ごとよける（v0.96.3 手元：箱の端がカイの札にかかった）
@@ -12399,7 +12404,9 @@ if(typeof ResizeObserver==='function'){let _sybQ=0;const _sybRO=new ResizeObserv
 setInterval(()=>{try{if(!S||!S.handOver||$('game').hidden)return;if(S._sybW!==S.handNo){S._sybW=S.handNo;S._sybN=0}if(S._sybN>=3)return;
   const R=e=>e.getBoundingClientRect(),sh=[...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.back):not(.slot)')].map(c=>[c.closest('.spot'),R(c)]).filter(x=>x[1].width>2);if(!sh.length)return;
   const bad=[...document.querySelectorAll('#felt .spot .mystack')].some(m=>{const a=R(m),sp=m.closest('.spot');return a.width>2&&sh.some(([s,c])=>s!==sp&&a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1)});
-  if(bad){S._sybN++;showYieldBoard()}}catch(e){}},500);
+  // 見せた札が画面の左右から出ていても置き直す（v0.98.6 CI：PC の6人卓で、いちばん左の席の勝った札が、置いたあとの動きで画面の左の端から出た。手元では起きず CI だけで起きる）
+  const off=!bad&&sh.some(([s,c])=>c.left<1||c.right>innerWidth-1);
+  if(bad||off){S._sybN++;showYieldBoard()}}catch(e){}},500);
 
 // アニメーションの重さ 案1（2026-10-17）：まばたきを「数秒おきに0.28秒だけ」動かす（01f_style_anim_lite.css）。
 // 今までは目に4.6秒の動きをずっと流していて、止まっている間も毎コマ顔の絵を描き直していた。
@@ -12826,7 +12833,8 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
   const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, .llseats i:not([hidden]), #controls, #between .betweenrow, #between .acts button, #resultText, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
-    .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
+    .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))
+    .concat([$('goalDrop')].filter(e=>e&&!e.hidden&&vis(e)).map(e=>e.getBoundingClientRect()))   // 目標の箱（v0.98.4 レビュー：PC の右の列で、開いた目標の箱に「タロウ コール 2,000」が重なった）   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
   const w=b.offsetWidth,h=b.offsetHeight,y=B.bottom+6;
@@ -12855,6 +12863,9 @@ LT.on('show',()=>{try{const b=$('vfLog');if(b&&$('game')&&$('game').hidden){b.hi
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go()}
 // ディーラーの声が出たら置き直す（声の上に直近の5手が乗らないよう。重なるならその間は .off で隠れ、声が消えたあとの layout で戻る。v92 確認：横で声に重なった）
 {const o=dealerSay;dealerSay=function(){const r=o.apply(this,arguments);try{if($('vfLog')&&!$('vfLog').hidden){blPlace();clearTimeout(blPlace.d);blPlace.d=setTimeout(()=>{try{blPlace()}catch(e){}},300)}}catch(e){}return r}}
+
+// 目標の箱を開いた・閉じたときも置き直す（開くのはボタンと、ハンドの頭の数秒だけ出すとき）
+{const o=goalOpen;goalOpen=function(){const r=o.apply(this,arguments);try{const b=$('vfLog');if(b&&!b.hidden)blPlace()}catch(e){}return r}}
 
 /* ---------- 第3〜5章のプレイ録画から（satou 2026-10-18 録画 2026-10-18 00-24-53.mp4） ---------- */
 // 小さな見え方の直しだけ。CPU の判断・配り札・勝ち負けの決まり方は変えない
@@ -13526,8 +13537,8 @@ function pcHandTarget(){const out=[],now=performance.now(),dk=document.querySele
   if(!home||!S||!S.players)return{kind:'',pts:out,home};
   // 1) ポットを押し出す（.potmove が飛んでいる間、その後ろに両手）
   const pm=[...document.querySelectorAll('#table > .potmove')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>0);
-  if(pm.length){const r=pm[0],c=pcHandMid(r),side=Math.max(22,r.width*.45),up=Math.max(8,r.height*.35);   // 両手でチップの左右を囲んで押す（指は手前を向く）
-    out.push({x:c[0]-side,y:c[1]-up,rot:.35},{x:c[0]+side,y:c[1]-up,rot:-.35});return{kind:'push',pts:out,home}}
+  if(pm.length){const r=pm[0],c=pcHandMid(r),side=Math.max(22,r.width*.45);   // 片手で、ディーラーの側（左）からチップを押す（v0.98.4 レビュー：両腕が相手の伏せ札の上から下りて、その人が取りに来たように見えた）
+    out.push({x:c[0]-side,y:c[1],rot:0});return{kind:'push',pts:out,home}}
   // 2) 燃やし札（.llburn が山から捨て札へ滑っている間）
   const bn=document.querySelector('#fxLayer .llburn');if(bn){const c=pcHandMid(bn.getBoundingClientRect());if(c){out.push({x:c[0],y:c[1]-6,rot:.25});return{kind:'burn',pts:out,home}}}
   // 3) 場札を開く（21d_live_table.js の ltBoardDur と同じ時間）
@@ -13539,9 +13550,15 @@ function pcHandTarget(){const out=[],now=performance.now(),dk=document.querySele
     if(el>=-300*SPEED()&&k<2*n){const kk=Math.max(0,k),sr=pcHandSeat(S.ltOrder[kk%n]),t=pcHandMid(sr);
       if(t){const dx=t[0]-home[0],dy=t[1]-home[1],ph=el<0?0:(el%iv)/iv,f=.08+.1*Math.sin(Math.PI*ph);out.push({x:home[0]+dx*f,y:home[1]+dy*f,rot:Math.atan2(-dx,Math.max(40,dy))*.6});return{kind:'deal',pts:out,home}}}}
   return{kind:'',pts:out,home}}
+// 腕の根元（ディーラーの席）：卓の左の端の外、山の高さ。どの動きでも同じ所から腕が出る（v0.98.4 レビュー：腕が相手の席の間から出て、相手の手に見えた）
+// 手は「ディーラーの持ち場」（場札の上の端より下）から上へ出さない。上へ出すと腕が相手の伏せ札・名札の上を通る
+function pcHandRoot(home){const tb=$('table');if(!tb||!home)return null;const r=tb.getBoundingClientRect();return{x:r.left-40,y:home[1]+18}}
+function pcHandZoneTop(){const b=$('boardCards'),cs=b?[...b.children].map(e=>e.getBoundingClientRect()).filter(r=>r.width>0):[];if(!cs.length)return -1e9;const t=Math.min(...cs.map(r=>r.top)),h=Math.max(...cs.map(r=>r.height));return t-h*.15}
 // 手を1つ描く（canvas の座標。指は下＝手前を向く。袖は卓の奥＝上へ、先は薄く消える。s：大きさ、al：濃さ）
-function pcHandDraw1(g,x,y,rot,s,al){g.save();g.globalAlpha=al;g.translate(x,y);g.rotate(rot);g.scale(s,s);
-  const sl=g.createLinearGradient(0,-30,0,-100);sl.addColorStop(0,'rgba(21,21,26,1)');sl.addColorStop(1,'rgba(21,21,26,0)');g.fillStyle=sl;g.fillRect(-16,-100,32,72);   // 袖（黒いベスト）
+function pcHandDraw1(g,x,y,rot,s,al,len){g.save();g.globalAlpha=al;g.translate(x,y);g.rotate(rot);g.scale(s,s);
+  // 袖（黒いベスト）：腕の根元（ディーラーの席）まで。根元の近くで薄く消える
+  const L=Math.max(100,len||100),sl=g.createLinearGradient(0,-30,0,-L);sl.addColorStop(0,'rgba(21,21,26,1)');sl.addColorStop(Math.max(.01,1-60/L),'rgba(21,21,26,.92)');sl.addColorStop(1,'rgba(21,21,26,0)');g.fillStyle=sl;
+  g.beginPath();g.moveTo(-16,-28);g.lineTo(16,-28);g.lineTo(19,-L);g.lineTo(-19,-L);g.closePath();g.fill();
   g.fillStyle='#f1efe9';g.fillRect(-15,-32,30,8);   // 白い袖口
   const sk=g.createLinearGradient(-15,0,15,0);sk.addColorStop(0,'#b88a68');sk.addColorStop(.5,'#cf9f7c');sk.addColorStop(1,'#a97b5b');g.fillStyle=sk;
   g.beginPath();g.roundRect(-14,-25,28,26,8);g.fill();   // 手の甲
@@ -13557,13 +13574,15 @@ function pcHandFrame(t){const g=PCHAND.g,W=PCHAND.w,H=PCHAND.h;if(!g||!W)return 
   const T=pcHandTarget(),busy=T.pts.length>0;PCHAND.kind=T.kind;
   // 手の大きさは場札1枚の幅に合わせる
   const bc=$('boardCards')&&[...$('boardCards').children].find(e=>e.getBoundingClientRect().width>0),cw=bc?bc.getBoundingClientRect().width*m.k:40,s=Math.max(.7,Math.min(1.8,cw/34));
-  const goal=T.pts.map(p=>{const q=m.pt(p.x,p.y);return{x:q[0],y:q[1],rot:p.rot}});
+  const rs=pcHandRoot(T.home),rc=rs?m.pt(rs.x,rs.y):null,zt=m.pt(0,pcHandZoneTop())[1];PCHAND.root=rc;
+  const goal=T.pts.map(p=>{const q=m.pt(p.x,p.y),y=Math.max(q[1],zt);
+    const rot=rc?Math.atan2(rc[1]-y,rc[0]-q[0])+Math.PI/2+p.rot*.3:p.rot;return{x:q[0],y,rot}});
   // なめらかに追う（1コマで 45%）。何もしていない間はその場で薄く消える。消えていた手は、次の動きの所に出る（卓の上を横切らない）
   const step=(o,q)=>{if(q){if(o.a<.05){o.x=q.x;o.y=q.y;o.rot=q.rot}else{o.x+=(q.x-o.x)*.45;o.y+=(q.y-o.y)*.45;o.rot+=(q.rot-o.rot)*.45}o.a+=(1-o.a)*.35}else o.a*=.75;if(o.a<.02)o.a=0};
   const h1=PCHAND.h1||(PCHAND.h1={x:0,y:0,rot:0,a:0}),h2=PCHAND.h2||(PCHAND.h2={x:0,y:0,rot:0,a:0});step(h1,goal[0]);step(h2,goal[1]);
   g.clearRect(0,0,W,H);g.save();g.beginPath();g.rect(0,top,W,H-top);g.clip();   // 顔（卓の板の上端より上）には描かない
   let drawn=false;
-  for(const h of [h1,h2])if(h.a>0){pcHandDraw1(g,h.x,h.y,h.rot,s,h.a);drawn=true}
+  for(const h of [h1,h2])if(h.a>0){const len=rc?Math.hypot(rc[0]-h.x,rc[1]-h.y)/s:100;pcHandDraw1(g,h.x,h.y,h.rot,s,h.a,len);drawn=true}
   g.restore();
   if(busy&&drawn)PCHAND.seen[T.kind]=(PCHAND.seen[T.kind]||0)+1;
   const ms=performance.now()-t0;PCHAND.frames++;PCHAND.hist.push(ms);if(PCHAND.hist.length>60)PCHAND.hist.shift();PCHAND.ms=PCHAND.ms?PCHAND.ms*.9+ms*.1:ms;
