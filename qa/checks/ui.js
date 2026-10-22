@@ -491,12 +491,6 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     for (let k = 1; k <= 3 && r2.drift; k++) { const s2 = Object.assign({}, s, { seed: (s.seed || 1000 + SCENES.indexOf(s)) + 100 * k, deal: s.deal != null ? s.deal + k : s.deal }); tried.push(`種 ${s2.seed}${s2.deal != null ? `・配り ${s2.deal}` : ''}`);
       r2 = await shoot(browser, file, s2, v, dir) }
     r2.scene = r.scene; r2.redo = `場面がずれた（${r.drift}）ので、${tried.join('、')} で撮り直した`; res[i] = r2 }
-  // 同じ種なら同じ場面（改善提案 2026-10-22 §0-1）：sameSeed の場面をもう一度撮り、座る人・チップ・何ハンド目か・場札・見せた札を比べる。
-  //   違えば ❌（検査の乱数が演出に取られて、main と PR で別の場面を見ている）。前は main だけ ❌ が出て初めて気づいていた
-  const same = [];
-  for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
-    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i], b = await shoot(browser, file, s, v, d2);
-    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo }) }
   // ページやブラウザが途中で閉じた場面は、1回だけ撮り直す（WebKit でたまに起きる。ブラウザごと落ちていたら開き直す）
   let own = null;
   for (let i = 0; i < res.length; i++) {
@@ -508,6 +502,12 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     res[i].retried = true;
   }
   if (own) await own.close().catch(() => {});
+  // 同じ種なら同じ場面（改善提案 2026-10-22 §0-1）。ページが閉じた場面の撮り直しのあとで比べる（CodeRabbit PR #142）：sameSeed の場面をもう一度撮り、座る人・チップ・何ハンド目か・場札・見せた札を比べる。
+  //   違えば ❌（検査の乱数が演出に取られて、main と PR で別の場面を見ている）。前は main だけ ❌ が出て初めて気づいていた
+  const same = [];
+  for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
+    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i], b = await shoot(browser, file, s, v, d2);
+    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo }) }
   const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;
     items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo ? 'warn' : ok ? 'ok' : 'fail',
       detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
