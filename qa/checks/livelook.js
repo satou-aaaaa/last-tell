@@ -49,7 +49,8 @@ async function run({ browser, file }) {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
       // 席番号の丸が名札から離れて残っていないか（v0.98.7 レビュー：ターンを配る途中の箱で測り、③④ が場札の列の高さに出ていた）。
       //   リバーまでゲームの時間で 100ms ごとに見て（検査は時計を速めているので、ゲームの中の時間で数える）、名札の下の端から 64px より下に 16回（1.6秒）続けて出ていたら記録する（置き直しは1秒に1回なので、その間の一瞬は数えない）
-      await page.evaluate(() => { const st = {}; window.__seatFar = []; window.__seatFarT = setInterval(() => { try { const L = document.querySelector('#table > .llseats'); if (!L) return; const R = e => e.getBoundingClientRect();
+      await page.evaluate(() => { let st = {}, hn = -1; window.__seatFar = []; window.__seatFarT = setInterval(() => { try { const L = document.querySelector('#table > .llseats'); if (!L) return; if (S.handNo !== hn) { hn = S.handNo; st = {} }   // ハンドが変わったら数え直す（CodeRabbit PR #144）
+        const R = e => e.getBoundingClientRect();
         for (const e of L.children) { const i = +e.dataset.i, pl = i && document.getElementById('plate' + i); const far = !e.hidden && e.offsetParent && R(e).width > 2 && pl && pl.offsetParent && R(pl).width > 2 && R(e).top > R(pl).bottom + 64;
           if (!far) { delete st[i]; continue } st[i] = (st[i] || 0) + 1; if (st[i] > 15 && !__seatFar.some(x => x.i === i && x.h === S.handNo)) __seatFar.push({ i, h: S.handNo, st: S.street, d: Math.round(R(e).top - R(pl).bottom) }) } } catch (e) {} }, 100) });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
