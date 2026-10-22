@@ -513,10 +513,16 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const same = [];
   for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
     const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i];
-    // 撮影中にブラウザごと落ちていたら、新しいブラウザで撮る（CodeRabbit PR #142）
-    let sb = browser, mine = null; try { if (!browser.isConnected()) sb = mine = await H.launch() } catch (e) {}
-    let b; try { b = await shoot(sb, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { if (mine) await mine.close().catch(() => {}) }
-    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '' }) }
+    // 2回目はいつも新しいブラウザで撮る（v0.98.8・v0.98.9 の WebKit：100枚ほど撮ったあとのブラウザで開くと、ページが落ちた。1回目の同じ場面は撮れていた）。
+    //   新しいブラウザでも落ちたら、もう1つ新しいブラウザで1回だけ撮り直す。それでも落ちたら「新しいブラウザでも落ちた」と出す（ブラウザの疲れでなく場面の重さ）
+    let b, fresh = 0;
+    for (let k = 0; k < 2; k++) { let mine = null;
+      try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; break }   // 疲れた元のブラウザには戻さない。開けなかったことを結果に残す（CodeRabbit PR #147）
+      try { b = await shoot(mine, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
+      const crashLike = !b.shot && /落ちた|閉じた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''));   // 落ちた回だけ数える（CodeRabbit PR #147）
+      if (crashLike) fresh++; else break }
+    const lost0 = !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '';
+    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: lost0 && fresh >= 2 ? lost0 + '（新しいブラウザで2回とも落ちた）' : lost0 }) }
   const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;
     items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo || (!ok && x.lost) ? 'warn' : ok ? 'ok' : 'fail',
       detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : x.lost ? '2回目が撮れなかったので比べられなかった：' + x.lost : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
