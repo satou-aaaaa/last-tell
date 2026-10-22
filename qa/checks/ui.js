@@ -353,7 +353,8 @@ async function shoot(browser, file, scene, vp, dir) {
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
     // 勝ち負けの帯が出ていることが前提の場面は、帯が出ているかも残す（帯が無いと、重なり 0 でも見たことにならない。CodeRabbit PR #144）
-    const vfresOn = scene.needVfres ? await page.evaluate(() => { const v = document.querySelector('#table > .vfres'); return !!(v && v.getBoundingClientRect().width > 2) }) : null;
+    const vfresOn = scene.needVfres ? await page.evaluate(() => { const v = document.querySelector('#table > .vfres'); if (!v) return false; const r = v.getBoundingClientRect(), s = getComputedStyle(v);   // 透明・隠れ・画面の外も「出ていない」（CodeRabbit PR #144）
+      return !v.hidden && s.display !== 'none' && s.visibility !== 'hidden' && +s.opacity > .05 && r.width > 2 && r.height > 2 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }) : null;
     // 心の声：D（ディーラーの印）を全席に動かして、そのたびに置き直して測る（v0.97.4 レビュー：D の位置しだいで字幕が D と席番号にかかり、版ごとに ⚠️ が出たり消えたりした）
     let innerD = null;
     if (scene.key === 'フリー6人_心の声') { innerD = [];
