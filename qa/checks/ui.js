@@ -519,7 +519,7 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     for (let k = 0; k < 2; k++) { let mine = null;
       try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; break }   // 疲れた元のブラウザには戻さない。開けなかったことを結果に残す（CodeRabbit PR #147）
       try { b = await shoot(mine, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
-      const crashLike = !b.shot && /落ちた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''));   // 落ちた回だけ数える（CodeRabbit PR #147）
+      const crashLike = !b.shot && /落ちた|閉じた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''));   // 落ちた回だけ数える（CodeRabbit PR #147）
       if (crashLike) fresh++; else break }
     const lost0 = !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '';
     same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: lost0 && fresh >= 2 ? lost0 + '（新しいブラウザで2回とも落ちた）' : lost0 }) }
