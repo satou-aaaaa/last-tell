@@ -29,8 +29,10 @@ jobs:
         with:
           node-version-file: .nvmrc
       - name: Playwright と日本語の字体を入れる
+        timeout-minutes: 25   # 入れる段階で止まっても 60分待たない（qa.yml と同じ。#151）
         run: |
-          sudo apt-get update -q && sudo apt-get install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
+          apt_try() { for i in 1 2 3; do sudo timeout 300 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 "$@" && return 0; echo "::warning::apt-get $1 が失敗か5分で止まった（$i 回目）。やり直す"; sleep 10; done; return 1; }
+          apt_try update -q && apt_try install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
           cd qa && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
       - name: 通しで遊ぶ
         id: p
