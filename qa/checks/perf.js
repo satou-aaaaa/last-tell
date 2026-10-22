@@ -131,6 +131,50 @@ async function run({ browser, file, quick, baseline }) {
       // 場札をめくっている途中で動きを減らす設定になっても、めくりの印（S.ltBoardAt）を残さない（残ると PC の手が空回りした。PR #136）
       out.boardRm = await r2.page.evaluate(() => { if (!reducedMotion()) return 'rm-off'; S.ltBoardFrom = 0; S.ltBoardAt = performance.now() - 10; ltBoardAnim(); const v = S.ltBoardAt; S.ltBoardAt = 0; return v === 0 ? 'cleared' : 'left' }) } catch (e) { out.handLite = 'err' } finally { await r2.ctx.close() }
   }
+  // 6. PC の大勝負の間（v0.98.5、PC 向けリッチ演出 案4、js/56_pc_big.js）：オールインがコールされた（S.runout）とき部屋を暗くし、勝負している相手の顔だけ明るく残す。
+  //    フロップまで打って止め、S.runout を立てて描き直させる（入口から入る）。降りた相手の顔は暗い・残っている相手の顔は明るい・第7章の最後の手では出ない・
+  //    最後の札は 1.2秒まででゆっくり（ふだんは今と同じ）・スマホ幅では出ない・動きを減らす設定ではゆっくりめくらない
+  {
+    const { ctx, page } = await H.openGame(browser, file, { fast: 20, lite: false, settings: { motion: 'full' } });
+    try {
+      await page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`);
+      await H.startBot(page, { policy: 'call', maxHands: 4 });
+      const t0 = Date.now(); while (Date.now() - t0 < 40000 && !(await page.evaluate(() => S && S.board && S.board.length >= 3 && !S.handOver && S.players.filter(inHand).length >= 2 && S.players.some((p, i) => i > 0 && !inHand(p) && !p.out)))) await page.waitForTimeout(30);
+      await page.evaluate(() => clearInterval(__bot.timer)); await page.waitForTimeout(300);
+      out.big = await page.evaluate(async () => {
+        if (typeof PCBIG === 'undefined' || typeof ltBoardDur !== 'function') return { defined: false };
+        const r = { defined: true }, ru = S.runout; S.runout = true; render(); r.on = PCBIG.hno === S.handNo;
+        await new Promise(f => setTimeout(f, 900));
+        const c = document.getElementById('pcBig'); r.shown = !!(c && c.classList.contains('on') && getComputedStyle(c).display !== 'none' && getComputedStyle(c).visibility !== 'hidden'); r.op = c ? +getComputedStyle(c).opacity : null; r.pe = c ? getComputedStyle(c).pointerEvents : null;
+        // 濃さ（opacity）は .7秒でふわっと変わる途中なので、印と表示で見る。暗さそのものは下の画素で見る
+        // 顔の真ん中で見る（faceBox：上半身は translateX(-50%) で置いてあり、真ん中が offsetLeft）
+        const at = i => { const f = typeof faceBox === 'function' ? faceBox(i) : null; if (!f || !c) return null; const x = Math.round((f.l + f.r) / 2), y = Math.round((f.t + f.b) / 2); return c.getContext('2d').getImageData(x, y, 1, 1).data[3] };
+        r.lit = S.players.map((p, i) => i).filter(i => i > 0 && inHand(S.players[i])).map(at); r.dark = S.players.map((p, i) => i).filter(i => i > 0 && !inHand(S.players[i]) && !S.players[i].out).map(at);
+        { const cw = document.querySelector('#table .ltcrowd.cr-big'); r.crowdBig = !!cw;   // 人数も見る（ふつうは5人、端に寄せる cr-edge は2人。CodeRabbit PR #138）
+          r.crowdN = cw ? [...cw.querySelectorAll('i')].filter(e => e.getClientRects().length && getComputedStyle(e).display !== 'none').length : 0; r.crowdWant = cw && cw.classList.contains('cr-edge') ? 2 : 5 }
+        S.ltBoardSlow = true; r.slow = Math.round(ltBoardDur(4)); S.ltBoardSlow = false; r.norm = Math.round(ltBoardDur(4)); r.normWant = Math.round(520 * SPEED()); r.river = LT.pcBigRiver();
+        // オールインでないリバー：ポット 30BB 未満は出さない・30BB 以上は出す（CodeRabbit PR #138）
+        { const ru0 = S.runout, h0 = PCBIG.hno, tt = S.players.map(p => p.total), set = v => { S.players.forEach(p => p.total = 0); S.players[0].total = v };
+          S.runout = false; PCBIG.hno = -1; set(Math.floor(PCBIG.BB * BB() * .5)); r.riverLow = LT.pcBigRiver(); set(PCBIG.BB * BB() + BB()); r.riverHigh = LT.pcBigRiver();
+          S.players.forEach((p, i) => p.total = tt[i]); S.runout = ru0; PCBIG.hno = h0 }
+        const ch = CFG.ch, fh = S.finalHand; CFG.ch = Object.assign({}, ch || {}, { no: 7, p2: 0 }); S.finalHand = true; r.ch7 = pcBigOk(); CFG.ch = ch; S.finalHand = fh;
+        S.runout = ru; r.errors = __qa.errors.slice(0, 3); return r });
+      // ふわっと出る濃さは、ページの外（本当の時間）で 1.2秒待ってから読む（ページの中の時計は検査で速めてあり、900ms が 45ms になっていた。CodeRabbit PR #138）
+      await page.waitForTimeout(1200); out.big.op = await page.evaluate(() => { const c = document.getElementById('pcBig'); return c ? Math.round(+getComputedStyle(c).opacity * 100) / 100 : null });
+      await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(600);
+      out.big.mobileShown = await page.evaluate(() => { const c = document.getElementById('pcBig'); return !!(c && c.getBoundingClientRect().width > 0 && getComputedStyle(c).display !== 'none' && c.classList.contains('on')) });
+      // 同じハンドで PC の幅に戻したら、また出る（CodeRabbit PR #138：PC の外へ出て戻ると出なくなっていた）
+      await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(600);
+      out.big.backShown = await page.evaluate(() => { if (S.handOver) return 'over'; S.runout = true; render(); const c = document.getElementById('pcBig'); return !!(c && getComputedStyle(c).display !== 'none' && c.classList.contains('on')) });
+    } catch (e) { out.bigErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
+    const r2 = await H.openGame(browser, file, { fast: 20 });
+    // 動きを減らす設定：暗くするのは出る（ふわっとせずに切り替え）・ゆっくりめくりはしない（CodeRabbit PR #138）
+    try { await r2.page.evaluate(`($('freeSize').value='6',$('freeRule').value='',startFree())`); await H.startBot(r2.page, { policy: 'call', maxHands: 2 });
+      { const t0 = Date.now(); while (Date.now() - t0 < 40000 && !(await r2.page.evaluate(() => S && S.players && S.handNo >= 1 && !S.handOver && S.board && S.board.length >= 3))) await r2.page.waitForTimeout(30) }
+      await r2.page.evaluate(() => clearInterval(__bot.timer));   // ハンドの途中で見る（始まる前は S.handOver で何もしない）
+      const v = await r2.page.evaluate(() => { if (typeof LT.pcBigRiver !== 'function') return { river: 'none', shown: false }; S.runout = true; render(); const c = document.getElementById('pcBig');
+        return { river: LT.pcBigRiver(), shown: !!(c && c.classList.contains('on') && c.classList.contains('still') && getComputedStyle(c).display !== 'none') } }); out.bigLite = v.river; out.bigLiteShown = v.shown } catch (e) { out.bigLite = 'err' } finally { await r2.ctx.close() }
+  }
   const b = (baseline && baseline.perf) || {};
   const worse = (k, f = 1.3, add = 0) => b[k] != null && out[k] > b[k] * f + add;
   const vs = k => b[k] != null ? `（前の版 ${b[k]}）` : '';
@@ -145,6 +189,10 @@ async function run({ browser, file, quick, baseline }) {
     const bad = out.handErr || !a.defined || !a.shown || a.pe !== 'none' || miss.length || face.length || errs.length || !(R.pushTop && R.pushTop.kind === 'push') || a.mobileShown || out.handLite !== 0 || out.boardRm !== 'cleared' || (a.errors || []).length;
     items.push({ id: 'perf:pchand', title: 'PC のディーラーの手：配る・燃やし札・場札・ポットの押し出しで出る・顔（卓の板より上）には描かない・押せない・スマホ幅と動きを減らす設定では描かない', status: bad ? 'fail' : a.ms > 2 ? 'warn' : 'ok',
       detail: out.handErr ? '測れなかった：' + out.handErr : !a.defined ? 'ディーラーの手（PCHAND・pcHandFrame）が無い版' : `${K.map(k => `${k} ${R[k] && R[k].low > 0 && R[k].kind === k ? '出た' : '出ない（' + ((R[k] || {}).kind || '何もしていない') + '）'}`).join('・')}、顔の所 ${face.length ? '描いている（' + face.join('・') + '）' : '透明（上端の上へ飛ぶチップでも）'}、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、1コマ 真ん中 ${a.ms}ms、スマホ幅で ${a.mobileShown ? '出てしまう' : '出ない'}、動きを減らす設定で描いたコマ ${out.handLite}・めくりの印 ${out.boardRm === 'cleared' ? '消えた' : '残った（' + out.boardRm + '）'}、自動対戦の中で出た ${Object.entries(a.seenLive || {}).map(([k, v]) => `${k} ${v}コマ`).join('・') || 'なし'}（参考：CI はコマが少ない）${errs.length ? '、エラー ' + errs.join(' / ') : ''}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
+  { const a = out.big || {}, litBad = (a.lit || []).filter(v => v == null || v > 60), darkBad = (a.dark || []).filter(v => v == null || v < 100);
+    const bad = out.bigErr || !a.defined || !a.on || !a.shown || !(a.op > .5) || a.pe !== 'none' || !(a.lit || []).length || !(a.dark || []).length || litBad.length || darkBad.length || !a.crowdBig || a.crowdN !== a.crowdWant || a.riverLow !== false || a.riverHigh !== true || !out.bigLiteShown || a.backShown !== true || !(a.slow > a.norm && a.slow <= 1200) || a.norm !== a.normWant || !a.river || a.ch7 !== false || a.mobileShown || out.bigLite !== false || (a.errors || []).length;
+    items.push({ id: 'perf:pcbig', title: 'PC の大勝負の間：オールインで部屋が暗くなり、勝負している相手の顔は明るいまま・降りた相手は暗い・人だかりが大きい・最後の札は 1.2秒まで・第7章の最後の手とスマホ幅と動きを減らす設定では出ない', status: bad ? 'fail' : 'ok',
+      detail: out.bigErr ? '測れなかった：' + out.bigErr : !a.defined ? '大勝負の間（PCBIG・ltBoardDur）が無い版' : `オールインで ${a.on ? '始まった' : '始まらない'}・${a.shown ? '暗い' : '暗くならない'}（濃さ ${a.op}）、残っている相手の顔の暗さ ${(a.lit || []).join('・') || 'なし'}（60 以下）、降りた相手 ${(a.dark || []).join('・') || 'なし'}（100 以上）、人だかり ${a.crowdBig ? '大きい' : 'ふつう'}（${a.crowdN}人／${a.crowdWant}人）、オールインでないリバー 30BB 未満で ${a.riverLow === false ? '出ない' : '出る'}・30BB 以上で ${a.riverHigh === true ? '出る' : '出ない'}、最後の札 ゆっくり ${a.slow}ms／ふだん ${a.norm}ms（今まで ${a.normWant}ms）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、第7章の最後の手で ${a.ch7 === false ? '出ない' : '出る'}、スマホ幅で ${a.mobileShown ? '出る' : '出ない'}、動きを減らす設定でゆっくりめくり ${out.bigLite === false ? 'しない' : 'する（' + out.bigLite + '）'}・暗くするのは ${out.bigLiteShown ? '出る（切り替えだけ）' : '出ない'}、スマホ幅から PC に戻すと ${a.backShown === true ? 'また出る' : a.backShown === false ? '出ない' : '測れない（' + a.backShown + '）'}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
     detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });

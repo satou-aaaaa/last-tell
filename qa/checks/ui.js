@@ -26,7 +26,7 @@ const SCENES = [
   // noSubHand：額を選ぶ間は自分の手札を出さない作り（手札が見えないので、字幕×手札は測らない）
   { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()`, noSubHand: true },
   // deal：配る札を固定（v88.2 レビュー：Chromium と WebKit で結果が違い比べられなかった）。配り 32・CPU の種 1007 は、左の席（相手1）があなたとのショーダウンで勝ち、あなたは残る手（ゲームが終わらない）。手元の Chromium で4回とも同じ勝ち負け
-  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007 },
+  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, showStrict: true },   // いちばん左の席（1）が札を見せたハンドの終わりで撮る（v0.98.5 CI：PC でその席の勝った札が画面の左の端から出た。配りしだいで見のがしていた）
   // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
   { key: '第2章_ハンドの終わり', prep: `startChapter(CHAPTERS[1],true)`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
@@ -376,10 +376,12 @@ async function shoot(browser, file, scene, vp, dir) {
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
       return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen), tip: typeof tipK !== 'undefined' && tipK ? String(tipK) : '', mwait: !!($('sensei') && $('sensei').classList.contains('mwait')) } }) : null;
     // 場面のずれ（v0.97.10 レビュー 2：「ハンドの終わり」のはずが、チップがなくなったゲームオーバーの画面で撮っていた）。撮る前に、あるべき印を見る
-    const drift = (scene.myTurn || scene.handEnd) ? await page.evaluate(my => { try { const me = S.players && S.players[0], r = [];
+    const drift = (scene.myTurn || scene.handEnd) ? await page.evaluate(([my, sb]) => { try { const me = S.players && S.players[0], r = [];
       if (S.result) r.push(`勝負が決着した画面（${S.result}）`); if (me && (me.out || me.chips <= 0)) r.push('自分のチップがない');
-      if (my && !S.result && !(S.toAct === 0 && !S.handOver)) r.push('自分の番でない');   // 60秒で待つのをやめた・別の画面（CodeRabbit PR #126）
-      return r.join('・') } catch (e) { return '' } }, !!scene.myTurn).catch(() => '') : '';
+      if (my && !S.result && !(S.toAct === 0 && !S.handOver)) r.push('自分の番でない');   // 60秒で待つのをめた・別の画面（CodeRabbit PR #126）
+      // showStrict：決めた席が札を見せた回でなければ「ずれた」にして、配りを変えて撮り直す（CodeRabbit PR #138：45秒で別のハンドを撮って ✅ になっていた）
+      if (sb && !(S.players[sb] && S.players[sb].show && !S.players[sb].folded)) r.push(`席${sb}が札を見せていない`);
+      return r.join('・') } catch (e) { return '' } }, [!!scene.myTurn, scene.showStrict ? scene.showBy : 0]).catch(() => '') : '';
     step = '場所を測る・撮る'; const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });

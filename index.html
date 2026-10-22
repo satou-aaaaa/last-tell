@@ -2225,6 +2225,20 @@ html:not(.pcw) #pcAir{display:none}
 #pcHand[hidden]{display:none}
 html:not(.pcw) #pcHand{display:none}
 
+/* ===== v0.98.5 PC 向け：大勝負の間（js/56_pc_big.js）。部屋を暗くする絵（上半身の上・卓の板の下）と、大きな人だかり。押せない ===== */
+#pcBig{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;transition:opacity .7s ease}
+#pcBig.on{opacity:1}
+#pcBig.still{transition:none}
+html:not(.pcw) #pcBig{display:none}
+/* 人だかり：PC では背を高く、5人まで（左右に2人ずつ＋奥に1人）。顔より奥の層のまま */
+#table .ltcrowd i.cr4,#table .ltcrowd i.cr5{display:none}
+html.pcw #table .ltcrowd.cr-big i{height:34%;top:5%}
+html.pcw #table .ltcrowd.cr-big i.cr3{display:block;left:auto;right:22%;height:30%;top:7%}
+html.pcw #table .ltcrowd.cr-big i.cr4{display:block;left:15%;height:31%;top:6%}
+html.pcw #table .ltcrowd.cr-big i.cr5{display:block;right:12%;height:28%;top:8%}
+html.pcw #table .ltcrowd.cr-big.cr-on i.cr4{transition-delay:.45s}html.pcw #table .ltcrowd.cr-big.cr-on i.cr5{transition-delay:.6s}
+html.pcw #table .ltcrowd.cr-big.cr-edge i.cr3,html.pcw #table .ltcrowd.cr-big.cr-edge i.cr4,html.pcw #table .ltcrowd.cr-big.cr-edge i.cr5{display:none}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2416,7 +2430,7 @@ html:not(.pcw) #pcHand{display:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.4';
+const APP_VERSION='0.98.5';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -11317,12 +11331,14 @@ function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.lt
     [...h.querySelectorAll(':scope > .card')].slice(0,2).forEach((c,r)=>{const d=(r*n+j)*LT_DEAL()-el;
       c.style.animation=`ltDeal ${260}ms cubic-bezier(.2,.7,.3,1) ${Math.round(d)}ms both`})})}
 // バーン：通りが進むたびに、伏せた札を1枚、捨て札の山へ
-{const o=nextStreet;nextStreet=function(){const n0=S&&S.board?S.board.length:0,at=S?S.ltBoardAt:0;if(S&&!reducedMotion()){S.ltBoardAt=performance.now();S.ltBoardFrom=n0}
+// めくる時間（ms）。フロップ 1000、ターン・リバー 520。大勝負のリバー（56_pc_big.js、PC だけ）は 1200 までゆっくり。ディーラーの手（55_pc_hand.js）も同じ時間で追う
+function ltBoardDur(from){return from===0?1000*SPEED():from===4&&S&&S.ltBoardSlow?Math.min(1200,1200*Math.max(SPEED(),.6)):520*SPEED()}
+{const o=nextStreet;nextStreet=function(){const n0=S&&S.board?S.board.length:0,at=S?S.ltBoardAt:0;if(S&&!reducedMotion()){S.ltBoardAt=performance.now();S.ltBoardFrom=n0;S.ltBoardSlow=n0===4&&typeof LT.pcBigRiver==='function'&&LT.pcBigRiver()}
   const r=o.apply(this,arguments);
   try{if(S&&S.board){if(S.board.length>n0){if(typeof muckAdd==='function')muckAdd()}else if(S.ltBoardFrom===n0)S.ltBoardAt=at}}catch(e){}
   return r}}
 function ltBoardAnim(){if(!S||!S.ltBoardAt)return;const rm=reducedMotion(),el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
-    dur=(flop?1000:520)*SPEED();if(rm||el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり（動きを減らす設定に変わったときもここで終わりの形にする。ltBoardAt を残すと PC の手が空回りした：PR #136）：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
+    dur=ltBoardDur(from);if(rm||el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり（動きを減らす設定に変わったときもここで終わりの形にする。ltBoardAt を残すと PC の手が空回りした：PR #136）：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
   // 動作の重さの改善 案3：札の幅は先に全部測ってから書く（書く→測るをくり返さない）
   const cs=[...$('boardCards').children].map((c,k)=>[c,k]).filter(([c,k])=>!(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back')));
   cs.forEach(([c])=>{if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}});
@@ -12193,7 +12209,7 @@ LT.on('startHand',()=>{try{
 // 第7章の最後の手と顔のアップ中は、影を左右の端だけに置く。動きは opacity と transform だけ（フィルター禁止）。回想では出さない。
 const CROWD={potBB:40,afterMs:1800,lines:['おお……','……今の、見たか','すげえな']};
 function crowdEl(){const tb=$('table'),rm=tb&&tb.querySelector('.room');if(!rm)return null;let c=tb.querySelector('.ltcrowd');
-  if(!c){c=document.createElement('div');c.className='ltcrowd';c.setAttribute('aria-hidden','true');c.innerHTML='<i class="cr1"></i><i class="cr2"></i><i class="cr3"></i>';
+  if(!c){c=document.createElement('div');c.className='ltcrowd';c.setAttribute('aria-hidden','true');c.innerHTML='<i class="cr1"></i><i class="cr2"></i><i class="cr3"></i><i class="cr4"></i><i class="cr5"></i>';   // cr4・cr5 は PC の大勝負（56_pc_big.js、.cr-big）だけで出す
 }
   if(c.previousElementSibling!==rm)rm.after(c);   // 店の奥（.room）のすぐ上、相手の上半身より奥。カメラの層（#cam）ができると .room が移るので、毎回そろえる
   return c}
@@ -12322,6 +12338,9 @@ function showYieldBoard(){const hands=[...document.querySelectorAll('#felt .spot
             .filter(([x,y])=>Math.abs(x)+Math.abs(y)<=40&&l+x>=T.left+2&&r+x<=T.right-2&&t+y>=T.top+2&&b+y<=T.bottom-2&&!hitOf(av,x,y).length)
             .sort((u,v)=>Math.abs(u[0])+Math.abs(u[1])-Math.abs(v[0])-Math.abs(v[1]));
         if(cand.length){dx+=cand[0][0];need+=cand[0][1]}}}catch(e){}
+    // 卓（画面の中）の左右の端から札が出るときは内側へ（v0.98.5 CI：PC の6人卓で、いちばん左の席の勝った札が画面の左の端から 3px 出た）
+    try{const rs=cs.map(R).filter(r=>r.width>2);if(rs.length){const T=sybTB(),L=Math.min(...rs.map(r=>r.left)),Rt=Math.max(...rs.map(r=>r.right)),cx=(L+Rt)/2,l=cx-(cx-L)*sc+dx,r=cx+(Rt-cx)*sc+dx;
+      if(l<T.left+4)dx+=T.left+4-l;else if(r>T.right-4)dx-=r-(T.right-4)}}catch(e){}
     if(!need&&!dx&&sc===1){delete h.dataset.syb;return}
     // 縮めて小さくなった札は、角の小さな数字ではなく真ん中に大きく数字とマークを出す（v96.1 レビュー：横で数字の札が真ん中のマークしか読めなかった）
     if(sc<1&&Math.max(...cs.map(e=>R(e).height))*sc<36)h.classList.add('sybs');
@@ -13511,8 +13530,8 @@ function pcHandTarget(){const out=[],now=performance.now(),dk=document.querySele
     out.push({x:c[0]-side,y:c[1]-up,rot:.35},{x:c[0]+side,y:c[1]-up,rot:-.35});return{kind:'push',pts:out,home}}
   // 2) 燃やし札（.llburn が山から捨て札へ滑っている間）
   const bn=document.querySelector('#fxLayer .llburn');if(bn){const c=pcHandMid(bn.getBoundingClientRect());if(c){out.push({x:c[0],y:c[1]-6,rot:.25});return{kind:'burn',pts:out,home}}}
-  // 3) 場札を開く（21d_live_table.js の ltBoardAnim と同じ時間：フロップ 1000ms、ターン・リバー 520ms）
-  if(S.ltBoardAt&&S.board){const el=now-S.ltBoardAt,from=S.ltBoardFrom||0,dur=(from===0?1000:520)*SPEED();
+  // 3) 場札を開く（21d_live_table.js の ltBoardDur と同じ時間）
+  if(S.ltBoardAt&&S.board){const el=now-S.ltBoardAt,from=S.ltBoardFrom||0,dur=ltBoardDur(from);
     if(el>=0&&el<=dur){const cs=[...$('boardCards').children].slice(from,S.board.length).map(e=>e.getBoundingClientRect()).filter(r=>r.width>0);
       if(cs.length){const p=Math.min(1,el/dur),k=Math.min(cs.length-1,Math.floor(p*cs.length)),c=pcHandMid(cs[k]);out.push({x:c[0],y:c[1]-cs[k].height*.1,rot:0});return{kind:'board',pts:out,home}}}}
   // 4) 配る（ltDealAnim と同じ順と間：LT_DEAL ごとに1枚、2周）。手は山の所で、配る先へ少し向いて手首を返す
@@ -13566,6 +13585,50 @@ LT.on('render',pcHandWake);
 setInterval(()=>{if(PCHAND.on&&!PCHAND.raf&&!$('game').hidden)pcHandWake()},150);   // ポットの押し出し（potPush）は render の後に始まるので、ここで拾う
 document.addEventListener('visibilitychange',()=>{try{pcHandSync()}catch(e){}});
 mqOn(matchMedia(PCW_Q),()=>{try{pcHandSync()}catch(e){}});
+
+// ===== v0.98.5 PC 向け：大勝負の間（PC 向けリッチ演出 案4、2026-10-21 satou「全部」） =====
+// PC（html.pcw）だけ。オールインがコールされたとき（S.runout）、またはリバーでポットが 30BB 以上のとき。
+// ・部屋を暗くし、勝負している人（降りていない相手）の上半身にだけスポットを残す（#pcBig：上半身の層のすぐ上・卓の板の下の canvas。押せない）
+// ・人だかり（43b_crowd.js）を PC の広さで大きく、人数も多く見せる（.ltcrowd.cr-big）
+// ・最後の札（リバー）はゆっくりめくる（1.2秒まで。ハンドの進みは止めない。卓をクリックすると飛ばせる）。時間は ltBoardDur（21d_live_table.js）が決める
+// 第7章の最後の手（ジンの本物のテル）では何もしない（顔を見せるため）。回想でも出さない。動き「少なめ」・動きを減らす設定では、暗くするのは切り替えだけ（ふわっとしない）でゆっくりめくりもしない
+const PCBIG={BB:30,afterMs:1800,hno:-1,key:'',cv:null};
+function pcBigOk(){try{return document.documentElement.classList.contains('pcw')&&!!S&&!!S.players&&!CFG.flashback&&!(S.finalHand&&CFG.ch&&!CFG.ch.p2&&CFG.ch.no===7)}catch(e){return false}}
+function pcBigStill(){return document.documentElement.classList.contains('ltLite')||reducedMotion()}
+function pcBigCv(){const cam=$('cam'),bu=$('busts');if(!cam||!bu)return null;let cv=$('pcBig');
+  if(!cv){cv=document.createElement('canvas');cv.id='pcBig';cv.setAttribute('aria-hidden','true')}
+  if(cv.parentNode!==cam||cv.previousElementSibling!==bu)bu.after(cv);   // 上半身（#busts）のすぐ上。卓の板（.felt-wrap）と名札はその上
+  return PCBIG.cv=cv}
+// 暗さを描く：全体を暗くして、勝負している相手の上半身の所を丸く抜く（座標は #cam の中。#busts と同じ箱なので、上半身の offset がそのまま使える）
+function pcBigDraw(){const cv=PCBIG.cv,cam=$('cam');if(!cv||!cam)return;const W=cam.clientWidth,H=cam.clientHeight;if(!W||!H)return;
+  const live=S.players.map((p,i)=>i).filter(i=>i>0&&inHand(S.players[i])),bs=live.map(i=>faceBox(i)).filter(Boolean);   // faceBox（30c_ui64.js）：上半身の真ん中は offsetLeft（translateX(-50%) で置いてある）
+  const key=W+'x'+H+':'+bs.map(f=>[f.cx,f.top,f.w,f.h].join(',')).join('|');if(key===PCBIG.key)return;PCBIG.key=key;
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}const g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  g.fillStyle='rgba(4,4,8,.62)';g.fillRect(0,0,W,H);g.globalCompositeOperation='destination-out';
+  // 抜く所は縦長の楕円（横は上半身の幅の 0.36倍まで）。6人卓では上半身が重なって並ぶので、丸く大きく抜くと隣の降りた人まで明るくなった（perf:pcbig）
+  for(const f of bs){const w=f.w,h=f.h,cx=f.cx,cy=f.top+h*.42,rx=w*.36,ry=h*.52;
+    g.save();g.translate(cx,cy);g.scale(1,ry/rx);const sg=g.createRadialGradient(0,0,rx*.6,0,0,rx);sg.addColorStop(0,'rgba(0,0,0,1)');sg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=sg;g.fillRect(-rx,-rx,2*rx,2*rx);g.restore()}
+  g.globalCompositeOperation='source-over'}
+function pcBigOn(){const cv=pcBigCv();if(!cv)return;PCBIG.key='';pcBigDraw();cv.classList.toggle('still',pcBigStill());void cv.offsetWidth;cv.classList.add('on');
+  const c=document.querySelector('#table .ltcrowd');if(c)c.classList.add('cr-big')}
+function pcBigOff(){const cv=$('pcBig');if(cv)cv.classList.remove('on');const c=document.querySelector('#table .ltcrowd');if(c)c.classList.remove('cr-big');clearTimeout(PCBIG.t)}
+// ゆっくりめくる最後の札（21d_live_table.js の ltBoardDur が読む）
+// リバーを配る前（nextStreet）に呼ばれる：大勝負になっている、またはなりそう（ポット 30BB 以上・2人以上残っている）なら true
+LT.pcBigRiver=()=>{try{return pcBigOk()&&!pcBigStill()&&S.players.filter(inHand).length>=2&&(PCBIG.hno===S.handNo||!!S.runout||potTotal()>=PCBIG.BB*BB())}catch(e){return false}};
+LT.on('startHand',()=>{try{PCBIG.hno=-1;pcBigOff()}catch(e){}});
+LT.on('render',()=>{try{
+  if(!S||!S.players||S.handOver)return;
+  if(PCBIG.hno===S.handNo){if(!pcBigOk()){pcBigOff();return}const cv=$('pcBig');if(cv&&cv.classList.contains('on'))pcBigDraw();else pcBigOn();return}   // 降りた人が出たら抜く所を描き直す。PC でなくなったら消し、同じハンドで PC に戻ったらまた出す（CodeRabbit PR #138）
+  if(!pcBigOk())return;
+  if(!(S.runout||(S.street==='river'&&potTotal()>=PCBIG.BB*BB())))return;
+  if(S.players.filter(inHand).length<2)return;
+  PCBIG.hno=S.handNo;pcBigOn()}catch(e){}});
+LT.on('layout',()=>{try{if(PCBIG.hno===S.handNo&&$('pcBig')&&$('pcBig').classList.contains('on')){PCBIG.key='';pcBigDraw()}}catch(e){}});
+LT.on('endHand',()=>{try{if(PCBIG.hno!==S.handNo)return;clearTimeout(PCBIG.t);PCBIG.t=setTimeout(()=>{try{pcBigOff()}catch(e){}},PCBIG.afterMs*Math.max(.6,SPEED()))}catch(e){}});
+mqOn(matchMedia(PCW_Q),()=>{try{if(!document.documentElement.classList.contains('pcw'))pcBigOff()}catch(e){}});
+// ゆっくりめくっている間に卓をクリックしたら、めくり終わりまで飛ばす（ボタンの押し方は変えない。クリックはそのままボタンにも届く）
+document.addEventListener('pointerdown',e=>{try{if(!S||!S.ltBoardAt||!S.ltBoardSlow||!e.target.closest('#table'))return;
+  const el=performance.now()-S.ltBoardAt,dur=ltBoardDur(S.ltBoardFrom||0);if(el<dur){S.ltBoardAt=performance.now()-dur;ltBoardAnim()}}catch(x){}},true);
 
 </script>
 <script>
