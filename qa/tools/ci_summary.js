@@ -103,6 +103,16 @@ if (prevVers.length) {
     else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }
     else it.detail = `くり返し（${it.repeat}回目）：` + it.detail } }
 
+// ページが落ちた（v0.98.9 レビュー）：「撮れなかった」⚠️ と分けて数える。同じ場面（画面の大きさは問わない）で直前の版にも落ちていたら ❌（Safari で本当に落ちるなら遊べない崩れ）
+//   前は「2回目が撮れなかった」⚠️ のくり返しとして、3版目まで ❌ にならなかった
+{ const CRASH = /ページが落ちた/, sceneOf = id => ((/ui:(?:same-seed:)?([^:]+):/.exec(id || '') || [])[1]) || null;
+  const prevCrash = prevVers.length ? new Set((prevVers[prevVers.length - 1].groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok' && CRASH.test(String(i.detail || ''))).map(i => sceneOf(i.id)).filter(Boolean)) : new Set();
+  const crashed = all.filter(it => it.status !== 'ok' && CRASH.test(String(it.detail || '')));
+  for (const it of crashed) { const sc = sceneOf(it.id); it.crash = true;
+    if (sc && prevCrash.has(sc) && it.status !== 'fail') { it.status = 'fail'; it.detail = `ページが落ちた（2版続けて同じ場面「${sc}」。メモリ不足か場面の重さを調べる）：` + it.detail } }
+  if (crashed.length) { const it = { id: 'ci:page-crash', title: `ページが落ちた場面 ${crashed.length}件（撮れなかったとは別に数える）`, status: 'warn', warnOnly: '数を出すだけ。2版続いた場面は項目のほうで ❌（v0.98.9 レビュー）', detail: crashed.map(x => x.id).join('、') };
+    all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) } }
+
 // 3版まとめの勝率（v0.97.9 レビュー：第2章が 13%→0%→0% と3版続いたが、1版8回だと許す幅が ±38 もあり、どの版も ✅ だった）
 //   今の版と直近の公開版（qa-results の v<版>/result.json）の勝ち負け（games）を足して、基準と比べる。回数が増えるので幅は 2×標準誤差（最低の 15 ポイントは付けない）
 //   ⚠️ だけ（版が重なるので、くり返しで ❌ に上げない）
