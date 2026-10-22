@@ -225,9 +225,10 @@ async function run({ browser, file, quick, baseline, outDir }) {
         const r = { defined: true, thrown: PCTOUCH.thrown, scat: PCTOUCH.scat, lay: PCTOUCH.lay, errors: PCTOUCH.errors };
         // 散らばったチップ：置いた所（translate）が付いている
         r.placed = [...document.querySelectorAll('#table .chipwrap .chip[data-pcs-to]')].filter(c => c.style.translate && c.style.translate !== '0px 0px' && c.style.translate !== '0px').length;
+        r.cols2 = [...document.querySelectorAll('#table .chipwrap .stack .col')].filter(c => c.querySelectorAll('.chip').length >= 2).length;   // 2枚以上の列（1枚だけの列は散らさないので、置いた所が 0 枚でも正しい。手元の4回に1回そうなった）
         Object.assign(r, probe);
         // 札の厚み：場札・相手の札の影が4段（0 4px 0）ある
-        const cs = [...document.querySelectorAll('#boardCards .card:not(.slot)')].slice(0, 1).concat([...document.querySelectorAll('.felt .spot .hand .card.back')].slice(0, 1));
+        const cs = [...document.querySelectorAll('#boardCards .card:not(.slot)')].concat([...document.querySelectorAll('.felt .spot .hand .card.back')]);   // 全部の札（先頭1枚だけだと、2枚目からの影が消えても通る。CodeRabbit PR #143）
         r.cards = cs.length; r.thick = cs.filter(c => /0px 4px 0px|rgb\(7, 8, 11\) 0px 3px 0px/.test(getComputedStyle(c).boxShadow)).length;
         r.ease = typeof ltCardEase === 'function' ? ltCardEase() : 'none';
         r.errors2 = __qa.errors.slice(0, 3); return r }, probe);
@@ -235,7 +236,7 @@ async function run({ browser, file, quick, baseline, outDir }) {
       await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(600);
       out.touch && out.touch.defined && (out.touch.mobile = await page.evaluate(() => { const n0 = PCTOUCH.thrown, s0 = PCTOUCH.scat;
         for (const { w } of pcTouchWraps()) { delete w.dataset.pct; const st = w.querySelector('.stack'); if (st) delete st.dataset.pcs; w.classList.add('slide') } pcTouchRender();
-        const thick = [...document.querySelectorAll('#boardCards .card:not(.slot)')].slice(0, 1).filter(c => /0px 4px 0px/.test(getComputedStyle(c).boxShadow)).length;
+        const thick = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(c => /0px 4px 0px/.test(getComputedStyle(c).boxShadow)).length;
         return { thrown: PCTOUCH.thrown - n0, scat: PCTOUCH.scat - s0, thick, ease: ltCardEase() } }));
     } catch (e) { out.touchErr = String(e.message || e).slice(0, 100) } finally { await ctx.close() }
     // 動きを減らす設定（prefers-reduced-motion）：1ハンド打っても投げない・散らさない
@@ -262,9 +263,9 @@ async function run({ browser, file, quick, baseline, outDir }) {
     items.push({ id: 'perf:pcbig', title: 'PC の大勝負の間：オールインで部屋が暗くなり、勝負している相手の顔は明るいまま・降りた相手は暗い・人だかりが大きい・最後の札は 1.2秒まで・第7章の最後の手とスマホ幅と動きを減らす設定では出ない', status: bad ? 'fail' : 'ok',
       detail: out.bigErr ? '測れなかった：' + out.bigErr : !a.defined ? '大勝負の間（PCBIG・ltBoardDur）が無い版' : `オールインで ${a.on ? '始まった' : '始まらない'}・${a.shown ? '暗い' : '暗くならない'}（濃さ ${a.op}）、残っている相手の顔の暗さ ${(a.lit || []).join('・') || 'なし'}（60 以下）、降りた相手 ${(a.dark || []).join('・') || 'なし'}（100 以上）、人だかり ${a.crowdBig ? '大きい' : 'ふつう'}（${a.crowdN}人／${a.crowdWant}人）、オールインでないリバー 30BB 未満で ${a.riverLow === false ? '出ない' : '出る'}・30BB 以上で ${a.riverHigh === true ? '出る' : '出ない'}、最後の札 ゆっくり ${a.slow}ms／ふだん ${a.norm}ms（今まで ${a.normWant}ms）、押せない ${a.pe === 'none' ? 'はい' : 'いいえ（' + a.pe + '）'}、第7章の最後の手で ${a.ch7 === false ? '出ない' : '出る'}、スマホ幅で ${a.mobileShown ? '出る' : '出ない'}、動きを減らす設定でゆっくりめくり ${out.bigLite === false ? 'しない' : 'する（' + out.bigLite + '）'}・暗くするのは ${out.bigLiteShown ? '出る（切り替えだけ）' : '出ない'}、スマホ幅から PC に戻すと ${a.backShown === true ? 'また出る' : a.backShown === false ? '出ない' : '測れない（' + a.backShown + '）'}${(a.errors || []).length ? '、エラー ' + a.errors.join(' / ') : ''}` }) }
   { const a = out.touch || {}, m = a.mobile || {};
-    const bad = out.touchErr || !a.defined || !(a.thrown > 0) || !(a.scat > 0) || !(a.placed > 0) || !(a.lay > 0) || a.errors || (a.errors2 || []).length || !(a.throwFrom > 20) || a.throwN !== 1 || !(a.cards > 0) || a.thick !== a.cards || !/^cubic-bezier\(/.test(a.ease || '') || m.ease !== 'ease-in-out' || m.thrown || m.scat || m.thick || out.touchLite !== 0;
+    const bad = out.touchErr || !a.defined || !(a.thrown > 0) || !(a.scat > 0) || (a.cols2 > 0 && !(a.placed > 0)) || !(a.lay > 0) || a.errors || (a.errors2 || []).length || !(a.throwFrom > 20) || a.throwN !== 1 || !(a.cards > 0) || a.thick !== a.cards || !/^cubic-bezier\(/.test(a.ease || '') || m.ease !== 'ease-in-out' || m.thrown || m.scat || m.thick || out.touchLite !== 0;
     items.push({ id: 'perf:pctouch', title: 'PC のチップと札の手ざわり：賭けたチップは持ち点の塔から投げられて止まり、少し散らばる・動きのあと位置を測り直す・札に厚みと影・スマホ幅と動きを減らす設定では投げない', status: bad ? 'fail' : 'ok',
-      detail: out.touchErr ? '測れなかった：' + out.touchErr : !a.defined ? 'チップと札の手ざわり（PCTOUCH・pcTouchRender）が無い版' : `投げた ${a.thrown}回、散らした ${a.scat}枚（置いた所が付いた ${a.placed}枚）、動きのあと測り直し ${a.lay}回、投げ始め 塔の側 ${a.throwFrom}px（20px より遠く）・1回だけ ${a.throwN === 1 ? 'はい' : 'いいえ（' + a.throwN + '回）'}、札の厚み ${a.thick}/${a.cards}枚、場札をめくる止まり方 ${a.ease}（スマホは ${m.ease}）、スマホ幅で 投げた ${m.thrown || 0}・散らした ${m.scat || 0}・厚み ${m.thick ? 'PC の厚みのまま' : '今まで'}、動きを減らす設定で 投げた・散らした ${out.touchLite}${a.errors ? '、エラー ' + a.errors + '回' : ''}${(a.errors2 || []).length ? '、エラー ' + a.errors2.join(' / ') : ''}` }) }
+      detail: out.touchErr ? '測れなかった：' + out.touchErr : !a.defined ? 'チップと札の手ざわり（PCTOUCH・pcTouchRender）が無い版' : `投げた ${a.thrown}回、散らした ${a.scat}枚（置いた所が付いた ${a.placed}枚、2枚以上の列 ${a.cols2}）、動きのあと測り直し ${a.lay}回、投げ始め 塔の側 ${a.throwFrom}px（20px より遠く）・1回だけ ${a.throwN === 1 ? 'はい' : 'いいえ（' + a.throwN + '回）'}、札の厚み ${a.thick}/${a.cards}枚、場札をめくる止まり方 ${a.ease}（スマホは ${m.ease}）、スマホ幅で 投げた ${m.thrown || 0}・散らした ${m.scat || 0}・厚み ${m.thick ? 'PC の厚みのまま' : '今まで'}、動きを減らす設定で 投げた・散らした ${out.touchLite}${a.errors ? '、エラー ' + a.errors + '回' : ''}${(a.errors2 || []).length ? '、エラー ' + a.errors2.join(' / ') : ''}` }) }
   if (quick) return { name: '重さ・速さ', items, baselineOut: {} };
   items.push({ id: 'perf:jank', title: '打っている間の引っかかり（50ms以上止まる回数）', status: worse('longPerHand', 1.5, 0.3) ? 'warn' : 'ok',
     detail: `1ハンドあたり ${out.longPerHand}回${vs('longPerHand')}・止まった時間の合計 ${out.longMsPerHand}ms、一番長い ${out.longMaxMs}ms（${out.hands}ハンド）` });
