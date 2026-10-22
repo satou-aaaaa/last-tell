@@ -7484,8 +7484,8 @@ function proceed(){
     const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.8:1)+hold+rdT;   // 客の降りは少しだけ速く（.5 だと「早い早い」：第6章の録画 #21）
     if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
       setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)askQuiz(angle==='faketap'?'tap':'onechip',()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}})},wait+1300*SPEED());return}
-    S.cpuQ={i,w:Math.round(wait),at:Date.now(),h:S.handNo};
-    setTimeout(()=>{S.cpuQ&&(S.cpuQ.ran=Date.now());if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
+    const cq=S.cpuQ={i,w:Math.round(wait),at:Date.now(),h:S.handNo};
+    setTimeout(()=>{if(S.cpuQ===cq)cq.ran=Date.now();if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
   }
 }
 function act(i,type,to){
