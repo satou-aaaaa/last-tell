@@ -141,7 +141,7 @@ if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
         if (new RegExp(`\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\s+#${i.number}\\b`, 'i').test(body)) continue;
         let cm = []; try { const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues/${i.number}/comments?per_page=100`];
           cm = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 })) } catch (e) { cm = null }
-        if (cm && cm.some(c => c.user && c.user.type !== 'Bot' && /理由|\breason\b/i.test(String(c.body || '')))) continue;   // 「直さない理由：…」と書いた人の書き込みだけ（「再現しました」だけでは通さない。CodeRabbit PR #140）
+        if (cm && cm.some(c => c.user && c.user.type !== 'Bot' && /(直さない理由|\breason)\s*[:：]\s*\S{2,}/i.test(String(c.body || '')))) continue;   // 「直さない理由：<説明>」「reason: <説明>」の形の人の書き込みだけ（「再現しました」「理由はありません」では通さない。CodeRabbit PR #140）
         unhandled.push(`#${i.number}${cm ? '' : '（書き込みを読めなかった）'}`) }
       const it = unhandled.length ? { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'fail', detail: `開いている CI 失敗の Issue：${mainRed}。${unhandled.join('・')} は、この PR の本文に「Closes #番号」も、Issue に「直さない理由：…」の書き込みも無い。直すなら PR の本文に「Closes #番号」、直さないなら Issue に「直さない理由：…」と書いてから CI を回し直す` }
         : { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。${pr ? 'どれもこの PR の本文の Closes か Issue の理由の書き込みがある' : 'この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く'}` };
