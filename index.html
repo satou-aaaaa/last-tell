@@ -13702,9 +13702,11 @@ function pcTouchScatter(w,i){const st=w.querySelector('.stack');if(!st||st.datas
       c.dataset.pcsTo=`${dx.toFixed(1)}px ${dy}px`;c.dataset.pcsRot=rot+'deg';c.style.zIndex='0';moved.push(c)}
     else if(k>0){c.style.translate=`${(r()*2-1).toFixed(1)}px 0px`}})});
   PCTOUCH.scat+=moved.length;return moved}
+// 散らしたチップは塔が止まったあとも動いている（330ms 後に始まり、最後の1枚は 570ms 以降に止まる）。最後の1枚が止まったときにも測り直す（CodeRabbit PR #143）
+function pcTouchLay(){PCTOUCH.lay++;try{layoutSoon()}catch(e){}}
 function pcTouchPlace(moved,anim){moved.forEach((c,n)=>{const to=c.dataset.pcsTo,rot=c.dataset.pcsRot;
   if(!anim){c.style.translate=to;c.style.rotate=rot;return}
-  LT.anim(c,[{translate:'0px 0px',rotate:'0deg'},{translate:to,rotate:rot}],{duration:240*SPEED(),delay:(330+n*40)*SPEED(),easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'},()=>{c.style.translate=to;c.style.rotate=rot});
+  LT.anim(c,[{translate:'0px 0px',rotate:'0deg'},{translate:to,rotate:rot}],{duration:240*SPEED(),delay:(330+n*40)*SPEED(),easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'},()=>{c.style.translate=to;c.style.rotate=rot;if(n===moved.length-1)pcTouchLay()});
   c.style.translate=to;c.style.rotate=rot})}
 function pcTouchRender(){if(!pcTouchOk())return;
   for(const {i,w,src} of pcTouchWraps()){const st=w.querySelector('.stack');if(!st)continue;
@@ -13715,7 +13717,7 @@ function pcTouchRender(){if(!pcTouchOk())return;
     const k=st.offsetWidth?a.width/st.offsetWidth:1,dx=(b.left+b.width/2-a.left-a.width/2)/k,dy=(b.top+b.height/2-a.top-a.height/2)/k;   // #cam が寄って拡大していても、元の大きさの px で動かす
     PCTOUCH.thrown++;pcTouchPlace(moved,true);
     LT.anim(st,[{transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(-10deg) scale(.9)`,opacity:.55},{transform:`translate(${(-dx*.05).toFixed(1)}px,${(-dy*.05).toFixed(1)}px) rotate(3deg)`,opacity:1,offset:.7},{transform:'none',opacity:1}],
-      {duration:480*SPEED(),easing:'cubic-bezier(.22,.7,.28,1)'},()=>{PCTOUCH.lay++;try{layoutSoon()}catch(e){}})}}
+      {duration:480*SPEED(),easing:'cubic-bezier(.22,.7,.28,1)'},pcTouchLay)}}
 LT.on('render',()=>{try{pcTouchRender()}catch(e){PCTOUCH.errors++;console.error('[pcTouch]',e)}});
 
 </script>
