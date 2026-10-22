@@ -517,9 +517,10 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     //   新しいブラウザでも落ちたら、もう1つ新しいブラウザで1回だけ撮り直す。それでも落ちたら「新しいブラウザでも落ちた」と出す（ブラウザの疲れでなく場面の重さ）
     let b, fresh = 0;
     for (let k = 0; k < 2; k++) { let mine = null;
-      try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; continue }   // 疲れた元のブラウザには戻さない（CodeRabbit PR #147）
-      try { b = await shoot(mine, file, s, v, d2); fresh++ } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
-      if (b.shot || !/落ちた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''))) break }
+      try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; break }   // 疲れた元のブラウザには戻さない。開けなかったことを結果に残す（CodeRabbit PR #147）
+      try { b = await shoot(mine, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
+      const crashLike = !b.shot && /落ちた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''));   // 落ちた回だけ数える（CodeRabbit PR #147）
+      if (crashLike) fresh++; else break }
     const lost0 = !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '';
     same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: lost0 && fresh >= 2 ? lost0 + '（新しいブラウザで2回とも落ちた）' : lost0 }) }
   const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;

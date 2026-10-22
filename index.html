@@ -10188,7 +10188,8 @@ function openPen59(pen){const hd=penLi59(pen.no);if(!hd)return;$('logBox').open=
   const L=$('log');L.querySelectorAll('.hl59').forEach(x=>x.classList.remove('hl59'));
   hd.classList.add('hl59');for(let e=hd.previousElementSibling;e&&!e.classList.contains('hd');e=e.previousElementSibling)e.classList.add('hl59');
   if(!hd.previousElementSibling||!hd.previousElementSibling.classList.contains('pen59')){const li=document.createElement('li');li.className='pen59 hl59';
-    li.textContent=`赤ペン：${pen.line}`;if(pen.x){const sp=document.createElement('span');sp.textContent=pen.x;li.appendChild(sp)}hd.before(li)}
+    li.textContent=`赤ペン：${pen.line}`;if(pen.x){const sp=document.createElement('span');sp.textContent=pen.x;li.appendChild(sp)}hd.before(li);
+    while(L.childElementCount>1500){const o=L.lastElementChild;if(o===hd||o===li)break;o.remove()}}
   try{hd.scrollIntoView({block:'center',behavior:reducedMotion()?'auto':'smooth'})}catch(e){}}
 $('review').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.penbtn59');if(b&&reviewHTML.pen&&String(reviewHTML.pen.no)===b.dataset.no)openPen59(reviewHTML.pen)});
 // startHand の頭：一騎打ちなら相手役以外は席を立つ（配らない・ブラインドなし）。終わったら戻す
