@@ -516,8 +516,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     // 2回目はいつも新しいブラウザで撮る（v0.98.8・v0.98.9 の WebKit：100枚ほど撮ったあとのブラウザで開くと、ページが落ちた。1回目の同じ場面は撮れていた）。
     //   新しいブラウザでも落ちたら、もう1つ新しいブラウザで1回だけ撮り直す。それでも落ちたら「新しいブラウザでも落ちた」と出す（ブラウザの疲れでなく場面の重さ）
     let b, fresh = 0;
-    for (let k = 0; k < 2; k++) { let mine = null; try { mine = await H.launch() } catch (e) {}
-      try { b = await shoot(mine || browser, file, s, v, d2); if (mine) fresh++ } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { if (mine) await mine.close().catch(() => {}) }
+    for (let k = 0; k < 2; k++) { let mine = null;
+      try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; continue }   // 疲れた元のブラウザには戻さない（CodeRabbit PR #147）
+      try { b = await shoot(mine, file, s, v, d2); fresh++ } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
       if (b.shot || !/落ちた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''))) break }
     const lost0 = !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '';
     same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: lost0 && fresh >= 2 ? lost0 + '（新しいブラウザで2回とも落ちた）' : lost0 }) }

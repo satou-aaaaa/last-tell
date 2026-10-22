@@ -110,7 +110,8 @@ if (prevVers.length) {
   const crashed = all.filter(it => it.status !== 'ok' && CRASH.test(String(it.detail || '')));
   for (const it of crashed) { const sc = sceneOf(it.id); it.crash = true;
     if (sc && prevCrash.has(sc) && it.status !== 'fail') { it.status = 'fail'; it.detail = `ページが落ちた（2版続けて同じ場面「${sc}」。メモリ不足か場面の重さを調べる）：` + it.detail } }
-  if (crashed.length) { const it = { id: 'ci:page-crash', title: `ページが落ちた場面 ${crashed.length}件（撮れなかったとは別に数える）`, status: 'warn', warnOnly: '数を出すだけ。2版続いた場面は項目のほうで ❌（v0.98.9 レビュー）', detail: crashed.map(x => x.id).join('、') };
+  const scenes = [...new Set(crashed.map(x => sceneOf(x.id) || x.id))];   // 場面ごとに1件（同じ場面の撮り直し・ずれの項目を重ねて数えない。CodeRabbit PR #147）
+  if (crashed.length) { const it = { id: 'ci:page-crash', title: `ページが落ちた場面 ${scenes.length}件（撮れなかったとは別に数える）`, status: 'warn', warnOnly: '数を出すだけ。2版続いた場面は項目のほうで ❌（v0.98.9 レビュー）', detail: scenes.join('、') + '（項目：' + crashed.map(x => x.id).join('、') + '）' };
     all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) } }
 
 // 3版まとめの勝率（v0.97.9 レビュー：第2章が 13%→0%→0% と3版続いたが、1版8回だと許す幅が ±38 もあり、どの版も ✅ だった）
