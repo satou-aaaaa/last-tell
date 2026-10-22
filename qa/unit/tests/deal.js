@@ -69,7 +69,9 @@ module.exports = G => {
       (K.KATA.bb || []).forEach((k, i) => { for (const alt of [''].concat(k.alt ? k.alt.split(' ') : [])) for (const ord of P3) for (const perm of P4) { const v = K.apply(k, perm, alt, ord); if (!v) continue;
         const nm = K.pairName(v.h), L = nm && K.BB_LINES[nm]; seen.add(nm || '（ペアでない）');
         if (!L) { miss.push(`bb[${i}] ${alt || '数字そのまま'} → ${nm || 'ペアでない'} の台詞が無い`); continue }
-        for (const key of ['deal', 'ask', 'jin']) { const x = L[key]; if (!x || !x[0] || !x[1] || !x[0].includes(nm) || K.bbLine(v.h, key) !== x[0]) miss.push(`${nm} の ${key}：${x ? x[0] : '無い'}`) } } });
+        for (const key of ['deal', 'ask', 'jin']) { const x = L[key]; const en = { AA: /\baces\b/i, KK: /\bkings\b/i, QQ: /\bqueens\b/i, JJ: /\bjacks\b/i, TT: /\btens\b/i }[nm];
+          if (!x || !x[0] || !x[1] || !x[0].includes(nm) || K.bbLine(v.h, key) !== x[0]) miss.push(`${nm} の ${key}：${x ? x[0] : '無い'}`);
+          else if (!en || !en.test(x[1])) miss.push(`${nm} の ${key} 英語に札の名前（aces など）が無い：${x[1]}`) } } });
       out.push({ id: 'unit:kata-line', title: '第5章の最初の1手：配られた手札と台詞（AA・KK・QQ）が合う', ok: !miss.length, detail: miss.length ? [...new Set(miss)].slice(0, 5).join(' / ') : `出る手札 ${[...seen].join('・')}、どれも日本語・英語の台詞あり` }) }
     else if (cur) out.push({ id: 'unit:kata-line', title: '第5章の最初の1手：配られた手札と台詞が合う', ok: false, detail: 'Rules.kata.pairName・BB_LINES が無い（台詞が手札に合わせられない）' });
     // 直近の型を避ける：200回続けて選んで、直近 ex(型の数) 回と同じ型が出ない。3型以上では次の型がいつも1つに決まらない（周期的に回らない。v0.98.2 の 012012…）。前の版の保存（数字1つ）も配列で読む
