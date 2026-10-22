@@ -29,7 +29,8 @@ for i in 1 2 3 4 5; do
   fi
   # pr/・branch/ の14日より古いもの（run.txt の at で見る。run.txt の中身だけまとめて取る）
   now=$(date +%s)
-  runs=$(g ls-files -s -z -- 'pr/*/run.txt' 'branch/*/run.txt' | tr '\0' '\n' | awk -F'\t' '{split($1, a, " "); print a[2]"\t"$2}')
+  # 今回の $key/run.txt はまだ origin に無いので除く（混ざるとまとめ取りが失敗し、1件ずつ取りに行って遅くなる）
+  runs=$(g ls-files -s -z -- 'pr/*/run.txt' 'branch/*/run.txt' | tr '\0' '\n' | awk -F'\t' -v k="$key/run.txt" '$2 != k {split($1, a, " "); print a[2]"\t"$2}')
   oids=$(printf '%s\n' "$runs" | cut -f1 | grep . || true)
   [ -n "$oids" ] && [ -n "$old" ] && g -c fetch.negotiationAlgorithm=noop fetch -q --no-tags --no-write-fetch-head --filter=blob:none origin $oids 2>/dev/null
   printf '%s\n' "$runs" | while IFS=$'\t' read -r oid path; do
