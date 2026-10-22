@@ -27,7 +27,10 @@ for i in 1 2 3 4 5; do
   git --git-dir="$ws/.git" --work-tree=/tmp/qa-w -C /tmp/qa-w add -A -f -- "$key" || fail "git add に失敗した"
   if [ -n "$vkey" ]; then
     # 同じ中身を v<版>/ にも載せる（read-tree --prefix は全部の blob を落とすので使わない）
-    g ls-files -s -z -- "$key/" | sed -z "s#\t$key/#\t$vkey/#" | g update-index -z --index-info || fail "$vkey に写せなかった"
+    # 名前の # . & などを sed にそのまま渡さない（ブランチ名に入りうる）
+    pat=$(printf '%s/' "$key" | sed 's/[]\/$*.^[#]/\\&/g'); rep=$(printf '%s/' "$vkey" | sed 's/[\/&#]/\\&/g')
+    copied=$(g ls-files -s -z -- "$key/" | sed -z "s#\t$pat#\t$rep#" | g update-index -z --index-info && echo ok)
+    [ "$copied" = ok ] && [ -n "$(g ls-files -- "$vkey/" | head -1)" ] || fail "$vkey に写せなかった"
   fi
   # pr/・branch/ の14日より古いもの（run.txt の at で見る。run.txt の中身だけまとめて取る）
   now=$(date +%s)
