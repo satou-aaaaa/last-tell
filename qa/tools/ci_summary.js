@@ -83,10 +83,10 @@ const all = groups.flatMap(g => g.items);
 let prevErr = '';
 const prevVers = (() => { try {
   const vk = v => v.replace(/^v/, '').split('.').map(Number), cmp = (a, b) => { const x = vk(a), y = vk(b); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0 };
-  if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && v !== 'v' + ver && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
+  if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && cmp(v, 'v' + ver) < 0 && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
   const git = (...a) => require('child_process').execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 });   // 引数は配列で渡す（シェルを通さない）
   git('fetch', '-q', '--depth', '1', 'origin', 'qa-results');
-  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
+  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && cmp(v, 'v' + ver) < 0).sort(cmp).slice(-3)
     .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { prevErr += (prevErr ? '／' : '') + `${v} が読めない（${String(e && e.message || e).split('\n')[0].slice(0, 60)}）`; return null } }).filter(Boolean);   // 読めない版は黙って飛ばさず ⚠️ に出す（CodeRabbit PR #119）
 } catch (e) { prevErr += (prevErr ? '／' : '') + String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
 if (prevErr) { const it = { id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr };
@@ -105,7 +105,7 @@ if (prevVers.length) {
 
 // ページが落ちた（v0.98.9 レビュー）：「撮れなかった」⚠️ と分けて数える。同じ場面（画面の大きさは問わない）で直前の版にも落ちていたら ❌（Safari で本当に落ちるなら遊べない崩れ）
 //   前は「2回目が撮れなかった」⚠️ のくり返しとして、3版目まで ❌ にならなかった
-{ const CRASH = /ページが落ちた/, sceneOf = id => ((/ui:(?:same-seed:)?([^:]+):/.exec(id || '') || [])[1]) || null;
+{ const CRASH = /ページが落ちた/, sceneOf = id => ((/ui:(?:same-seed:|drift:)?([^:]+):/.exec(id || '') || [])[1]) || null;
   const prevCrash = prevVers.length ? new Set((prevVers[prevVers.length - 1].groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok' && CRASH.test(String(i.detail || ''))).map(i => sceneOf(i.id)).filter(Boolean)) : new Set();
   const crashed = all.filter(it => it.status !== 'ok' && CRASH.test(String(it.detail || '')));
   for (const it of crashed) { const sc = sceneOf(it.id); it.crash = true;
