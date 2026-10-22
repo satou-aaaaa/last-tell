@@ -2442,7 +2442,7 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.10';
+const APP_VERSION='0.98.11';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2774,8 +2774,6 @@ EN_TPL.push(
 
 // 動画のツッコミから（2026-10-17）：js/47_video_fixes.js の英語
 Object.assign(EN_DICT,{
- 'AAが来た。いちばん強い手札だ':'Pocket aces. The best starting hand there is.',
- 'ハヤトのオールイン。AAで受けるか？':'Hayato is all-in. Call with your aces?',
  'あなたの番':'Your turn','後ろ':'Late','前':'Early',
  '後ろの席：あとから動けるので、ブラインドスチールを仕掛けやすい':'Late position: you act after the others, so it is a good spot to steal the blinds',
  '前の席：あとの人が多いので、強い手だけで':'Early position: many players act after you, so play only strong hands',
@@ -7778,7 +7776,7 @@ function showdown(){
   potPush();potCall();
 }
 function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
-  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
+  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote(Rules.kata.bbLine(S.players[0].hand,'jin'),1);
     S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？'};render()}},1400*SPEED())}
   {const me=S.players[0];if(penOn()&&(S.myActs||[]).length&&(hasLesson('pen')?me.total-me.won>0:me.total-me.won>=BB()*10&&(S.penCount||0)<3))S.penReady=S.handNo}
   if(S.finalHand&&CFG.ch&&CFG.ch.p2)p2FinalEnd();
@@ -12615,12 +12613,12 @@ LT.on('startHand:before',()=>{if(S)S.vf={h:S.handNo+1}});
 // ===== A1：第5章の AA のハンド。「自動でコールしたことになった」→ 自分で押す =====
 // オールインを受けるかは自分で決める（降りる・上げるは出さない。押せるのは「オールイン」だけ）。手札・場札・勝ち負けは今のまま
 const vfBadbeat=()=>!!(CFG&&CFG.ch&&!CFG.ch.p2&&CFG.ch.script==='badbeat'&&S&&S.handNo===1&&!CFG.flashback);
-LT.on('startHand',()=>{try{if(vfBadbeat()&&S.autoMe)S.msg='AAが来た。いちばん強い手札だ'}catch(e){}});
+LT.on('startHand',()=>{try{if(vfBadbeat()&&S.autoMe)S.msg=Rules.kata.bbLine(S.players[0].hand,'deal')}catch(e){}});
 LT.on('render',()=>{try{
   // 隠した「レイズ」は、ほかの描き直し（renderControls）では戻らないので、ここで戻す。戻さないと第5章の残りと回想（押せるのが「レイズ」だけ）で進めなくなる（v0.92.3）
   {const rb=$('btnRaise');if(rb&&rb.dataset.vfHid&&!(S&&S.vf&&S.vf.ask&&S.toAct===0&&!S.handOver)){rb.hidden=false;delete rb.dataset.vfHid}}
   if(!vfBadbeat()||S.handOver)return;const me=S.players[0];
-  if(S.autoMe&&S.toAct===0&&S.currentBet>me.bet&&!S.vf.ask){S.vf.ask=true;S.vf.bb=true;S.autoMe=false;S.msg='ハヤトのオールイン。AAで受けるか？';
+  if(S.autoMe&&S.toAct===0&&S.currentBet>me.bet&&!S.vf.ask){S.vf.ask=true;S.vf.bb=true;S.autoMe=false;S.msg=Rules.kata.bbLine(me.hand,'ask');
     requestAnimationFrame(()=>{try{render()}catch(e){}})}
   const ask=!!S.vf.ask&&S.toAct===0;
   ['btnFold','btnRaise','quick','raisePanel'].forEach(id=>{const b=$(id);if(b&&ask){if(id==='btnRaise'&&!b.hidden)b.dataset.vfHid='1';b.hidden=true}});
@@ -13459,9 +13457,19 @@ Rules.kata={
   recent(v){const a=Array.isArray(v)?v:v===undefined||v===null||v===''?[]:[v];return a.filter(x=>typeof x==='number'||typeof x==='string'&&x.trim()!=='').map(x=>+x).filter(x=>Number.isInteger(x)&&x>=0).slice(-3)},
   // 直近に使った型を避けて選ぶ（直近 ex(n) 回。いつも2つ以上から選べるように 型の数−2 回まで。3型なら直前の1つだけ外す。v0.98.2 は 型の数−1 回で、3型が 012012… と決まった順に回った）
   ex(n){return Math.max(1,Math.min(3,n-2))},
+  // 第5章の最初の1手の台詞は、配られた手札（型と数字の幅で AA・KK・QQ になる）に合わせる（Godot 移植の報告 2026-10-22：KK・QQ でも「AAが来た」と出ていた）。
+  //   qa/unit/tests/deal.js が、型の全部のばらし方で手札に合う台詞があるかを確かめる
+  pairName(h){if(!h||h.length!==2||h[0].r!==h[1].r)return null;const l={14:'A',13:'K',12:'Q',11:'J',10:'T'}[h[0].r]||String(h[0].r);return l+l},
+  BB_LINES:{
+    AA:{deal:['AAが来た。いちばん強い手札だ','Pocket aces. The best starting hand there is.'],ask:['ハヤトのオールイン。AAで受けるか？','Hayato is all-in. Call with your aces?'],jin:['AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ','Even aces lose. ...This is where it starts. Win it back with a short stack, one pot at a time.']},
+    KK:{deal:['KKが来た。2番目に強い手札だ','Pocket kings. The second-best starting hand.'],ask:['ハヤトのオールイン。KKで受けるか？','Hayato is all-in. Call with your kings?'],jin:['KKでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ','Even kings lose. ...This is where it starts. Win it back with a short stack, one pot at a time.']},
+    QQ:{deal:['QQが来た。3番目に強い手札だ','Pocket queens. The third-best starting hand.'],ask:['ハヤトのオールイン。QQで受けるか？','Hayato is all-in. Call with your queens?'],jin:['QQでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ','Even queens lose. ...This is where it starts. Win it back with a short stack, one pot at a time.']}},
+  // 手札に合う台詞（日本語）。合う台詞が無いときは AA の台詞にせず、手札の名前を入れない言い方にする
+  bbLine(h,k){const n=Rules.kata.pairName(h),L=n&&Rules.kata.BB_LINES[n];return L?L[k][0]:{deal:'強いペアが来た',ask:'ハヤトのオールイン。受けるか？',jin:'強い手でも負ける。……ここからだ。少ないチップで、一つずつ取り返せ'}[k]},
   pick(n,recent,rnd){const ex=recent.slice(-Rules.kata.ex(n)),c=[];for(let i=0;i<n;i++)if(!ex.includes(i))c.push(i);const l=c.length?c:[...Array(n).keys()];return l[Math.floor(rnd()*l.length)]},
 };
 // @unit-end deal_mod
+try{Object.values(Rules.kata.BB_LINES).forEach(L=>Object.values(L).forEach(([ja,en])=>{EN_DICT[ja]=en}));Object.assign(EN_DICT,{'強いペアが来た':'A strong pair.','ハヤトのオールイン。受けるか？':'Hayato is all-in. Call?','強い手でも負ける。……ここからだ。少ないチップで、一つずつ取り返せ':'Even strong hands lose. ...This is where it starts. Win it back with a short stack, one pot at a time.'})}catch(e){}
 
 // 遊び方（13_beginner.js）とストアの説明（launch/ストア掲載素材.md・release/ストア掲載_英語版.md）の公平の段落に要る語（§8-3：細かい仕組みは書かず、調整していることを一文で。
 // フリー対戦が公平なことも書く）。qa/checks/text.js と dev/tools/lint/check.js がこれを読む。登録ごとの words は仕組みの説明（今は説明の文には求めない）
