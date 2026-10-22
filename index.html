@@ -2215,6 +2215,8 @@ html.pcw #game .sensei p{display:block;-webkit-line-clamp:unset;overflow:visible
 html.pcw #game .mine{padding-bottom:18px}
 html.pcw .felt .boardspot>.lltools{scale:.62;transform-origin:0 0}
 html.pcw .felt .boardspot>.muckpile{scale:.62}
+/* v0.98.9：Safari では瞳の transition が途中で止まることがある（v0.98.8 CI：WebKit PC 第14章で止まったまま残った）。瞳は動かさずに置く（見え方は変わらない位置へ一度で） */
+html.wk .bust.look .av .pupils,html.wk .bust.c35away .av.real .eyes .pupils{transition:none}
 
 /* ===== v0.98.1 PC 向け：部屋の光と煙（js/53_pc_air.js）。卓の布の上・名札の下に重ねる絵。押せない ===== */
 #pcAir{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
@@ -2440,7 +2442,7 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.8';
+const APP_VERSION='0.98.9';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2506,8 +2508,6 @@ const LT={_h:{},errors:0,
   sweep(){if(!this._sw||!document.getAnimations)return;const now=performance.now();if(now-(this._swAt||0)<240)return;
     this._swAt=now;   // qa は setInterval を速めるので、実の時間で 240ms ごとに
     for(const a of document.getAnimations()){try{if(a.playState!=='running'){this._sw.delete(a);continue}const t=a.effect&&a.effect.getComputedTiming();if(!t||!isFinite(t.endTime))continue;
-      // 始まった時刻がわかる動きは、最初に見た時を待たずに「始まり＋長さ＋300ms」で終える（v0.98.8 CI：WebKit で止まった瞳の transition を見張りが遅れて見つけ、検査の待ち時間をこえて残った）
-      const tl=document.timeline&&document.timeline.currentTime;if(a.startTime!=null&&tl!=null&&(tl-a.startTime)*Math.abs(a.playbackRate||1)>t.endTime+300&&(+t.localTime||0)<t.endTime){this._sw.delete(a);a.finish();continue}
       let m=this._sw.get(a);if(!m){this._sw.set(a,m={t:now,lt:+t.localTime||0});continue}
       if(now-m.t>t.endTime-m.lt+300){this._sw.delete(a);a.finish()}}catch(e){}}}
 };
@@ -5012,7 +5012,10 @@ const MANNERS={
 };
 const mannerOf=p=>{const m=p&&!p.human&&!(CFG.ch&&CFG.ch.no<=4)?MANNERS[p.name]||null:null;return m&&p.name==='ハヤト'&&uraRule('ハヤト')?{...m,slowroll:1,tilt:{...m.tilt,hands:0}}:m};
 const styleOf=p=>{const m=mannerOf(p);return m&&p.tilt>0?{...p.style,bluff:m.tilt.bluff,margin:m.tilt.margin}:p.style};
-const jinNote=(t,hands)=>{S.jinNote={t,until:S.handNo+(hands||0)}};
+// keep：1回だけの教えの台詞（セーブに「見た」と残すもの）。そのハンドのうちは、あとから来た別の台詞で上書きしない（後の台詞は次のハンドへ回す）
+// v0.98.9 CI：第4章で「〇〇だけ」の師匠のひとことが、同じ描き直しの中で別の台詞に上書きされ、見たことになったのに一度も出なかった
+const jinNote=(t,hands,keep)=>{const c=S.jinNote;if(c&&c.keep&&c.t!==t&&S.handNo<=c.until){S.jinNoteNext={t,hands};return}S.jinNote={t,until:S.handNo+(hands||0),keep:!!keep}};
+LT.on('startHand',()=>{try{const n=S.jinNoteNext;if(!n)return;S.jinNoteNext=null;if(S.jinNote&&S.jinNote.keep&&S.handNo<=S.jinNote.until)return;S.jinNote={t:n.t,until:S.handNo+(n.hands||0),keep:false}}catch(e){}});
 const MANNER_KEY='shisho-manners';
 function bumpNice(){let n=0;try{n=+(JSON.parse(localStorage.getItem(MANNER_KEY))||{}).nice||0}catch(e){}n++;try{localStorage.setItem(MANNER_KEY,JSON.stringify({v:1,nice:n}))}catch(e){}return n}
 // 煽られたあとの返し：「無視する」「ナイスハンド」。押さなくても進む
@@ -5109,7 +5112,9 @@ function pickSeat(done){
     <div class="seats">${opps.map((p,k)=>`<button class="seatbtn" data-k="${k}"><span class="sava">${avatar(p.name)}</span>
       <b>${esc(seatWho(p.name))}の左</b><span>${esc(seatWho(p.name))}のすぐあとに動く</span>${roughOf(p)?'<i class="rough">荒い</i>':''}${usual===p.name?'<i>いつもの席</i>':''}</button>`).join('')}</div></div>`;
   v.hidden=false;
+  let picked=false;   // 1回だけ（v0.98.9 CI：WebKit の第5章で席のボタンが2回押され、ハンドが始まったあとに席を並べ替えて、相手の番のまま止まった）
   v.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+    if(picked)return;picked=true;
     const k=+b.dataset.k,pick=opps[k];
     S.players=[S.players[0]].concat(opps.slice(k+1),opps.slice(0,k+1));
     S.dealer=Math.floor(Math.random()*S.players.length);
@@ -7427,7 +7432,7 @@ function roundComplete(){
 function proceed(){
   const live=S.players.filter(inHand);
   if(live.length===1)return winUncontested(live[0]);
-  const hold=S.hold||0;S.hold=0;
+  const hold=S.hold||0;S.hold=0;S.procAt=Date.now();S.procN=(S.procN||0)+1;   // 止まったときに調べるため（qa の自動対戦が読む：v0.98.9 WebKit 第5章の1ハンド目の止まり）
   const s0=S,h0=S.handNo; // 章を出入りしたあとに古いタイマーが動かないように
   if(roundComplete()){
     S.toAct=-1; // 通りの区切りでは誰の番でもない（待っている間にボタンを押せないように）
@@ -7480,9 +7485,10 @@ function proceed(){
       if(angle){S.angleHand=S.handNo;d.type='call';delete d.to}
     }
     const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.8:1)+hold+rdT;   // 客の降りは少しだけ速く（.5 だと「早い早い」：第6章の録画 #21）
-    if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
+    const cq=S.cpuQ={i,w:Math.round(wait),at:Date.now(),h:S.handNo};   // アングルの時も記録する（CodeRabbit PR #145）
+    if(angle){setTimeout(()=>{if(S.cpuQ===cq)cq.ran=Date.now();if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
       setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)askQuiz(angle==='faketap'?'tap':'onechip',()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}})},wait+1300*SPEED());return}
-    setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
+    setTimeout(()=>{if(S.cpuQ===cq)cq.ran=Date.now();if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
   }
 }
 function act(i,type,to){
@@ -8299,19 +8305,21 @@ function askPanelTop(a){const p=$('raisePanel');if(!p||p.hidden||!p.offsetParent
 function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row);let tb=R($('table'));if(!r0.width)return;
   // v0.98.8 CI：額を選ぶ枠（#raisePanel）は卓の下側に重なって開く。枠の上を卓の下端とみなし、枠のすぐ上を先に試す（WebKit の縦で「強いよ」が枠の「あなたの手」の下に隠れた）
   const pt=askPanelTop(r0);if(pt<tb.bottom)tb={left:tb.left,right:tb.right,top:tb.top,bottom:pt};
+  const rp=$('raisePanel'),pr=rp&&!rp.hidden&&rp.offsetParent?R(rp):null;   // 枠そのものも「かかってはいけない所」に入れる（CodeRabbit PR #144）
   const obs=[...document.querySelectorAll('#boardCards .card,#mine .card,#mine .mystack,#mine .hold,#potSign,.chipwrap .chips,.spot .card,#board2 .card')].filter(e=>e.offsetParent&&R(e).width).map(R);
   const bc=[...document.querySelectorAll('#boardCards .card')].filter(e=>e.offsetParent).map(R);
-  const hit=(x,y)=>obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
+  const hit=(x,y)=>(pr&&r0.left+x<pr.right&&pr.left<r0.right+x&&r0.top+y<pr.bottom&&pr.top<r0.bottom+y)||obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
   const inT=(x,y)=>r0.left+x>=tb.left+4&&r0.right+x<=tb.right-2&&r0.top+y>=tb.top+2&&r0.bottom+y<=tb.bottom-2;
   const ys=[0];if(pt<Infinity)ys.push(pt-6-r0.bottom);if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
   // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
   const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
   // どこにも空きがないときは、かかる面積がいちばん小さい所へ（場札は3倍に数える）。前は元の場所のままで、手札の列を上げたぶん場札の 2♣ に「黙る」が乗った（PR #128 の CI 第14章の縦）
   const ar=(x,y,o)=>Math.max(0,Math.min(r0.right+x,o.right)-Math.max(r0.left+x,o.left))*Math.max(0,Math.min(r0.bottom+y,o.bottom)-Math.max(r0.top+y,o.top));
-  const cost=(x,y)=>obs.reduce((a,o)=>a+ar(x,y,o),0)+bc.reduce((a,o)=>a+2*ar(x,y,o),0);let best=null;
+  const cost=(x,y)=>(pr?4*ar(x,y,pr):0)+obs.reduce((a,o)=>a+ar(x,y,o),0)+bc.reduce((a,o)=>a+2*ar(x,y,o),0);let best=null;
   for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)){if(!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
   for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)){if(!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
-  if(best&&(best.x||best.y)&&best.c<cost(0,0))row.style.translate=`${best.x.toFixed(1)}px ${best.y.toFixed(1)}px`}
+  if(best&&(best.x||best.y)&&best.c<cost(0,0)){row.style.translate=`${best.x.toFixed(1)}px ${best.y.toFixed(1)}px`;return}
+  if(pt<Infinity&&r0.bottom>pt)row.style.translate=`0px ${(pt-6-r0.bottom).toFixed(1)}px`}   // 置き場が無くても、枠の下には残さない
 // v71（改善提案§1）：席の前の賭けチップ（.chipwrap）と持ち点の塔（.mystack。自分の欄の分も）、1対1では相手の伏せ札・D の札も（v70 レビュー）、場札にかかるときは、bPlace と同じく空いた所を探して席の側へ寄せる。
 // 寄せる向きは「場札の真ん中→席」、横（席のある側・反対側）、縦（席の側・反対側）の順。席の札・名札・ポットの山にかからない、いちばん近い所。位置合わせ（36_layout_pass）で fitTable の後に呼ぶ
 function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot .hand,#dbtn';document.querySelectorAll(MS).forEach(e=>{if(e.style.translate)e.style.translate=''});   // 自分の欄・相手の伏せ札・D の札は fitTable が戻さないので、ここで戻す
@@ -11497,14 +11505,14 @@ function dcallPlace(){dcallPlace0();const d=$('dcall');if(!d||!d.classList.conta
   const R=e=>e.getBoundingClientRect(),hit=(r,c)=>Math.min(r.right,c.right)-Math.max(r.left,c.left)>0&&Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top)>0;
   const cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);let r=R(d),hc=cs.filter(c=>hit(r,c));if(!hc.length)return;
   if(!d.classList.contains('dleft')){d.style.top='';d.style.right='';d.classList.add('dleft');r=R(d);hc=cs.filter(c=>hit(r,c));if(!hc.length)return}
-  const mw=Math.min(...hc.map(c=>c.left))-r.left-8;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}
+  const mw=Math.min(...hc.map(c=>c.left))-r.left-8;if(mw>40){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}
 function dcallPlace0(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';return}
   const R=e=>e.getBoundingClientRect(),cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);
   d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';if(!cs.length)return dcSayLift(d);
   const hit=r=>c=>{const w=Math.min(r.right,c.right)-Math.max(r.left,c.left),h=Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top);return w>0&&h>0};
   const r0=R(d);if(!cs.some(hit(r0)))return dcSayLift(d);
   // 左上へ（札を優先）。左の吹き出し（客の一言）にかかるときは、吹き出しの上へ少し上げる（顔の上へは下げない：顔の奥に隠れるため）
-  d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
+  d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>40){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
   // 吹き出しからは 7px 離す（v93 レビュー：3px かかった。dcSayLift と同じ幅）
   const r1=R(d),r1m={left:r1.left-7,right:r1.right+7,top:r1.top-7,bottom:r1.bottom+7},says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R).filter(r=>r.width>1&&hit(r1m)(r));
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-7-pr.top;
@@ -11822,7 +11830,7 @@ function mfBigFirst(p){
   const t=loadStory();if(t.mfBig)return;t.mfBig=1;saveStory(t);
   const jin=S.players.find(q=>q.name==='ジン'&&!q.out);
   if(jin)talkLater(()=>talkSay(jin,MF_LINES.bigFirst),900);
-  else{S.jinNote={t:MF_LINES.bigFirst,until:S.handNo+1};render()}}
+  else{jinNote(MF_LINES.bigFirst,1);render()}}
 
 // ===== 案2：「前にも見た」アオの心の声 =====
 function mfRecall(p){
@@ -11857,6 +11865,8 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   {const ps=$('potSign');if(vis(ps)){const r=ps.getBoundingClientRect();avoid.push({left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2,k:4})}}
   // 勝ち負けの帯（.vfres）も同じ重み（v0.98.7 レビュー：人だかりの声が帯に重なった。心の声も同じ所に出るので一緒に）
   {const vr=document.querySelector('#table > .vfres');if(vis(vr)){const r=vr.getBoundingClientRect();avoid.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
+  // 人だかりの声も（人だかりの側は心の声をよける。あとから出た方がよける：CodeRabbit PR #144）
+  {const cv=$('crowdSay');if(vis(cv)){const r=cv.getBoundingClientRect();avoid.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
   // 横向きは右の操作の列（指示の箱の下・ボタンの上）に空きがあれば、まずそこに出す（v85.2 レビュー。v86.4 レビュー：卓の上だと D と席番号を隠すので先に試す）
   const C=$('controls'),sn=$('sensei');
   const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
@@ -13071,7 +13081,7 @@ const rsTipHeld=()=>{try{const s=$('sensei');return !!(typeof tipK!=='undefined'
 function rsRetry(){clearTimeout(rsRetry.t);rsRetry.t=setTimeout(()=>{try{if(!S||!S.players||S.rsSaid||S.handOver)return;if(rsTipHeld())return rsRetry();render()}catch(e){}},400)}
 function rsLine(){if(S.rsSaid)return;if(rsTipHeld()){rsRetry();return}const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
   if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
-  jinNote(READ_SCOPE_LINE_JA,0);saveSet(RS_KEY,{v:1,seen:true},1);
+  jinNote(READ_SCOPE_LINE_JA,0,1);saveSet(RS_KEY,{v:1,seen:true},1);
   // v94 レビュー 1：描き直しの中で決めるので、#senseiText はもう書かれている。もう一度描いて、このハンドのうちに出す（41_more_fun の mfBigFirst と同じ）。
   // 0 ハンド：1 にすると第4章のクセの手引きが2ハンド止まる
   setTimeout(()=>{try{render()}catch(e){}},0)}
