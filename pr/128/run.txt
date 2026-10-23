@@ -1,0 +1,5 @@
+branch: v09712-subhand
+sha: 4b21d058e7003f4f1d282842f9a7f57084ddf0e7
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39619503734
+full: false
+at: 2026-10-21T15:05:46Z

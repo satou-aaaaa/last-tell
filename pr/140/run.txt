@@ -1,0 +1,5 @@
+branch: v0986-review-fixes
+sha: 891bc996db6d5223ca0345d1584302041588c091
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39711929178
+full: false
+at: 2026-10-22T02:54:28Z

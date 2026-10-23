@@ -1,0 +1,5 @@
+branch: v0973-vfres
+sha: 77dab60cd72ca026d4c37a48b7270c41f436ad56
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39374916435
+full: false
+at: 2026-10-20T06:27:10Z

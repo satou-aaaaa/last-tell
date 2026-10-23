@@ -1,0 +1,5 @@
+branch: v09812-perf-steady
+sha: 70277c2197f4d929fd3b8b1bc3e45fbde7451448
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39789806582
+full: false
+at: 2026-10-22T14:13:38Z

@@ -1,0 +1,5 @@
+branch: v09713-readcaught
+sha: 22104c813d6ad94fc518f77c48e78557402c4950
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39624986149
+full: false
+at: 2026-10-21T15:40:25Z

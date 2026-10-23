@@ -1,0 +1,5 @@
+branch: v0985-pc-big
+sha: c19cb8bd4a304d1315f67b8751ebfdbf6f1d1e62
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39702817801
+full: false
+at: 2026-10-22T01:16:24Z

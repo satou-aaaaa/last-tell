@@ -1,0 +1,5 @@
+branch: qa-handend-wait
+sha: 39ed9f594fe08306cc5b1303aa87328d2bd0e28c
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39360360819
+full: false
+at: 2026-10-20T02:53:57Z

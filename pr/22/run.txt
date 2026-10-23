@@ -1,0 +1,5 @@
+branch: ci-heavy
+sha: 21491b3e58de38b4a614fa9c1d0bc5efc315d102
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/38525357315
+full: false
+at: 2026-10-14T07:07:21Z

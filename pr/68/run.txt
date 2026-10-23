@@ -1,0 +1,5 @@
+branch: check-betlog-table
+sha: 0801fbd89fdcb27cb5dfcd39723743b3375ac739
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39033980802
+full: false
+at: 2026-10-17T13:24:41Z

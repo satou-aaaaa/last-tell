@@ -1,0 +1,5 @@
+branch: v0978-fair
+sha: 5b780c0dcdc42e68be5513cec138e76f4eef03d8
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39530496991
+full: false
+at: 2026-10-21T02:13:52Z

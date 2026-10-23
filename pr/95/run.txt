@@ -1,0 +1,5 @@
+branch: check-play6-fixes
+sha: fee168f1fdccb520437e0c00b8ba6b251c5eac5c
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39146669705
+full: false
+at: 2026-10-18T16:57:46Z

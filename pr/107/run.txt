@@ -1,0 +1,5 @@
+branch: check-sharp-felt
+sha: 3583e996a09989cd540c5e7e43d9ef034cf718ee
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39285621879
+full: false
+at: 2026-10-19T16:44:20Z

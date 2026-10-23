@@ -1,0 +1,5 @@
+branch: v0984-pc-hand
+sha: ffe87c639b3e6c56cb38fb8d512e252bd8267f6d
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39696161076
+full: false
+at: 2026-10-22T00:11:50Z

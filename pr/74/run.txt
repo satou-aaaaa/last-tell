@@ -1,0 +1,5 @@
+branch: check-ch5-flashback-stall
+sha: 2af210d2df9b5540fe7ad8fdd444b0eafa1eb24e
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39052789486
+full: false
+at: 2026-10-17T18:03:47Z

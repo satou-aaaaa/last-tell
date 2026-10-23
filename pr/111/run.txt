@@ -1,0 +1,5 @@
+branch: qa-fixes-r11
+sha: 21041ef88d356eda688419f05b2e4dac35f168bf
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39359469598
+full: false
+at: 2026-10-20T02:46:12Z

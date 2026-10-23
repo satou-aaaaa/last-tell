@@ -1,0 +1,5 @@
+branch: qa-playthrough-flash
+sha: f279787d57149cd70bee25368f33e741621247d4
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/38838000194
+full: false
+at: 2026-10-16T02:13:33Z

@@ -1,0 +1,5 @@
+branch: v09811-ch5-pair-line
+sha: 09513ddb38cd69a946093707771285c2e091c2fd
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39766016968
+full: false
+at: 2026-10-22T11:09:52Z
