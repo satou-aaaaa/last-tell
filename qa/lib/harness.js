@@ -19,6 +19,7 @@ function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {
     window.addEventListener('error', e => window.__qa.errors.push(String(e.message) + ' @' + (e.lineno||'')));
     window.addEventListener('unhandledrejection', e => window.__qa.errors.push('promise: ' + String(e.reason && e.reason.message || e.reason)));
     const F = ${fast};
+    window.__qaST = window.setTimeout;   // 短くしない元のタイマー（タイマーの遅れを測る lag が使う。CodeRabbit PR #154）
     if (F > 1) {
       const st = window.setTimeout, si = window.setInterval;
       window.setTimeout = (f, d, ...a) => st(f, Math.max(0, (+d || 0) / F), ...a);
@@ -63,7 +64,7 @@ const BOT = `(() => {
   // 長い処理（50ms 以上）の回数と合計（止まったときに、ページが重くて回っていなかったかを見る。Chromium だけ）
   window.__qaLong = { n: 0, ms: 0, max: 0, ok: !!(window.PerformanceObserver && (PerformanceObserver.supportedEntryTypes || []).includes('longtask')) }; try { new PerformanceObserver(l => l.getEntries().forEach(e => { __qaLong.n++; __qaLong.ms += e.duration; __qaLong.max = Math.max(__qaLong.max, e.duration) })).observe({ entryTypes: ['longtask'] }) } catch (e) {}
   // タイマーの遅れ（WebKit は longtask を測れないので、こちらでページの詰まりを見る。2026-10-24 WebKit 第5章：50ms のタイマーが 773ms かかっていたのに「長い処理 0回」と出た）
-  window.__qaLag = { n: 0, ms: 0, max: 0, last: [] }; (function lag() { const t = performance.now(); setTimeout(() => { const d = Math.max(0, performance.now() - t - 200); const L = __qaLag; L.n++; L.ms += d; L.max = Math.max(L.max, d); L.last.push(Math.round(d)); if (L.last.length > 20) L.last.shift(); lag() }, 200) })();
+  window.__qaLag = { n: 0, ms: 0, max: 0, last: [] }; (function lag() { const t = performance.now(); (window.__qaST || setTimeout)(() => { const d = Math.max(0, performance.now() - t - 200); const L = __qaLag; L.n++; L.ms += d; L.max = Math.max(L.max, d); L.last.push(Math.round(d)); if (L.last.length > 20) L.last.shift(); lag() }, 200) })();
   const $ = id => document.getElementById(id);
   // offsetParent は position:fixed の部品（スマホ横の操作パネルなど）で null になるので、getClientRects で見る
   const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
