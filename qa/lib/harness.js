@@ -19,6 +19,7 @@ function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {
     window.addEventListener('error', e => window.__qa.errors.push(String(e.message) + ' @' + (e.lineno||'')));
     window.addEventListener('unhandledrejection', e => window.__qa.errors.push('promise: ' + String(e.reason && e.reason.message || e.reason)));
     const F = ${fast};
+    window.__qaST = window.setTimeout;   // 短くしない元のタイマー（タイマーの遅れを測る lag が使う。CodeRabbit PR #154）
     if (F > 1) {
       const st = window.setTimeout, si = window.setInterval;
       window.setTimeout = (f, d, ...a) => st(f, Math.max(0, (+d || 0) / F), ...a);
@@ -61,13 +62,15 @@ async function openGame(browser, file, { viewport = { width: 1280, height: 800 }
 const BOT = `(() => {
   if (window.__bot) return;
   // 長い処理（50ms 以上）の回数と合計（止まったときに、ページが重くて回っていなかったかを見る。Chromium だけ）
-  window.__qaLong = { n: 0, ms: 0, max: 0 }; try { new PerformanceObserver(l => l.getEntries().forEach(e => { __qaLong.n++; __qaLong.ms += e.duration; __qaLong.max = Math.max(__qaLong.max, e.duration) })).observe({ entryTypes: ['longtask'] }) } catch (e) {}
+  window.__qaLong = { n: 0, ms: 0, max: 0, ok: !!(window.PerformanceObserver && (PerformanceObserver.supportedEntryTypes || []).includes('longtask')) }; try { new PerformanceObserver(l => l.getEntries().forEach(e => { __qaLong.n++; __qaLong.ms += e.duration; __qaLong.max = Math.max(__qaLong.max, e.duration) })).observe({ entryTypes: ['longtask'] }) } catch (e) {}
+  // タイマーの遅れ（WebKit は longtask を測れないので、こちらでページの詰まりを見る。2026-10-24 WebKit 第5章：50ms のタイマーが 773ms かかっていたのに「長い処理 0回」と出た）
+  window.__qaLag = { n: 0, ms: 0, max: 0, last: [] }; (function lag() { const t = performance.now(); (window.__qaST || setTimeout)(() => { const d = Math.max(0, performance.now() - t - 200); const L = __qaLag; L.n++; L.ms += d; L.max = Math.max(L.max, d); L.last.push(Math.round(d)); if (L.last.length > 20) L.last.shift(); lag() }, 200) })();
   const $ = id => document.getElementById(id);
   // offsetParent は position:fixed の部品（スマホ横の操作パネルなど）で null になるので、getClientRects で見る
   const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
   // 押してよいボタン（上から順に）。「やめる」「設定」などは押さない
   const CLICK = ['vsGo','twN','btnShowNo','btnIgnore','qtNo','rvOk','tourSkip','btnNoticeClose','btnAdv','btnNext','btnHelpClose','btnDailyClose','btnShareClose','btnZoomClose','btnSetClose','askGo','lkOk','nvNew']; // nvNew：v63「ポーカーを遊んだことは？」→ はじめて
-  const B = window.__bot = { policy: 'random', hands: 0, decisions: 0, clicks: {}, chipErr: [], negErr: [], lastSum: null, lastNames: '', done: false, result: null, stuckAt: Date.now(), lastHand: -1, maxHands: 60, events: [], twiceSeen: [] };
+  const B = window.__bot = { policy: 'random', hands: 0, decisions: 0, clicks: {}, chipErr: [], negErr: [], lastSum: null, lastNames: '', done: false, result: null, stuckAt: Date.now(), progAt: Date.now(), lastHand: -1, maxHands: 60, events: [], twiceSeen: [] };
   function sum() { return S.players.reduce((a, p) => a + p.chips, 0) }
   // ブラフの札でコールしたとき、こちらに役があったか（1ペア以上か A を持っている）（v88 レビュー：ブラフ読みのコールが損なのは役なしでもコールするからか、を分けて測る）
   B.madeOrA = (h, bd) => { try { return h.some(x => x.r === 14) || (bd.length >= 3 ? bestN(h.concat(bd))[0] >= 1 : h[0].r === h[1].r) } catch (e) { return false } };
@@ -143,6 +146,10 @@ const BOT = `(() => {
   }
   B.tick = function () {
     B.tickN = (B.tickN || 0) + 1; B.tickAt = Date.now();   // 止まったときに、ボットのタイマーが回っていたかを見る
+    // ゲームが進んでいる印（ハンド・通り・番・進める処理の回数・ボットの押した数・判断の数・場面の行）。変わったら progAt を今にする。
+    // 「止まった」はハンドが終わらない時間だけでなく、この印も変わらないときにする（2026-10-24 WebKit 第5章：実行機が遅く1ハンド目が20秒を超えたが、0.5秒前にも進んでいた）
+    try { const pk = (typeof S !== 'undefined' && S && S.players ? [S.handNo, S.street, S.toAct, S.procN || 0, S.handOver ? 1 : 0].join('|') : '-') + '|' + (B.totalClicks || 0) + '|' + B.decisions + '|' + (typeof SC !== 'undefined' && SC ? SC.i : '');
+      if (pk !== B.progKey) { B.progKey = pk; B.progAt = Date.now() } } catch (e) {}
     if (B.done) return;
     try {
       const press = b => { const k = b.id || b.textContent.trim().slice(0, 8); B.clicks[k] = 1 + (B.clicks[k] || 0); B.totalClicks = (B.totalClicks || 0) + 1; b.click() };
@@ -179,7 +186,7 @@ const BOT = `(() => {
       const b = clickables(); if (b) press(b);
     } catch (e) { B.events.push('bot: ' + e.message) }
   };
-  B.restart = function () { B.done = false; B.result = null; B.lastHand = -1; B.lastSum = null; B.lastNames = ''; B.stuckAt = Date.now(); B.games = (B.games || 1) + 1 };
+  B.restart = function () { B.done = false; B.result = null; B.lastHand = -1; B.lastSum = null; B.lastNames = ''; B.stuckAt = B.progAt = Date.now(); B.games = (B.games || 1) + 1 };
   B.timer = setInterval(B.tick, 4);
 })();`;
 
@@ -188,17 +195,19 @@ async function startBot(page, opts = {}) {
   await page.evaluate(o => Object.assign(window.__bot, o), opts);
 }
 
+const { stallKind, STATE_JS, HARD_MS } = require('./stall');
+
 // 終わるまで待つ。手が進まないまま stallMs 過ぎたら「止まった」とする
 async function runUntilDone(page, { timeoutMs = 120000, stallMs = 15000 } = {}) {
   const t0 = Date.now(), tks = []; let starved = 0;
   while (true) {
     await page.waitForTimeout(250);
-    const st = await page.evaluate(() => ({ done: __bot.done, hands: __bot.hands, idle: Date.now() - __bot.stuckAt, tk: __bot.tickN || 0 }));
+    const st = await page.evaluate(STATE_JS);
     tks.push([Date.now(), st.tk]); while (tks.length > 2 && tks[1][0] < Date.now() - 20000) tks.shift();
     if (st.done) return { status: 'done' };
     // ボットのタイマー（4ms ごと）が 20秒で 200回も回っていないときは、ゲームが止まったのでなくページ全体が詰まっている（実行機が混んでいる）。
     // 自動対戦（checks/fuzz.js）と同じく 60秒まで待ち足す（PR #128 の CI：rules のフリー対戦が1ハンド目で「止まった」が、長い処理が合計19秒だった）
-    if (st.idle > stallMs) { if (st.tk - tks[0][1] < 200) { if (!starved) starved = Date.now(); if (Date.now() - starved < 60000) continue } return { status: 'stalled', starvedMs: starved ? Date.now() - starved : 0 } }   // 待ち足すのは実際の時間で60秒まで（CodeRabbit PR #128）
+    if (stallKind(st, stallMs)) { if (st.tk - tks[0][1] < 200) { if (!starved) starved = Date.now(); if (Date.now() - starved < 60000) continue } return { status: 'stalled', starvedMs: starved ? Date.now() - starved : 0 } }   // 待ち足すのは実際の時間で60秒まで（CodeRabbit PR #128）
     if (Date.now() - t0 > timeoutMs) return { status: 'timeout' };
   }
 }
@@ -206,7 +215,8 @@ async function runUntilDone(page, { timeoutMs = 120000, stallMs = 15000 } = {}) 
 async function botState(page) {
   return page.evaluate(() => {
     const B = __bot;
-    const vis = el => !!el && !el.hidden && el.offsetParent !== null;
+    // ボットと同じ見え方（offsetParent は position:fixed の操作パネルで null になり、PC 幅で「ボタンなし」と出ていた。2026-10-24）
+    const vis = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
     const screen = ['title', 'chapters', 'scene', 'game', 'notebook', 'more'].find(id => vis(document.getElementById(id)));
     const overlays = [...document.querySelectorAll('[role=dialog],.qin,.vsin')].filter(vis).map(e => e.id || e.className).slice(0, 5);
     return { result: B.result, games: B.games || 1, wins: B.wins || 0, hands: B.hands, decisions: B.decisions, chipErr: B.chipErr, negErr: B.negErr, events: B.events.slice(0, 10), clicks: B.clicks,
@@ -215,7 +225,10 @@ async function botState(page) {
       // 止まった場所を調べるため（2026-10-17 WebKit の1ハンド目の止まり）
       gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
         sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden,
-        lt: window.__qaLong ? Math.round(__qaLong.ms / 1000) + "秒/" + __qaLong.n + "回（最長" + Math.round(__qaLong.max) + 'ms）' : '',
+        lt: !window.__qaLong ? '' : __qaLong.ok === false ? 'このブラウザでは測れない' : Math.round(__qaLong.ms / 1000) + "秒/" + __qaLong.n + "回（最長" + Math.round(__qaLong.max) + 'ms）',
+        // 200ms のタイマーの遅れ（最近20回の平均と最大）と、ハンドが終わってから・ゲームが最後に進んでからの時間
+        lag: window.__qaLag && __qaLag.last.length ? '平均' + Math.round(__qaLag.last.reduce((a, b) => a + b, 0) / __qaLag.last.length) + 'ms・最大' + Math.max(...__qaLag.last) + 'ms' : '',
+        idle: Math.round((Date.now() - B.stuckAt) / 1000), prog: Math.round((Date.now() - (B.progAt || B.stuckAt)) / 100) / 10,
         // 相手の番の予約（proceed の最後・相手の動きのタイマー）と、待ちを延ばす値（v0.98.9 WebKit 第5章：相手の番のまま止まった）
         pr: S.procAt ? Math.round((Date.now() - S.procAt) / 100) / 10 + '秒前' + (S.procN ? '（' + S.procN + '回）' : '') : 'なし',
         cq: S.cpuQ ? '席' + S.cpuQ.i + '・ハンド' + S.cpuQ.h + '・待ち' + S.cpuQ.w + 'ms・' + Math.round((Date.now() - S.cpuQ.at) / 100) / 10 + '秒前' + (S.cpuQ.ran ? '・動いた' : '・まだ') : 'なし',
@@ -231,4 +244,4 @@ const UNLOCKED = { 'shisho-progress': JSON.stringify({ v: 1, cleared: 7 }), 'shi
 // 同じゲームのファイルなら、何度回しても同じ配り方・同じ CPU の迷いになる
 const seedOf = (...xs) => { let h = 2166136261; for (const c of xs.join('|')) h = Math.imul(h ^ c.codePointAt(0), 16777619); return (h >>> 0) % 1e9 + 1 };
 
-module.exports = { UNLOCKED, launch, openGame, startBot, runUntilDone, botState, pw, seedOf };
+module.exports = { UNLOCKED, launch, openGame, startBot, runUntilDone, botState, pw, seedOf, stallKind, STATE_JS, HARD_MS };

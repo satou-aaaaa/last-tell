@@ -51,7 +51,7 @@ async function runOne(browser, file, mode, hands, limit) {
     while (true) {
       await page.waitForTimeout(400);
       if (mode.lang === 'en') (await page.evaluate(JP_SCAN)).forEach(t => jp.add(t));
-      const s = await page.evaluate(() => ({ done: __bot.done, idle: Date.now() - __bot.stuckAt, tk: __bot.tickN || 0, h: __bot.hands || 0 }));
+      const s = await page.evaluate(H.STATE_JS); s.h = s.hands;
       hs.push([Date.now(), s.h]); while (hs.length > 2 && hs[1][0] < Date.now() - 30000) hs.shift();
       tks.push([Date.now(), s.tk]); while (tks.length > 2 && tks[1][0] < Date.now() - 20000) tks.shift();
       if (s.done) {
@@ -65,7 +65,7 @@ async function runOne(browser, file, mode, hands, limit) {
       }
       // ボットのタイマー（4ms ごと）が 20秒で 200回も回っていないときは、ゲームが止まったのではなくページ全体が詰まっている（WebKit の CI で、
       // PR #80・#82 では 20秒で 31回）。そのときは 60秒まで待ち足す（待ち足した分は starved に残す）
-      if (s.idle > 20000) { const ran = s.tk - tks[0][1]; if (ran < 200 && starved < 60000) { starved += 400; continue } st = 'stalled'; break }
+      if (H.stallKind(s, 20000)) { const ran = s.tk - tks[0][1]; if (ran < 200 && starved < 60000) { starved += 400; continue } st = 'stalled'; break }
       // 時間切れの時に、直前30秒でハンドが進んでいてエラーも無ければ、1回だけ半分の時間を足す（止まったのでなく、CI の実行機が混んで遅いだけ。
       // PR #109・#122・#128 で6人卓が「14ハンドまで」。手元では同じ版で 15ハンドに 83〜125秒。見るハンド数・エラーの判定は変えない）
       if (Date.now() - t0 > limit) { const prog = hs.length > 1 && s.h > hs[0][1];
@@ -105,7 +105,7 @@ async function run({ browser, file, quick, baseline, parallel = 4, part = null }
   for (const r of res) {
     const errs = [...new Set([...(r.errors || []), ...(r.pageErrors || []), ...(r.events || [])])];
     const bad = [];
-    if (r.status === 'stalled') { const g = r.gs; bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}${g ? `、ハンド${g.hand}・${g.street}・番${g.toAct}${g.over ? '・終わり' : ''}${g.ctrl ? '・ボタンあり' : ''}・ボットの最後の動き${Math.round(g.sinceTick / 1000)}秒前（${g.ticks}回）・行動 ${g.acted}${g.hidden ? '・裏のタブ' : ''}${g.lt ? '・長い処理 ' + g.lt : ''}${g.sc ? '・場面 ' + g.sc : ''}${g.pr ? '・進める処理 ' + g.pr : ''}${g.cq ? '・相手の動きの予約 ' + g.cq : ''}${g.fl ? '・状態 ' + g.fl : ''}${g.btns ? '・ボタン ' + g.btns : ''}` : ''}${r.timerMs != null ? `、50ms のタイマー ${r.timerMs < 0 ? '来ない' : r.timerMs + 'ms'}` : ''}${r.lastLog && r.lastLog.length ? '、最後の記録「' + r.lastLog.slice(-2).join('／') + '」' : ''}）`) }
+    if (r.status === 'stalled') { const g = r.gs; bad.push(`止まった（${r.hands}ハンド目、画面:${r.screen}、開いていた窓:${(r.overlays || []).join('/') || 'なし'}${g ? `、ハンド${g.hand}・${g.street}・番${g.toAct}${g.over ? '・終わり' : ''}${g.ctrl ? '・ボタンあり' : ''}・ハンドが終わってから${g.idle}秒・ゲームが最後に進んでから${g.prog}秒・ボットの最後の動き${Math.round(g.sinceTick / 1000)}秒前（${g.ticks}回）・行動 ${g.acted}${g.hidden ? '・裏のタブ' : ''}${g.lt ? '・長い処理 ' + g.lt : ''}${g.lag ? '・タイマーの遅れ ' + g.lag : ''}${g.sc ? '・場面 ' + g.sc : ''}${g.pr ? '・進める処理 ' + g.pr : ''}${g.cq ? '・相手の動きの予約 ' + g.cq : ''}${g.fl ? '・状態 ' + g.fl : ''}${g.btns ? '・ボタン ' + g.btns : ''}` : ''}${r.timerMs != null ? `、50ms のタイマー ${r.timerMs < 0 ? '来ない' : r.timerMs + 'ms'}` : ''}${r.lastLog && r.lastLog.length ? '、最後の記録「' + r.lastLog.slice(-2).join('／') + '」' : ''}）`) }
     if (r.status === 'timeout' && !(r.hands >= Math.min(ENOUGH, hands) && !errs.length && !r.chipErr.length && !r.negErr.length)) bad.push(`時間切れ（${r.hands}ハンドまで${r.extra ? `。進んでいたので ${r.extra / 1000}秒足したあとも` : ''}）`);
     if (r.status === 'crash') bad.push('起動できなかった');
     if (errs.length) bad.push('エラー: ' + errs.slice(0, 3).join(' / '));

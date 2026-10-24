@@ -6,6 +6,10 @@ Before:
 
 After:
 
+## 閉じる Issue
+<!-- main の QA ❌（ラベル ci-failure）を直す PR は、ここに「Closes #番号」を書いてから PR を作る。あとで本文を直しても QA は回り直さない（検査のまとめが ❌ のまま） -->
+- Closes #
+
 ## 版
 - ゲームの版（index.html の APP_VERSION）：
 - 元にした共有フォルダのファイル：`story/shisho.html`
