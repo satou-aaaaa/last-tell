@@ -22,7 +22,7 @@ try{RS_SKIP.push('wonPile')}catch(e){}
 
 const u64={};
 const inGame=()=>!$('game').hidden;
-const LAND64=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+const LAND64=()=>matchMedia(SIDE_Q).matches;   // 右の列の配置（スマホ横・PC の横長の卓）
 
 // ---------- §B-1：対戦中はページを動かさない ----------
 function ingameSync(){const on=!$('game').hidden;document.documentElement.classList.toggle('ingame',on);if(on&&(scrollX||scrollY))scrollTo(0,0)}
@@ -96,7 +96,7 @@ function sayPlace(sy){const i=+sy.id.replace('say',''),f=faceBox(i),L=$('sayLaye
 }
 // 新しい吹き出しが出たら、前の吹き出しは読み終わる時間（35_say_keep の skRead）がたってから消す。読みかけのセリフは切らない
 function sayOne(cur){const now=performance.now();cur._shown=now;
-  document.querySelectorAll('#sayLayer .say.go,#plates .say.go').forEach(sy=>{if(sy===cur||(sy._shown||0)>now)return;
+  document.querySelectorAll('#sayLayer .say.go,#plates .say.go').forEach(sy=>{if(sy===cur||(sy._shown||0)>now)return;   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */
     const need=typeof skRead==='function'?skRead(sy.textContent):1100,left=(sy._shown||0)+need-now,seq=sy.dataset.seq;
     clearTimeout(sy._off);if(left<=30){sy.classList.remove('go');return}
     sy._off=setTimeout(()=>{if(sy.dataset.seq===seq&&sy.classList.contains('go')&&cur.classList.contains('go'))sy.classList.remove('go')},left)})}
@@ -145,8 +145,46 @@ function barSync(){const gw=document.querySelector('#game .gwrap');if(!gw||!inGa
   // v74：帯が「あなたのチップ」の列より上にあるとき（小さい画面）は、帯の高さでは足りないので、かかる分だけ上げる
   if(sb){try{const mr=document.querySelector('#mine .me-r');if(mr){const t=parseFloat((getComputedStyle(mr).translate.split(' ')[1])||'0')||0,need=Math.ceil(mr.getBoundingClientRect().bottom-t-se.getBoundingClientRect().top+4);if(need>sb)sb=need}}catch(e){}}
   if(gw.dataset.sh!==String(sh)){gw.dataset.sh=String(sh);gw.style.setProperty('--sh',sh+'px')}
-  if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}}
-try{const ro=new ResizeObserver(barSync);ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
+  if(gw.dataset.sb!==String(sb)){gw.dataset.sb=String(sb);gw.style.setProperty('--sb',sb+'px');requestAnimationFrame(()=>{try{if(S)potSignPlace()}catch(e){}})}
+  // 自分の札（.hold）も、帯にかかるなら上げる。上げすぎて場札・ポットにかからない所まで（v0.97.8 main QA・Issue #124：WebKit の縦で帯が2行になり、
+  // 前の「最大 26px」では足りず、師匠のひとことが自分の Q♣ を隠した）
+  // 手札が上がりきるのに要る量（need）と、場札・ポットまでの余地（room）を測る（手札の上げ分 translate は引いて、元の位置で）
+  const meas=()=>{const hd=document.querySelector('#mine .hold');if(!(hd&&[...hd.querySelectorAll('.card')].some(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden'&&+getComputedStyle(c).opacity>.05)))return null;
+    const t=parseFloat((getComputedStyle(hd).translate.split(' ')[1])||'0')||0,r=hd.getBoundingClientRect(),need=Math.ceil(r.bottom-t-se.getBoundingClientRect().top+2);
+    const up=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&+getComputedStyle(e).opacity>.05&&!(e.getAnimations&&e.getAnimations().some(a=>a.playState==='running'&&!(a.effect&&a.effect.getComputedTiming().endTime===Infinity))&&(barSync.anim=1))).map(e=>e.getBoundingClientRect().bottom);
+    return{need,room:Math.floor(r.top-t-(up.length?Math.max(...up):-1e9)-4)}};
+  let sh2=Math.min(sb,26),dfc=0,noHand=true,m=null;if(sb){try{m=meas();noHand=!m;if(m){const{need,room}=m;
+    if(need>sh2)sh2=Math.max(sh2,Math.min(need,room));dfc=Math.max(need,sh2)-room}}catch(e){}}
+  if(gw.dataset.sbh!==String(sh2)){gw.dataset.sbh=String(sh2);gw.style.setProperty('--sbh',sh2+'px')}
+  // v0.97.11：場札・ポットが近くて上げる余地が足りないとき（第4章の3人以上の縦）は、案内の箱が出たときと同じく、帯の高さだけ卓を縮める（--sx）。
+  //   一度縮めたら帯が消えるまで戻さない（縮めると余地も変わるので、測り直して戻すと行ったり来たりする）。縮めてもまだ足りなければ、
+  //   足りない分だけ足す（増やすだけ・帯の高さの2倍まで。これ以上は卓が小さくなりすぎるので止める。CodeRabbit PR #128）
+  //   動いている途中（アニメ・transition）の場札・ポットの額・チップは数えない。6px までの足りなさは縮めない（ポットの額が 3px かかるだけで卓を 89px 縮めていた）。
+  //   縮め始めるのは、足りない状態が 0.3秒続いたときだけ（札を配る・チップが動くあいだの一瞬の足りなさで縮め、そのまま戻らなかった。
+  //   v0.97.12 CI：第2章のフロップの縦で卓が縮み、相手の伏せ札が場札にかかって画質の検査が ❌）
+  if(barSync.anim){barSync.anim=0;clearTimeout(barSync.at);barSync.at=setTimeout(()=>{try{barSync()}catch(e){}},300)}   // 動いていた分は、止まってから測り直す
+  // カメラが寄っている間は卓が拡大されて場札が手札に近づくので、縮める・戻すの判断をしない（そのまま）。
+  //   v0.97.12 CI：PC の顔のアップ中に「足りない」と測って卓を 94px 縮め、顔の絵が引き伸ばされて画質の検査が ❌
+  const camIn=(()=>{try{return camState.i>=0}catch(e){return false}})();if(camIn){gw._dfcAt=0;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},400);return}   // 引いたら測り直す
+  const sx0=+(gw.dataset.sx||0);let dfcOk=dfc>6;
+  if(sb&&!sx0&&dfc>6){const now=performance.now();if(!gw._dfcAt){gw._dfcAt=now;clearTimeout(barSync.ct);barSync.ct=setTimeout(()=>{try{barSync()}catch(e){}},320)}if(now-gw._dfcAt<300)dfcOk=false}else if(!(dfc>6))gw._dfcAt=0;
+  // 自分の札が見えていない（降りた・席がない・配る前）ときは測らない（PR #128 の CI：6人卓のハンドの終わりで、札の無い手札の箱から足りないと測って 52px 縮めていた）。
+  //   縮めたあとは、配り直しで札が一瞬消えても戻さない（毎ハンド卓が伸び縮みしないように）
+  // 縮めたときより字幕が低くなった（次の字幕が1行など）ら、いったん戻す。まだ足りなければ 0.3秒後にまた縮める（PR #128 の CI：第14章の縦で、前の長い字幕のときの縮めが残っていた）
+  const shorter=sx0>0&&seh<(gw._sxSeh||0)-4;if(shorter)gw._dfcAt=0;
+  // 縮めたあとも、縮めなくても手札が字幕に 4px より深くかからないようになったら戻す（検査 ui:sx と同じ見方。v0.98.6 CI：8px の余裕を求めていたので、0〜12px の間で縮めたまま戻らず、検査が「縮めなくてもかからない」と ❌）。縮め始めは 6px より足りないときなので、行ったり来たりしない。--sx を 0 にして同じコマの中で測り、すぐ戻す（描かれないので見た目は動かない）。
+  //   場札・ポットの額は動くので、縮めた時は足りなくても、あとで足りるようになることがある（PR #128 手元：第14章の縦、フロップでポットの額が動く間に 11px 足りず縮め、止まったあとも縮めたままだった）
+  let fits=false;if(sx0>0&&!gw._sxPend&&m&&!shorter){const now=performance.now();if(now-(gw._prAt||0)>500){gw._prAt=now;let p=null;try{gw.style.setProperty('--sx','0px');p=meas()}catch(e){}gw.style.setProperty('--sx',sx0+'px');fits=!!p&&p.room+4>=p.need}
+    clearTimeout(barSync.rt);barSync.rt=setTimeout(()=>{try{barSync()}catch(e){}},700)}   // 縮めている間は、きっかけが無くても時々見直す
+  if(fits)gw._dfcAt=0;
+  const sx=sb&&!shorter&&!fits&&(sx0>0||dfcOk&&!noHand)?Math.min(2*seh,Math.max(seh,sx0+(dfc>6?Math.ceil(dfc):0))):0;
+  if(sx>0&&!sx0)gw._sxSeh=seh;
+  // 書くのは次のコマで（barSync は ResizeObserver からも呼ばれる。その中で卓の大きさを変えると「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+  if(sx!==sx0&&!gw._sxPend){gw.dataset.sx=String(sx);gw._sxPend=1;requestAnimationFrame(()=>{gw._sxPend=0;gw.style.setProperty('--sx',(+gw.dataset.sx||0)+'px');requestAnimationFrame(()=>{try{barSync()}catch(e){}})});
+    // 卓の大きさが変わるので、勝ち負けの帯・吹き出し・名札などを置き直す（v0.97.11 手元：縮めたあと「あなたの負け」が D の札にかかった）
+    try{layoutSoon();clearTimeout(barSync.lt);barSync.lt=setTimeout(()=>{try{layoutSoon()}catch(e){}},260)}catch(e){}}}
+// ResizeObserver の中では書かず、次のコマで（中で --sb・--sbh・--sx を書くと、名札・ポットの額を見張る ResizeObserver へ続き「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+try{let roQ=0;const ro=new ResizeObserver(()=>{if(!roQ)roQ=requestAnimationFrame(()=>{roQ=0;try{barSync()}catch(e){}})});ro.observe($('controls'));ro.observe($('between'));ro.observe($('sensei'))}catch(e){}
 // v74：師匠の帯は mwait（待ってから出す）が外れた時にも「あなたのチップ」の列を上げ直す（タイマーで外れるので render が来ないことがある）
 try{new MutationObserver(()=>barSync()).observe($('sensei'),{attributes:true,attributeFilter:['class','hidden']});$('sensei').addEventListener('animationend',()=>barSync())}catch(e){}
 // 動作の重さの改善 案3：0.25秒ごとの見回りはやめ、位置合わせ（36_layout_pass）で呼ぶ
@@ -237,7 +275,7 @@ function faceFit(){const B=$('busts'),P=$('plates');if(!B||!P||$('game').hidden|
   // 前と同じ値なら書かない
   out.forEach(([b,mw,bt])=>{if((b._ffmw||'')!==mw||!mw!==!b.style.maxWidth){b.style.maxWidth=mw;b._ffmw=mw}if((b._ffbt||'')!==bt||!bt!==!b.style.bottom){b.style.bottom=bt;b._ffbt=bt}});
   // 卓が見える前（相手紹介の間など）に出た吹き出しは置き場所が決まっていないので、見えてから1回だけ置き直す
-  document.querySelectorAll('#sayLayer .say.go').forEach(sy=>{if(sy._fitSeq===sy.dataset.seq||sy.classList.contains('side'))return;sy._fitSeq=sy.dataset.seq;try{sayPlace(sy);sy._lpSay=0}catch(e){}})}
+  document.querySelectorAll('#sayLayer .say.go').forEach(sy=>{if(sy._fitSeq===sy.dataset.seq||sy.classList.contains('side'))return;sy._fitSeq=sy.dataset.seq;try{sayPlace(sy);sy._lpSay=0}catch(e){}})}   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */
 LT.on('layout',()=>{try{faceFit()}catch(e){}});
 
 // ---------- v66：「やめる」の確認を開くときは、操作の案内を閉じる（テスター目線 8） ----------

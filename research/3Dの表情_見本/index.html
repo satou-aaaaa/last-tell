@@ -1,0 +1,84 @@
+<title>3Dの表情とテル</title>
+<style>
+:root{--bg:#f1eee8;--fg:#1d1b18;--mut:#625d55;--card:#fffdf9;--line:#ddd6ca;--acc:#8a5c0c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121417;--fg:#e9e4da;--mut:#9a958c;--card:#1b1f24;--line:#2c3138;--acc:#e2b65b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121417;--fg:#e9e4da;--mut:#9a958c;--card:#1b1f24;--line:#2c3138;--acc:#e2b65b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.7 system-ui,"Hiragino Sans","Noto Sans JP",sans-serif;margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 50px}
+h1{font-size:22px;margin:0 0 4px}.lead{color:var(--mut);margin:0 0 14px;max-width:70ch}
+.view{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+#cv{width:100%;aspect-ratio:4/3;background:#0b0d0c;border-radius:10px;display:block}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.panel h3{margin:0 0 6px;font-size:15px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.btns button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit}
+.btns button.on{border-color:var(--acc);color:var(--acc)}
+.note{color:var(--mut);font-size:13px;margin:0 0 6px}
+@media (max-width:820px){.view{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<h1>3Dの表情とテル（見本）</h1>
+<p class="lead">MetaHuman の顔は、このような「顔の動きの部品」（眉・目・口・頬など約50か所）で表情を作ります。下のボタンで、ゲームのテルがどう見えるかを試せます。</p>
+<div class="view"><canvas id="cv" aria-label="3Dの顔の表情の見本"></canvas>
+<div class="panel"><h3>表情・テル</h3>
+<div class="btns" id="ex"></div>
+<h3>光</h3>
+<div class="btns" id="lt"><button data-v="lamp" class="on">卓のランプ</button><button data-v="side">横から</button><button data-v="dim">暗い店</button></div>
+<p class="note">顔データ：Face Cap（Bannaflak）の見本の顔、three.js の公式サンプルより。見本だけに使い、ゲームには入れません。</p>
+<p class="note">実際のキャラは MetaHuman で、年齢・髪・ひげ・傷・服まで作ります。顔の動かし方はこの見本と同じしくみです。</p>
+</div></div></div>
+<script src="face.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const EX={
+ normal:['ふつう',{}],
+ smile:['口元がゆるむ',{mouthSmile_L:.45,mouthSmile_R:.35,cheekSquint_L:.25,cheekSquint_R:.2,mouthPress_L:.2,mouthPress_R:.2}],
+ glance:['目をそらす',{eyeLookOut_L:.85,eyeLookIn_R:.85,eyeLookDown_L:.3,eyeLookDown_R:.3},{ry:-.12,eye:[-.45,.12]}],
+ stare:['じっと見る',{eyeWide_L:.35,eyeWide_R:.35,browDown_L:.4,browDown_R:.4,mouthPress_L:.5,mouthPress_R:.5},{rx:-.04,still:1}],
+ still:['固まる',{mouthPress_L:.7,mouthPress_R:.7,mouthRollLower:.3},{still:1}],
+ worried:['不安',{browInnerUp:.75,mouthFrown_L:.35,mouthFrown_R:.35,eyeSquint_L:.15,eyeSquint_R:.15,mouthStretch_L:.2,mouthStretch_R:.2}],
+ confident:['自信',{mouthSmile_L:.6,eyeSquint_L:.3,eyeSquint_R:.3,browDown_R:.25,mouthDimple_L:.3},{rx:.05}],
+ think:['考える',{browDown_L:.5,browInnerUp:.2,eyeLookUp_L:.45,eyeLookUp_R:.45,mouthLeft:.4,mouthPucker:.2},{ry:.08,eye:[.25,-.3]}],
+ talk:['しゃべる',{},{talk:1}],
+};
+const exEl=document.getElementById('ex');
+for(const k in EX){const b=document.createElement('button');b.dataset.v=k;b.textContent=EX[k][0];if(k==='normal')b.className='on';exEl.appendChild(b)}
+const cv=document.getElementById('cv');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(Math.min(2,devicePixelRatio));
+R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1;
+const S=new THREE.Scene();S.background=new THREE.Color(0x0b0d0c);
+const C=new THREE.PerspectiveCamera(22,4/3,.1,100);C.position.set(0,0,8.2);
+const L={};L.key=new THREE.SpotLight(0xffd9a8,120,40,.6,.7,1.4);L.key.position.set(-3,7,6);S.add(L.key);
+L.fill=new THREE.HemisphereLight(0x8aa0b8,0x1d5a3a,.45);S.add(L.fill);
+L.rim=new THREE.DirectionalLight(0x9fb8ff,.9);L.rim.position.set(5,3,-6);S.add(L.rim);
+L.side=new THREE.DirectionalLight(0xffe2c0,0);L.side.position.set(-8,1,2);S.add(L.side);
+const g=new THREE.Group();S.add(g);let face=null,eyes=[];
+window.createImageBitmap=undefined;/* blob fetch is blocked in artifacts; use <img> */
+new GLTFLoader().parse(Uint8Array.from(atob(window.MODEL_B64),c=>c.charCodeAt(0)).buffer,'',gl=>{
+ const m=gl.scene.children[0];m.scale.setScalar(1);g.add(m);
+ m.traverse(o=>{if(o.isMesh&&o.morphTargetDictionary&&o.morphTargetDictionary.mouthSmile_L!==undefined)face=o;else if(o.isMesh&&!o.morphTargetDictionary&&/eye/i.test(o.name+(o.parent&&o.parent.name)))eyes.push(o);if(o.isMesh&&o.material)o.material.envMapIntensity=.5});
+ if(face&&face.material){face.material.color.set(0xffd2b4);face.material.roughness=.62;face.material.needsUpdate=true}
+ let bb=new THREE.Box3().setFromObject(m);const sz=bb.getSize(new THREE.Vector3());m.scale.setScalar(2.6/sz.y);bb=new THREE.Box3().setFromObject(m);const c=bb.getCenter(new THREE.Vector3());m.position.sub(c);g.updateMatrixWorld(true);eyes=eyes.map(e=>{const bx=new THREE.Box3().setFromObject(e),c=bx.getCenter(new THREE.Vector3()),r=bx.getSize(new THREE.Vector3()).x/2;const wc=c.clone();const pv=new THREE.Group();e.parent.add(pv);e.parent.worldToLocal(c);pv.position.copy(c);pv.updateMatrixWorld(true);pv.attach(e);return pv});window.READY=1});
+let cur='normal',t0=0,target={},w={};
+const setOn=(id,v)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+window.setEx=k=>{cur=k;t0=performance.now();target=EX[k][1];setOn('ex',k)};
+exEl.onclick=e=>{const b=e.target.closest('button');if(b)setEx(b.dataset.v)};
+window.setLt=v=>{setOn('lt',v);L.key.intensity=v==='side'?20:v==='dim'?70:120;L.side.intensity=v==='side'?2.6:0;L.fill.intensity=v==='dim'?.15:.45;L.rim.intensity=v==='dim'?1.3:.9};
+document.getElementById('lt').onclick=e=>{const b=e.target.closest('button');if(b)setLt(b.dataset.v)};
+const rs=()=>{const W=cv.clientWidth,H=cv.clientHeight;R.setSize(W,H,false);C.aspect=W/H;C.updateProjectionMatrix()};addEventListener('resize',rs);rs();
+const red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+window.SNAP=0;
+R.setAnimationLoop(t=>{const s=t/1000,o=EX[cur][2]||{};
+ if(face){const d=face.morphTargetDictionary,inf=face.morphTargetInfluences;
+  for(const k in d){let v=Math.min(1,(target[k]||0)*1.5);
+   if(o.talk&&k==='jawOpen')v=.12+.12*Math.abs(Math.sin(s*9))*Math.abs(Math.sin(s*2.3));
+   if(o.talk&&k==='mouthFunnel')v=.15*Math.abs(Math.sin(s*5));
+   if(!o.still&&!window.SNAP&&(k==='eyeBlink_L'||k==='eyeBlink_R')){const p=s%4.2;v=Math.max(v,p<.12?Math.sin(p/.12*Math.PI):0)}
+   inf[d[k]]+=(v-inf[d[k]])*(window.SNAP?1:.12)}}
+ let ry=(o.ry||0),rx=(o.rx||0),y=0;
+ if(!red&&!o.still&&!window.SNAP){y=Math.sin(s*1.8)*.015;ry+=Math.sin(s*.4)*.03}
+ const ex=(o.eye||[0,0]);for(const e of eyes){const ty=ex[0],tx=ex[1];e.rotation.y+=(ty-e.rotation.y)*(window.SNAP?1:.2);e.rotation.x+=(tx-e.rotation.x)*(window.SNAP?1:.2)}
+ g.rotation.y+=(ry-g.rotation.y)*(window.SNAP?1:.12);g.rotation.x+=(rx-g.rotation.x)*(window.SNAP?1:.12);g.position.y=y;R.render(S,C)});
+</script>

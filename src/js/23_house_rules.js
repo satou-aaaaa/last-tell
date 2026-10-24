@@ -51,7 +51,7 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   S.showOffer=false;if(S.shownMem&&S.handNo>0&&S.handNo%6===0){S.shownMem.bluff=Math.max(0,S.shownMem.bluff-1);S.shownMem.strong=Math.max(0,S.shownMem.strong-1)}S.taunt=-1;S.slowrolled=-1;S.meSmug=false;S.angleActing=-1;S.players.forEach(p=>{if(p.tilt>0&&S.handNo>0&&p.tiltHand!==S.handNo){p.tiltHand=S.handNo;p.tilt--}});S.needle=null;S.runout=false;S.tease=false;S.reveal=false;S.stare=-1;S.stareKey='';$('table').classList.remove('hush');Sound.hush(false);Clock.stop();S.myPreFold=false;S.myTurnAt=0;S.myTurnKey='';S.deck=shuffle(fullDeck());S.board=[];S.released=false;S.street='preflop';S.handOver=false;S.msg='';S.raises=0;S.aggr=-1;S.riverAggr=-1;S.lastCalled=-1;S.myPostAggro=false;
   S.players.forEach(p=>{Object.assign(p,{hand:p.out?[]:[S.deck.pop(),S.deck.pop()],folded:p.out,allIn:false,
     bet:0,total:0,acted:false,show:false,won:0,refund:0,hname:'',raisedPre:false,cbetFlop:false,leakPend:[],leakFold:'',leakAL:0,lastAct:'',lastType:'',seen:null,actKind:'',say:null,peeked:false,tell:null,tellLog:[],lastState:'',answered:false,hs:p.chips,ante:0,mucked:false,muckPlan:false,shownByChoice:false,counting:false,showN:0,slow:false,eq:null,eqDir:'',seenArr:null})});
-  try{if(typeof dealHelp==='function')dealHelp()}catch(e){}   // 易しくする：自分に弱い手が来にくい（js/49_play35_fixes.js）。台本・決まった札はこの後で上書きされる
+  try{LT.dealRun('hand')}catch(e){}   // 配りを変える入口（js/54_deal_mod.js）：弱い手の引き直し・強い手・遊べる手・章の目標の場面。台本・決まった札はこの後の setupScript が上書きする
   setupScript();
   // ディーラーのミス（第4章以降とフリー対戦）：1ハンドに1.5%、続けては起きない
   let mq='';

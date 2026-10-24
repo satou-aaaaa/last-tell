@@ -1,0 +1,14 @@
+BENCH3D kind=2d n=1 h=260 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=1449 avg_ms=10.35 worst_ms=30.3 over50ms=0 redraws/s=[-0.1] prims=12 draws=6 vid_MB=22
+BENCH3D kind=3d n=1 h=260 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=476 avg_ms=31.54 worst_ms=79.3 over50ms=17 redraws/s=[21.5] prims=48376 draws=19 vid_MB=74
+BENCH3D kind=2d n=5 h=240 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=1285 avg_ms=11.68 worst_ms=25.6 over50ms=0 redraws/s=[-0.1, -0.1, -0.1, -0.1, -0.1] prims=38 draws=19 vid_MB=22
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=202 avg_ms=74.39 worst_ms=120.2 over50ms=201 redraws/s=[7.9, 5.1, 4.7, 4.8, 4.5] prims=95636 draws=36 vid_MB=91
+BENCH3D kind=3d n=5 h=240 max_draws=0 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=92 avg_ms=163.73 worst_ms=193.1 over50ms=91 redraws/s=[6.1, 6.1, 6.1, 6.1, 6.1] prims=240192 draws=85 vid_MB=91
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=0 msaa=0 idle_fps=15 active_fps=30 scale=1 still=0 frames=430 avg_ms=34.88 worst_ms=78.0 over50ms=5 redraws/s=[14.2, 11.3, 10.7, 10.2, 10.1] prims=48104 draws=26 vid_MB=86
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=1 frames=1296 avg_ms=11.58 worst_ms=30.5 over50ms=0 redraws/s=[0.0, 0.0, 0.0, 0.0, 0.0] prims=12 draws=6 vid_MB=95
+BENCH3D kind=3d n=1 h=260 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=249 avg_ms=60.39 worst_ms=134.9 over50ms=171 redraws/s=[15.2] prims=48376 draws=19 vid_MB=259
+BENCH3D kind=3d n=5 h=240 max_draws=0 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=90 avg_ms=167.61 worst_ms=231.0 over50ms=89 redraws/s=[6.0, 6.0, 6.0, 6.0, 6.0] prims=240192 draws=85 vid_MB=282
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=198 avg_ms=76.17 worst_ms=120.8 over50ms=197 redraws/s=[7.7, 5.0, 4.5, 4.7, 4.5] prims=95636 draws=36 vid_MB=282
+BENCH3D kind=3d n=5 h=240 max_draws=1 shadow=1 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=318 avg_ms=47.21 worst_ms=116.9 over50ms=83 redraws/s=[5.3, 4.2, 3.7, 4.1, 3.9] prims=48384 draws=23 vid_MB=282
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=0 msaa=2 idle_fps=15 active_fps=30 scale=1 still=0 frames=197 avg_ms=76.33 worst_ms=181.1 over50ms=196 redraws/s=[7.9, 4.9, 4.6, 4.5, 4.5] prims=48104 draws=26 vid_MB=282
+BENCH3D kind=3d n=5 h=240 max_draws=2 shadow=0 msaa=0 idle_fps=15 active_fps=30 scale=1 still=0 frames=409 avg_ms=36.72 worst_ms=81.4 over50ms=4 redraws/s=[14.1, 11.5, 9.9, 9.6, 9.3] prims=48104 draws=26 vid_MB=277
+BENCH3D kind=3d n=1 h=260 max_draws=2 shadow=0 msaa=0 idle_fps=15 active_fps=30 scale=1 still=0 frames=857 avg_ms=17.51 worst_ms=60.5 over50ms=2 redraws/s=[22.7] prims=24190 draws=13 vid_MB=258

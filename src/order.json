@@ -27,6 +27,11 @@
  "01k_style_readscope.css",
  "01l_style_cardmark.css",
  "01m_style_sharp.css",
+ "01n_style_pcwide.css",
+ "01o_style_pcair.css",
+ "01p_style_pchand.css",
+ "01q_style_pcbig.css",
+ "01r_style_pctouch.css",
  "02_body.html",
  "js/00_version_links.js",
  "js/00b_hooks.js",
@@ -115,5 +120,10 @@
  "js/50_read_scope.js",
  "js/51_play6_fixes.js",
  "js/52_cardmark.js",
+ "js/53_pc_air.js",
+ "js/54_deal_mod.js",
+ "js/55_pc_hand.js",
+ "js/56_pc_big.js",
+ "js/57_pc_touch.js",
  "99_tail.html"
 ]

@@ -6,7 +6,7 @@
 function sayTopBar(){const b=$('tbar');if(!b||b.hidden||!b.getClientRects().length)return null;   // 帯は position:fixed で offsetParent が無いので、大きさで見る
   const r=b.getBoundingClientRect();return r.height>2&&r.bottom<innerHeight/3?r:null}   // 横向きは帯が右の列にあるので、横に重なる吹き出しだけ見る
 function sayClampTop(){const b=sayTopBar();
-  const list=[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>e.offsetParent),R=list.map(e=>e.getBoundingClientRect());   // 全部測ってから全部書く
+  const list=[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>e.offsetParent),R=list.map(e=>e.getBoundingClientRect());   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */   // 全部測ってから全部書く
   list.forEach((e,k)=>{const under=b&&R[k].right>b.left&&R[k].left<b.right,lim=under?b.bottom+4:4,d=lim-R[k].top;   // 帯の下でなくても、画面の上の端（横向き）で切れないように
     if(d>.5)e.style.marginTop=((parseFloat(e.style.marginTop)||0)+d).toFixed(1)+'px'})}
 LT.on('layout',()=>{try{if(!$('game').hidden)sayClampTop()}catch(e){}});

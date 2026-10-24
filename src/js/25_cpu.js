@@ -297,6 +297,9 @@ function talkPlace(){const row=$('askRow'),b=$('btnNeedle');row.style.translate=
   if(mr&&mr.offsetParent){const vis=[...nr.children].filter(x=>!x.hidden&&x.offsetParent);if(vis.length){const m=mr.getBoundingClientRect();let top=Infinity,bot=-Infinity,l=Infinity,rr=-Infinity;vis.forEach(x=>{const q=x.getBoundingClientRect();top=Math.min(top,q.top);bot=Math.max(bot,q.bottom);l=Math.min(l,q.left);rr=Math.max(rr,q.right)});
     let dy=0;if(rr>m.left&&l<m.right&&bot>m.top-4)dy=bot-m.top+6;
     const ps=$('potSign');if(dy&&ps&&!ps.hidden&&ps.offsetParent){const q=ps.getBoundingClientRect();if(q.right>l&&q.left<rr&&bot-dy>q.top-4&&top-dy<q.bottom+4)dy=bot-q.top+6}
+    // 上げても場札にはかけない（PR #128 手元：第14章の縦で、字幕のぶん手札の列が上がり、「黙る」が場札の 2♣ に乗った）
+    if(dy>0){const bc=[...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot)')].filter(c=>c.getClientRects().length&&getComputedStyle(c).visibility!=='hidden').map(c=>c.getBoundingClientRect()).filter(q=>q.right>l&&q.left<rr&&q.bottom<=bot);
+      if(bc.length){const lim=top-Math.max(...bc.map(q=>q.bottom))-4;dy=Math.min(dy,Math.max(0,lim))}}
     if(dy>0)nr.style.translate=`0 ${(-dy).toFixed(1)}px`}}
   const tgt=!row.hidden?row:(S.handOver&&!b.hidden&&b.dataset.mode==='chat')?b:null;if(!tgt)return;
   const r=tgt.getBoundingClientRect();let lim=Infinity;const hold=$('mine').querySelector('.hold');if(hold&&hold.offsetParent)lim=hold.getBoundingClientRect().top;
@@ -356,12 +359,12 @@ function bMark(b){const B=bState(),z=bLoad();z.seen[b.id]=(+z.seen[b.id]||0)+1;b
 // 掛け合いの吹き出しが、クセの札・カード・チップ・ボタンにかからないよう、少し横か上へずらす（クセの札は吹き出しより奥の層にあるため）
 // 位置そのものは sayFollow が毎フレーム決める。ここではずらす量（_ax,_ay）だけを決め、sayFollow がそれを足す
 function bAvoid(){const L=$('sayLayer');if(!L||$('game').hidden)return false;const R=e=>e.getBoundingClientRect();
-  const ss=[...L.querySelectorAll('.say')],live=e=>e.classList.contains('bt')&&e.classList.contains('go')&&performance.now()-(e._t||0)<3700;
+  const ss=[...L.querySelectorAll('.say')],live=e=>e.classList.contains('go')&&performance.now()-(e._t||0)<(e.classList.contains('bt')||e.classList.contains('long')?3700:2800)&&LT.sayOn(e);   // 掛け合いだけでなく、ふつうのひとことも（v0.97.11：ハンドの終わりで「ついていく！」が見せた札の角に乗った）
   ss.forEach(e=>{if(!live(e))e._ax=e._ay=0});
   const act=ss.filter(live);if(!act.length)return false;
   // 必ずよける：クセの札・場札・自分の手札・チップ・ポット・ボタン・ほかの吹き出し／できればよける：相手の伏せ札・名札
   const q=sel=>[...document.querySelectorAll(sel)].filter(e=>e.offsetParent&&R(e).width);
-  const hard=q('#plates .cue,#boardCards .card,#mine .card,.chipwrap .chips,#potSign,#acts button,#askRow button,#street').concat(q('#msg').filter(e=>e.textContent.trim())).map(R),soft=q('.spot .card,#plates .plate').map(R);
+  const hard=q('#plates .cue,#boardCards .card,#mine .card,.chipwrap .chips,#potSign,#acts button,#askRow button,#street,.felt .spot .hand:not(.folded):not(.muck) .card:not(.back)').concat(q('#msg').filter(e=>e.textContent.trim())).map(R),soft=q('.spot .card,#plates .plate,#vfLog:not(.off)').map(R);
   const tb=R($('table')),top=(()=>{try{return sayTopPad()}catch(e){return 2}})();const C=[];for(let dy=-40;dy<=48;dy+=8)for(let dx=-120;dx<=120;dx+=8)C.push([dx,dy]);C.sort((a,b)=>Math.abs(a[0])+2*Math.abs(a[1])-Math.abs(b[0])-2*Math.abs(b[1]));
   act.forEach(e=>{const r=R(e),ax=e._ax||0,ay=e._ay||0,oth=ss.filter(x=>x!==e&&x.classList.contains('go')&&performance.now()-(x._t||0)<3700).map(R);
     const ov=(L,x,y)=>L.some(o=>r.left+x<o.right-1&&o.left<r.right+x-1&&r.top+y<o.bottom-1&&o.top<r.bottom+y-1);
@@ -372,7 +375,9 @@ function bAvoid(){const L=$('sayLayer');if(!L||$('game').hidden)return false;con
       for(const [x,y] of C){const X=x-ax,Y=y-ay;if(!okB(X,Y))continue;if(!hitH(X,Y)&&(!full||!sft(X,Y))){e._ax=x;e._ay=y;return}}}});
   return true}
 // クセの札は小さい所から大きくなり、カメラも寄るので、掛け合いの吹き出しが出ているあいだは 0.3 秒ごとに見直す
-let bAvT=0;const bAvLoop=()=>{clearTimeout(bAvT);let on=false;try{on=bAvoid()}catch(e){}if(on)bAvT=setTimeout(bAvLoop,300)};
+let bAvT=0;const bAvLoop=()=>{clearTimeout(bAvT);let on=false;try{on=bAvoid()}catch(e){}if(on)bAvT=setTimeout(bAvLoop,300);
+  // 吹き出しを動かしたあとで、直近の5手も置き直す（吹き出しが動いた先に直近の5手があった。PR #128 の CI：#say3「赤縁の眼鏡 オールイン！」）
+  try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
 // 動作の重さの改善 案3：描き直しの直後ではなく、位置合わせ（36_layout_pass）の最後に1回目を回す（クセの札の位置が決まってから測る）
 // カットイン・クイズ・案内などが出ているあいだは待つ
 function bBlocked(){return tourI>=0||['toast','quiz','cutin','camBand','mieta','foolStamp'].some(id=>$(id)&&!$(id).hidden)||$('game').hidden}
@@ -461,16 +466,26 @@ function bAnswer(k,late){const st=S.bAsk;if(!st||st.stage!==1)return;const a=st.
     row.hidden=false;row.classList.add('bask');b.hidden=true;$('table').classList.remove('talkpick');row._bp=1;layoutSoon()}
   else{row.classList.remove('bask');if(row.dataset.k&&row.dataset.k[0]==='b'&&!askLive()){row.hidden=true;row.dataset.k='';row.innerHTML=''}}}catch(e){}return r}}
 // 3つのボタンが場札・自分の手札・チップ・ポット表示にかからない場所を探して、少しずらす
-function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row),tb=R($('table'));if(!r0.width)return;
+// 開いている額の枠（#raisePanel）の上端。開いていない・横にずれている（PC で枠が別の列）ときは Infinity
+function askPanelTop(a){const p=$('raisePanel');if(!p||p.hidden||!p.offsetParent)return Infinity;const q=p.getBoundingClientRect();return q.width>2&&(!a||a.left<q.right&&q.left<a.right)?q.top:Infinity}
+function bPlace(row){row.style.translate='';const R=e=>e.getBoundingClientRect(),r0=R(row);let tb=R($('table'));if(!r0.width)return;
+  // v0.98.8 CI：額を選ぶ枠（#raisePanel）は卓の下側に重なって開く。枠の上を卓の下端とみなし、枠のすぐ上を先に試す（WebKit の縦で「強いよ」が枠の「あなたの手」の下に隠れた）
+  const pt=askPanelTop(r0);if(pt<tb.bottom)tb={left:tb.left,right:tb.right,top:tb.top,bottom:pt};
+  const rp=$('raisePanel'),pr=rp&&!rp.hidden&&rp.offsetParent?R(rp):null;   // 枠そのものも「かかってはいけない所」に入れる（CodeRabbit PR #144）
   const obs=[...document.querySelectorAll('#boardCards .card,#mine .card,#mine .mystack,#mine .hold,#potSign,.chipwrap .chips,.spot .card,#board2 .card')].filter(e=>e.offsetParent&&R(e).width).map(R);
   const bc=[...document.querySelectorAll('#boardCards .card')].filter(e=>e.offsetParent).map(R);
-  const hit=(x,y)=>obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
+  const hit=(x,y)=>(pr&&r0.left+x<pr.right&&pr.left<r0.right+x&&r0.top+y<pr.bottom&&pr.top<r0.bottom+y)||obs.some(o=>r0.left+x<o.right&&o.left<r0.right+x&&r0.top+y<o.bottom&&o.top<r0.bottom+y);
   const inT=(x,y)=>r0.left+x>=tb.left+4&&r0.right+x<=tb.right-2&&r0.top+y>=tb.top+2&&r0.bottom+y<=tb.bottom-2;
-  const ys=[0];if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
+  const ys=[0];if(pt<Infinity)ys.push(pt-6-r0.bottom);if(bc.length){const bb=Math.max(...bc.map(o=>o.bottom)),bt=Math.min(...bc.map(o=>o.top));ys.push(bb+4-r0.top,bt-4-r0.bottom)}
   // v0.96.4 CI：第14章の縦で、場札の上下にも左にも空きがなく、元の位置（自分の手札の上）に戻っていた。自分の手札のすぐ上と、右へずらす向きも試す
   const mc=[...document.querySelectorAll('#mine .card')].filter(e=>e.offsetParent).map(R).filter(r=>r.width>2);if(mc.length)ys.push(Math.min(...mc.map(o=>o.top))-4-r0.bottom);
-  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)&&!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}
-  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)&&!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}}}
+  // どこにも空きがないときは、かかる面積がいちばん小さい所へ（場札は3倍に数える）。前は元の場所のままで、手札の列を上げたぶん場札の 2♣ に「黙る」が乗った（PR #128 の CI 第14章の縦）
+  const ar=(x,y,o)=>Math.max(0,Math.min(r0.right+x,o.right)-Math.max(r0.left+x,o.left))*Math.max(0,Math.min(r0.bottom+y,o.bottom)-Math.max(r0.top+y,o.top));
+  const cost=(x,y)=>(pr?4*ar(x,y,pr):0)+obs.reduce((a,o)=>a+ar(x,y,o),0)+bc.reduce((a,o)=>a+2*ar(x,y,o),0);let best=null;
+  for(const y of ys)for(let x=0;x>=-(r0.left-tb.left);x-=12){if(inT(x,y)){if(!hit(x,y)){if(x||y)row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
+  for(const y of ys)for(let x=12;x<=tb.right-r0.right;x+=12){if(inT(x,y)){if(!hit(x,y)){row.style.translate=`${x.toFixed(1)}px ${y.toFixed(1)}px`;return}const c=cost(x,y);if(!best||c<best.c)best={x,y,c}}}
+  if(best&&(best.x||best.y)&&best.c<cost(0,0)){row.style.translate=`${best.x.toFixed(1)}px ${best.y.toFixed(1)}px`;return}
+  if(pt<Infinity&&r0.bottom>pt)row.style.translate=`0px ${(pt-6-r0.bottom).toFixed(1)}px`}   // 置き場が無くても、枠の下には残さない
 // v71（改善提案§1）：席の前の賭けチップ（.chipwrap）と持ち点の塔（.mystack。自分の欄の分も）、1対1では相手の伏せ札・D の札も（v70 レビュー）、場札にかかるときは、bPlace と同じく空いた所を探して席の側へ寄せる。
 // 寄せる向きは「場札の真ん中→席」、横（席のある側・反対側）、縦（席の側・反対側）の順。席の札・名札・ポットの山にかからない、いちばん近い所。位置合わせ（36_layout_pass）で fitTable の後に呼ぶ
 function chipAvoid(){const MS='#mine .mybet .chipwrap,#mine .mystack,.felt .spot .hand,#dbtn';document.querySelectorAll(MS).forEach(e=>{if(e.style.translate)e.style.translate=''});   // 自分の欄・相手の伏せ札・D の札は fitTable が戻さないので、ここで戻す

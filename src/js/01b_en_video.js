@@ -1,7 +1,5 @@
 // 動画のツッコミから（2026-10-17）：js/47_video_fixes.js の英語
 Object.assign(EN_DICT,{
- 'AAが来た。いちばん強い手札だ':'Pocket aces. The best starting hand there is.',
- 'ハヤトのオールイン。AAで受けるか？':'Hayato is all-in. Call with your aces?',
  'あなたの番':'Your turn','後ろ':'Late','前':'Early',
  '後ろの席：あとから動けるので、ブラインドスチールを仕掛けやすい':'Late position: you act after the others, so it is a good spot to steal the blinds',
  '前の席：あとの人が多いので、強い手だけで':'Early position: many players act after you, so play only strong hands',

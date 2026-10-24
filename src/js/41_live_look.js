@@ -60,6 +60,7 @@ function llSeats(){const tb=$('table');if(!tb||!S||!S.players)return;
   const k=String(S.players.length);if(L&&L.dataset.k===k)return;
   if(!L){L=document.createElement('div');L.className='llseats';L.setAttribute('aria-hidden','true');tb.appendChild(L)}
   L.dataset.k=k;L.innerHTML=S.players.map((p,i)=>`<i data-i="${i}" data-n="${i+1}"></i>`).join('')}   // 数字は ::before（飾りなので読み上げ・文字の検査に入れない）
+const LL_SEAT_NEAR=64;   // 席番号の丸の上の端は、名札の下の端から 64px 以内（ふだんは 40px ほど）
 function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$('table');if(!L||!tb)return;
   const T=tb.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&e.getBoundingClientRect().width>2,R=e=>e.getBoundingClientRect(),z=15;
   const av=[...document.querySelectorAll('.felt .spot .card, .felt .spot .mystack, .felt .spot .chipwrap, #plates .plate, #plates .cue, #boardCards .card, #potSign, #mine .card, #mine .me-ava, #mine .mystack, #mine .mybet, #dbtn, .dbadge, .felt .boardspot > .lltools:not(.off), #table > .cup:not(.off), #busts .bust .body, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);   // 「あなたの番」・勝ち負けの札（v96 CI：縦の5人卓で .vfres に席番号が重なった）（v91.1 CI：PC で自分の席番号が重なった）
@@ -71,7 +72,9 @@ function llSeatsPlace(){const L=document.querySelector('#table > .llseats'),tb=$
     if(!r&&i){const sp=$('spot'+i);if(sp){const q=R(sp);r={left:q.left+q.width/2-14,right:q.left+q.width/2+14,top:q.top,bottom:q.top+20,height:20}}}
     if(!r||!p||p.out){el.hidden=true;return}
     const cy=r.top+(r.height-z)/2,cs=i?[[r.left-z-6,cy],[r.right+6,cy]]:[];
-    let c=cs.find(([x,y])=>ok(x,y));
+    // 名札から離れすぎた横は使わない（v0.98.7 レビュー：ターンを配る途中で、席の札の箱が場札の列まで伸びて測られ、③④ が場札の上に出た）
+    const pl=i&&$('plate'+i),pr=vis(pl)?R(pl):null,near=([x,y])=>!pr||y<=pr.bottom+LL_SEAT_NEAR;
+    let c=cs.find(([x,y])=>near([x,y])&&ok(x,y));
     // 横に場所がなければ名札（自分は顔）の左上の角に重ねて付ける（席の札のように）
     // 横に場所がなければ名札（自分は顔）の左上、だめなら右上の角に重ねる。D・場札・札に重なるなら出さない（v85 レビュー）
     if(!c){const t=i?$('plate'+i):$('mine')&&$('mine').querySelector('.me-ava');if(vis(t)){const q=R(t);c=[[q.left-z/2,q.top-z/2],[q.right-z/2,q.top-z/2]].find(([x,y])=>okCorner(x,y))}}
@@ -128,7 +131,9 @@ let llSeatChkAt=0;
 function llSeatsBad(){const L=document.querySelector('#table > .llseats');if(!L)return false;const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetParent&&R(e).width>2;
   const nums=[...L.children].filter(e=>!e.hidden&&vis(e)).map(R);if(!nums.length)return false;
   const hard=[...document.querySelectorAll('#dbtn, .dbadge, #boardCards .card, .felt .spot .card, #mine .card, #mine .vfturn:not([hidden]), #plates .plate > .ltact:not([hidden]), #table > .vfres')].filter(vis).map(R);
-  return nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom))}
+  if(nums.some(a=>hard.some(q=>a.left<q.right&&q.left<a.right&&a.top<q.bottom&&q.top<a.bottom)))return true;
+  // 名札から離れすぎていても置き直す（v0.98.7 レビュー：配る途中の箱で測って、場札の列の高さに残った）
+  return [...L.children].some(e=>{if(e.hidden||!vis(e))return false;const i=+e.dataset.i,pl=i&&$('plate'+i);return !!(pl&&vis(pl)&&R(e).top>R(pl).bottom+LL_SEAT_NEAR)})}
 // 1秒に1回のときに外れた分は、1秒たったところで1回だけ測る（v92.2 CI：配った札の上に席番号が残った。その後 layout が来なかった）
 function llSeatChk(){llSeatChkAt=Date.now();clearTimeout(llSeatChk.t);llSeatChk.t=0;try{if(llSeatsBad())llSeatsPlace()}catch(e){}}
 LT.on('layout',()=>{const k=llKey();if(k===llPlaceK){const w=1000-(Date.now()-llSeatChkAt);if(w<=0)llSeatChk();else if(!llSeatChk.t)llSeatChk.t=setTimeout(llSeatChk,w);return}llPlaceK=k;llPlaceAll();clearTimeout(llPlaceT);llPlaceT=setTimeout(llPlaceAll,900)});

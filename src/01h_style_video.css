@@ -13,11 +13,13 @@
 /* A1：押せるのはオールインだけ */
 #controls.vfone #btnCall{flex:1 1 100%}
 /* A7・A8：勝ち負けの一行（場札の下） */
-.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;
+/* 負けたときは「あなたの負け／相手の役／自分の役」と長くなり、スマホ縦で画面より広くなって左右が切れた（v0.97.8 手元の検査：幅 426px）。卓の幅までにして、語のまとまりごとに折り返す */
+.vfres{position:absolute;left:50%;z-index:6;transform:translateX(-50%);pointer-events:none;white-space:nowrap;display:flex;gap:8px;align-items:baseline;max-width:calc(100% - 12px);box-sizing:border-box;flex-wrap:wrap;justify-content:center;row-gap:0;
   padding:4px 12px;border-radius:6px;background:rgba(10,11,14,.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:700 13px/1.3 var(--display,inherit);color:#e8e4da;
   animation:vfIn .3s ease-out both;transition:opacity .4s}
 .vfres.win{box-shadow:inset 0 0 0 1px var(--gold,#e2b65b)}
 .vfres b{font-weight:800}.vfres.win b{color:var(--gold,#e2b65b)}
+.vfres .hm{display:inline-flex;gap:8px;max-width:100%;overflow:hidden;white-space:nowrap}.vfres .hm>span{overflow:hidden;text-overflow:ellipsis;min-width:0}   /* 役は1行に（長ければ…で切る） */
 .vfres .h{color:#c9d6e2}.vfres .n{font-variant-numeric:tabular-nums}.vfres.win .n{color:#9fe0b0}
 .vfres.out,.vfcard.out{opacity:0}
 @keyframes vfIn{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
@@ -51,3 +53,4 @@
 .spot .hand.sybs .card .s,.spot .hand.sybs .card .court,.spot .hand.sybs .card .r2{display:none}
 .spot .hand.sybs .card .r:not(.r2){top:50%;left:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.6);letter-spacing:-.06em}
 .spot .hand.sybs .card .r:not(.r2) i{display:block;font-size:.62em;margin-top:0}
+#dbtn.vfhide,.dbadge.vfhide{visibility:hidden}   /* 勝ち負けの帯がどこに置いても D の札にかかるときだけ（47_video_fixes。v0.97.11） */

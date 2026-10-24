@@ -1,0 +1,35 @@
+/* ===== v0.98.0 PC 向け：横長の卓（PC 向けリッチ演出 案1、2026-10-21 satou「全部」） =====
+   html.pcw（幅1100px以上・高さ640px以上・マウス。00b_hooks.js の PCW_Q）のときは、スマホ横と同じ「右の列」の配置
+   （上の帯・師匠の字幕・直近の5手・ボタンは右の列、卓は左いっぱい）にして、大きさだけ PC に合わせる。スマホは今のまま */
+html.pcw #game{--side:clamp(340px,24vw,440px)}
+html.pcw.ingame .wrap{max-width:none;padding-inline:0}
+html.pcw #game .gwrap{max-width:none;margin:0;width:auto;padding-right:calc(var(--side) + 6px)}
+html.pcw #game .t3d{height:100vh;height:100dvh;min-height:0}
+/* 卓の中の札：場札は奥に置いて少し小さく、相手の見せた札は場札の 0.8倍以上（v0.97.12 レビュー：27px で名札に隠れた） */
+html.pcw .felt .card{--cw:40px}
+html.pcw .spot .card{--cw:52px}
+html.pcw .n6 .spot .card{--cw:46px}
+html.pcw .mine .hold .card{--cw:74px}
+html.pcw .felt .boardspot{top:24%}
+/* 顔は大きく、でも頭が画面の上で切れない（胸像の下の端は卓の高さの 37%） */
+html.pcw #busts>.bust{max-width:34vh}
+/* 名札と右の列の字は PC の大きさに */
+html.pcw .plate{max-width:24%}
+html.pcw .plate .nm{font-size:.9rem}html.pcw .plate .chp{font-size:.92rem}html.pcw .plate .tag{font-size:.8rem;padding:0 6px}
+html.pcw #game .tbar h1{font-size:.95rem}html.pcw #game .tbar .tbmeta{font-size:.78rem}
+html.pcw #game .sensei p{font-size:.95rem}
+html.pcw #game .gwrap>.sensei{max-height:36vh}
+html.pcw .potchips.mess{transform:scale(.68);transform-origin:50% 30%}
+/* WebKit（Safari・iPhone の全ブラウザ）は、PC でもスマホでも卓を倒さない（倒すと、部品を測った場所と描かれた場所がずれる。PC は 100px 以上で名札が見せた札にかぶった：Issue #131。
+   スマホ縦は 60〜80px で「勝ち・負け」の帯や D ボタンが札にかぶった：v0.97.5〜v0.98.7 の WebKit 縦）。
+   倒さなければ WebKit でもずれは 2px（qa/checks/sharp.js の「試した直し：倒さない」）。見た目は真上から見た卓に近くなる */
+html.wk .felt{transform:scale(.333333)}
+/* PC は師匠の字幕を2行で切らない（右の列は縦に余裕がある。v0.98.0 レビュー：「…」で切れていた） */
+html.pcw #game .sensei p{display:block;-webkit-line-clamp:unset;overflow:visible}
+/* PC：自分の手札を大きく、下の端から少し上へ（v0.98.0 レビュー：下の端 790/800 で小さく、手前の山のほうが大きく見えて3枚め・4枚めの手札に見えた）。
+   配る前の山（.lltools）と捨て札の山（.muckpile）は手前ほど遠近で大きく描かれるので、PC では小さめにする。qa/checks/ui.js の PC 検査（手札・山の大きさ・下の端）で見る */
+html.pcw #game .mine{padding-bottom:18px}
+html.pcw .felt .boardspot>.lltools{scale:.62;transform-origin:0 0}
+html.pcw .felt .boardspot>.muckpile{scale:.62}
+/* v0.98.9：Safari では瞳の transition が途中で止まることがある（v0.98.8 CI：WebKit PC 第14章で止まったまま残った）。瞳は動かさずに置く（見え方は変わらない位置へ一度で） */
+html.wk .bust.look .av .pupils,html.wk .bust.c35away .av.real .eyes .pupils{transition:none}

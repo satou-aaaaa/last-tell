@@ -1,0 +1,99 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "チ",
+     "consonant": "ch",
+     "consonant_length": 0.10151379555463791,
+     "vowel": "i",
+     "vowel_length": 0.12047749012708664,
+     "pitch": 5.111784934997559
+    },
+    {
+     "text": "ッ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "cl",
+     "vowel_length": 0.14383533596992493,
+     "pitch": 0.0
+    }
+   ],
+   "accent": 1,
+   "pause_mora": {
+    "text": "、",
+    "consonant": null,
+    "consonant_length": null,
+    "vowel": "pau",
+    "vowel_length": 0.3742414116859436,
+    "pitch": 0.0
+   },
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ミ",
+     "consonant": "m",
+     "consonant_length": 0.03861372917890549,
+     "vowel": "i",
+     "vowel_length": 0.058560967445373535,
+     "pitch": 4.7823357582092285
+    },
+    {
+     "text": "テ",
+     "consonant": "t",
+     "consonant_length": 0.07490376383066177,
+     "vowel": "e",
+     "vowel_length": 0.0764116495847702,
+     "pitch": 4.863821506500244
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ヤ",
+     "consonant": "y",
+     "consonant_length": 0.05382772535085678,
+     "vowel": "a",
+     "vowel_length": 0.09037845581769943,
+     "pitch": 4.599930763244629
+    },
+    {
+     "text": "ル",
+     "consonant": "r",
+     "consonant_length": 0.023240849375724792,
+     "vowel": "u",
+     "vowel_length": 0.04719091206789017,
+     "pitch": 4.535488605499268
+    },
+    {
+     "text": "ヨ",
+     "consonant": "y",
+     "consonant_length": 0.06341245025396347,
+     "vowel": "o",
+     "vowel_length": 0.1449112892150879,
+     "pitch": 4.516976833343506
+    }
+   ],
+   "accent": 3,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "チ'ッ、ミ'テ/ヤルヨ'"
+}

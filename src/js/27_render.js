@@ -286,5 +286,6 @@ function presetValues(pot,toCall){
 }
 function log(text,head){
   const li=document.createElement('li');li.textContent=text;if(head)li.className='hd';
-  $('log').prepend(li);
+  // 長く遊ぶと行が増え続けた（v0.98.9 レビュー：50ハンドで約1600行。WebKit で落ちる場面の調べ）。古い行から消して1500行までにする
+  const L=$('log');L.prepend(li);while(L.childElementCount>1500)L.lastElementChild.remove();
 }

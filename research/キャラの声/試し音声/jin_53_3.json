@@ -1,0 +1,46 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "ウ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "u",
+     "vowel_length": 0.08271580189466476,
+     "pitch": 4.7549896240234375
+    },
+    {
+     "text": "ケ",
+     "consonant": "k",
+     "consonant_length": 0.09307119250297546,
+     "vowel": "e",
+     "vowel_length": 0.08682854473590851,
+     "pitch": 5.254672050476074
+    },
+    {
+     "text": "ル",
+     "consonant": "r",
+     "consonant_length": 0.023055532947182655,
+     "vowel": "u",
+     "vowel_length": 0.14516574144363403,
+     "pitch": 4.787215232849121
+    }
+   ],
+   "accent": 2,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 0.9,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "ウケ'ル"
+}

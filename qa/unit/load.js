@@ -27,7 +27,7 @@ function load(target) {
   const box = vm.createContext({ LT: { rand }, HAND_JP: ['ハイカード', 'ワンペア', 'ツーペア', 'スリーカード', 'ストレート', 'フラッシュ', 'フルハウス', 'フォーカード', 'ストレートフラッシュ'] });
   const code = Object.values(b).join('\n') + `\n;({${NAMES.map(n => `${n}:typeof ${n}==='undefined'?undefined:${n}`).join(',')}})`;
   const g = vm.runInContext(code, box, { filename: 'unit-blocks.js' });
-  g.rand = rand; g.blocks = Object.keys(b);
+  g.rand = rand; g.blocks = Object.keys(b); g.text = text;
   return g;
 }
 module.exports = { load };

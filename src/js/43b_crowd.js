@@ -5,7 +5,7 @@
 // 第7章の最後の手と顔のアップ中は、影を左右の端だけに置く。動きは opacity と transform だけ（フィルター禁止）。回想では出さない。
 const CROWD={potBB:40,afterMs:1800,lines:['おお……','……今の、見たか','すげえな']};
 function crowdEl(){const tb=$('table'),rm=tb&&tb.querySelector('.room');if(!rm)return null;let c=tb.querySelector('.ltcrowd');
-  if(!c){c=document.createElement('div');c.className='ltcrowd';c.setAttribute('aria-hidden','true');c.innerHTML='<i class="cr1"></i><i class="cr2"></i><i class="cr3"></i>';
+  if(!c){c=document.createElement('div');c.className='ltcrowd';c.setAttribute('aria-hidden','true');c.innerHTML='<i class="cr1"></i><i class="cr2"></i><i class="cr3"></i><i class="cr4"></i><i class="cr5"></i>';   // cr4・cr5 は PC の大勝負（56_pc_big.js、.cr-big）だけで出す
 }
   if(c.previousElementSibling!==rm)rm.after(c);   // 店の奥（.room）のすぐ上、相手の上半身より奥。カメラの層（#cam）ができると .room が移るので、毎回そろえる
   return c}
@@ -20,7 +20,9 @@ function crowdPlace(){const v=$('crowdSay'),tb=$('table');if(!v||v.hidden||!tb)r
   v.style.left='';v.style.right='';   // 真ん中に戻して幅を測る
   const T=tb.getBoundingClientRect(),h=v.offsetHeight||22,w=v.offsetWidth,vis=e=>e&&e.getClientRects().length&&e.getBoundingClientRect().width>2&&getComputedStyle(e).visibility!=='hidden',R=e=>e.getBoundingClientRect();
   const av=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, [id^=plate]:not(#plates), #dcall.go, #mine .card, #potChips .chip, #dbtn, .dbadge, .llseats i, .felt .boardspot > .lltools:not(.off)')].filter(vis).map(e=>{const r=R(e);return{left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2}});
-  av.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #potSign')].filter(vis).map(e=>{const r=R(e);return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  av.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #potSign')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>{const r=R(e);return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  // 勝ち負けの帯（.vfres）も重く避ける（v0.98.7 レビュー：PC の4人オールインで「すげえな」が「あなたの負け」の帯の真ん中に重なり、両方読めなかった）。帯があとから置き直されたら帯の側から crowdPlace を呼ぶ（47_video_fixes.js）
+  {const vr=document.querySelector('#table > .vfres');if(vis(vr)){const r=R(vr);av.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
   // 相手の顔（目と口）も避ける（v89 レビュー：iPhone の横で、真ん中の人の口元にかかっていた）
   {const L0=$('sayLayer'),lr=L0&&R(L0);if(lr&&typeof faceBox==='function')S.players.forEach((p,i)=>{if(!i||p.out)return;const f=faceBox(i);if(f)av.push({left:lr.left+f.l,right:lr.left+f.r,top:lr.top+f.t,bottom:lr.top+f.b,k:3})})}
   const bd=$('boardCards'),bb=vis(bd)?R(bd):null,ys=[];

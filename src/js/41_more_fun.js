@@ -28,7 +28,7 @@ function mfBigFirst(p){
   const t=loadStory();if(t.mfBig)return;t.mfBig=1;saveStory(t);
   const jin=S.players.find(q=>q.name==='ジン'&&!q.out);
   if(jin)talkLater(()=>talkSay(jin,MF_LINES.bigFirst),900);
-  else{S.jinNote={t:MF_LINES.bigFirst,until:S.handNo+1};render()}}
+  else{jinNote(MF_LINES.bigFirst,1);render()}}
 
 // ===== 案2：「前にも見た」アオの心の声 =====
 function mfRecall(p){
@@ -50,7 +50,7 @@ function mfInner(text){const tb=$('table');if(!tb||!text)return;
   let el=$('mfInner');if(!el){el=document.createElement('div');el.id='mfInner';el.className='mfinner';el.setAttribute('aria-live','polite');tb.appendChild(el)}
   el.textContent=text;el.hidden=false;el.classList.toggle('still',reducedMotion());el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
   if(reducedMotion())log(text);
-  mfPlace();clearTimeout(el._p);el._p=setTimeout(()=>{try{mfPlace()}catch(e){}},900);   // 札が配り終わって止まってから、もう1回置き直す
+  mfPlace();clearTimeout(el._p);clearTimeout(el._p2);el._p=setTimeout(()=>{try{mfPlace()}catch(e){}},900);el._p2=setTimeout(()=>{try{mfPlace()}catch(e){}},2000);   // 2秒：席番号（.llseats）が置き直されたあとにもう1回（v0.97.9 レビュー：PC で席番号に 15×2px）   // 札が配り終わって止まってから、もう1回置き直す
   clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.remove('go');el.hidden=true},MF.innerMs*(typeof SPEED==='function'?Math.max(.6,SPEED()):1))}
 function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)return;
   el.classList.remove('side');el.style.left='';el.style.width='';el.style.translate='';   // 右の列に出していても、卓の中の幅で測り直す
@@ -58,9 +58,13 @@ function mfPlace(){const el=$('mfInner'),tb=$('table');if(!el||el.hidden||!tb)re
   const avoid=[...document.querySelectorAll('#table button, #felt .card, .felt .spot .hand:not(.folded):not(.muck) .card, #plates .cue, #plates .plate, #dcall.go, #mine .card, #controls, .felt .boardspot > .lltools:not(.off), #potChips .chip, #dbtn, .dbadge, .llseats i')].filter(vis).map(e=>e.getBoundingClientRect());
   // D ボタンと席番号（.llseats i）も避ける（v86.4 レビュー：横で D と席4・5を隠した）
   // 吹き出しは読めなくなるので重みを4倍に（v85.2 レビュー：「うう、降ります」の真上に乗った）。吹き出しは #sayLayer と #plates の両方に出る
-  avoid.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(vis).map(e=>{const r=e.getBoundingClientRect();return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
+  avoid.push(...[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>{const r=e.getBoundingClientRect();return{left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4}}));
   // ポットの額も読めなくなるので吹き出しと同じ重み（v86.2 レビュー：スマホ縦で「ポット 約1万」の真上に乗った）
   {const ps=$('potSign');if(vis(ps)){const r=ps.getBoundingClientRect();avoid.push({left:r.left-2,right:r.right+2,top:r.top-2,bottom:r.bottom+2,k:4})}}
+  // 勝ち負けの帯（.vfres）も同じ重み（v0.98.7 レビュー：人だかりの声が帯に重なった。心の声も同じ所に出るので一緒に）
+  {const vr=document.querySelector('#table > .vfres');if(vis(vr)){const r=vr.getBoundingClientRect();avoid.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
+  // 人だかりの声も（人だかりの側は心の声をよける。あとから出た方がよける：CodeRabbit PR #144）
+  {const cv=$('crowdSay');if(vis(cv)){const r=cv.getBoundingClientRect();avoid.push({left:r.left-4,right:r.right+4,top:r.top-4,bottom:r.bottom+4,k:4})}}
   // 横向きは右の操作の列（指示の箱の下・ボタンの上）に空きがあれば、まずそこに出す（v85.2 レビュー。v86.4 レビュー：卓の上だと D と席番号を隠すので先に試す）
   const C=$('controls'),sn=$('sensei');
   const shown=e=>e&&!e.hidden&&e.getBoundingClientRect().width>2;   // #controls は position:fixed で offsetParent が無いので、大きさで見る
@@ -114,3 +118,20 @@ function mfReplay(b){let el=$('mfReplay');if(!el){el=document.createElement('div
   const close=()=>{clearTimeout(el._t);el.onclick=null;el.hidden=true;el.innerHTML=''};
   el.onclick=close;el._t=setTimeout(close,MF_REPLAY.ms)}
 LT.on('endHand',()=>{try{if(!mfReplayOk()||S.mfReplayed)return;S.mfReplayed=true;mfReplay(S.tw.best)}catch(e){}});
+// 心の声が出ている間に、あとから出た吹き出しにかかったら置き直す（v0.97.11：v0.97.10 の手元の検査で #say2 に 4×18px。
+// 置いたあとに出た吹き出しは、2秒後の置き直しまで重なったままだった）
+// 直近の5手（#vfLog）も、吹き出しが出たら置き直す。吹き出しのほうは見せた札をよける（bAvLoop）（v0.97.11：撮り直したハンドの終わりで重なった）
+try{let mfSayQ=0;const mfSayObs=new MutationObserver(ms=>{if(mfSayQ||$('game').hidden)return;
+  // 見るのは「吹き出しが足された」「.go（出る）が付いた・外れた」ときだけ。置き直しが付ける・外す別のクラスには反応しない
+  // （v0.97.11 は .say のクラスが変わるたびに反応し、置き直し→クラス変化→置き直し…が毎コマ回って、オールインの場面で止まった。main の Issue #127・PR #128 の CI）
+  const goFlip=m=>m.type==='attributes'&&m.target.classList&&m.target.classList.contains('say')&&/(^|\s)go(\s|$)/.test(m.oldValue||'')!==m.target.classList.contains('go');
+  // 出ている吹き出しの字が変わった（「チェック」→「上げる」）ときも。長さが変わるので（PR #128 の CI：PC の6人卓で #vfLog に #say2「黒いスーツ 上げる」がかかった）
+  const sayText=m=>m.type==='childList'&&m.target.closest&&!!m.target.closest('.say');
+  if(!ms.some(m=>goFlip(m)||sayText(m)||[...(m.addedNodes||[])].some(n=>n.classList&&n.classList.contains('say'))))return;
+  const go=()=>{const el=$('mfInner');if(el&&!el.hidden)try{mfPlace()}catch(e){}try{bAvLoop()}catch(e){}try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}};
+  // 出たばかりの吹き出しは小さく透明（LT.sayOn が「見えない」とする）。ふくらみ終わったころにもう一度（v0.97.11 手元：PC の6人卓で、直近の5手に「ミサキ いくよ！」がかかった）
+  mfSayQ=requestAnimationFrame(()=>{mfSayQ=0;go()});clearTimeout(mfSayObs.t);mfSayObs.t=setTimeout(go,380)});
+  // 吹き出しがふくらみ終わった（アニメ・transition の終わり）ときにも置き直す。380ms では間に合わない重い端末があった（PR #128 手元：第14章の終わりで #say2「カイ チェック！」が直近の5手にかかった）
+  const mfSayEnd=ev=>{const t=ev.target;if(!(t&&t.closest&&t.closest('.say'))||$('game').hidden)return;clearTimeout(mfSayEnd.t);mfSayEnd.t=setTimeout(()=>{try{const v=$('vfLog');if(v&&!v.hidden&&typeof blPlace==='function')blPlace()}catch(e){}try{const el=$('mfInner');if(el&&!el.hidden)mfPlace()}catch(e){}},30)};
+  const mfSayHook=()=>['sayLayer','plates'].forEach(id=>{const e=$(id);if(e&&!e._mfObs){e._mfObs=1;mfSayObs.observe(e,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});e.addEventListener('animationend',mfSayEnd);e.addEventListener('transitionend',mfSayEnd)}});
+  mfSayHook();LT.on('startHand',mfSayHook)}catch(e){}

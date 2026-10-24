@@ -1,0 +1,130 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "ネ",
+     "consonant": "n",
+     "consonant_length": 0.05347900837659836,
+     "vowel": "e",
+     "vowel_length": 0.09239008277654648,
+     "pitch": 5.439079761505127
+    },
+    {
+     "text": "エ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "e",
+     "vowel_length": 0.09711409360170364,
+     "pitch": 5.607522964477539
+    },
+    {
+     "text": "ネ",
+     "consonant": "n",
+     "consonant_length": 0.07650340348482132,
+     "vowel": "e",
+     "vowel_length": 0.11588043719530106,
+     "pitch": 5.558572292327881
+    },
+    {
+     "text": "エ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "e",
+     "vowel_length": 0.15156608819961548,
+     "pitch": 5.2801642417907715
+    }
+   ],
+   "accent": 2,
+   "pause_mora": {
+    "text": "、",
+    "consonant": null,
+    "consonant_length": null,
+    "vowel": "pau",
+    "vowel_length": 0.4074403941631317,
+    "pitch": 0.0
+   },
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "イ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "i",
+     "vowel_length": 0.06984417885541916,
+     "pitch": 5.474534034729004
+    },
+    {
+     "text": "マ",
+     "consonant": "m",
+     "consonant_length": 0.06024841219186783,
+     "vowel": "a",
+     "vowel_length": 0.04441618174314499,
+     "pitch": 5.599249362945557
+    },
+    {
+     "text": "ノ",
+     "consonant": "n",
+     "consonant_length": 0.05786161869764328,
+     "vowel": "o",
+     "vowel_length": 0.06904671341180801,
+     "pitch": 5.456699371337891
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "テ",
+     "consonant": "t",
+     "consonant_length": 0.06161931902170181,
+     "vowel": "e",
+     "vowel_length": 0.07797490805387497,
+     "pitch": 5.377774715423584
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ド",
+     "consonant": "d",
+     "consonant_length": 0.05807388573884964,
+     "vowel": "o",
+     "vowel_length": 0.09647879749536514,
+     "pitch": 5.2282304763793945
+    },
+    {
+     "text": "オ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "o",
+     "vowel_length": 0.10775721818208694,
+     "pitch": 5.18959379196167
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": true
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "ネエ'ネエ、イ'マノ/テ'/ド'オ？"
+}

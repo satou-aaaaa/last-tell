@@ -5,6 +5,13 @@
 // 合図を出す関数の一覧は js/35_hooks_wire.js（全部のファイルの後で1回だけ包む）。
 // 登録した関数でエラーが出ても、ほかの登録やゲームは止まらない（console.error に出るので qa の fuzz が拾う）。
 // 状態は S の下に自分の区画を作って入れる（例 S.talk={…}）。消すのも自分の startHand 合図の中で（案7）。
+// v0.98.0 PC 向け（横長の卓）：スマホ横と同じ「右の列」の配置を、大きい PC の画面（マウス）でも使う。CSS の @media も同じ2つの条件（片方を変えたらもう片方も。build.py の lint が確かめる）
+const LAND_Q='(orientation:landscape) and (max-height:520px)',PCW_Q='(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine)',SIDE_Q=LAND_Q+', '+PCW_Q;
+// WebKit（Safari・iPhone の全ブラウザ）の印 html.wk。WebKit は 3D で倒した卓の中の部品を、測った場所（getBoundingClientRect）と違う所に描く（v0.97.5 sharp:gap）。
+// この印で卓を倒さずに描き（01n_style_pcwide.css。PC：Issue #131、PR #130。スマホも v0.98.8 から）、測った場所と描かれた場所をそろえる
+{const ua=navigator.userAgent||'';if(/AppleWebKit/.test(ua)&&!/(Chrome|Chromium|Edg|OPR)\//.test(ua))document.documentElement.classList.add('wk')}
+function mqOn(q,f){try{if(typeof q.addEventListener==='function')q.addEventListener('change',f);else if(typeof q.addListener==='function')q.addListener(f)}catch(e){}}   // 画面の条件の変わり目（古い Safari は addListener だけ）
+{const q=matchMedia(PCW_Q),f=()=>document.documentElement.classList.toggle('pcw',q.matches);f();mqOn(q,f)}
 const LT={_h:{},errors:0,
   on(n,f){(this._h[n]=this._h[n]||[]).push(f);return f},
   off(n,f){const a=this._h[n];if(a){const i=a.indexOf(f);if(i>=0)a.splice(i,1)}},
@@ -24,6 +31,12 @@ const LT={_h:{},errors:0,
   // CSS の animation（fill both で出てくる動き：vfIn・ltFlop/ltTurn・ltDeal）も、ms たっても動いていたら終わりの形にする
   cssFinish(el){try{if(!el||!el.isConnected||!el.getAnimations)return;el.getAnimations().forEach(a=>{const t=a.effect&&a.effect.getComputedTiming();if(t&&isFinite(t.endTime)&&a.playState==='running')a.finish()})}catch(e){}},
   cssDone(el,ms){setTimeout(()=>LT.cssFinish(el),ms)},
+  // よける相手として数えてよいか。吹き出し（.say）は .go が付いたまま2.6秒の動きの最後で見えなくなるので、不透明度で見る（v0.97.8 レビュー：もう見えない吹き出しを
+  // 心の声の字幕がよけて、右上に寄って折り返した）。吹き出しでなければ true。'.say.go' をよける一覧に入れるときは必ずこれも通す（lint が見る）（say-go-ok）
+  // 消える途中（動きの残りが 0.5秒以下）も見えていない扱い（v0.97.9 レビュー：消えかけの吹き出しを字幕がよけ、検査は ⚠️ を出した。ゲームと検査で同じ線にする。qa/checks/ui.js の INNER_OV も同じ）
+  sayOn(e){if(!e||!e.classList||!e.classList.contains('say'))return true;if(+getComputedStyle(e).opacity<=.05)return false;{const r=e.getBoundingClientRect();if(r.width<14||r.height<14||!(e.textContent||'').trim())return false}   // 中身のない・出はじめの細い吹き出し（v0.97.11 手元：#say2 が幅 4px で心の声に「重なり」）
+    
+    try{for(const a of e.getAnimations())if(/^say/.test(a.animationName||'')&&a.playState==='running'){const d=a.effect.getComputedTiming(),left=(d.endTime||0)-(+d.localTime||0);if(left<=500)return false}}catch(x){}return true},
   // 見張り（v0.97.3 レビュー）：画面のすべての動き（CSS の animation・transition、script の動き）を 250ms ごとに見て、
   // 最初に見た時からの残り時間＋300ms をすぎても動いていれば、終わりの形にする。Safari で動きが止まっても、透明・横向き・途中のまま残らない。
   // 一つずつ LT.cssDone を足すのでは抜けが出た（v0.97.3：見せた札の flip/flipSlow が透明のまま）ので、全部まとめて見る。終わりのない動き（infinite）と止めた動きは見ない

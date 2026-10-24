@@ -1,0 +1,99 @@
+<title>卓の手と考える顔</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+/* layout: one dark felt-and-lamp column; the video is the hero, options as a short list, then the cast table */
+:root{
+  --bg:#0f1311; --panel:#171d1a; --line:#2a3530; --fg:#e8e4da; --mute:#a3a89f; --gold:#d8b46a; --felt:#1f5a3c;
+  --display:"Shippori Mincho","Yu Mincho",serif; --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.75;font-size:15px}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1{font-family:var(--display);font-size:clamp(26px,5vw,36px);margin:0;letter-spacing:.04em;text-wrap:balance}
+h2{font-family:var(--display);font-size:20px;margin:0 0 10px;color:var(--gold);letter-spacing:.05em}
+.lead{color:var(--mute);margin:6px 0 0}
+video{width:100%;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+.cap{color:var(--mute);font-size:13px;margin-top:6px}
+.opts{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.opts li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.opts b.n{font-family:var(--display);color:var(--gold);font-size:18px;min-width:2.2em}
+.opts .rec{border-color:var(--gold)}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:99px;background:var(--felt);color:var(--fg);margin-left:6px;letter-spacing:.05em}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--gold);font-weight:700;background:var(--panel);white-space:nowrap}
+td:first-child{white-space:nowrap;font-weight:700}
+ul.rules{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.src a{color:var(--gold)}
+.src{font-size:13px;color:var(--mute)}
+</style>
+<div class="wrap">
+  <header>
+    <h1>卓の手と、考える顔</h1>
+    <p class="lead">3D の人に、本物の店らしい手の動きと、性格ごとの「考える顔」を付けた試作です。強い人ほど小さく静かに、弱い人ほど大きく、かわいく動きます。</p>
+  </header>
+
+  <section>
+    <video src="hands.mp4" controls muted playsinline loop preload="metadata"></video>
+    <p class="cap">ジン → クロウ → ハヤト → レイカ → ゲン → ミナ（各 10 秒ほど・計 67 秒）。札をのぞく → チェックのノック → チップを置く → チップの手遊び → 考える（顔へ寄る）。卓・服・光は試作用の仮です。</p>
+  </section>
+
+  <section>
+    <h2>追加：チップを放る・降り方（2026-10-24 夜）</h2>
+    <video src="toss_fold.mp4" controls muted playsinline loop preload="metadata"></video>
+    <p class="cap">6 人がそれぞれチップを出してから降ります（各 4 秒ほど・計 25 秒）。ハヤトとゲンは放ります。チップは低い弧を描いて<b>自分の前</b>に落ち、真ん中のポットには放り込みません（店で嫌われる「スプラッシュ」）。降り方は 4 通りで、すべらせる（ジン）、はじく（クロウ・ハヤト）、押し出す（レイカ・ミナ）、放る（ゲン）。札は伏せたまま、手が触れたときに動き出します。</p>
+  </section>
+
+  <section>
+    <h2>追加：性格ごとの顔（案4）</h2>
+    <img src="faces6.jpg" alt="6 人の顔。左から ふだん・考える・自信・不安・勝ち・負け" style="width:100%;border-radius:6px;border:1px solid var(--line);display:block">
+    <p class="cap">上から ジン・クロウ・ハヤト・レイカ・ゲン・ミナ。左から ふだん・考える・自信・不安・勝ち・負け。ジンは勝っても口を開けず、クロウは片側だけ鋭くにやりとし、ハヤトは負けると怒ります。レイカは口を閉じたまま まぶたで見せ、ゲンとミナは顔に全部出ます。</p>
+  </section>
+
+  <section>
+    <h2>案</h2>
+    <ul class="opts">
+      <li class="rec"><b class="n">案1</b><div><b>動作に手が付く</b><span class="tag">おすすめ</span><br>配られたら札をのぞく・チェックで卓をたたく・ベットでチップを山から取って線の先へ置く。チップが飛ぶ今の動きを、手が運ぶ形に変えます。</div></li>
+      <li class="rec"><b class="n">案2</b><div><b>待っている間の手遊び</b><span class="tag">おすすめ</span><br>自分の番でないとき、ときどきチップの山の上で指を動かす（前に入れたチップの手遊びの 3D 版）。</div></li>
+      <li class="rec"><b class="n">案3</b><div><b>考える仕草と考える顔</b><span class="tag">おすすめ</span><br>考えている間、性格ごとの顔（下の表）と手：レイカはあごに手、ミナはほおに指、ゲンとハヤトは頭をかく。ジンとクロウは手を動かさず、顔だけわずかに変わる。</div></li>
+      <li><b class="n">案4</b><div><b>ほかの顔も性格ごとに</b>（あとで）<br>自信・不安・勝ち・負けの顔も 1 人ずつ作り分ける。20 人の常連にも広げる。</div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>性格ごとの違い（試作の値）</h2>
+    <div class="tw"><table>
+      <thead><tr><th>人</th><th>考える顔</th><th>考える手</th><th>ベット</th><th>降り方</th><th>のぞき方</th><th>ノック</th></tr></thead>
+      <tbody>
+        <tr><td>ジン</td><td>ほぼ動かない（目を少し細める）</td><td>なし</td><td>卓をすべらせて一度で</td><td>2 本の指ですべらせる</td><td>少しだけ・下を見ない</td><td>指先 1 回</td></tr>
+        <tr><td>クロウ</td><td>片眉を下げ、唇を薄く結ぶ</td><td>なし</td><td>すべらせる・速い</td><td>人差し指ではじく</td><td>少しだけ・下を見ない</td><td>指の背 1 回</td></tr>
+        <tr><td>ハヤト</td><td>下唇をかんで片方の口角を上げる</td><td>頭をかく</td><td>少し運んで前へ放る</td><td>人差し指ではじく</td><td>さっと</td><td>指の背 1 回（強め）</td></tr>
+        <tr><td>レイカ</td><td>まぶたを落とし、口を少しすぼめる</td><td>あごに手</td><td>持ち上げて置く・ゆっくり</td><td>手のひらで押し出す</td><td>少し・下を見る</td><td>手のひら 1 回</td></tr>
+        <tr><td>ゲン</td><td>眉を上げ、口をとがらせて横へ寄せる</td><td>頭をかく</td><td>少し運んで前へ放る・チップを見る</td><td>つまんで放る</td><td>大きく 2 回</td><td>こぶし 2 回</td></tr>
+        <tr><td>ミナ</td><td>ほおをふくらませて上を見る</td><td>ほおに指</td><td>持ち上げて置く・チップを見る</td><td>手のひらで押し出す</td><td>大きく 2 回</td><td>指先 1 回</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>守ること</h2>
+    <ul class="rules">
+      <li>手の動きと考える顔は、手の強さで変えない。毎回同じ癖なので、読み合いの手がかり（テル）にはならない。テルは今までどおり別に出る。</li>
+      <li>ジンは考えるときに手を顔に近づけない（第 7 章の本当のテルに触れない）。</li>
+      <li>テルの手（ジンの傷・クロウの手袋）は今のまま。</li>
+      <li>自動検査を足した：手が目標に届く・卓に沈まない・終わると元の姿勢に戻る・動きの関数が手の強さを受け取らない。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>まだ残ること</h2>
+    <ul class="rules">
+      <li>腕を高く上げると T シャツの肩が伸びて見える（服のスレッドの「肩の肌」の直しと合わせて直す）。</li>
+      <li>本物の卓の画面（座った目の視点）への組み込みは、卓を標準にする変更が main に入ってから。</li>
+    </ul>
+  </section>
+
+  <p class="src">調べたもの：<a href="https://www.pokernews.com/strategy/10-hold-em-tips-5-common-poker-tells-to-look-for-25433.htm">PokerNews：よくあるテル</a>（手のふるえ・チップの扱いが手がかりになる → 癖は毎回同じにして手がかりにしない）／<a href="https://en.wikipedia.org/wiki/Tell_(poker)">Tell (poker)</a>／<a href="https://www.pokernews.com/strategy/casino-poker-for-beginners-05-chips-betting-raising-29211.htm">PokerNews：チップの出し方</a>（自分の前へ一度で、スプラッシュしない）／<a href="https://www.pokernews.com/pokerterms/muck.htm">PokerNews：Muck</a>（降り方は押す・すべらせる・はじく・放る）／<a href="https://www.thepokerbank.com/articles/etiquette/live/">The Poker Bank：ライブのマナー</a>／<a href="https://docs.godotengine.org/en/4.3/classes/class_skeletonik3d.html">Godot の骨の IK</a>。表情は MetaHuman の DNA から Epic の OpenRigLogic で焼いています。</p>
+</div>

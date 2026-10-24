@@ -27,13 +27,13 @@ LT.on('askQuiz',id=>{try{const box=$('quiz'),q=box&&box.querySelector('.qq');if(
 // ストーリーの章で、自分に弱い2枚（preTier 0）が来たら、ある割合でその2枚を山の底に戻して引き直す（1回だけ）。
 // 第5章は 6割、ほかの章は 3割。回想・裏の卓・はしご・フリー対戦は今のまま。台本・決まった札は後の setupScript が上書きする
 const DEAL_HELP={def:.3,5:.6,6:.6};   // 第6章も 6割（satou 2026-10-18 第6章の録画 #15〜17）
+// 呼ぶのは配りを変える入口（js/54_deal_mod.js の LT.dealRun('hand')）だけ。札を変えたら true。第6章・第14章の強い手（p6Premium）は入口が先に呼ぶ
 function dealHelp(){
-  if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return;
-  try{if(typeof p6Premium==='function'&&p6Premium())return}catch(e){}   // 第6章：ときどき強い手（js/51_play6_fixes.js）
-  const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return;
+  if(!S||!S.players||!CFG||!CFG.ch||CFG.flashback||CFG.ura||CFG.run)return false;
+  const me=S.players[0];if(!me||me.out||!me.hand||me.hand.length!==2||preTier(me.hand)>0)return false;
   const p=!CFG.ch.p2&&DEAL_HELP[CFG.ch.no]!=null?DEAL_HELP[CFG.ch.no]:CFG.ch.p2===4?DEAL_HELP[6]:DEAL_HELP.def;   // 第14章も第6章と同じ（2026-10-19、第6章の形にそろえた）
-  if(LT.rand()>=p||S.deck.length<12)return;
-  S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()]}
+  if(LT.rand()>=p||S.deck.length<12)return false;
+  S.deck.unshift(...me.hand);me.hand=[S.deck.pop(),S.deck.pop()];return true}
 // 設定の初めの値（satou 2026-10-17 17:13Z のカード）：「先に選ぶ」（パスフォールド）は最初からオン、「カードをそろえる」は最初はオフ。
 // 前の版でできた保存（先に選ぶ：オフ、そろえる：オン）は一度だけ新しい値に直す。そのあと設定で変えたものは、そのまま
 SAVE_KEYS.push('shisho-p35');
@@ -142,5 +142,6 @@ function c35ToolsChk(){const R=e=>e.getBoundingClientRect(),vis=e=>e&&e.offsetPa
 // v95 CI：縦で塔が自分の札に 4px かかったまま残った（札が配られて動き終わる前に測った）。位置合わせの 0.45 秒後にもう一度測る
 // 山を積み直すと額が後から動く（potSignSoon）ので、上の 150/700ms でも直す（CI：第6章 横で額が塔に 13×4px）
 // 額の数字は数え上げ（potCount）で後から幅が広がるので、額の大きさが変わったときにも直す（v95 CI：第6章 横で 13×4px）
-{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{try{c35PotTight()}catch(e){}});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
+// ResizeObserver の中では書かず次のコマで（中で額の幅を変えると、帯・名札を見張る ResizeObserver へ続き「ResizeObserver loop」のエラーになる。v0.97.12 の自動対戦）
+{let c35RO=null;LT.on('layout',()=>{try{const s=$('potSign'),v=s&&s.querySelector('.pv');if(s&&typeof ResizeObserver!=='undefined'&&(!c35RO||c35RO.el!==s||c35RO.v!==v)){if(c35RO)c35RO.disconnect();c35RO=new ResizeObserver(()=>{if(!c35RO.q)c35RO.q=requestAnimationFrame(()=>{c35RO.q=0;try{c35PotTight()}catch(e){}})});c35RO.el=s;c35RO.v=v;c35RO.observe(s);if(v)c35RO.observe(v)}}catch(e){}})}
 let c35PT=0;LT.on('layout',()=>{try{c35PotTight()}catch(e){}clearTimeout(c35PT);c35PT=setTimeout(()=>{try{c35PotTight()}catch(e){}},450)});

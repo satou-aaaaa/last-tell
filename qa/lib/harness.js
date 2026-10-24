@@ -10,8 +10,11 @@ const FAST = 25; // 待ち時間を 1/25 にする
 // ページが読み込まれる前に入れる：時間の早回し、エラーの記録、設定
 function initScript({ fast = FAST, lang = 'ja', settings = {}, seed = null } = {}) {
   return `(() => {
-    // seed を決めたときは、配られる札などを毎回同じにする（画面チェック用）
-    if (${seed === null ? 'false' : 'true'}) { let a = ${Number(seed) >>> 0 || 1}; Math.random = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
+    // seed を決めたときは、配られる札などを毎回同じにする（画面チェック用）。Math.random を呼んだ場所（関数と呼び元の行）ごとに別の乱数の列にする：
+    //   スタックの1行目が「Error」なのは Chromium だけ（WebKit は呼ばれた関数の行から始まる）なので、それを飛ばしてから「呼び元とその呼び元」の2行を使う（CodeRabbit PR #142）
+    //   1本の列だと、タイマーで動く演出が実行機の速さしだいで先に乱数を取り、同じ種でも座る人・CPU の打ち方が変わった（改善提案 2026-10-22 §0-1）
+    if (${seed === null ? 'false' : 'true'}) { const S0 = ${Number(seed) >>> 0 || 1}, st = new Map(); const h = s => { let x = S0 ^ 0x9E3779B9; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 0x01000193); return x >>> 0 };
+      Math.random = () => { const L = (new Error().stack || '').split(String.fromCharCode(10)), k = L.slice(/^Error/.test(L[0]) ? 2 : 1).slice(0, 2).map(l => l.replace(/^.*[/]/, '')).join('<'); let a = st.has(k) ? st.get(k) : h(k); a = a + 0x6D2B79F5 | 0; st.set(k, a); let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
     window.__qa = { errors: [], logs: [] };
     window.addEventListener('error', e => window.__qa.errors.push(String(e.message) + ' @' + (e.lineno||'')));
     window.addEventListener('unhandledrejection', e => window.__qa.errors.push('promise: ' + String(e.reason && e.reason.message || e.reason)));
@@ -187,12 +190,15 @@ async function startBot(page, opts = {}) {
 
 // 終わるまで待つ。手が進まないまま stallMs 過ぎたら「止まった」とする
 async function runUntilDone(page, { timeoutMs = 120000, stallMs = 15000 } = {}) {
-  const t0 = Date.now();
+  const t0 = Date.now(), tks = []; let starved = 0;
   while (true) {
     await page.waitForTimeout(250);
-    const st = await page.evaluate(() => ({ done: __bot.done, hands: __bot.hands, idle: Date.now() - __bot.stuckAt }));
+    const st = await page.evaluate(() => ({ done: __bot.done, hands: __bot.hands, idle: Date.now() - __bot.stuckAt, tk: __bot.tickN || 0 }));
+    tks.push([Date.now(), st.tk]); while (tks.length > 2 && tks[1][0] < Date.now() - 20000) tks.shift();
     if (st.done) return { status: 'done' };
-    if (st.idle > stallMs) return { status: 'stalled' };
+    // ボットのタイマー（4ms ごと）が 20秒で 200回も回っていないときは、ゲームが止まったのでなくページ全体が詰まっている（実行機が混んでいる）。
+    // 自動対戦（checks/fuzz.js）と同じく 60秒まで待ち足す（PR #128 の CI：rules のフリー対戦が1ハンド目で「止まった」が、長い処理が合計19秒だった）
+    if (st.idle > stallMs) { if (st.tk - tks[0][1] < 200) { if (!starved) starved = Date.now(); if (Date.now() - starved < 60000) continue } return { status: 'stalled', starvedMs: starved ? Date.now() - starved : 0 } }   // 待ち足すのは実際の時間で60秒まで（CodeRabbit PR #128）
     if (Date.now() - t0 > timeoutMs) return { status: 'timeout' };
   }
 }
@@ -210,6 +216,10 @@ async function botState(page) {
       gs: (typeof S !== 'undefined' && S && S.players) ? { hand: S.handNo, street: S.street, toAct: S.toAct, over: !!S.handOver, autoMe: !!S.autoMe, ctrl: vis(document.getElementById('controls')),
         sinceTick: Date.now() - (B.tickAt || 0), ticks: B.tickN || 0, acted: S.players.map(p => p.lastAct || '-').join(','), hidden: document.hidden,
         lt: window.__qaLong ? Math.round(__qaLong.ms / 1000) + "秒/" + __qaLong.n + "回（最長" + Math.round(__qaLong.max) + 'ms）' : '',
+        // 相手の番の予約（proceed の最後・相手の動きのタイマー）と、待ちを延ばす値（v0.98.9 WebKit 第5章：相手の番のまま止まった）
+        pr: S.procAt ? Math.round((Date.now() - S.procAt) / 100) / 10 + '秒前' + (S.procN ? '（' + S.procN + '回）' : '') : 'なし',
+        cq: S.cpuQ ? '席' + S.cpuQ.i + '・ハンド' + S.cpuQ.h + '・待ち' + S.cpuQ.w + 'ms・' + Math.round((Date.now() - S.cpuQ.at) / 100) / 10 + '秒前' + (S.cpuQ.ran ? '・動いた' : '・まだ') : 'なし',
+        fl: ['hold', 'stare', 'reveal', 'runout', 'angleActing', 'tease'].filter(k => S[k] != null && S[k] !== false && S[k] !== 0 && S[k] !== -1).map(k => k + '=' + String(S[k]).slice(0, 12)).join(' ') + (S.scriptAI ? ' scriptAI' : '') + (typeof CFG !== 'undefined' && CFG.flashback ? ' flashback' : ''),
         sc: (typeof SC !== 'undefined' && SC) ? (SC.i + '/' + (SC.lines ? SC.lines.length : '?')) : '', btns: [...document.querySelectorAll('#scene button, #vs button, #between button')].filter(vis).map(b => b.id || b.textContent.trim().slice(0, 6)).slice(0, 5).join('/') } : null };
   });
 }

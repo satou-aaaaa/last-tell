@@ -6,7 +6,10 @@ const MANNERS={
 };
 const mannerOf=p=>{const m=p&&!p.human&&!(CFG.ch&&CFG.ch.no<=4)?MANNERS[p.name]||null:null;return m&&p.name==='ハヤト'&&uraRule('ハヤト')?{...m,slowroll:1,tilt:{...m.tilt,hands:0}}:m};
 const styleOf=p=>{const m=mannerOf(p);return m&&p.tilt>0?{...p.style,bluff:m.tilt.bluff,margin:m.tilt.margin}:p.style};
-const jinNote=(t,hands)=>{S.jinNote={t,until:S.handNo+(hands||0)}};
+// keep：1回だけの教えの台詞（セーブに「見た」と残すもの）。そのハンドのうちは、あとから来た別の台詞で上書きしない（後の台詞は次のハンドへ回す）
+// v0.98.9 CI：第4章で「〇〇だけ」の師匠のひとことが、同じ描き直しの中で別の台詞に上書きされ、見たことになったのに一度も出なかった
+const jinNote=(t,hands,keep)=>{const c=S.jinNote;if(c&&c.keep&&c.t!==t&&S.handNo<=c.until){S.jinNoteNext={t,hands};return}S.jinNote={t,until:S.handNo+(hands||0),keep:!!keep}};
+LT.on('startHand',()=>{try{const n=S.jinNoteNext;if(!n)return;S.jinNoteNext=null;if(S.jinNote&&S.jinNote.keep&&S.handNo<=S.jinNote.until)return;S.jinNote={t:n.t,until:S.handNo+(n.hands||0),keep:false}}catch(e){}});
 const MANNER_KEY='shisho-manners';
 function bumpNice(){let n=0;try{n=+(JSON.parse(localStorage.getItem(MANNER_KEY))||{}).nice||0}catch(e){}n++;try{localStorage.setItem(MANNER_KEY,JSON.stringify({v:1,nice:n}))}catch(e){}return n}
 // 煽られたあとの返し：「無視する」「ナイスハンド」。押さなくても進む

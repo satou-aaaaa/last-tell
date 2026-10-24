@@ -149,19 +149,21 @@ function ltDealAnim(){if(!S||!S.ltDealAt||!S.players)return;if(!S.ltOrder||!S.lt
     [...h.querySelectorAll(':scope > .card')].slice(0,2).forEach((c,r)=>{const d=(r*n+j)*LT_DEAL()-el;
       c.style.animation=`ltDeal ${260}ms cubic-bezier(.2,.7,.3,1) ${Math.round(d)}ms both`})})}
 // バーン：通りが進むたびに、伏せた札を1枚、捨て札の山へ
-{const o=nextStreet;nextStreet=function(){const n0=S&&S.board?S.board.length:0,at=S?S.ltBoardAt:0;if(S&&!reducedMotion()){S.ltBoardAt=performance.now();S.ltBoardFrom=n0}
+// めくる時間（ms）。フロップ 1000、ターン・リバー 520。大勝負のリバー（56_pc_big.js、PC だけ）は 1200 までゆっくり。ディーラーの手（55_pc_hand.js）も同じ時間で追う
+function ltBoardDur(from){return from===0?1000*SPEED():from===4&&S&&S.ltBoardSlow?Math.min(1200,1200*Math.max(SPEED(),.6)):520*SPEED()}
+{const o=nextStreet;nextStreet=function(){const n0=S&&S.board?S.board.length:0,at=S?S.ltBoardAt:0;if(S&&!reducedMotion()){S.ltBoardAt=performance.now();S.ltBoardFrom=n0;S.ltBoardSlow=n0===4&&typeof LT.pcBigRiver==='function'&&LT.pcBigRiver()}
   const r=o.apply(this,arguments);
   try{if(S&&S.board){if(S.board.length>n0){if(typeof muckAdd==='function')muckAdd()}else if(S.ltBoardFrom===n0)S.ltBoardAt=at}}catch(e){}
   return r}}
-function ltBoardAnim(){if(!S||!S.ltBoardAt||reducedMotion())return;const el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
-    dur=(flop?1000:520)*SPEED();if(el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
+function ltBoardAnim(){if(!S||!S.ltBoardAt)return;const rm=reducedMotion(),el=performance.now()-S.ltBoardAt,from=S.ltBoardFrom||0,flop=from===0,
+    dur=ltBoardDur(from);if(rm||el>dur+50){S.ltBoardAt=0;[...$('boardCards').children].forEach(c=>{LT.cssFinish(c);LT.cssFinish(c.querySelector(':scope > .ltbk'))});return}   // めくり終わり（動きを減らす設定に変わったときもここで終わりの形にする。ltBoardAt を残すと PC の手が空回りした：PR #136）：Safari で動きが途中で止まって札が重なったまま残った（v0.97.2 CI）。終わりの形にする
   // 動作の重さの改善 案3：札の幅は先に全部測ってから書く（書く→測るをくり返さない）
   const cs=[...$('boardCards').children].map((c,k)=>[c,k]).filter(([c,k])=>!(k<from||k>=S.board.length||c.classList.contains('slot')||c.classList.contains('back')));
   cs.forEach(([c])=>{if(!c.querySelector(':scope > .ltbk')){const b=document.createElement('i');b.className='card back ltbk';b.setAttribute('aria-hidden','true');c.appendChild(b)}});
   const ws=cs.map(([c])=>c.getBoundingClientRect().width||40);
   cs.forEach(([c,k],j)=>{
     const w=ws[j],sx=flop?-(k-from)*(w+4):0;c.style.setProperty('--ltsx',sx+'px');
-    c.style.animation=`${flop?'ltFlop':'ltTurn'} ${Math.round(dur)}ms ease-in-out ${Math.round(-el)}ms both`;
+    c.style.animation=`${flop?'ltFlop':'ltTurn'} ${Math.round(dur)}ms ${typeof ltCardEase==="function"?ltCardEase():"ease-in-out"} ${Math.round(-el)}ms both`;
     c.querySelector(':scope > .ltbk').style.animation=`${flop?'ltBack':'ltBackT'} ${Math.round(dur)}ms linear ${Math.round(-el)}ms both`;})}
 // ショーダウン：ポットが動いたあと、負けて開いていた手をディーラーが集める（伏せる人は今の処理のまま）
 function ltLosersAway(){if(!S||!S.handOver||S.street!=='showdown'||!S.ltLoseAt||performance.now()<S.ltLoseAt)return;

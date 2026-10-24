@@ -57,7 +57,8 @@ function tipWant(){const me=S.players[0];if(!me||!me.human)return'';const nv=nov
     if(S.board.length>=3&&!tipSeen('board'))return'board'}
   if(S.handOver&&S.handNo>0&&me.won>0&&!tipSeen('pot'))return'pot';
   return''}
-function tipShow(k){const bar=tipBar();if(!bar)return;tipMark(k);tipK=k;tipAt=performance.now();const e=tipEl();e.textContent=k==='check'&&I18N.lang!=='en'?TIPS[k].replace('そのまま','そ\u2060の\u2060ま\u2060ま'):TIPS[k];bar.insertBefore(e,bar.firstChild);e.hidden=false;
+function tipShow(k){const bar=tipBar();if(!bar)return;tipMark(k);tipK=k;tipAt=performance.now();const e=tipEl();e.textContent=k==='check'&&I18N.lang!=='en'?TIPS[k].replace('そのまま','そ\u2060の\u2060ま\u2060ま'):TIPS[k];bar.insertBefore(e,bar.firstChild);e.hidden=false;try{LT.cssDone(e,500)}catch(x){}   // Safari：出てくるアニメ（tipIn）が進まず透明のまま残ることがある（v0.97.12 CI WebKit：案内が opacity 0 のまま）。時間がたったらアニメを外して必ず見せる
+  
   try{requestAnimationFrame(keepMine)}catch(x){}
   // v66（レビュー 3）：はじめての人の「act」の案内は、最初に操作ボタンを押すまで出しておく。ジンの助言はそのあと
   // v68（v67 レビュー 3）：最初の判断で払う額が 0 なら「act」ではなく「check」の案内を先に出し、同じように押すまで出しておく
@@ -118,7 +119,7 @@ function resumeLoad(){try{const R=JSON.parse(localStorage.getItem(RESUME_KEY));
   else if(R.kind!=='free'&&R.kind!=='store')return null;
   return R}catch(e){return null}}
 function resumeLabel(R){const h=(+R.S.handNo||0)+1;return R.kind==='ch'?`続きから（第${R.ch}章・${h}ハンド目）`:`続きから（フリー対戦・${h}ハンド目）`}
-const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。スチールは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。AAで負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、スチールは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
+const RECAP={"1": "錨亭だ。ゲンは何にでも入ってくる。強い手のときだけ戦え", "2": "ロクの店、銀の扉だ。スチールは後ろの席から。あと{left}回だ", "3": "月影で、セキと打っている。何もない手でも、仕掛けどころはある。あと{left}回だ", "4": "天空の卓だ。レイカは嘘をつく。顔を見て、嘘にだけ払え。あと{left}回だ", "5": "ハヤトの賭場だ。強い手札で負けて、少ないチップからやり直している。……焦るな", "6": "王冠のトーナメントだ。残りは{left}人。ブラインドは上がり続ける", "7": "……座れ。卒業試験の続きだ", "11": "錨亭だ。タロウがゲンと打っている。強い手だけで戦え", "12": "汐見の舫だ。よその店でも、スチールは後ろの席から。あと{left}回だ", "13": "地下で、ハヤトの弟子のカイと打っている。急がせるのは向こうだ", "14": "看板持ちのトーナメントだ。残りは{left}人", "15": "……座れ。最後のテルの続きだ"};
 function recapLine(R){if(!R||R.kind!=='ch'||!(Date.now()-(+R.at||0)>6*3600e3))return null;const c=CHAPTERS[R.ch-1];const t=c&&RECAP[c.no];if(!t)return null;
   const g=c.goal||{},st=R.S||{},n=g.type==='steal'?st.steals:g.type==='bluff'?st.bluffs:g.type==='readcall'?st.reads:null;
   const left=g.n&&n!=null?Math.max(1,g.n-(+n||0)):R.P.filter(p=>!p.out&&(+p.chips||0)>0).length;

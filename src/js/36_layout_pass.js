@@ -34,13 +34,19 @@ function potSignPlaceWide(){const s=$('potSign'),p=$('potChips'),t=$('table'),c=
   s.style.top=(Math.min(b+3,lim)-tr.top)+'px'}
 // クセの札：相手の胸像の右上（今まで render の中で決めていた位置と同じ式）。全部測ってから全部書く
 // v73（改善提案 2026-10-14 §1）：ディーラーの声（#dcall）がクセの札（.cue）に重なるときは、声を左上へ寄せる（札は動かさない）
-function dcallPlace(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';return}
+// 置いたあとも、クセの札にかかっていたら（吹き出しをよけて動いた先が札だった・字の幅が測った時と違う）、左へ寄せて札の手前で折り返す（v0.98.7 CI：WebKit PC で #cue2 に 25×19px）
+function dcallPlace(){dcallPlace0();const d=$('dcall');if(!d||!d.classList.contains('go'))return;
+  const R=e=>e.getBoundingClientRect(),hit=(r,c)=>Math.min(r.right,c.right)-Math.max(r.left,c.left)>0&&Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top)>0;
+  const cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);let r=R(d),hc=cs.filter(c=>hit(r,c));if(!hc.length)return;
+  if(!d.classList.contains('dleft')){d.style.top='';d.style.right='';d.classList.add('dleft');r=R(d);hc=cs.filter(c=>hit(r,c));if(!hc.length)return}
+  const mw=Math.min(...hc.map(c=>c.left))-r.left-8;if(mw>40){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}
+function dcallPlace0(){const d=$('dcall');if(!d)return;if(!d.classList.contains('go')){d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';return}
   const R=e=>e.getBoundingClientRect(),cs=[...document.querySelectorAll('#plates > .cue')].filter(c=>!c.hidden&&c.offsetParent).map(R).filter(r=>r.width>1);
   d.classList.remove('dleft','dwrap');d.style.top='';d.style.maxWidth='';d.style.right='';if(!cs.length)return dcSayLift(d);
   const hit=r=>c=>{const w=Math.min(r.right,c.right)-Math.max(r.left,c.left),h=Math.min(r.bottom,c.bottom)-Math.max(r.top,c.top);return w>0&&h>0};
   const r0=R(d);if(!cs.some(hit(r0)))return dcSayLift(d);
   // 左上へ（札を優先）。左の吹き出し（客の一言）にかかるときは、吹き出しの上へ少し上げる（顔の上へは下げない：顔の奥に隠れるため）
-  d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>80){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
+  d.classList.add('dleft');{const rl=R(d),hc=cs.filter(hit(rl));if(hc.length){const mw=Math.min(...hc.map(c=>c.left))-rl.left-6;if(mw>40){d.style.maxWidth=Math.round(mw)+'px';d.classList.add('dwrap')}}}   // 長い声（役の名前など）が左から札に届くときは2行に
   // 吹き出しからは 7px 離す（v93 レビュー：3px かかった。dcSayLift と同じ幅）
   const r1=R(d),r1m={left:r1.left-7,right:r1.right+7,top:r1.top-7,bottom:r1.bottom+7},says=[...document.querySelectorAll('#sayLayer .say,#plates .say')].filter(e=>e.offsetParent&&+getComputedStyle(e).opacity>.05).map(R).filter(r=>r.width>1&&hit(r1m)(r));
   if(!says.length)return;const pr=(d.offsetParent||document.body).getBoundingClientRect(),top=Math.min(...says.map(c=>c.top))-r1.height-7-pr.top;
@@ -109,8 +115,10 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     lpTry(fitTags);lpTry(fitMyHand);lpTry(barSync);
     if(LP.pot){LP.pot=false;lpTry(potSignPlaceWide)}
     lpTry(()=>{talkPlace();const row=$('askRow');
+      // 場札にかかったときも（PR #128 の CI：第14章の縦で「黙る」が場札の 2♣ に乗った）
       // v0.96.2 CI：第14章の縦で、相手の問い（「黙る」など）の列を上げても自分の手札にかかった。かかったままなら bPlace と同じく空いた所を探す
-      const onMine=r=>{const a=r.getBoundingClientRect();return [...document.querySelectorAll('#mine .card')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
+      const onMine=r=>{const a=r.getBoundingClientRect();if(a.bottom>askPanelTop(a)+1)return true;   // 額の枠にかかったときも（v0.98.8 CI）
+        return [...document.querySelectorAll('#mine .card, #boardCards .card:not(.slot), #board2 .card:not(.slot)')].some(e=>{const q=e.getBoundingClientRect();return q.width>2&&a.left<q.right-1&&q.left<a.right-1&&a.top<q.bottom-1&&q.top<a.bottom-1})};
       if(row&&!row.hidden&&typeof bPlace==='function'&&(row._bp||onMine(row)))bPlace(row);
       // 手札は配る動きのあとで場所が決まる。少しあとにもう一度だけ確かめる（v0.96.4 CI）
       if(row&&!row.hidden&&typeof bPlace==='function'){clearTimeout(LP._askT);LP._askT=setTimeout(()=>{try{const r=$('askRow');if(r&&!r.hidden&&onMine(r))bPlace(r)}catch(e){}},700)}});
@@ -118,7 +126,7 @@ LT.on('layout',()=>{const gameOn=!$('game').hidden;
     // 吹き出しの置き場所（30c_ui64 の sayPlace）。faceFit がもう置いたものは飛ばす
     document.querySelectorAll('#sayLayer .say').forEach(sy=>{if(!sy._lpSay)return;sy._lpSay=0;if(sy.classList.contains('go'))lpTry(()=>sayPlace(sy))});
     // v75 レビュー 1：卓の大きさが変わって（レイズの欄を開くなど）横に置いた吹き出しが名札にかかったら置き直す
-    {const R0=($('table')||document.body).getBoundingClientRect(),pr=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent).map(e=>[e.id,e.getBoundingClientRect()]);if(pr.length)document.querySelectorAll('#sayLayer .say.go.side').forEach(sy=>{const r=sy.getBoundingClientRect(),me='plate'+sy.id.replace('say','');const k=(sy.dataset.seq||'')+'|'+Math.round(R0.height);if(sy._rpK===k)return;if(pr.some(([id,q])=>id!==me&&r.left<q.right&&q.left<r.right&&r.top<q.bottom&&q.top<r.bottom)){sy._rpK=k;lpTry(()=>sayPlace(sy))}})}   // 同じ吹き出し・同じ卓の高さでは1回だけ（置き場が無いときに毎コマ置き直さない）
+    {const R0=($('table')||document.body).getBoundingClientRect(),pr=[...document.querySelectorAll('#plates .plate')].filter(e=>e.offsetParent).map(e=>[e.id,e.getBoundingClientRect()]);if(pr.length)document.querySelectorAll('#sayLayer .say.go.side').forEach(sy=>{const r=sy.getBoundingClientRect(),me='plate'+sy.id.replace('say','');const k=(sy.dataset.seq||'')+'|'+Math.round(R0.height);if(sy._rpK===k)return;if(pr.some(([id,q])=>id!==me&&r.left<q.right&&q.left<r.right&&r.top<q.bottom&&q.top<r.bottom)){sy._rpK=k;lpTry(()=>sayPlace(sy))}})}   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */   // 同じ吹き出し・同じ卓の高さでは1回だけ（置き場が無いときに毎コマ置き直さない）
     lpTry(senseiFit);lpTry(muckAvoid);lpTry(fitTable);lpTry(potClear);lpTry(chipAvoid);lpTry(barSync);   // v71（改善提案§1）：場札にチップをかけない（ポットの山→席の賭けチップの順）
   }else{lpTry(fitMyHand);lpTry(barSync)}   // 相手紹介（#vs）は卓が出る前
   lpTry(tourGuard);lpTry(fitScene);

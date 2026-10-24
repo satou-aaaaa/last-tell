@@ -989,7 +989,7 @@ kbd.k{display:none}
 
 
 /* スマホ横向き：ボタンとジンのひとことを右の列に出し、卓を画面の高さに収める */
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
  #game .gwrap{max-width:none;margin:0;width:auto;box-sizing:border-box;padding-right:calc(var(--side) + 6px)}
  #game{--side:min(320px,42vw)}
  #game .actionbar{position:fixed;right:0;top:auto;bottom:0;width:var(--side);max-height:100vh;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
@@ -1009,7 +1009,7 @@ kbd.k{display:none}
 #raiseWord{white-space:normal;text-wrap:balance}
 .n6 .plate .chp{font-size:.7rem}
 @media (max-width:699px){.n6 .felt .boardspot{top:30%;gap:0}.n6 .felt .potzone{min-height:60px;margin-top:-8px}.n6 .potchips.mess{transform:scale(.8);transform-origin:50% 25%}}
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
  .felt .boardspot{top:31%;gap:0}
  .felt .potzone{min-height:64px;margin-top:-6px}.potchips.mess{transform:scale(.8);transform-origin:50% 30%}
  .felt .spot:not(#spot0){top:9%!important}
@@ -1072,7 +1072,7 @@ kbd.k{display:none}
 .t3d .needlerow .askrow[hidden]{display:none}
 .t3d .needlerow .askrow .needle{opacity:1;background:#1d1726f0;border-color:#a58fd0;min-height:34px;padding:6px 12px;max-width:min(230px,52vw);white-space:normal;text-align:right;line-height:1.25}
 .t3d .needlerow .askrow .needle.quiet{border-color:#ffffff40;color:#cfc8dc}
-@media (orientation:landscape) and (max-height:520px){.t3d .needlerow .askrow{gap:3px}.t3d .needlerow .askrow .needle{min-height:28px;padding:4px 10px;font-size:.68rem}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){.t3d .needlerow .askrow{gap:3px}.t3d .needlerow .askrow .needle{min-height:28px;padding:4px 10px;font-size:.68rem}}
 .talkpicks{position:absolute;inset:0;z-index:8;pointer-events:none}
 .talkpicks .talkpick{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;font:700 .7rem/1 inherit;padding:4px 10px;border-radius:999px;background:#2a2333f2;border:1px solid #c9a0ff;color:#efe8ff;cursor:pointer;white-space:nowrap;min-height:24px;min-width:44px}
 @media (prefers-reduced-motion:no-preference){.talkpicks .talkpick{animation:talkpick .35s ease-out}@keyframes talkpick{from{opacity:0}to{opacity:1}}}
@@ -1198,7 +1198,7 @@ body.en #game button.act.fold:not(:disabled) small{visibility:hidden}
 @media (max-width:699px) and (orientation:portrait){#game button.act.fold small{font-size:clamp(.58rem,2.45vw,.85rem);letter-spacing:-.02em;min-width:0}}
 /* v67：自分の顔の D は左上へ（右上だと顔の右の 💬 に重なった） */
 .mine .me-ava .dbadge{right:auto;left:-6px}
-@media (orientation:landscape) and (max-height:520px){#game #controls button.act.fold small{letter-spacing:-.04em}}
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){#game #controls button.act.fold small{letter-spacing:-.04em}}
 #game button.act.call{background:linear-gradient(180deg,#3f8b77,#25594c 60%,#1c4a3f)}
 #game button.act.raise{background:linear-gradient(180deg,#f04a5f,#c01f34 55%,#9b1729)}
 #game button.act.raise.open{background:linear-gradient(180deg,#f7dc95,#e2b65b 55%,#b98a35);color:#111;text-shadow:none}
@@ -1282,7 +1282,7 @@ body.ltTitle::after{opacity:.6}
 }
 @keyframes lpeek{0%,40%,100%{transform:translateX(-50%) rotate(18deg)}55%,85%{transform:translateX(-38%) rotate(24deg) translateY(-6px)}}
 .hero .tagname{z-index:2}
-@media (orientation:landscape) and (max-height:520px){
+@media (orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){
   #game .actionbar{box-shadow:inset 1.5px 0 0 rgba(226,182,91,.6),-4px 0 16px rgba(215,38,61,.25),-8px 0 24px rgba(0,0,0,.45)}
 }
 @media (prefers-reduced-motion:reduce){

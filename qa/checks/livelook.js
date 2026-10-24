@@ -47,6 +47,12 @@ async function run({ browser, file }) {
     const vp = `${w}x${h}`, { ctx, page } = await H.openGame(WK ? wkB : browser, file, { fast: 20, viewport: { width: w, height: h }, lite: WK, storage: H.UNLOCKED, seed: 42 });
     try {
       await page.evaluate(() => { $('freeSize').value = '6'; startFree() });
+      // 席番号の丸が名札から離れて残っていないか（v0.98.7 レビュー：ターンを配る途中の箱で測り、③④ が場札の列の高さに出ていた）。
+      //   リバーまでゲームの時間で 100ms ごとに見て（検査は時計を速めているので、ゲームの中の時間で数える）、名札の下の端から 64px より下に 16回（1.6秒）続けて出ていたら記録する（置き直しは1秒に1回なので、その間の一瞬は数えない）
+      await page.evaluate(() => { let st = {}, hn = -1; window.__seatFar = []; window.__seatFarT = setInterval(() => { try { const L = document.querySelector('#table > .llseats'); if (!L) return; if (S.handNo !== hn) { hn = S.handNo; st = {} }   // ハンドが変わったら数え直す（CodeRabbit PR #144）
+        const R = e => e.getBoundingClientRect();
+        for (const e of L.children) { const i = +e.dataset.i, pl = i && document.getElementById('plate' + i); const far = !e.hidden && e.offsetParent && R(e).width > 2 && pl && pl.offsetParent && R(pl).width > 2 && R(e).top > R(pl).bottom + 64;
+          if (!far) { delete st[i]; continue } st[i] = (st[i] || 0) + 1; if (st[i] > 15 && !__seatFar.some(x => x.i === i && x.h === S.handNo)) __seatFar.push({ i, h: S.handNo, st: S.street, d: Math.round(R(e).top - R(pl).bottom) }) } } catch (e) {} }, 100) });
       if (!(await toStreet(page, 'river'))) { add(`livelook:table:${vp}`, `卓の道具（${vp}）`, 'リバーまで進めなかった', '', true); continue }
       const measure = () => page.evaluate(() => {
         const R = e => e.getBoundingClientRect(), vis = e => e && e.offsetParent && R(e).width > 2, ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
@@ -82,6 +88,8 @@ async function run({ browser, file }) {
         if (g) add(`livelook:winedge-small:${vp}`, `名札が空の席が勝つと顔の下に金の線（${vp}）`, g.filter(x => !x[1] || x[2]).map(x => `席${x[0] + 1}`).join(', '), `${g.length}席`);
       }
       add(`livelook:seats:${vp}`, `席番号がD・場札・札に重ならない（${vp}）`, r.seats.slice(0, 4).join(', '), '重なりなし');
+      { const far = await page.evaluate(() => { clearInterval(window.__seatFarT); return window.__seatFar || [] });
+        add(`livelook:seatnear:${vp}`, `席番号の丸が名札から離れて残らない（${vp}、名札の下 64px より下にゲームの時間で 1.6秒以上）`, far.slice(0, 4).map(x => `席${x.i + 1}（${x.st}、名札の下 ${x.d}px）`).join(', '), 'なし') }
       // v95.1 レビュー：縦の大きなポットで、塔の下半分が自分の手札の後ろに隠れていた（ui の場面はポットが小さくて出なかった）
       add(`livelook:tower:${vp}`, `ポットの塔が自分の手札にかからない（${vp}）`, [...new Set(r.tower)].slice(0, 4).join(', '), '重なりなし');
       add(`livelook:mf:${vp}`, `心の声がラック・ポットのチップに重ならない（${vp}）`, r.mf.slice(0, 4).join(', '), '重なりなし');

@@ -1,0 +1,76 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "デ",
+     "consonant": "d",
+     "consonant_length": 0.04544011130928993,
+     "vowel": "e",
+     "vowel_length": 0.14433707296848297,
+     "pitch": 4.953361511230469
+    },
+    {
+     "text": "ワ",
+     "consonant": "w",
+     "consonant_length": 0.06886657327413559,
+     "vowel": "a",
+     "vowel_length": 0.28893086314201355,
+     "pitch": 4.729216575622559
+    }
+   ],
+   "accent": 1,
+   "pause_mora": {
+    "text": "、",
+    "consonant": null,
+    "consonant_length": null,
+    "vowel": "pau",
+    "vowel_length": 0.3968416750431061,
+    "pitch": 0.0
+   },
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ス",
+     "consonant": "s",
+     "consonant_length": 0.13367176055908203,
+     "vowel": "u",
+     "vowel_length": 0.06220940500497818,
+     "pitch": 5.169497489929199
+    },
+    {
+     "text": "ベ",
+     "consonant": "b",
+     "consonant_length": 0.03891914337873459,
+     "vowel": "e",
+     "vowel_length": 0.08461353927850723,
+     "pitch": 5.108627796173096
+    },
+    {
+     "text": "テ",
+     "consonant": "t",
+     "consonant_length": 0.06139017641544342,
+     "vowel": "e",
+     "vowel_length": 0.3229018747806549,
+     "pitch": 4.670427322387695
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "デ'ワ、ス'ベテ"
+}

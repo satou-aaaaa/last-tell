@@ -1,0 +1,88 @@
+<title>LAST TELL タイトル画面の案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;700&family=Oswald:wght@500&display=swap">
+<style>
+/* 暗い店の卓の色。題字は明朝、操作の字はゴシック。案を縦に並べ、各案は 16:9 の画面の見本 */
+:root{
+  --bg:#0e0d0c; --panel:#171513; --fg:#efe6d6; --sub:#a59a8a; --gold:#d8b46a; --red:#c8283c; --line:#2c2824;
+  --mincho:"Shippori Mincho","Yu Mincho","Hiragino Mincho ProN",serif;
+  --goth:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --eye:"Oswald","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--goth);line-height:1.7}
+.wrap{max-width:1120px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:40px}
+header h1{font-family:var(--mincho);font-weight:800;font-size:clamp(26px,4vw,38px);margin:0;text-wrap:balance}
+header p{color:var(--sub);margin:.4em 0 0;max-width:62ch}
+.opt{display:grid;gap:12px}
+.opt h2{margin:0;font-size:20px;display:flex;gap:.6em;align-items:baseline;flex-wrap:wrap}
+.opt h2 .k{font-family:var(--eye);color:var(--gold);letter-spacing:.08em}
+.opt h2 .rec{font-size:12px;color:var(--bg);background:var(--gold);padding:1px 8px;border-radius:3px;font-weight:700}
+.opt p{margin:0;color:var(--sub);max-width:70ch}
+.screen{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:#000;border:1px solid var(--line);container-type:inline-size}
+.screen video,.screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ui{position:absolute;inset:0;pointer-events:none}
+.logo{position:absolute;font-family:var(--mincho);font-weight:800;color:#f6ead0;line-height:.86;letter-spacing:.02em;text-shadow:0 0 2.2cqw rgba(0,0,0,.8)}
+.logo small{display:block;font-family:var(--eye);font-size:1.05cqw;color:var(--red);letter-spacing:.2em;margin-bottom:1cqw;font-weight:500}
+.logo .ja{display:block;font-family:var(--mincho);font-size:1.5cqw;color:var(--gold);letter-spacing:.6em;margin-top:1.1cqw}
+.btns{position:absolute;display:grid;gap:.7cqw;font-family:var(--goth)}
+.btns span{display:block;padding:.55cqw 1.6cqw;font-size:1.25cqw;color:var(--fg);background:rgba(10,9,8,.55);border:1px solid rgba(239,230,214,.18);backdrop-filter:blur(4px)}
+.btns span.p{background:var(--red);border-color:var(--red);font-weight:700}
+.shade{position:absolute;inset:0}
+/* A：題字は左、ボタンは左下に縦 */
+.A .shade{background:linear-gradient(90deg,rgba(0,0,0,.82) 0,rgba(0,0,0,.35) 42%,transparent 60%)}
+.A .logo{left:6cqw;top:16cqw;font-size:7cqw}
+.A .btns{left:6cqw;top:35cqw;width:20cqw}
+/* B：題字は上の真ん中、ボタンは下に横一列 */
+.B .shade{background:linear-gradient(180deg,rgba(0,0,0,.75) 0,transparent 34%,transparent 66%,rgba(0,0,0,.85) 100%)}
+.B .logo{left:0;right:0;top:4cqw;text-align:center;font-size:6cqw}
+.B .logo .ja{letter-spacing:.8em}
+.B .btns{left:0;right:0;bottom:3cqw;display:flex;justify-content:center;flex-wrap:wrap}
+/* C：ゲームと同じ目の高さ。題字は右上、ボタンは右 */
+.C .shade{background:linear-gradient(270deg,rgba(0,0,0,.8) 0,rgba(0,0,0,.3) 38%,transparent 55%)}
+.C .logo{right:6cqw;top:9cqw;font-size:6.2cqw;text-align:right}
+.C .btns{right:6cqw;top:28cqw;width:20cqw}
+.now .screen{max-width:560px}
+.note{border-left:3px solid var(--red);padding-left:12px;color:var(--sub);max-width:70ch}
+.note b{color:var(--fg)}
+@media (prefers-reduced-motion:reduce){.screen video{display:none}}
+</style>
+<div class="wrap">
+<header>
+  <h1>タイトル画面を 3D の卓に合わせる案</h1>
+  <p>動画はすべて今のゲームの Godot で撮った本物の絵です（3D の卓・MetaHuman の人・ディーラー）。題字とボタンは配置の見本です。</p>
+</header>
+
+<section class="opt now">
+  <h2><span class="k">NOW</span>今のタイトル</h2>
+  <p>後ろの店は 3D になったが、真ん中のジンは昔の 2D の絵を半透明にしたまま。赤い斜めの帯と金の点も 2D 時代の飾り。</p>
+  <div class="screen"><img src="now.jpg" alt="今のタイトル画面"></div>
+</section>
+
+<section class="opt">
+  <h2><span class="k">A</span>向かいのジン<span class="rec">おすすめ</span></h2>
+  <p>閉店後の錨亭。卓の向こうにジンが一人で座り、カメラがゆっくり寄り、終わりにジンがふと目を上げる。物語の始まりと終わり（第7章）の場所で、「最後のテル」の題にいちばん合う。</p>
+  <div class="screen A"><video src="a.mp4" autoplay muted loop playsinline></video><div class="ui"><div class="shade"></div>
+    <div class="logo"><small>TEXAS HOLD'EM STORY</small>LAST<br>TELL<span class="ja">最後のテル</span></div>
+    <div class="btns"><span class="p">ストーリー</span><span>フリー対戦</span><span>今日の1ハンド</span><span>その他</span></div></div></div>
+</section>
+
+<section class="opt">
+  <h2><span class="k">B</span>ディーラーの手元</h2>
+  <p>ラシャすれすれの低い目線で、配る前のディーラーの手元を横へ流して見せる。顔はほとんど映さず、手とラシャの質感で見せる（作るときは札を切る手の動きを足す）。</p>
+  <div class="screen B"><video src="b.mp4" autoplay muted loop playsinline></video><div class="ui"><div class="shade"></div>
+    <div class="logo"><small>TEXAS HOLD'EM STORY</small>LAST TELL<span class="ja">最後のテル</span></div>
+    <div class="btns"><span class="p">ストーリー</span><span>フリー対戦</span><span>今日の1ハンド</span><span>その他</span></div></div></div>
+</section>
+
+<section class="opt">
+  <h2><span class="k">C</span>いつもの卓を見わたす</h2>
+  <p>ゲームと同じ「座った目」で、常連とディーラーのいる卓をゆっくり見わたす。押すとそのまま卓に着く流れにつなげやすい。人が多いぶん重く、絵の粗も目に入りやすい。</p>
+  <div class="screen C"><video src="c.mp4" autoplay muted loop playsinline></video><div class="ui"><div class="shade"></div>
+    <div class="logo"><small>TEXAS HOLD'EM STORY</small>LAST<br>TELL<span class="ja">最後のテル</span></div>
+    <div class="btns"><span class="p">ストーリー</span><span>フリー対戦</span><span>今日の1ハンド</span><span>その他</span></div></div></div>
+</section>
+
+<p class="note"><b>どの案でも同じこと：</b>人の服（灰色のシャツ）と肌の色は今の 3D の途中の状態です。服や体が仕上がれば、タイトルもそのまま良くなります。3D の素材が無いとき・設定で 3D を切ったときは、今の 2D のタイトルに戻します。</p>
+</div>

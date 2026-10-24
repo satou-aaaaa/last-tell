@@ -1,0 +1,100 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "フ",
+     "consonant": "f",
+     "consonant_length": 0.13448292016983032,
+     "vowel": "u",
+     "vowel_length": 0.08306414633989334,
+     "pitch": 5.4708251953125
+    },
+    {
+     "text": "フ",
+     "consonant": "f",
+     "consonant_length": 0.12107103317975998,
+     "vowel": "u",
+     "vowel_length": 0.14708933234214783,
+     "pitch": 5.207098960876465
+    }
+   ],
+   "accent": 1,
+   "pause_mora": {
+    "text": "、",
+    "consonant": null,
+    "consonant_length": null,
+    "vowel": "pau",
+    "vowel_length": 0.28205394744873047,
+    "pitch": 0.0
+   },
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ゴ",
+     "consonant": "g",
+     "consonant_length": 0.053703658282756805,
+     "vowel": "o",
+     "vowel_length": 0.10630165785551071,
+     "pitch": 5.366764068603516
+    },
+    {
+     "text": "チ",
+     "consonant": "ch",
+     "consonant_length": 0.09710002690553665,
+     "vowel": "I",
+     "vowel_length": 0.030158773064613342,
+     "pitch": 0.0
+    },
+    {
+     "text": "ソ",
+     "consonant": "s",
+     "consonant_length": 0.09710279852151871,
+     "vowel": "o",
+     "vowel_length": 0.05745326727628708,
+     "pitch": 5.654054641723633
+    },
+    {
+     "text": "オ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "o",
+     "vowel_length": 0.06189707666635513,
+     "pitch": 5.635682582855225
+    },
+    {
+     "text": "サ",
+     "consonant": "s",
+     "consonant_length": 0.12505114078521729,
+     "vowel": "a",
+     "vowel_length": 0.07103753834962845,
+     "pitch": 5.532088279724121
+    },
+    {
+     "text": "マ",
+     "consonant": "m",
+     "consonant_length": 0.0891905203461647,
+     "vowel": "a",
+     "vowel_length": 0.1545501947402954,
+     "pitch": 5.4667277336120605
+    }
+   ],
+   "accent": 6,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "フ'フ、ゴ_チソオサマ'"
+}

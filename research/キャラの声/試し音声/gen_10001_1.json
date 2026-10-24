@@ -1,0 +1,100 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "ヨ",
+     "consonant": "y",
+     "consonant_length": 0.05336761474609375,
+     "vowel": "o",
+     "vowel_length": 0.03379148244857788,
+     "pitch": 5.24229097366333
+    },
+    {
+     "text": "ッ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "cl",
+     "vowel_length": 0.023871421813964844,
+     "pitch": 0.0
+    },
+    {
+     "text": "シャ",
+     "consonant": "sh",
+     "consonant_length": 0.1320381909608841,
+     "vowel": "a",
+     "vowel_length": 0.11475671827793121,
+     "pitch": 4.7947678565979
+    }
+   ],
+   "accent": 1,
+   "pause_mora": {
+    "text": "、",
+    "consonant": null,
+    "consonant_length": null,
+    "vowel": "pau",
+    "vowel_length": 0.26669755578041077,
+    "pitch": 0.0
+   },
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ウ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "u",
+     "vowel_length": 0.0674256831407547,
+     "pitch": 4.869799613952637
+    },
+    {
+     "text": "ワ",
+     "consonant": "w",
+     "consonant_length": 0.0677107721567154,
+     "vowel": "a",
+     "vowel_length": 0.04042787849903107,
+     "pitch": 5.05056095123291
+    },
+    {
+     "text": "ノ",
+     "consonant": "n",
+     "consonant_length": 0.05041906237602234,
+     "vowel": "o",
+     "vowel_length": 0.050348564982414246,
+     "pitch": 5.1728363037109375
+    },
+    {
+     "text": "セ",
+     "consonant": "s",
+     "consonant_length": 0.07709811627864838,
+     "vowel": "e",
+     "vowel_length": 0.04828764498233795,
+     "pitch": 5.120800971984863
+    },
+    {
+     "text": "ダ",
+     "consonant": "d",
+     "consonant_length": 0.042998529970645905,
+     "vowel": "a",
+     "vowel_length": 0.11829912662506104,
+     "pitch": 4.861965179443359
+    }
+   ],
+   "accent": 5,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.3,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "ヨ'ッシャ、ウワノセダ'"
+}

@@ -58,7 +58,7 @@ async function run({ browser, file, baseline }) {
       }
     } finally { await ctx.close() }
     // 2b. 電波が弱いとき（改善提案 第12回 0-2：オフラインの検査はすぐ失敗が返る場合しか見ておらず、返事が来ないと20秒以上真っ白なのを見逃した）
-    { const c2 = await browser.newContext({ serviceWorkers: 'allow' }); let d2 = '', ok2 = false, ms = 0;
+    { const c2 = await browser.newContext({ serviceWorkers: 'allow' }); let d2 = '', ok2 = false, ms = 0, saved2 = false;
       try {
         const page = await c2.newPage();
         await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
@@ -68,11 +68,17 @@ async function run({ browser, file, baseline }) {
         else {
           await page.waitForTimeout(1500); await page.evaluate(() => { window.__beforeReload = 1 }); srv.stall = true;   // 開き直す前のページに印。印が残っているページ（＝まだ開き直せていない）のタイトルは数えない（CodeRabbit PR #122）
           const t0 = Date.now(); page.reload({ waitUntil: 'load', timeout: 12000 }).catch(() => {});
-          while (Date.now() - t0 < 9000) { await page.waitForTimeout(250); const vis = page.evaluate(() => { const t = document.getElementById('title'); return !window.__beforeReload && !!t && !t.hidden }).catch(() => false);   // 読み込みが止まっている間は evaluate も返らないことがあるので、待つのは1秒まで
-            if (await Promise.race([vis, new Promise(r => setTimeout(() => r(false), 1000))])) { ok2 = true; break } }
-          ms = Date.now() - t0; if (ok2 && ms > 6000) { ok2 = false; d2 = `タイトルが出るまで ${(ms / 1000).toFixed(1)}秒（6秒以内）` } else if (!ok2) d2 = '返事が来ないと、9秒たってもタイトルが出なかった（sw.js が待ち続けている）';
+          while (Date.now() - t0 < 9000) { await page.waitForTimeout(250); const vis = page.evaluate(() => { const t = document.getElementById('title'); return !window.__beforeReload && !!t && !t.hidden }).catch(() => false);   // 読み込みが止まっている間は evaluate も返らないことがあるので、待つのは0.3秒まで（長く待つと、測った時間が最大1秒ずれる）
+            if (await Promise.race([vis, new Promise(r => setTimeout(() => r(false), 300))])) { ok2 = true; ms = Date.now() - t0; break } }   // タイトルまでの時間はここで決める（あとの保存の確かめの時間を入れない：CodeRabbit PR #123）
+          // 止めていた返事をあとから返し（印を付けた版）、それが保存されて次に開くときの版になるか（v0.97.8 レビュー：保存を e.waitUntil で待っていなかった）
+          if (ok2) { srv.stall = false; const late = fs.readFileSync(path.join(root, 'index.html'), 'utf8') + '\n<!--lt-late-->';
+            srv.hung.splice(0).forEach(r => { try { r.writeHead(200, { 'content-type': TYPES['.html'] }); r.end(late) } catch (e) {} });
+            const t1 = Date.now(); while (Date.now() - t1 < 6000 && !saved2) { await page.waitForTimeout(400);
+              saved2 = await Promise.race([page.evaluate(async () => { for (const k of await caches.keys()) { const c = await caches.open(k); for (const q of await c.keys()) { const r = await c.match(q); if (/text\/html/.test(r.headers.get('content-type') || '') && (await r.text()).includes('<!--lt-late-->')) return true } } return false }).catch(() => false), new Promise(r => setTimeout(() => r(false), 2000))]) } }
+          if (!ok2) ms = Date.now() - t0; if (ok2 && ms > 6000) { ok2 = false; d2 = `タイトルが出るまで ${(ms / 1000).toFixed(1)}秒（6秒以内）` } else if (!ok2) d2 = '返事が来ないと、9秒たってもタイトルが出なかった（sw.js が待ち続けている）';
         }
       } finally { srv.stall = false; srv.hung.splice(0).forEach(r => { try { r.destroy() } catch (e) {} }); await Promise.race([c2.close().catch(() => {}), new Promise(r => setTimeout(r, 10000))]) }
+      items.push({ id: 'site:slow-save', title: '電波が弱くて保存した版を先に出したあとも、遅れて届いた新しい版を保存する（次に開くときの版になる）', status: !ok2 ? 'fail' : saved2 ? 'ok' : 'fail', detail: !ok2 ? '先に保存した版が出なかった（site:slow を見る）' : saved2 ? '遅れて届いた版が保存された' : '遅れて届いた版が6秒たっても保存されなかった' });
       items.push({ id: 'site:slow', title: '電波が弱くても開ける（一度開いたあと、index.html の返事が止まっても6秒以内にタイトルが出る）', status: ok2 ? 'ok' : 'fail', detail: ok2 ? `${(ms / 1000).toFixed(1)}秒でタイトルが出た` : d2 }) }
     items.push({ id: 'site:offline', title: 'ネットが無くても開ける（一度開いたあと、オフラインで開き直してタイトルが出る）', status: ok ? 'ok' : 'fail', detail: ok ? 'オフラインで開き直してタイトルが出た' : detail });
 

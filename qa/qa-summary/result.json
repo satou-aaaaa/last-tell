@@ -1,0 +1,20 @@
+{
+ "label": "vunknown",
+ "ver": "unknown",
+ "quick": true,
+ "sha": "",
+ "groups": [
+  {
+   "key": "ci",
+   "name": "CI",
+   "items": [
+    {
+     "id": "ci:repeat",
+     "title": "くり返しの ⚠️ の検査（前の版の結果を読む）",
+     "status": "warn",
+     "detail": "前の版の結果を読めなかった：Command failed: git fetch -q --depth 1 origin qa-results"
+    }
+   ]
+  }
+ ]
+}

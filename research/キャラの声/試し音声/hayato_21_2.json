@@ -1,0 +1,77 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "カ",
+     "consonant": "k",
+     "consonant_length": 0.050390683114528656,
+     "vowel": "a",
+     "vowel_length": 0.06777412444353104,
+     "pitch": 4.9193644523620605
+    },
+    {
+     "text": "チ",
+     "consonant": "ch",
+     "consonant_length": 0.11376545578241348,
+     "vowel": "i",
+     "vowel_length": 0.04312698543071747,
+     "pitch": 5.2345452308654785
+    },
+    {
+     "text": "ワ",
+     "consonant": "w",
+     "consonant_length": 0.04501580446958542,
+     "vowel": "a",
+     "vowel_length": 0.08648555725812912,
+     "pitch": 4.917599201202393
+    }
+   ],
+   "accent": 2,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "カ",
+     "consonant": "k",
+     "consonant_length": 0.09831502288579941,
+     "vowel": "a",
+     "vowel_length": 0.05672242492437363,
+     "pitch": 4.669713973999023
+    },
+    {
+     "text": "チ",
+     "consonant": "ch",
+     "consonant_length": 0.08295812457799911,
+     "vowel": "i",
+     "vowel_length": 0.027269773185253143,
+     "pitch": 4.843791484832764
+    },
+    {
+     "text": "ダ",
+     "consonant": "d",
+     "consonant_length": 0.03225287050008774,
+     "vowel": "a",
+     "vowel_length": 0.15711089968681335,
+     "pitch": 4.5466742515563965
+    }
+   ],
+   "accent": 2,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "カチ'ワ/カチ'ダ"
+}

@@ -26,7 +26,7 @@ function blClamp(){document.querySelectorAll('.ltact').forEach(el=>{if(el.hidden
 // 46_act_word.js の awPlace（上下・左右へよける）の後に測る。v0.90 CI の重なりの決まり（チップは語の面積の4分の1まで）と同じ
 function blFit(){if(!S||!S.players)return;
   const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
-  const others=[...document.querySelectorAll('.llseats i:not([hidden]), #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #plates .cue, #dcall.go, .ltact')].filter(vis);   // .ltact：となりの席の語（v92：字を 12px にして額が付くと、となりの語にかかった）
+  const others=[...document.querySelectorAll('.llseats i:not([hidden]), #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #plates .cue, #dcall.go, .ltact')].filter(e=>vis(e)&&LT.sayOn(e));   // .ltact：となりの席の語（v92：字を 12px にして額が付くと、となりの語にかかった）
   const hit=el=>{const a=el.getBoundingClientRect();return others.some(o=>{if(o.contains(el)||el.contains(o))return false;const c=o.getBoundingClientRect(),w=Math.min(a.right,c.right)-Math.max(a.left,c.left),h=Math.min(a.bottom,c.bottom)-Math.max(a.top,c.top);
     return w>3&&h>3&&(!/chipwrap|mystack/.test(o.className)||w*h>.2*a.width*a.height)})};
   S.players.forEach((p,i)=>{const box=i===0?document.querySelector('#mine .me-l'):$('plate'+i);const el=box&&box.querySelector(':scope > .ltact:not([hidden])');const n=el&&el.querySelector(':scope > .bln');if(!n)return;
@@ -77,8 +77,9 @@ function blPlace(){const b=$('vfLog');if(!b||b.hidden&&!b.children.length)return
   const bar=$('tbar'),B=vis(bar)?bar.getBoundingClientRect():{left:0,right:innerWidth,bottom:0};
   // 吹き出しは .go（出ている途中）に限らず、見えている物はすべて（メモの吹き出し .memo など。v92 確認）
   const sayVis=e=>{const c=getComputedStyle(e);return +c.opacity>.05};
-  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, .llseats i:not([hidden]), #controls, #between .betweenrow, #between .acts button, #resultText, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
-    .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
+  const av=[...document.querySelectorAll('#busts .bust .body, #busts .bust .face, #plates .plate, #plates .cue, #sayLayer .say.go, #plates .say.go, .say.go, #crowdSay, #dcall.go, #boardCards .card, .felt .spot .card, #potSign, .llseats i:not([hidden]), #controls, #between .betweenrow, #between .acts button, #resultText, #sensei:not([hidden]), #mfInner, #quiz:not([hidden]), .vfturn:not([hidden]), .ltact:not([hidden])')].filter(e=>vis(e)&&LT.sayOn(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>1&&r.height>1)
+    .concat([$('msg')].filter(e=>e&&vis(e)&&(e.textContent||'').trim()).map(e=>e.getBoundingClientRect()))
+    .concat([$('goalDrop')].filter(e=>e&&!e.hidden&&vis(e)).map(e=>e.getBoundingClientRect()))   // 目標の箱（v0.98.4 レビュー：PC の右の列で、開いた目標の箱に「タロウ コール 2,000」が重なった）   // 上の案内の文（字があるとき。v92 レビュー：縦で重なった）
     .concat([...document.querySelectorAll('#sayLayer .say:not(.go), #plates .say:not(.go)')].filter(e=>vis(e)&&sayVis(e)).map(e=>e.getBoundingClientRect()).filter(r=>r.width>14&&r.height>14));   // 中身のない吹き出し（12px ほど）は数えない
   b.style.visibility='hidden';b.hidden=false;b.classList.remove('off');b.style.left='0px';b.style.top='0px';   // .off（display:none）のまま測ると大きさ 0 で「置ける」になり、出る・隠れるをくり返していた（v92 確認）
   const w=b.offsetWidth,h=b.offsetHeight,y=B.bottom+6;
@@ -107,3 +108,6 @@ LT.on('show',()=>{try{const b=$('vfLog');if(b&&$('game')&&$('game').hidden){b.hi
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go()}
 // ディーラーの声が出たら置き直す（声の上に直近の5手が乗らないよう。重なるならその間は .off で隠れ、声が消えたあとの layout で戻る。v92 確認：横で声に重なった）
 {const o=dealerSay;dealerSay=function(){const r=o.apply(this,arguments);try{if($('vfLog')&&!$('vfLog').hidden){blPlace();clearTimeout(blPlace.d);blPlace.d=setTimeout(()=>{try{blPlace()}catch(e){}},300)}}catch(e){}return r}}
+
+// 目標の箱を開いた・閉じたときも置き直す（開くのはボタンと、ハンドの頭の数秒だけ出すとき）
+{const o=goalOpen;goalOpen=function(){const r=o.apply(this,arguments);try{const b=$('vfLog');if(b&&!b.hidden)blPlace()}catch(e){}return r}}

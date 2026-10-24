@@ -1,0 +1,103 @@
+<title>本物の人間の見た目</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 暗い店の卓。上のランプだけが顔を照らす */
+:root{--bg:#f1eee8;--fg:#1d1b18;--mut:#625d55;--card:#fffdf9;--line:#ddd6ca;--acc:#8a5c0c;--stage:#0b0d0c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121417;--fg:#e9e4da;--mut:#9a958c;--card:#1b1f24;--line:#2c3138;--acc:#e2b65b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121417;--fg:#e9e4da;--mut:#9a958c;--card:#1b1f24;--line:#2c3138;--acc:#e2b65b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.7 system-ui,"Hiragino Sans","Noto Sans JP",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:22px;margin:0 0 4px;text-wrap:balance}h2{font-size:17px;margin:26px 0 8px}
+.lead{color:var(--mut);margin:0 0 14px;max-width:70ch}
+.view{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;align-items:start}
+#cv{width:100%;aspect-ratio:4/3;max-width:100%;background:var(--stage);border-radius:10px;display:block}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.panel h3{margin:0 0 6px;font-size:15px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.btns button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit}
+.btns button.on{border-color:var(--acc);color:var(--acc)}
+.btns button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.note{color:var(--mut);font-size:13px;margin:0}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.opt.rec{border-color:var(--acc)}
+.opt h3{margin:0 0 6px;font-size:16px}.opt.rec h3::after{content:" おすすめ";color:var(--acc);font-size:12px}
+.opt dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13.5px}
+.opt dt{color:var(--mut)}.opt dd{margin:0}
+@media (max-width:820px){.view,.opts{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<h1>本物の人間の見た目（PC向け）</h1>
+<p class="lead">コードで描く絵では、本物の人には見えません。本物の人に見せるには、本物の人から作ったデータを使います。下は、実在の人の頭をスキャンした3Dデータを、ブラウザで卓のランプの下に置いた見本です。マウスで少し回せます。</p>
+<div class="view">
+  <canvas id="cv" aria-label="3Dの顔の見本"></canvas>
+  <div class="panel">
+    <h3>光</h3>
+    <div class="btns" id="lt"><button data-v="lamp" class="on">卓のランプ</button><button data-v="side">横から</button><button data-v="dim">暗い店</button></div>
+    <h3>動き（テルの見せ方の例）</h3>
+    <div class="btns" id="mv"><button data-v="idle" class="on">ふつう（呼吸）</button><button data-v="look">目線をそらす</button><button data-v="freeze">固まる</button><button data-v="nod">うなずく</button></div>
+    <p class="note">これは見本用のデータです（髪なし、目は閉じたまま、表情は動きません）。ゲームでは、キャラごとに髪・服・表情の動き（まばたき、口元、目線）を持った3Dの人を作ります。</p>
+    <p class="note" style="margin-top:8px">顔データ：Infinite, 3D Head Scan by Lee Perry-Smith（CC BY 3.0、three.js の公式サンプルより）。見本だけに使い、ゲームには入れません。</p>
+  </div>
+</div>
+<h2>本物の人に見せる3つの方法</h2>
+<div class="opts">
+  <div class="opt rec"><h3>1 リアルな3Dの人</h3>
+    <dl><dt>見た目</dt><dd>この見本の方向。髪・肌・目まで本物に近い</dd>
+    <dt>テル</dt><dd>目線・口元・手・固まるを、そのまま動きで見せられる</dd>
+    <dt>作り方</dt><dd>MetaHuman（Epic）で人を作り、軽くしてブラウザの3Dで表示</dd>
+    <dt>お金</dt><dd>売上100万ドル未満は無料</dd>
+    <dt>手間</dt><dd>大。Unreal Engine をPC（D:）に入れて作る作業がいる。1人数十MB</dd></dl></div>
+  <div class="opt"><h3>2 写真のような絵</h3>
+    <dl><dt>見た目</dt><dd>写真そのもの。いちばん本物に見える</dd>
+    <dt>テル</dt><dd>表情ごとの絵の切り替えか、短い動画。動きは限られる</dd>
+    <dt>作り方</dt><dd>画像生成AIで、キャラ×表情ぶんの絵を作る</dd>
+    <dt>お金</dt><dd>生成サービスの月額（有料）</dd>
+    <dt>手間</dt><dd>中。同じ顔を保つのが難しい。Steam ではAI使用の申告が必要</dd></dl></div>
+  <div class="opt"><h3>3 実写（人が演じる）</h3>
+    <dl><dt>見た目</dt><dd>本物の人そのもの</dd>
+    <dt>テル</dt><dd>演技で撮る。本物のテルに一番近い</dd>
+    <dt>作り方</dt><dd>出演者に演じてもらい、表情とテルを短い動画で撮る</dd>
+    <dt>お金</dt><dd>出演・撮影の費用、出演の同意と契約</dd>
+    <dt>手間</dt><dd>大。人数（24人以上）ぶんの撮影</dd></dl></div>
+</div>
+</div>
+<script src="head.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const cv=document.getElementById('cv');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(2,devicePixelRatio));
+R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.95;R.shadowMap.enabled=true;
+const S=new THREE.Scene();S.background=new THREE.Color(0x0b0d0c);S.fog=new THREE.Fog(0x0b0d0c,14,30);
+const C=new THREE.PerspectiveCamera(26,4/3,.1,100);C.position.set(0,.4,13.5);
+// 卓（フェルト）
+const felt=new THREE.Mesh(new THREE.PlaneGeometry(40,20),new THREE.MeshStandardMaterial({color:0x15462e,roughness:.95}));felt.rotation.x=-Math.PI/2;felt.position.y=-4.2;felt.receiveShadow=true;S.add(felt);
+const L={};
+L.key=new THREE.SpotLight(0xffd9a8,150,40,.55,.7,1.4);L.key.position.set(-3,8,7);L.key.castShadow=true;L.key.shadow.bias=-.0004;L.key.shadow.normalBias=.04;L.key.shadow.mapSize.set(1024,1024);S.add(L.key);
+L.fill=new THREE.HemisphereLight(0x8aa0b8,0x1d5a3a,.35);S.add(L.fill);
+L.rim=new THREE.DirectionalLight(0x9fb8ff,.8);L.rim.position.set(5,3,-6);S.add(L.rim);
+L.side=new THREE.DirectionalLight(0xffe2c0,0);L.side.position.set(-8,1,2);S.add(L.side);
+let head,g=new THREE.Group();S.add(g);
+const tl=new THREE.TextureLoader();const tx=f=>tl.load(f);
+const col=tx('col.jpg');col.colorSpace=THREE.SRGBColorSpace;
+window.createImageBitmap=undefined;/* blob fetch is blocked in artifacts; use <img> */
+new GLTFLoader().parse(Uint8Array.from(atob(window.MODEL_B64),c=>c.charCodeAt(0)).buffer,'',gl=>{head=gl.scene.children[0];
+  head.material=new THREE.MeshPhysicalMaterial({map:col,normalMap:tx('nrm.jpg'),roughness:.7,sheen:.25,sheenColor:new THREE.Color(0xffb8a0),sheenRoughness:.6});
+  head.castShadow=true;head.scale.setScalar(.95);head.position.y=-.6;head.rotation.x+=-.1;g.add(head)});
+let mode='idle',t0=0,drag=0,dragX=0,yaw=0;
+cv.addEventListener('pointerdown',e=>{drag=1;dragX=e.clientX});addEventListener('pointerup',()=>drag=0);
+addEventListener('pointermove',e=>{if(drag){yaw+=(e.clientX-dragX)*.006;yaw=Math.max(-.9,Math.min(.9,yaw));dragX=e.clientX}});
+const setOn=(id,v)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+document.getElementById('mv').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.v;t0=performance.now();setOn('mv',mode)};
+document.getElementById('lt').onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;setOn('lt',v);
+  L.key.intensity=v==='side'?25:v==='dim'?80:150;L.side.intensity=v==='side'?2.6:0;L.fill.intensity=v==='dim'?.12:.35;L.rim.intensity=v==='dim'?1.2:.8;R.toneMappingExposure=v==='dim'?.85:.95};
+const rs=()=>{const w=cv.clientWidth,h=cv.clientHeight;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()};addEventListener('resize',rs);rs();
+const red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+R.setAnimationLoop(t=>{const s=(t-t0)/1000;let ry=yaw,rx=0,y=0;
+  if(!red&&mode!=='freeze'){y=Math.sin(t/1000*1.8)*.03;ry+=Math.sin(t/1000*.4)*.04}
+  if(mode==='look'){const k=s<.25?s/.25:s<1.6?1:Math.max(0,1-(s-1.6)/.4);ry+=-.38*k;rx=.06*k;if(s>3)t0=t}
+  if(mode==='nod'){rx=Math.sin(Math.min(s,1.2)/1.2*Math.PI*2)*.12;if(s>2.5)t0=t}
+  g.rotation.y+=(ry-g.rotation.y)*.15;g.rotation.x+=(rx-g.rotation.x)*.15;g.position.y=y;R.render(S,C)});
+</script>

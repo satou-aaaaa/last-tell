@@ -89,7 +89,7 @@ const PART2=[
    ["師匠","カイは先に打ってくる。……だから、こっちが打つ場所を選べ",{mt:'attack'}],
    ["師匠","カイは、考える前に賭ける。速さを見ろ。手は、そこに出る",{mt:'read'}],
    {lesson:"急がない",body:"相手が速く、大きく賭けてくると、こっちも急ぎたくなる。だが、勝負する手を選ぶのはお前だ。カイのチップを全部取れば勝ちだ。"},
-   ["","（最初の1ハンドは、自動で進みます）",{rush:1}],
+   ["","（タロウは、勝負を急いでいる）",{rush:1}],
    ["カイ","先に言っとく。俺は、待つのが嫌いだ"]],outro:[
    ["カイ","……くそ。待たれた"],
    ["ハヤト","カイ。今日は、もうワンハンドもなしだ"],
@@ -280,14 +280,14 @@ function startP2(ch,skipIntro){
 // 台本のハンド：第3章の急ぎすぎた1ハンド、第5章の最後のハンド
 function p2Script(sc){
   if(sc==='rush'&&CFG.rush&&S.handNo===1&&!S.rushDone){
-    rig({'タロウ':[C(14,'♥'),C(11,'♥')],'カイ':[C(12,'♠'),C(12,'♦')]},[C(13,'♣'),C(8,'♦'),C(3,'♠'),C(6,'♣'),C(2,'♥')]);
-    S.autoMe=true;S.rushHand=1;S.msg='タロウは、勝負を急いでいる。……このハンドは自動で進みます';
+    kataDeal('rush','カイ');   // 型：カイにポケットペア、タロウは外れる（js/54_deal_mod.js）
+    S.autoMe=true;S.rushHand=1;S.msg='タロウは、勝負を急いでいる';
     S.scriptAI=i=>{const p=S.players[i],tc=S.currentBet-p.bet;
       if(p.name==='カイ')return S.street==='preflop'&&S.currentBet<p.bet+p.chips?{type:'raise',to:p.bet+p.chips,state:'strong'}:{type:'call',state:'strong'};
       return tc>0?{type:'fold',state:'none'}:{type:'call',state:'none'}};return true}
-  if(sc==='mfinal'&&!S.finalRead&&S.handNo>=(S.finalNext||6)){
+  if(sc==='mfinal'&&!S.finalRead&&S.handNo>=(S.finalNext||kataAt(5,8))){   // 最初の最後の1手は5〜8ハンド目のどこか（§8-1 4）
     S.finalHand=true;S.finalNext=S.handNo+3;const cue=P2_CUE[loadP2().tell]||'glance';S.p2cue=cue;
-    rig({'タロウ':[C(14,'♣'),C(13,'♦')],'師匠':[C(9,'♥'),C(9,'♠')]},[C(14,'♠'),C(9,'♦'),C(2,'♣'),C(11,'♥'),C(4,'♠')]);
+    kataDeal('mf','師匠');   // 型：師匠にセット、タロウにトップペア（js/54_deal_mod.js）
     S.msg='師匠は、静かにチップをそろえている……';
     S.scriptAI=i=>{const p=S.players[i],tc=S.currentBet-p.bet,pot=potTotal();
       if(S.street==='river'){

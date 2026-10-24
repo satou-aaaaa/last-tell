@@ -1,0 +1,101 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "ゴ",
+     "consonant": "g",
+     "consonant_length": 0.04907894879579544,
+     "vowel": "o",
+     "vowel_length": 0.07738428562879562,
+     "pitch": 5.438499927520752
+    },
+    {
+     "text": "カ",
+     "consonant": "k",
+     "consonant_length": 0.07031027227640152,
+     "vowel": "a",
+     "vowel_length": 0.07561879605054855,
+     "pitch": 5.757737159729004
+    },
+    {
+     "text": "ク",
+     "consonant": "k",
+     "consonant_length": 0.06303740292787552,
+     "vowel": "u",
+     "vowel_length": 0.036858342587947845,
+     "pitch": 5.75683069229126
+    },
+    {
+     "text": "ニ",
+     "consonant": "n",
+     "consonant_length": 0.08498100191354752,
+     "vowel": "i",
+     "vowel_length": 0.06181658059358597,
+     "pitch": 5.598813533782959
+    },
+    {
+     "text": "ン",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "N",
+     "vowel_length": 0.08089501410722733,
+     "pitch": 5.412686347961426
+    }
+   ],
+   "accent": 2,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ク",
+     "consonant": "k",
+     "consonant_length": 0.057105667889118195,
+     "vowel": "u",
+     "vowel_length": 0.04050826281309128,
+     "pitch": 5.345561504364014
+    },
+    {
+     "text": "ダ",
+     "consonant": "d",
+     "consonant_length": 0.05019070953130722,
+     "vowel": "a",
+     "vowel_length": 0.07283512502908707,
+     "pitch": 5.347494602203369
+    },
+    {
+     "text": "サ",
+     "consonant": "s",
+     "consonant_length": 0.13382375240325928,
+     "vowel": "a",
+     "vowel_length": 0.1071346327662468,
+     "pitch": 5.374579906463623
+    },
+    {
+     "text": "イ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "i",
+     "vowel_length": 0.09382099658250809,
+     "pitch": 5.176793575286865
+    }
+   ],
+   "accent": 3,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "ゴカ'クニン/クダサ'イ"
+}

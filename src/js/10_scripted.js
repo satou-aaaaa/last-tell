@@ -21,15 +21,15 @@ function setupScript(){
   const sc=CFG.ch&&CFG.ch.script;if(!sc)return;
   if(CFG.ch.p2){p2Script(sc);return}
   if(sc==='badbeat'&&S.handNo===1){
-    rig({'あなた':[C(14,'♠'),C(14,'♥')],'ハヤト':[C(9,'♦'),C(8,'♦')]},[C(13,'♦'),C(7,'♦'),C(2,'♣'),C(3,'♠'),C(6,'♦')]);
-    S.autoMe=true;S.msg='AAが来た。……このハンドは自動で進みます';
+    kataDeal('bb','ハヤト');   // 型：自分にオーバーペア、ハヤトにスーテッド、リバーでハヤトのフラッシュ（js/54_deal_mod.js）
+    S.autoMe=true;S.msg='ジン：……この1手は、黙って見ていろ';
     S.scriptAI=i=>{const p=S.players[i],tc=S.currentBet-p.bet;
       if(p.name==='ハヤト')return S.street==='preflop'&&S.currentBet<p.bet+p.chips?{type:'raise',to:p.bet+p.chips,state:'bluff'}:{type:'call',state:'none'};
       return tc>0?{type:'fold',state:'none'}:{type:'call',state:'none'}};
   }
-  if(sc==='final'&&!S.finalRead&&S.handNo>=(S.finalNext||5)){
+  if(sc==='final'&&!S.finalRead&&S.handNo>=(S.finalNext||kataAt(4,7))){   // 最初の最後の1手は4〜7ハンド目のどこか（§8-1 4）
     S.finalHand=true;S.finalNext=S.handNo+3;
-    dealOf59(FINAL_DEALS59[pickDeal59('7',3)],'ジン');
+    kataDeal('7','ジン');
     S.scriptAI=i=>{const p=S.players[i],tc=S.currentBet-p.bet,pot=potTotal();
       if(S.street==='river'){
         if(!S.released){S.released=true;

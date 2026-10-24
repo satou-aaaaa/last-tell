@@ -26,6 +26,8 @@ const Rules={
   // 自分がレイズするときに選べる額（オールインより上は選べない）
   raiseBounds(cur,minRaise,bet,chips){const maxTo=bet+chips;return{minTo:Math.min(cur+minRaise,maxTo),maxTo}},
   // アンティを除いた、賭けた額（BBアンティは死に金なので、だれのものでもない）
+  // 「ブラフを見抜いた！」を出してよいか：コールした自分が勝ち、賭けた相手は何も取らなかった（分けたときは出さない。v0.97.12 レビュー：第14章で引き分けなのに出た）
+  readCaught:(meWon,agWon,bluffy)=>meWon>0&&!(agWon>0)&&!!bluffy,
   betOf:p=>p.total-(p.ante||0),
   // コールされなかった賭け：いちばん多く出した人の、2番目との差。ほかに誰も出していないときは返さない
   uncalled(ps){const b=Rules.betOf,c=ps.map((p,j)=>j).filter(j=>ps[j].total>0).sort((x,y)=>b(ps[y])-b(ps[x]));

@@ -1,0 +1,194 @@
+<title>LAST TELL PC演出案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* 夜のカードルームの一枚：暗い木と緑のフェルト、真鍮の差し色。1つの見た目に決めて暗いまま */
+:root{
+  --room:#0d0f10; --panel:#15191a; --line:#2a3132; --felt:#16503d; --felt2:#0c3527;
+  --brass:#c9a45c; --ink:#e9e4d8; --mute:#9aa29d; --red:#c0392b;
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--room);color:var(--ink);font-family:var(--body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:.04em;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--mute);max-width:68ch}
+.now{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.now img{width:100%;border-radius:4px;display:block}
+.now h2,.card h2{font-family:var(--disp);font-size:20px;margin:0 0 4px;letter-spacing:.03em}
+.now ul{margin:6px 0 0;padding-left:1.2em;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.rec{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass) inset}
+.tag{display:inline-block;font-size:12px;letter-spacing:.12em;color:var(--brass);border:1px solid var(--brass);padding:0 8px;border-radius:2px;margin-left:8px;vertical-align:3px;font-family:var(--body)}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;border-radius:4px;overflow:hidden;background:#000}
+.stage canvas{width:100%;height:100%;display:block}
+.card p{margin:0;color:var(--mute);font-size:14px}
+.card dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;font-size:13px}
+.card dt{color:var(--brass)} .card dd{margin:0;color:var(--ink)}
+.ctrl{display:flex;gap:10px;align-items:center;color:var(--mute);font-size:13px}
+button{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 14px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (max-width:760px){.grid,.now{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<header>
+  <h1>PC 向けのリッチな演出 5案</h1>
+  <p>スマホは最低限にして、PC の横長の画面に合わせる案です。下の5つは全部同時に動いています。どれも操作ボタンは増やさず、第1〜3章の難しさと第7章のジンのテルには触れません。</p>
+</header>
+<section class="now">
+  <img src="pc_rich/now_pc.png" alt="いまの PC 画面（1920×1080）。真ん中の細い縦長の列だけにゲームがあり、左右は壁紙">
+  <div><h2>いまの PC 画面</h2>
+  <ul><li>ゲームは幅 560px の縦長の列だけで、1920px の画面の 7割は壁紙です。</li>
+  <li>スマホの縦画面を基準に作ったので、相手の顔・場札・手札が縦に詰まっています。</li>
+  <li>直近の手・師匠の字幕・操作が卓の上に重なり、よける処理が多くなっています（ここ数版の手直しの多くはこれでした）。</li></ul></div>
+</section>
+<div class="ctrl"><button id="pp" type="button">止める</button><span>どの見本も約8秒でくり返します。</span></div>
+<div class="grid">
+  <article class="card rec"><h2>案1 横長の卓<span class="tag">おすすめ</span></h2>
+    <div class="stage"><canvas id="c1" width="960" height="540"></canvas></div>
+    <p>画面いっぱいに楕円の卓を置き、相手は奥に半円で座ります。直近の手と師匠の字幕は左の柱、自分のチップと操作は右下に分けて、卓の上には何も重ねません。</p>
+    <dl><dt>効き目</dt><dd>相手の顔が2倍近く大きくなり、テルが見やすい。重なりをよける処理がほぼ要らなくなる</dd><dt>手間</dt><dd>大（配置の作り直し。スマホは今の縦のまま残す）</dd></dl></article>
+  <article class="card"><h2>案2 部屋の光と煙</h2>
+    <div class="stage"><canvas id="c2" width="960" height="540"></canvas></div>
+    <p>卓の上のランプがわずかに揺れ、煙がゆっくり流れます。光の届かない外側は暗く沈み、チップと札に光が反射します。章ごとに光の色を変えます。</p>
+    <dl><dt>効き目</dt><dd>その場にいる空気が出る。遊び方は何も変わらない</dd><dt>手間</dt><dd>小〜中（重ねる絵だけ）</dd></dl></article>
+  <article class="card"><h2>案3 ディーラーの手</h2>
+    <div class="stage"><canvas id="c3" width="960" height="540"></canvas></div>
+    <p>札を配る、燃やし札を置く、場札を開く、ポットを勝った人へ押し出す動きを、ディーラーの手で見せます。</p>
+    <dl><dt>効き目</dt><dd>ライブのカードルームらしさが一番強く出る</dd><dt>手間</dt><dd>中（手の絵と動き。配る速さは今と同じ）</dd></dl></article>
+  <article class="card"><h2>案4 大勝負の間</h2>
+    <div class="stage"><canvas id="c4" width="960" height="540"></canvas></div>
+    <p>オールインや大きなポットのとき、部屋が暗くなり二人だけにスポットが当たります。後ろに人が集まり、最後の札はゆっくりめくります。</p>
+    <dl><dt>効き目</dt><dd>山場がはっきりする。今の「人だかり」を PC の広さで大きく見せる</dd><dt>手間</dt><dd>中（場面の切り替えのみ）</dd></dl></article>
+  <article class="card"><h2>案5 チップと札の手ざわり</h2>
+    <div class="stage"><canvas id="c5" width="960" height="540"></canvas></div>
+    <p>投げたチップが卓の上で散らばり、少し崩れた山になります。札には厚みと影があり、滑って止まります。</p>
+    <dl><dt>効き目</dt><dd>本物の卓に近い見た目。PC の高い解像度で映える</dd><dt>手間</dt><dd>中（チップの置き方と影）</dd></dl></article>
+</div>
+</div>
+<script>
+const T=8000,P=Math.PI;let run=true,t0=performance.now(),tp=0;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.getElementById('pp').onclick=e=>{run=!run;e.target.textContent=run?'止める':'動かす';if(run)t0=performance.now()-tp};
+const C=[1,2,3,4,5].map(i=>document.getElementById('c'+i).getContext('2d'));
+const W=960,H=540,ease=x=>x<0?0:x>1?1:x*x*(3-2*x),cl=(x,a,b)=>Math.max(a,Math.min(b,x)),seg=(t,a,b)=>ease((t-a)/(b-a));
+function rnd(s){return()=>(s=(s*16807)%2147483647)/2147483647}
+function felt(g,cx,cy,rx,ry,dim=1){g.save();const gr=g.createRadialGradient(cx,cy-ry*.3,10,cx,cy,rx);gr.addColorStop(0,`rgba(30,110,80,${dim})`);gr.addColorStop(1,`rgba(10,50,36,${dim})`);
+  g.fillStyle='#3a2416';g.beginPath();g.ellipse(cx,cy,rx+18,ry+18,0,0,2*P);g.fill();g.fillStyle=gr;g.beginPath();g.ellipse(cx,cy,rx,ry,0,0,2*P);g.fill();
+  g.strokeStyle='rgba(201,164,92,.35)';g.lineWidth=2;g.beginPath();g.ellipse(cx,cy,rx-30,ry-26,0,0,2*P);g.stroke();g.restore()}
+function card(g,x,y,w,rot,face,lab,red){const h=w*1.4;g.save();g.translate(x,y);g.rotate(rot);g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=w*.18;g.shadowOffsetY=w*.06;
+  g.fillStyle=face?'#f3efe6':'#7a1f22';g.beginPath();g.roundRect(-w/2,-h/2,w,h,w*.08);g.fill();g.shadowColor='transparent';
+  if(face){g.fillStyle=red?'#b3262a':'#1c1c1c';g.font=`700 ${w*.42}px Georgia,serif`;g.textAlign='left';g.textBaseline='top';g.fillText(lab,-w*.4,-h*.44)}
+  else{g.strokeStyle='rgba(201,164,92,.6)';g.lineWidth=1.5;g.strokeRect(-w*.38,-h*.4,w*.76,h*.8)}
+  g.restore()}
+function chip(g,x,y,r,col){g.save();g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(x+2,y+3,r,r*.45,0,0,2*P);g.fill();g.fillStyle=col;g.beginPath();g.ellipse(x,y,r,r*.45,0,0,2*P);g.fill();
+  g.strokeStyle='rgba(255,255,255,.7)';g.setLineDash([r*.35,r*.35]);g.lineWidth=r*.12;g.beginPath();g.ellipse(x,y,r*.82,r*.36,0,0,2*P);g.stroke();g.restore()}
+function stack(g,x,y,n,col,r=14,jit=0,seed=1){const R=rnd(seed);for(let i=0;i<n;i++)chip(g,x+(R()-.5)*jit,y-i*r*.28,r,col)}
+function bust(g,x,y,s,shade,lit=1){g.save();g.globalAlpha=lit;g.fillStyle=shade;g.beginPath();g.ellipse(x,y+s*.95,s*.85,s*.55,0,P,2*P);g.fill();
+  g.fillStyle='#d8b494';g.beginPath();g.ellipse(x,y,s*.38,s*.47,0,0,2*P);g.fill();g.fillStyle='#1b1714';g.beginPath();g.ellipse(x,y-s*.28,s*.4,s*.24,0,P,2*P);g.fill();
+  g.fillStyle='#2a2320';g.fillRect(x-s*.17,y-s*.02,s*.08,s*.04);g.fillRect(x+s*.09,y-s*.02,s*.08,s*.04);g.restore()}
+function room(g,a=1){const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#141210');gr.addColorStop(1,'#070707');g.fillStyle=gr;g.fillRect(0,0,W,H)}
+function label(g,s,x,y,sz=15,al='left',col='#e9e4d8'){g.save();g.font=`500 ${sz}px "Zen Kaku Gothic New",sans-serif`;g.fillStyle=col;g.textAlign=al;g.fillText(s,x,y);g.restore()}
+function vign(g,k){const gr=g.createRadialGradient(W/2,H*.48,H*.2,W/2,H/2,W*.62);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,`rgba(0,0,0,${k})`);g.fillStyle=gr;g.fillRect(0,0,W,H)}
+
+// 案1：いまの縦の列 → 横長の卓へ広がる
+function s1(g,t){room(g);const k=seg(t,1200,3200)-seg(t,7000,7800);
+  const colW=560/1920*W,x0=W/2-colW/2;
+  // 壁紙（いま）
+  g.globalAlpha=1-k;g.fillStyle='#0b0d1a';g.fillRect(0,0,W,H);for(let i=0;i<40;i++){g.fillStyle='rgba(240,200,120,.25)';g.fillRect((i*97)%W,H-((i*53)%180),4,4)}g.globalAlpha=1;
+  const rx=colW*.5+k*(W*.36-colW*.5),ry=H*.22+k*(H*.25-H*.22),cy=H*(.55+k*.03);
+  felt(g,W/2,cy,rx,ry);
+  // 相手
+  const n=5;for(let i=0;i<n;i++){const a=P*(1.12+i*.19);const px=W/2+Math.cos(a)*(rx*.92),py=cy+Math.sin(a)*(ry*1.25)-10*(1-k);
+    const xx=(1-k)*(x0+colW*(.12+i*.19))+k*px,yy=(1-k)*H*.28+k*py;bust(g,xx,yy-20,26+k*20,['#3d2a2a','#2d3a44','#3a3a2a','#2a2a3a','#402a38'][i])}
+  // 場札
+  for(let i=0;i<5;i++)card(g,W/2+(i-2)*(30+k*26),cy-6,34+k*14,0,i<3,['2','3','8'][i]||'',i>0);
+  stack(g,W/2,cy+ry*.45,6,'#2f5fa8',12+k*3);
+  // 自分の手札
+  card(g,W/2-18-k*8,H*.86-k*20,40+k*14,-.08,1,'4',1);card(g,W/2+18+k*8,H*.86-k*20,40+k*14,.08,1,'K',0);
+  // 柱（ワイド時）
+  g.globalAlpha=k;g.fillStyle='rgba(21,25,26,.9)';g.fillRect(14,60,170,200);g.strokeStyle='rgba(201,164,92,.5)';g.strokeRect(14,60,170,200);
+  ['直近の手','テツ　コール 8,000','ニット　フォールド','ワッペン　フォールド','あなた　コール'].forEach((s,i)=>label(g,s,26,86+i*26,i?13:14,'left',i?'#e9e4d8':'#c9a45c'));
+  g.fillStyle='rgba(21,25,26,.9)';g.fillRect(14,H-120,300,64);label(g,'師匠「ここは払う額がない。様子を見ろ」',26,H-82,13);
+  ['フォールド','チェック','ベット'].forEach((s,i)=>{g.fillStyle=['#2a2a2a','#1f6b52','#a32b2b'][i];g.fillRect(W-330+i*106,H-74,98,44);label(g,s,W-281+i*106,H-46,14,'center')});
+  label(g,'22,000',W-60,H-96,14,'right','#c9a45c');g.globalAlpha=1;
+  label(g,k<.5?'いま：縦の列だけ':'案1：横長の卓',16,30,16,'left','#c9a45c')}
+
+// 案2：ランプの揺れ・煙・周りの暗さ
+const smoke=Array.from({length:40},(_,i)=>{const R=rnd(i+3);return{x:R()*W,y:R()*H*.6,r:40+R()*90,s:.2+R()*.5,p:R()*6}});
+function s2(g,t){room(g);const sw=Math.sin(t/1300)*14,lx=W/2+sw,cy=H*.6;
+  felt(g,W/2,cy,W*.4,H*.24);
+  for(let i=0;i<4;i++)card(g,W/2+(i-1.5)*64,cy-10,46,0,i<3,['J','9','4'][i]||'',i==1);
+  stack(g,W/2-160,cy+60,5,'#a32b2b',15,3,4);stack(g,W/2+180,cy+50,7,'#2f5fa8',15,3,8);
+  [[W*.25,H*.36],[W*.42,H*.27],[W*.58,H*.27],[W*.75,H*.36]].forEach(([x,y],i)=>bust(g,x,y,40,'#2a2a30'));
+  // 光の円錐
+  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(lx,cy-10,20,lx,cy,W*.42);gr.addColorStop(0,'rgba(255,214,150,.22)');gr.addColorStop(1,'rgba(255,214,150,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  g.fillStyle='rgba(255,220,160,.06)';g.beginPath();g.moveTo(lx-30,0);g.lineTo(lx+30,0);g.lineTo(lx+W*.36,cy+40);g.lineTo(lx-W*.36,cy+40);g.fill();
+  // 反射
+  const sh=(Math.sin(t/700)+1)/2;g.fillStyle=`rgba(255,240,210,${.25+.25*sh})`;[[W/2-160,cy+45],[W/2+180,cy+30]].forEach(([x,y])=>{g.beginPath();g.ellipse(x-4,y,6,2,0,0,2*P);g.fill()});g.restore();
+  // 煙
+  smoke.forEach(s=>{const x=(s.x+t*s.s*.03)%(W+200)-100,y=s.y+Math.sin(t/2000+s.p)*20;const gg=g.createRadialGradient(x,y,0,x,y,s.r);gg.addColorStop(0,'rgba(200,200,190,.07)');gg.addColorStop(1,'rgba(200,200,190,0)');g.fillStyle=gg;g.fillRect(x-s.r,y-s.r,2*s.r,2*s.r)});
+  // ランプ
+  g.fillStyle='#1d1a16';g.beginPath();g.moveTo(lx-50,40);g.lineTo(lx+50,40);g.lineTo(lx+30,14);g.lineTo(lx-30,14);g.fill();g.strokeStyle='#333';g.beginPath();g.moveTo(W/2,0);g.lineTo(lx,14);g.stroke();
+  vign(g,.85);label(g,'案2：部屋の光と煙',16,30,16,'left','#c9a45c')}
+
+// 案3：ディーラーの手
+function hand(g,x,y,rot,s=1){g.save();g.translate(x,y);g.rotate(rot);g.scale(s,s);g.fillStyle='#1a1a1a';g.fillRect(-26,30,52,60);g.fillStyle='#f2f2f2';g.fillRect(-26,26,52,10);
+  g.fillStyle='#d9b08f';g.beginPath();g.roundRect(-24,-18,48,46,14);g.fill();for(let i=0;i<4;i++){g.beginPath();g.roundRect(-22+i*12,-40,10,30,5);g.fill()}g.beginPath();g.roundRect(20,-8,22,10,5);g.fill();g.restore()}
+function s3(g,t){room(g);const cy=H*.58;felt(g,W/2,cy,W*.42,H*.26);
+  const seats=[[W*.2,H*.42],[W*.38,H*.33],[W*.62,H*.33],[W*.8,H*.42]];seats.forEach(([x,y])=>bust(g,x,y-60,36,'#2a2a30'));
+  const dx=W/2,dy=H*.92;
+  // 配る：0-2.4s
+  let hx=dx,hy=dy-30,hr=0;
+  seats.forEach(([x,y],i)=>{const a=400+i*450,p=seg(t,a,a+380);if(t>a){const sx=dx+(x-dx)*p,sy=dy-60+(y+30-dy+60)*p;card(g,sx,sy,30,p*6.1+i,0);if(p<1){hx=dx+(x-dx)*.25*p;hy=dy-50-30*p;hr=(x-dx)/800}}});
+  // 燃やし札と場札：2.6-4.6s
+  if(t>2600){const p=seg(t,2600,3000);card(g,dx-170,cy-10+20*(1-p),36,.2,0);}
+  ['Q','7','2'].forEach((l,i)=>{const a=3100+i*250,p=seg(t,a,a+300);if(t>a){const fx=dx-70+i*62,flip=Math.abs(Math.cos(P*p/1));card(g,dx+(fx-dx)*p,cy-10+(dy-cy)*(1-p)*.5,44*(p<.5?1:1),0,p>.5,l,i==1);if(p<1){hx=dx+(fx-dx)*p;hy=cy+40;hr=0}}});
+  // ポットを押し出す：5-7s
+  const pp=seg(t,5000,6800);const px=dx+(seats[2][0]-dx)*pp*.85,py=cy+60+(seats[2][1]+40-cy-60)*pp;stack(g,px-14,py,5,'#2f5fa8',14,3,2);stack(g,px+16,py+4,4,'#a32b2b',14,3,5);
+  if(t>5000&&t<7000){hand(g,px-50,py+30,-.6);hand(g,px+60,py+30,.6)}else hand(g,hx,hy,hr,1);
+  vign(g,.7);label(g,'案3：ディーラーの手',16,30,16,'left','#c9a45c')}
+
+// 案4：大勝負
+const crowd=Array.from({length:14},(_,i)=>{const R=rnd(i+20);return{x:40+R()*(W-80),s:28+R()*16,d:R()*1500}});
+function s4(g,t){room(g);const cy=H*.6,k=seg(t,800,2200)-seg(t,7200,7900);
+  // 人だかり
+  crowd.forEach(c=>{const a=seg(t,1600+c.d,2600+c.d)*(1-seg(t,7200,7900));g.globalAlpha=a*.85;g.fillStyle='#0a0a0a';g.beginPath();g.ellipse(c.x,H*.28,c.s*.4,c.s*.5,0,0,2*P);g.fill();g.beginPath();g.ellipse(c.x,H*.28+c.s,c.s*.9,c.s*.6,0,P,2*P);g.fill()});g.globalAlpha=1;
+  // カメラが寄る
+  const z=1+k*.12;g.save();g.translate(W/2,cy);g.scale(z,z);g.translate(-W/2,-cy);
+  felt(g,W/2,cy,W*.4,H*.24,1-k*.35);
+  bust(g,W*.3,H*.36,46,'#3d2a2a',1);bust(g,W*.7,H*.36,46,'#2d3a44',1);[W*.5].forEach(x=>bust(g,x,H*.3,34,'#2a2a2a',1-k*.8));
+  stack(g,W/2-30,cy+40,9,'#2f5fa8',15,4,3);stack(g,W/2+30,cy+44,8,'#111',15,4,9);
+  for(let i=0;i<4;i++)card(g,W/2+(i-2)*60+30,cy-14,44,0,1,['A','K','9','5'][i],i%2);
+  // 最後の札をゆっくり
+  const r=seg(t,3600,6200);g.save();g.translate(W/2+150,cy-14);g.scale(1,1);const w=44;const sq=r;card(g,0,0,w,0,0);
+  g.beginPath();g.rect(-w/2,w*.7-w*1.4*sq,w,w*1.4*sq);g.clip();card(g,0,0,w,0,1,'K',1);g.restore();
+  g.restore();
+  // スポット
+  if(k>0){g.save();g.fillStyle=`rgba(0,0,0,${.55*k})`;g.fillRect(0,0,W,H);g.globalCompositeOperation='lighter';[[W*.3,H*.4],[W*.7,H*.4]].forEach(([x,y])=>{const gr=g.createRadialGradient(x,y,10,x,y,170);gr.addColorStop(0,`rgba(255,220,170,${.22*k})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,H)});g.restore()}
+  const beat=k*Math.max(0,Math.sin(t/260))**8;vign(g,.6+.3*beat);
+  if(k>.5)label(g,'オールイン',W/2,H*.16,22,'center','#c9a45c');
+  label(g,'案4：大勝負の間',16,30,16,'left','#c9a45c')}
+
+// 案5：チップと札の手ざわり
+function s5(g,t){room(g);const cy=H*.58;felt(g,W/2,cy,W*.42,H*.27);
+  const R=rnd(77),thr=Array.from({length:9},()=>({dx:(R()-.5)*120,dy:(R()-.5)*50,c:['#a32b2b','#2f5fa8','#1d1d1d','#2f8a4a'][Math.floor(R()*4)]}));
+  // 自分のチップ（崩れた山）
+  stack(g,W*.74,H*.86,10,'#2f5fa8',16,4,11);stack(g,W*.78,H*.88,7,'#a32b2b',16,4,12);stack(g,W*.70,H*.9,5,'#1d1d1d',16,4,13);
+  // 投げる：1-2.6s、片付け：5-6.5s
+  const p=seg(t,1000,1700),sp=seg(t,1600,2600),tidy=seg(t,5200,6400);
+  thr.forEach((c,i)=>{if(t<1000)return;const sx=W*.74,sy=H*.82;const ex=W/2+c.dx*(sp*(1-tidy))+(tidy*(i%3-1)*0),ey=cy+40+c.dy*(sp*(1-tidy))-tidy*i*4;
+    const x=sx+(ex-sx)*p,y=sy+(ey-sy)*p-Math.sin(P*p)*60;chip(g,x,y,16,c.c)});
+  // 札が滑って止まる
+  ['A','J','10'].forEach((l,i)=>{const a=2800+i*300,q=seg(t,a,a+700),fx=W/2-70+i*70;if(t>a){const dec=1-(1-q)**3;card(g,W*.2+(fx-W*.2)*dec,cy-60,52,(1-dec)*.6*(i-1),1,l,i==0)}});
+  // 厚み
+  g.save();g.fillStyle='rgba(0,0,0,.4)';g.font='13px sans-serif';g.restore();
+  card(g,W*.42,H*.88,60,-.07,1,'Q',1);card(g,W*.5,H*.88,60,.07,1,'Q',0);
+  vign(g,.6);label(g,'案5：チップと札の手ざわり',16,30,16,'left','#c9a45c')}
+const F=[s1,s2,s3,s4,s5];
+function loop(now){if(run){tp=(now-t0)%T}const t=reduce?T*.5:tp;C.forEach((g,i)=>{g.clearRect(0,0,W,H);F[i](g,t)});requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script>

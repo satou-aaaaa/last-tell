@@ -44,21 +44,23 @@ Object.assign(EN_DICT,{
 // 場札を配る前（nextStreet:before）に、山の残りを並べ替える（1ハンドに1回）。
 // 自分もオールインに入っているときは、自分とほかの人の勝ち負け（誰に勝って誰に負けるか）が元の並びと同じになる並びだけを使う＝自分の結果は変えない
 function p6Board(deck){const d=deck.slice(),b=S.board.slice();while(b.length<5){d.pop();const n=b.length?1:3;for(let k=0;k<n;k++)b.push(d.pop())}return b}
-LT.on('nextStreet:before',()=>{try{
-  if(!p6On()||S.p6hu||S.board.length>=5)return;
+// 呼ぶのは配りを変える入口（js/54_deal_mod.js の LT.dealMod('bossRunout','board',…)）。並べ替えたら true
+function p6Runout(){
+  if(!p6On()||S.p6hu||S.board.length>=5)return false;
   const live=S.players.filter(inHand),me=S.players[0],mine=live.includes(me),bs=live.find(p=>p.name===p6Boss());
   // 第14章：自分が降りた勝負で、カイが持ち点の半分以上を入れていれば、オールインでなくても次の札からカイが勝つ並びに（自分の結果には関わらない。
   // カイは自分から大きく打つので、オールインの前に決まることが多い。小さな勝負は並べ替えない＝カイが勝ちすぎない）
   const deep=!S.runout&&!mine&&!p6Six()&&bs&&bs.total>=bs.chips&&bs.chips<=BB()*15;   // 残りが少ない＝負ければ飛ぶときだけ（勝ちすぎて一騎打ちが重くならないように）
-  if(deep){const k=S.handNo+':'+S.board.length;if(S.p6rig===k)return;S.p6rig=k}
-  else{if(!S.runout||S.p6rig===S.handNo)return;S.p6rig=S.handNo}
-  const cr=live.find(p=>p.name===p6Boss());if(!cr||live.filter(p=>!p.human).length<2)return;
+  if(deep){const k=S.handNo+':'+S.board.length;if(S.p6rig===k)return false;S.p6rig=k}
+  else{if(!S.runout||S.p6rig===S.handNo)return false;S.p6rig=S.handNo}
+  const cr=live.find(p=>p.name===p6Boss());if(!cr||live.filter(p=>!p.human).length<2)return false;
   const sg=x=>x>0?1:x<0?-1:0,meVs=b=>{const m=bestN(me.hand.concat(b));return live.filter(p=>p!==me).map(p=>sg(cmp(m,bestN(p.hand.concat(b))))).join()};
   const base=mine?meVs(p6Board(S.deck)):'';
   const won=d=>{const b=p6Board(d),c=bestN(cr.hand.concat(b));return live.every(p=>p===cr||p.human||cmp(c,bestN(p.hand.concat(b)))>0)&&(!mine||meVs(b)===base)};
-  if(won(S.deck))return;
-  for(let t=0;t<400;t++){const d=shuffle(S.deck.slice());if(won(d)){S.deck=d;return}}
-}catch(e){}});
+  if(won(S.deck))return false;
+  for(let t=0;t<400;t++){const d=shuffle(S.deck.slice());if(won(d)){S.deck=d;return true}}
+  return false;
+}
 
 // ===== CPU の打ち方（第6章だけ） =====
 function p6Cpu(i,d){
@@ -93,10 +95,11 @@ function p6Cpu(i,d){
   return d}
 {const _cd=cpuDecide;cpuDecide=function(i){const d=_cd(i);try{return p6Cpu(i,d)}catch(e){return d}}}
 
-// ===== #16・#17 ときどき強い手（js/49 の dealHelp から呼ぶ。配ったら true） =====
+// ===== #16・#17 ときどき強い手（配りを変える入口 js/54_deal_mod.js から呼ぶ。配ったら true） =====
 // 8ハンド強い手が来ていなければ、4割で山から TT 以上のペアか AK を選んで、自分の2枚と入れ替える
 function p6Premium(){
-  if(!p6On()||!S||!S.players)return false;const me=S.players[0];   // 第14章も（2026-10-19 コーディネーター経由：satou 10-17「全体を易しくしてよい」、前の第14章の勝率 約4割に戻す）if(!me||me.out||!me.hand||me.hand.length!==2)return false;
+  if(!p6On()||!S||!S.players)return false;const me=S.players[0];   // 第14章も（2026-10-19 コーディネーター経由：satou 10-17「全体を易しくしてよい」、前の第14章の勝率 約4割に戻す）
+  if(!me||me.out||!me.hand||me.hand.length!==2)return false;   // v0.97.9：前は上の // の続きに入っていて効いていなかった
   if(preTier(me.hand)===2){S.p6prem=S.handNo;return false}
   const k14=!p6Six();if(S.handNo-(S.p6prem||0)<(k14?6:8)||LT.rand()>(k14?.5:.4))return false;   // 第14章は少し多め（6ハンドに5割。5人・30BB で前の第14章の勝率 約4割に戻す）
   const D=S.deck,c=[];for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++){const x=D[a],y=D[b];if((x.r===y.r&&x.r>=10)||(x.r+y.r===27&&Math.max(x.r,y.r)===14))c.push([a,b])}

@@ -81,6 +81,8 @@ async function measure(page, sel, n, k) {
   return { q: out.length ? Math.min(...out) : null, n: out.length };   // いちばん甘い部品で判定する（平均にすると、ぼやけた1枚が隠れる。CodeRabbit PR #107）。測れた数も返す
 }
 const r2 = v => v == null ? '—' : v.toFixed(2);
+// 顔の細かさは、息づかい・まばたきの動きで1枚ごとにぶれる（WebKit PC で寄る前 1.36〜1.64）。3枚撮って真ん中の値で見る（v0.98.3 CI：寄る前 1.57 の1枚に当たって 0.91倍で ❌）
+async function measureMid(page, sel, k) { const v = []; for (let i = 0; i < 3; i++) { if (i) await page.waitForTimeout(180); const q = (await measure(page, sel, 1, k)).q; if (q != null) v.push(q) } v.sort((a, b) => a - b); return v.length === 3 ? v[1] : null }   // 3枚そろわなければ測れなかった扱い（1枚欠けて上側の値で通さない。CodeRabbit #134）
 
 const bad = v => v == null || v < QMIN;
 // ぼやけたときに試す CSS（表示だけ。判定には使わない）
@@ -124,7 +126,7 @@ async function shoot(browser, file, vp, dir) {
     let tries = null;
     if (bad(board) || bad(chips)) {
       tries = [];
-      const hitNormal = hitStat; hitStat = null;   // 画質の候補を試す間の当たり判定は数えない（CodeRabbit PR #121）
+      const hitNormal = hitStat, gapNormal = gapMax; hitStat = null;   // 画質の候補を試す間の当たり判定は数えない（CodeRabbit PR #121）。場所のずれも数えない（「zoomなし」などを入れたままの場所を、元の場所のずれに混ぜていた：PR #142 CI で WebKit PC 125px と ❌。直しを外すと 2px）
       try {
       for (const [name, css] of TRIES) {
         await page.evaluate(c => { const st = document.createElement('style'); st.id = 'sharpTry'; st.textContent = c; document.head.appendChild(st) }, css);
@@ -135,18 +137,21 @@ async function shoot(browser, file, vp, dir) {
       if (dir) for (const [nm, sel] of [['場札', '#boardCards .card:not(.back):not(.slot)'], ['ポットのチップ', '#potChips'], ['相手のチップ', '.felt .spot .mystack']]) {
         const c = (await rectsOf(page, sel, 1))[0]; if (c) await page.screenshot({ clip: c, path: require('path').join(dir, `画質_${process.env.QA_BROWSER || 'chromium'}_${vp.key}_${nm}.png`) }).catch(() => {});
       }
-      } finally { hitStat = hitNormal }
+      } finally { hitStat = hitNormal; gapMax = gapNormal }
     }
     // 顔：寄る前と、寄ったあと（カメラの動きが終わってから）
     const seat = await page.evaluate(() => { for (let i = 1; i < S.players.length; i++) { const b = document.getElementById('bust' + i); if (b && !S.players[i].out && b.querySelector('.body svg')) return i } return -1 });
     const faceSel = `#bust${seat} .body svg`;
-    const face0 = seat > 0 ? (await measure(page, faceSel, 1, k)).q : null;
-    let face1 = null;
+    const face0 = seat > 0 ? await measureMid(page, faceSel, k) : null;
+    let face1 = null, sx0 = null, sx1 = null;   // 寄る前・寄ったあとの卓の縮め（--sx）。寄っている間に変わったら ❌（v0.97.12 CI：顔のアップ中に卓を縮めてぼやけた）
     if (seat > 0 && await page.evaluate(() => typeof camTo === 'function' && !!document.getElementById('cam'))) {
+      const sxOf = () => page.evaluate(() => { const g = document.querySelector('#game .gwrap'); return g ? g.dataset.sx || '0' : '0' });
+      sx0 = await sxOf();
       await page.evaluate(i => camTo(i, 'tell'), seat);
       for (let last = '', t1 = Date.now(); Date.now() - t1 < 4000; await page.waitForTimeout(250)) { const t = await page.evaluate(() => getComputedStyle(document.getElementById('cam')).transform); if (t === last) break; last = t }
       await page.waitForTimeout(500);
-      face1 = (await measure(page, faceSel, 1, k)).q;
+      face1 = await measureMid(page, faceSel, k);
+      sx1 = await sxOf();
     }
     // 場所がずれたときだけ：どの CSS を変えると、描かれた場所と getBoundingClientRect が合うかを試して出す（v0.97.5 CI：WebKit は zoom を外しても 72〜80px ずれた。WebKit は手元で動かせない）
     let gapTries = null, hitKeep = null;
@@ -166,7 +171,7 @@ async function shoot(browser, file, vp, dir) {
       }
       gapMax = keep; await page.waitForTimeout(300) }
     const hit = hitKeep || hitStat; hitStat = null;
-    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, seat, tries, gap: gapMax, gapTries, hit };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
+    return { own, board, boardN, chips, ownChips, seatChips, face0, face1, sx0, sx1, seat, tries, gap: gapMax, gapTries, hit };   // 判定は丸めない値で（CodeRabbit PR #119）。表示だけ丸める
   } finally { await ctx.close() }
 }
 
@@ -190,8 +195,13 @@ async function run({ browser, file, dir }) {
     items.push({ id: `sharp:gap:${vp.key}`, title: `卓の中の部品が、測った場所に描かれている（${vp.key}、ずれ ${GAP_MAX}px 以下）`, status: r.gap > GAP_MAX ? 'fail' : 'ok',
       detail: `ずれ 最大 ${Math.round(r.gap)}px${r.hit && r.hit.n ? `、当たり判定が部品に当たる：描かれた場所 ${r.hit.p}/${r.hit.n}・測った場所 ${r.hit.g}/${r.hit.n}` : ''}${r.gapTries ? `（試した直し：${r.gapTries.join('、')}）` : ''}` });
     // 顔は柔らかい絵（グラデーション）なので、場札より低い目安（ZMIN）で見る。寄る前の値は表示だけ
-    items.push({ id: `sharp:zoom:${vp.key}`, title: `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : st(vp, r.face1 < ZMIN ? 'fail' : 'ok'),
-      detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}` });
+    // WebKit の PC（soft）は寄る前の顔から柔らかい（1.36〜1.53）。目安 1.45 のまわりで回ごとにぶれて、くり返しの判定で ❌ になった（PR #132）。
+    //   寄ったことでぼやけたか（寄る前の 0.93倍より下）と、引き伸ばしたぼやけ（1.3 未満）を ❌ にする。⚠️ に逃がさない
+    const zSoft = soft(vp) && r.face0 != null, zBad = r.face1 == null || (zSoft ? r.face1 < 1.3 || r.face1 < r.face0 * .93 : r.face1 < ZMIN);
+    items.push({ id: `sharp:zoom:${vp.key}`, title: zSoft ? `顔のアップでもくっきりしている（${vp.key}、寄る前の 0.93倍以上・1.3 以上）` : `顔のアップでもくっきりしている（${vp.key}、細かさ ${ZMIN} 以上）`, status: r.face1 == null ? 'fail' : zSoft ? (zBad ? 'fail' : 'ok') : st(vp, zBad ? 'fail' : 'ok'),
+      detail: r.face1 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `寄る前 ${r2(r.face0)} → 寄ったあと ${r2(r.face1)}${zSoft ? `（${r2(r.face1 / r.face0)}倍）` : ''}` });
+    items.push({ id: `sharp:camsx:${vp.key}`, title: `顔のアップの間に卓の大きさが変わらない（${vp.key}）`, status: r.sx0 == null ? 'fail' : r.sx0 !== r.sx1 ? 'fail' : 'ok',
+      detail: r.sx0 == null ? `顔かカメラが見つからなかった（席 ${r.seat}）` : `卓の縮め 寄る前 ${r.sx0}px → 寄ったあと ${r.sx1}px${r.sx0 !== r.sx1 ? '：寄って大きく見える場札を「手札にかかる」と測って縮めている（30c の barSync はカメラが寄っている間は判断しない）' : ''}` });
   }
   return { name: '画質（高精細の画面でくっきりしているか）', items };
 }

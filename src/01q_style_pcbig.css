@@ -1,0 +1,13 @@
+/* ===== v0.98.5 PC 向け：大勝負の間（js/56_pc_big.js）。部屋を暗くする絵（上半身の上・卓の板の下）と、大きな人だかり。押せない ===== */
+#pcBig{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;transition:opacity .7s ease}
+#pcBig.on{opacity:1}
+#pcBig.still{transition:none}
+html:not(.pcw) #pcBig{display:none}
+/* 人だかり：PC では背を高く、5人まで（左右に2人ずつ＋奥に1人）。顔より奥の層のまま */
+#table .ltcrowd i.cr4,#table .ltcrowd i.cr5{display:none}
+html.pcw #table .ltcrowd.cr-big i{height:34%;top:5%}
+html.pcw #table .ltcrowd.cr-big i.cr3{display:block;left:auto;right:22%;height:30%;top:7%}
+html.pcw #table .ltcrowd.cr-big i.cr4{display:block;left:15%;height:31%;top:6%}
+html.pcw #table .ltcrowd.cr-big i.cr5{display:block;right:12%;height:28%;top:8%}
+html.pcw #table .ltcrowd.cr-big.cr-on i.cr4{transition-delay:.45s}html.pcw #table .ltcrowd.cr-big.cr-on i.cr5{transition-delay:.6s}
+html.pcw #table .ltcrowd.cr-big.cr-edge i.cr3,html.pcw #table .ltcrowd.cr-big.cr-edge i.cr4,html.pcw #table .ltcrowd.cr-big.cr-edge i.cr5{display:none}

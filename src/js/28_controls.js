@@ -107,7 +107,7 @@ renderCamBtn();
 (function(){const t=$('table'),c=document.createElement('div');c.className='cam';c.id='cam';t.insertBefore(c,$('busts'));c.appendChild($('busts'));c.appendChild(t.querySelector('.felt-wrap'));c.appendChild($('plates'));const L=document.createElement('div');L.className='plates saylayer';L.id='sayLayer';t.insertBefore(L,c.nextSibling)})();
 renderDepth();
 // ===== 隣の卓の声（案4：ピント送り）。ハンドとハンドの間だけ、6〜8ハンドに1回 =====
-const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさんは昔、ジンさんと組んでいたんだろ？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["AAが負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
+const NEXT_VOICES={"1": {"air": ["マスター、もう一杯", "……コール", "グラス、こっちにも頼む"], "cheer": ["オールイン！ ……入ったあ！"], "story": ["カウンターの写真、一枚だけ裏返しなの、なんでだろうな"], "react": {"win": ["おっ、ジンさんの連れてる若いのだ"]}, "big": ["フォーカード！"]}, "2": {"air": ["ディーラー交代です", "カードを新しいのに替えます"], "cheer": ["ナイスハンド！"], "story": ["ロクさんは昔、ジンさんと組んでいたんだろ？"], "meet": [["ゲン「おーい新入り！こっちの卓にも顔出せよ！」", 1]], "big": ["ストレートフラッシュだ！"]}, "3": {"air": ["（曲の切れ目に、拍手と小さな笑い声）"], "cheer": ["（どよめき）オールインだ！"], "story": ["ミナの歌が止まったら、誰かが勝負に出るんだってさ"], "meet": [["ロク「おや、ここでも会いましたね」", 2], ["ハル「あ、また会いましたね！」", 2]], "react": {"bluff": ["今の、何も無い手で押し切ったのか？"]}, "big": ["ストレートフラッシュだ！"]}, "4": {"air": ["ディーラー交代です", "お飲み物をお持ちしました"], "story": ["ハヤト？ あいつなら今は地下にいるって聞いたぜ"], "meet": [["セキ「……いい顔になったな」", 3], ["ミナ「この店でも、歌えたらいいのに」", 3]], "rumor": [["レイカは汗をかいたら勝負手だってさ", "old", "レイカ"]], "big": ["ロイヤルストレートフラッシュ！"]}, "5": {"air": ["おい、今のイカサマじゃねえのか ……フロア！"], "cheer": [["強い手札が負けたってよ。かわいそうに", "aa"], "オールイン！ ……入ったあ！"], "rumor": [["ハヤトは絶対にブラフしないって話だぜ", "old", "ハヤト"]], "big": ["殴り合い寸前！ ……フロアが走る"]}, "6": {"air": ["3卓、ブレイクです", "隣の卓で一人飛んだぞ"], "story": ["この大会、今年は人が多いな"], "rumor": [["クロウさん、本当に迷ったときだけ手袋に触るって", "true", "クロウ"]], "big": ["隣の卓、ロイヤルストレートフラッシュ！ ……店じゅうがどよめく"]}, "free": {"air": ["ディーラー交代です", "マスター、もう一杯"], "cheer": ["ナイスハンド！", "オールイン！ ……入ったあ！"], "big": ["フォーカード！"]}};
 const NV_REACT={"win": ["今の勝負、向こうの若いのが取ったぞ"], "bluff": ["今の、何も無い手で押し切ったのか？"], "fold": ["あの若いの、ずいぶん我慢してるな"]},NV_SELF={"slow": {"s": "あの新顔、強いときは長く考えるよな", "w": "あの新顔、迷ってるときほど長く考えるな"}, "fast": {"s": "あの新顔、強いときはすぐ動くよな", "w": "あの新顔、手が無いときほど早いよな"}, "big": {"s": "あの新顔、強いときだけ強気に出るよな", "w": "あの新顔、強気に出るときほど怪しいな"}};
 const NV={on:false,tok:0,t:0};
 function nvLamp(){const L=$('nextLamp');if(L)L.classList.toggle('off',storeNo()===7)}
@@ -118,7 +118,7 @@ function nvBlocked(){
   if(!S||!S.players||$('game').hidden||!S.handOver||S.result||S.reveal||S.finalHand||S.autoMe||CFG.flashback||S.toAct===0)return true;
   if(['toast','quiz','cutin','camBand','mieta','foolStamp'].some(id=>$(id)&&!$(id).hidden))return true;
   if($('dcall').classList.contains('go'))return true;
-  const now=performance.now();return [...document.querySelectorAll('#sayLayer .say.go,#plates .say.go')].some(sy=>now-(sy._t||0)<2800)}
+  const now=performance.now();return [...document.querySelectorAll('#sayLayer .say.go,#plates .say.go')].some(sy=>now-(sy._t||0)<2800)}   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */
 function nvMob(p){if(p[0]!=='air')return;const st=storeNo(),h=loadMob();
   const L=Object.keys(MOBS).filter(k=>(!st||MOBS[k].store===st)&&(+h[k]||0)>=10&&!S.players.some(q=>q.name===k));
   if(L.length&&Math.random()<.35){const k=L[Math.floor(Math.random()*L.length)];p[1]=`${k}「${PROFILE[k].ph.replace(/^（メモ）/,'')}」`}}
@@ -224,7 +224,7 @@ function confirmRaise(){
   clearArm();raiseOpen=false;quickPick=0;buzz();act(0,'raise',v)}
 function buzz(){if(SETTINGS.sound&&navigator.vibrate)try{navigator.vibrate(8)}catch(e){}}
 // A：（v64）卓とボタンが1画面に収まったので、自分の番に卓へ自動でスクロールしない。名前は呼び出し元のために残す
-const LAND=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+const LAND=()=>matchMedia(SIDE_Q).matches;   // 右の列の配置（スマホ横・PC の横長の卓）
 function keepMine(){}
 // I：自分の番の合図
 function turnCue(){requestAnimationFrame(keepMine);const a=$('acts');a.classList.remove('cue');void a.offsetWidth;a.classList.add('cue');

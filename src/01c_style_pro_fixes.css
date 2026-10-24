@@ -53,7 +53,7 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
   #between .acts.acts3 #btnNext{grid-column:1/-1}
 }
 /* v68（v67 UI/UX レビュー）：文字：大 のとき、ボタンの下の小さい字（「チェックできます」など）も 12px 以上にする（スマホ幅だけ。PC はもともと 13.6px なので触らない）。1行に収まるよう字間とボタンの内側の余白を少し詰める */
-@media (max-width:699px),(orientation:landscape) and (max-height:520px){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
+@media (max-width:699px),(orientation:landscape) and (max-height:520px),(min-width:1100px) and (min-height:640px) and (hover:hover) and (pointer:fine){html.fbig #game button.act small{font-size:12px!important;letter-spacing:-.04em!important;white-space:nowrap!important}}@media (max-width:389px){html.fbig #game button.act small{letter-spacing:-.08em!important}}
 @media (max-width:699px){html.fbig #game #btnFold b{letter-spacing:0!important}html.fbig #game #btnFold small{letter-spacing:-.13em!important}}
 /* 改善提案 第5回 §1：注意書きを「遊んだことは？」の箱に同居 */
 #novDlg .novnote{font-size:.85rem;color:var(--ink);line-height:1.6;padding-bottom:10px;border-bottom:1px solid #ffffff1a}

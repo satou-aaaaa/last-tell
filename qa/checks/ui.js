@@ -23,12 +23,14 @@ const SCENES = [
   { key: '第6章_自分の番', prep: `startChapter(CHAPTERS[5],true)`, myTurn: true },
   // 1対1（v65 クリエイター目線レビュー：スマホ横で相手の顔が目から上で切れていた）
   { key: '第7章_自分の番', prep: `startChapter(CHAPTERS[6],true)`, myTurn: true, street: 'flop' },
-  { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()` },
+  // noSubHand：額を選ぶ間は自分の手札を出さない作り（手札が見えないので、字幕×手札は測らない）
+  { key: 'フリー6人_レイズを開く', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnRaise').click()`, noSubHand: true },
   // deal：配る札を固定（v88.2 レビュー：Chromium と WebKit で結果が違い比べられなかった）。配り 32・CPU の種 1007 は、左の席（相手1）があなたとのショーダウンで勝ち、あなたは残る手（ゲームが終わらない）。手元の Chromium で4回とも同じ勝ち負け
-  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007 },
+  { key: 'フリー6人_ハンドの終わり', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, showStrict: true, sameSeed: 'PC_1280x800' },   // いちばん左の席（1）が札を見せたハンドの終わりで撮る（v0.98.5 CI：PC でその席の勝った札が画面の左の端から出た。配りしだいで見のがしていた）
   // 場札にチップが重ならないか（v71 改善提案§1：第2章でポットの山が場札を隠していた）
   { key: '第2章_ハンドの終わり', prep: `startChapter(CHAPTERS[1],true)`, handEnd: true },
   { key: '設定', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `$('btnSet').click()` },
+  { key: 'フリー6人_目標を開いた', prep: `($('freeSize').value='6',startFree())`, myTurn: true, after: `goalOpen(true)` },   // 目標の箱と直近の5手（#vfLog）が重ならない（v0.98.4 レビュー：PC の右の列で重なった）
   { key: '英語_フリー6人_自分の番', prep: `($('freeSize').value='6',startFree())`, myTurn: true, lang: 'en' },
   // 主人公の画面と回想（クリエイター目線レビュー v62 の直し5）。waitFor は会話や相手紹介を先へ送りながら待つ
   { key: '名乗る', prep: `startChapter(CHAPTERS[0])`, fresh: true,
@@ -41,6 +43,9 @@ const SCENES = [
   { key: '読み勝ちの見返し', prep: `startChapter(CHAPTERS[3],true)`, myTurn: true, street: 'flop', settle: 3400,
     after: `(MF_REPLAY.ms=1e7,(()=>{const o=S.players.find(p=>!p.human&&!p.out&&p.hand&&p.hand.length);mfReplay({pot:1,name:o.name,cue:'smile',act:'call',hand:o.hand.slice(),board:S.board.slice(),hand2:S.players[0].hand.slice()})})())` },
   // 改善提案 2026-10-15b 案4：人だかり（オールインがコールされたとき）。影と「おお……」の声が札・名札・ボタンに重ならないか
+  // v0.98.7 レビュー：オールインの決着（PC）で、人だかりの声が「あなたの負け」の帯の真ん中に重なった。帯の出るハンドの終わりで声を出し、帯にかからないかを見る
+  { key: 'フリー6人_人だかりと勝ち負け', prep: `($('freeSize').value='6',startFree())`, handEnd: true, deal: 32, seed: 1007, showBy: 1, settle: 900, needVfres: true,
+    after: `(CROWD.afterMs=1e7,(()=>{const c=document.querySelector('#table .ltcrowd');if(c)clearTimeout(c._t)})(),crowdSay(CROWD.lines[2]),setTimeout(()=>{const d=document.querySelector('#table > .vfres');if(d&&d._place)d._place()},50))`, measure: 'inner', sel: '#crowdSay' },
   { key: 'フリー6人_人だかり', prep: `($('freeSize').value='6',startFree())`, myTurn: true, street: 'flop', settle: 1400,
     after: `(S.runout=true,render(),S.runout=false,crowdSay(CROWD.lines[1]))`, measure: 'inner', sel: '#crowdSay' },
   // アクションのわかりやすさ 案2：ディーラーの声に呼び名と席番号（.sn）。声がほかの部品に重ならないか（v91.2 レビュー）
@@ -127,7 +132,7 @@ const INSPECT = `(() => {
   // 名札の下の行動の語（.ltact、アクションのわかりやすさ 案1）が、席番号・D・チップ・吹き出し・ポットの額・札に重ならないか（その席の伏せ札の上に重ねるのは決めた置き方なので見ない）
   if (!modal) { const okv = e => { if (!e || e.hidden || e.closest('[hidden]')) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') return false; for (let q = e; q && q !== document.body; q = q.parentElement) { const t = getComputedStyle(q); if (t.display === 'none' || +t.opacity === 0) return false } const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2 };
     const acts = [...document.querySelectorAll('.ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off)')].filter(okv);   // .vf*：動画のツッコミの直し（2026-10-17、js/47_video_fixes.js）。#vfLog：直近の5手（js/48_bet_log.js）
-    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText, #table .needlerow button')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
+    const others = [...document.querySelectorAll('.llseats i, #dbtn, .dbadge, .felt .spot .chipwrap, .felt .spot .mystack, #mine .mystack, #mine .mybet, #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #mine .card, #felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back), #plates .cue, #dcall.go, .ltact, .vfturn, .vfpos, .vfres, #vfLog:not(.off), #between .acts button, #resultText, #table .needlerow button, #goalDrop:not([hidden])')].filter(okv).concat([document.getElementById('msg')].filter(e => okv(e) && (e.textContent || '').trim()));   // #msg：上の案内の文（字があるとき。v92 レビュー）。#between：ハンドの終わりの結果の文とボタン（v96.4 レビュー：PC で直近の5手が重なった）
     for (const el of acts) { const a = el.getBoundingClientRect(); for (const o of others) { if (o === el || o.contains(el) || el.contains(o)) continue; const c = o.getBoundingClientRect();
       const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
       const chip = /chipwrap|mystack/.test(o.className);   // チップの山の端に少しかかるのは読める（語の面積の4分の1まで）
@@ -137,6 +142,11 @@ const INSPECT = `(() => {
       for (const bt of document.querySelectorAll('button, [role=button], a[href]')) { if (el.contains(bt) || !okv(bt)) continue; const c = bt.getBoundingClientRect(); if (c.width < 2 || c.height < 2) continue;
         const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
         if (w > 1 && h > 1 && !out.some(o => o.kind === '重なり' && o.el === desc(el) && String(o.by || '').startsWith(desc(bt)))) { out.push({ kind: '重なり', el: desc(el), by: desc(bt) + '（帯に押せる部品）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
+    // 勝ち負けの帯が相手の顔（目・口のあたり：顔の箱の横の真ん中 6割・縦 3〜8割）にかからないか（v0.97.9 レビュー：縦で3行の帯が上の端の相手のあご・首にかかった。COVER_BY は札が隠れるかだけを見ていた）
+    for (const el of document.querySelectorAll('#table > .vfres')) { if (!okv(el)) continue; const a = el.getBoundingClientRect();
+      for (const f of document.querySelectorAll('#busts .bust .face')) { if (!okv(f)) continue; const q = f.getBoundingClientRect(), c = { left: q.left + q.width * .2, right: q.right - q.width * .2, top: q.top + q.height * .3, bottom: q.top + q.height * .8 };
+        const w = Math.min(a.right, c.right) - Math.max(a.left, c.left), h = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+        if (w > 4 && h > 4) { out.push({ kind: '重なり', el: desc(el), by: '相手の顔（目・口）' + Math.round(w) + '×' + Math.round(h) + 'px' }); break } } }
     // 行動の語がほかの席の名札・顔に乗らないか（v91.2 レビュー：縦で「フォールド」が左の席の頭に乗った）。自分の名札・顔は見ない
     // 顔はゲームの faceBox（顔のまわりの空いた所を入れない枠）。体の箱 .body は隣の席どうしで重なるほど大きいので使わない
     const L0 = document.getElementById('sayLayer'), lr = L0 && L0.getBoundingClientRect();
@@ -164,6 +174,29 @@ const INSPECT = `(() => {
       .find(e => { const q = e.getBoundingClientRect(); return q.width > 2 && [cr].concat(el.closest('.hand.sybs') ? [{ l: a.left + a.width * .25, r: a.right - a.width * .25, t: a.top + a.height * .25, b: a.bottom - a.height * .25 }] : []).some(c => Math.min(c.r, q.right) - Math.max(c.l, q.left) > 2 && Math.min(c.b, q.bottom) - Math.max(c.t, q.top) > 2) });   // 縮めた札（.sybs）は数字を真ん中に出すので、真ん中も見る（PR #103 のレビュー）
     if (by) { out.push({ kind: '隠れ', el: '見せた札の角 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: desc(by) }); break }
     const h = el.closest('.hand'); if (h && h.style.scale && a.height < 27) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（縮めた札は 28px 以上）' }); break } }
+  // PC（マウス・広い画面）は、相手の見せた札が場札の 0.8倍以上の高さか（v0.97.12 レビュー：PC で見せた札が 27〜28px、場札は約47px。読めない大きさ）。
+  //   線を画面ごとに分ける：スマホは上の「縮めた札は 28px 以上」だけ、PC はこちらも
+  if (!modal && document.documentElement.classList.contains('pcw')) {
+    const bh = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect().height).filter(h => h > 2).sort((x, y) => x - y);
+    const ref = bh.length ? bh[bh.length >> 1] : 0;
+    if (ref) for (const el of [...document.querySelectorAll('#felt .spot .hand:not(.folded):not(.muck) .card:not(.slot):not(.back)')].filter(e => vis(e))) { const a = el.getBoundingClientRect(); if (a.width < 3) continue;
+      if (a.height < ref * .8 - .5) { out.push({ kind: '小さすぎ', el: '見せた札 ' + desc(el.closest('.spot') || el) + ' ' + desc(el), by: '高さ ' + Math.round(a.height) + 'px（PC は場札 ' + Math.round(ref) + 'px の 0.8倍以上）' }); break } } }
+  // PC の自分の手札（v0.98.0 レビュー：下の端 790/800 で小さく、手前の配る前の山・捨て札の山のほうが大きく見え、3枚め・4枚めの手札に見えた）
+  //   手札の高さ ≥ 場札、山・捨て札の山の札 < 手札、手札の下の端が画面の下から 8px 以上内側
+  if (!modal && document.documentElement.classList.contains('pcw')) {
+    const own = [...document.querySelectorAll('#mine .hold .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect()).filter(r => r.width > 2);
+    const bh = [...document.querySelectorAll('#boardCards .card:not(.slot)')].filter(e => vis(e)).map(e => e.getBoundingClientRect().height).filter(h => h > 2).sort((x, y) => x - y), ref = bh.length ? bh[bh.length >> 1] : 0;
+    // 自分の番（降りるボタンが出ている）なのに手札が1枚も見えないのも ✕（CodeRabbit #132：番の間に手札が消えても、上の検査は「手札なし」で素通りしていた）
+    { const bf = document.getElementById('btnFold'); if (bf && shown(bf) && vis(bf) && ![...document.querySelectorAll('#mine .hold .card:not(.slot)')].some(e => shown(e) && vis(e))) out.push({ kind: '隠れ', el: '自分の手札', by: '自分の番なのに手札が見えない（PC）' }) }
+    if (own.length) { const oh = Math.min(...own.map(r => r.height)), ob = Math.max(...own.map(r => r.bottom));
+      if (ref && oh < ref - .5) out.push({ kind: '小さすぎ', el: '自分の手札', by: '高さ ' + Math.round(oh) + 'px（PC は場札 ' + Math.round(ref) + 'px 以上）' });
+      if (ob > Hh - 8) out.push({ kind: 'はみ出し', el: '自分の手札', by: '下の端 ' + Math.round(ob) + '/' + Hh + 'px（PC は下から 8px 以上内側）' });
+      const pile = [...document.querySelectorAll('.felt .lltools:not(.off) .ddeck .card, .felt .boardspot > .muckpile .muckcard')].filter(e => vis(e)).map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width > 2).sort((x, y) => y[1].height - x[1].height)[0];
+      if (pile && pile[1].height >= oh) out.push({ kind: '大きすぎ', el: (pile[0].closest('.lltools') ? '配る前の山' : '捨て札の山') + ' ' + desc(pile[0]), by: '高さ ' + Math.round(pile[1].height) + 'px（PC は自分の手札 ' + Math.round(oh) + 'px より小さく）' }) }
+  }
+  // PC で文字の箱の中で文が切れていないか（v0.98.0 レビュー：師匠の字幕が2行で「…」になっていた。重なりは測っていたが、箱の中で切れるのを見ていなかった）
+  if (!modal && document.documentElement.classList.contains('pcw')) for (const el of [...document.querySelectorAll('#sensei p, #table > .vfres, #plates .plate .nm, #plates .plate .tag')].filter(e => shown(e) && vis(e))) {
+    if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) { out.push({ kind: '切れ', el: desc(el), by: '「' + (el.textContent || '').trim().slice(0, 24) + '」 中身 ' + el.scrollWidth + '×' + el.scrollHeight + ' / 箱 ' + el.clientWidth + '×' + el.clientHeight }); break } }
   // 相手の席の見せた手札と「勝ち」の札が、卓と画面の内側にあるか（改善提案 §2）
   {const tb = document.getElementById('table'), tr = tb && vis(tb) ? tb.getBoundingClientRect() : { left: 0, right: W, top: 0, bottom: Hh };
     const L = Math.max(0, tr.left), R = Math.min(W, tr.right);
@@ -253,12 +286,15 @@ async function paintCover(page) {
 }
 // 字幕（心の声など）に重なる部品と重なりの大きさ（v86 レビュー：「1個」だけでは画像を見ないと分からない）
 const INNER_OV = sel => { const e = document.querySelector(sel); if (!e || e.hidden) return -1; const r = e.getBoundingClientRect();
-      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden])')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden')
+      return [...document.querySelectorAll('button, #mine .card, #boardCards .card:not(.slot), #felt .hand:not(.folded):not(.muck) .card, #plates .cue, #dcall.go, #potSign, #dbtn, .dbadge, .llseats i, [id^=plate]:not(#plates), #sayLayer .say.go, #plates .say.go, #mfInner:not([hidden]), #crowdSay:not([hidden]), #table > .vfres')].filter(x => x !== e && x.offsetParent && getComputedStyle(x).visibility !== 'hidden' && (typeof LT === 'undefined' || !LT.sayOn ? (!x.classList.contains('say') || +getComputedStyle(x).opacity > .05) : LT.sayOn(x)))   // 見えなくなった・消えかけ（残り 0.5秒以下）の吹き出しは数えない。ゲームと同じ LT.sayOn で見る（v0.97.8・v0.97.9 レビュー）
         .filter(x => { const q = x.getBoundingClientRect(); return q.width > 2 && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1 })
         // 何にどれだけ重なったか（v86 レビュー：「1個」だけでは画像を見ないと分からない）
         .map(x => { const q = x.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
           const nm = x.id ? '#' + x.id : x.classList.contains('say') ? '吹き出し「' + (x.textContent || '').trim().slice(0, 12) + '」' : x.tagName === 'BUTTON' ? 'ボタン「' + (x.textContent || '').trim().slice(0, 8) + '」' : (x.className || x.tagName).toString().split(' ').slice(0, 2).join('.');
-          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' }) };
+          // 吹き出しは、場所・不透明度・動きの残りも書く（v0.97.9 レビュー：画像に写っていない #say2 が出て、何なのか分からなかった）
+          let ex = ''; if (x.classList.contains('say')) { const an = (x.getAnimations ? x.getAnimations() : []).find(a => /^say/.test(a.animationName || '')); const t = an && an.effect.getComputedTiming();
+            ex = `（${Math.round(q.left)},${Math.round(q.top)}・不透明度 ${(+getComputedStyle(x).opacity).toFixed(2)}${t ? `・動きの残り ${Math.round((t.endTime || 0) - (+t.localTime || 0))}ms` : '・動きなし'}）` }
+          return nm + ' ' + Math.round(w) + '×' + Math.round(h) + 'px' + ex }) };
 async function shoot(browser, file, scene, vp, dir) {
   const { ctx, page } = await H.openGame(browser, file, { viewport: vp.viewport, isMobile: vp.isMobile, hasTouch: vp.hasTouch, fast: 20, lite: false, settings: { ...(scene.settings || {}), motion: 'full' }, lang: scene.lang || 'ja', seed: scene.seed || 1000 + SCENES.indexOf(scene), deal: scene.deal,
     storage: scene.fresh ? null : H.UNLOCKED });
@@ -268,6 +304,8 @@ async function shoot(browser, file, scene, vp, dir) {
     await page.evaluate(scene.prep);
     const t0 = Date.now();
     if (scene.myTurn || scene.handEnd) {
+      // ハンドの終わりの場面：自分が飛んでゲームオーバーの画面を撮らないように、ボットを動かす前（最初のハンドより前）に登録して、ハンドの前に自分のチップを「いちばん多い相手＋最初の持ち分」まで足す（v0.98.2 レビュー：PC のフリー6人_ハンドの終わりが2版続けてゲームオーバーの画面で、撮り直し3回もだめだった）
+      if (scene.handEnd) await page.evaluate(() => LT.on('startHand:before', () => { try { const m = S.players && S.players[0]; if (!m || m.chips <= 0) return; const top = Math.max(0, ...S.players.filter(p => p !== m && !p.out).map(p => p.chips)); if (m.chips < top + m.start) m.chips = top + m.start } catch (e) {} }));
       await H.startBot(page, { policy: 'call', maxHands: 99 });
       // 自分の番（またはハンドの終わり）が来たら止める
       // street：撮る時点を決めた通り（例 'flop'＝フロップで自分の番）にする。版ごとにプリフロップ・フロップと揺れて「22% 変わった」と出ていた（改善提案 2026-10-14b §1）。30秒で来なければ、どの番でも撮る
@@ -314,6 +352,9 @@ async function shoot(browser, file, scene, vp, dir) {
     // 会話の話し手の絵が、会話の箱にどれだけ隠れるか（絵の高さに対する割合。v82 レビュー：横で顔の下が箱に隠れていた）
     let face = null;
     if (scene.measure === 'inner') face = await page.evaluate(INNER_OV, scene.sel || '#mfInner');
+    // 勝ち負けの帯が出ていることが前提の場面は、帯が出ているかも残す（帯が無いと、重なり 0 でも見たことにならない。CodeRabbit PR #144）
+    const vfresOn = scene.needVfres ? await page.evaluate(() => { const v = document.querySelector('#table > .vfres'); if (!v) return false; const r = v.getBoundingClientRect(), s = getComputedStyle(v);   // 透明・隠れ・画面の外も「出ていない」（CodeRabbit PR #144）
+      return !v.hidden && s.display !== 'none' && s.visibility !== 'hidden' && +s.opacity > .05 && r.width > 2 && r.height > 2 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight }) : null;
     // 心の声：D（ディーラーの印）を全席に動かして、そのたびに置き直して測る（v0.97.4 レビュー：D の位置しだいで字幕が D と席番号にかかり、版ごとに ⚠️ が出たり消えたりした）
     let innerD = null;
     if (scene.key === 'フリー6人_心の声') { innerD = [];
@@ -341,6 +382,15 @@ async function shoot(browser, file, scene, vp, dir) {
       document.querySelectorAll('#boardCards .card:not(.slot), #mine .card, #sayLayer .say.go, #plates .say.go, #plates .plate').forEach(e => { if (!e.offsetParent || (e.classList.contains('say') && !(e.textContent || '').trim())) return; const q = e.getBoundingClientRect(); if (q.width > 2) hit(q, e.id ? '#' + e.id : e.classList.contains('card') ? '札' : e.classList.contains('say') ? '吹き出し' : '名札') }) });
       const sv = (() => { try { return JSON.parse(localStorage.getItem('shisho-readscope') || 'null') } catch (e) { return null } })();
       return { has: true, n: cs.length, text, fs, out, over, vf: (() => { const v = $('vfLog'), se = $('sensei'); return { log: !!(v && v.children.length), on: !!(v && !v.hidden && !v.classList.contains('off')), se: !!(se && !se.hidden) } })(), line: !!(S.jinNote && /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(S.jinNote.t || '')), shown: /後ろにまだ人がいる|このあとに動く人|still behind|players who act after/.test(($('senseiText') || {}).textContent || '') && !!$('sensei') && !$('sensei').hidden && !$('sensei').classList.contains('mwait') && !(typeof tipK !== 'undefined' && tipK), seen: !!(sv && sv.seen), tip: typeof tipK !== 'undefined' && tipK ? String(tipK) : '', mwait: !!($('sensei') && $('sensei').classList.contains('mwait')) } }) : null;
+    // 場面のずれ（v0.97.10 レビュー 2：「ハンドの終わり」のはずが、チップがなくなったゲームオーバーの画面で撮っていた）。撮る前に、あるべき印を見る
+    const drift = (scene.myTurn || scene.handEnd) ? await page.evaluate(([my, sb]) => { try { const me = S.players && S.players[0], r = [];
+      if (S.result) r.push(`勝負が決着した画面（${S.result}）`); if (me && (me.out || me.chips <= 0)) r.push('自分のチップがない');
+      if (my && !S.result && !(S.toAct === 0 && !S.handOver)) r.push('自分の番でない');   // 60秒で待つのをめた・別の画面（CodeRabbit PR #126）
+      // showStrict：決めた席が札を見せた回でなければ「ずれた」にして、配りを変えて撮り直す（CodeRabbit PR #138：45秒で別のハンドを撮って ✅ になっていた）
+      if (sb && !(S.players[sb] && S.players[sb].show && !S.players[sb].folded)) r.push(`席${sb}が札を見せていない`);
+      return r.join('・') } catch (e) { return '' } }, [!!scene.myTurn, scene.showStrict ? scene.showBy : 0]).catch(() => '') : '';
+    // 場面の中身（同じ種なら同じ場面かを比べる。改善提案 2026-10-22 §0-1）：座る人・チップ・何ハンド目か・場札・見せた札
+    const fp = await page.evaluate(() => { try { const c = x => x ? x.r + x.s : '?'; return JSON.stringify({ h: S.handNo, p: S.players.map(p => p.name + ':' + p.chips + (p.folded ? 'f' : '') + (p.show && p.hand ? '[' + p.hand.map(c).join(' ') + ']' : '')), b: (S.board || []).map(c).join(' ') }) } catch (e) { return 'err:' + String(e.message || e).slice(0, 60) } }).catch(() => '');
     step = '場所を測る・撮る'; const rects = await page.evaluate(RECTS);
     const shot = path.join(dir, `${scene.key}_${vp.key}.png`);
     await page.screenshot({ path: shot });
@@ -375,9 +425,58 @@ async function shoot(browser, file, scene, vp, dir) {
     // 撮ってから1秒あとの状態も残す（撮った時の状態は hs0）
     const hs = scene.handEnd ? Object.assign(await readHs(), { hs0, waitMs, waitWhy }) : null;
     step = '描かれた場所のかぶり'; const cover = scene.handEnd ? await paintCover(page) : null;   // 描かれた場所で場札・見せた札にかぶるもの（v0.97.4 レビュー）
+    // 字幕×自分の手札（v0.97.10 レビュー 1：main の Issue #124 は、字幕が出た配りのときだけ見つかった）。
+    //   縦の対戦場面では毎回、師匠の字幕（2行の長さ）と案内の箱（一番長い案内）を出して、自分の手札が字幕・案内・ボタンの帯に隠れないかを測る
+    let subHand = null;
+    // 卓を縮める（--sx）のは、字幕・案内が手札にかかって上げる余地も無いときだけ。縮めたままの画面で、縮めるのをやめても手札が字幕・案内・場札・ポットにかからなければ ❌
+    //   （v0.97.12 CI：札を配る一瞬の足りなさで卓を縮め、そのまま戻らず、相手の伏せ札が場札にかかって画質の検査で見つかった。その場面を直接見る）
+    let sxStuck = null;
+    if (/^縦/.test(vp.key)) { step = '卓の縮め'; sxStuck = await page.evaluate(async () => { const gw = document.querySelector('#game .gwrap'), sx = gw ? +(gw.dataset.sx || 0) : 0; if (!sx) return { sx: 0 };
+        const fr = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
+        const hit = () => { const cs = [...document.querySelectorAll('#mine .card')].filter(vis).map(e => e.getBoundingClientRect()), q2 = [...['#sensei', '#tipLine'].map(q => document.querySelector(q)), ...document.querySelectorAll('#boardCards .card:not(.slot), #board2 .card:not(.slot), #potSign, #potChips .chip')].filter(vis).map(e => e.getBoundingClientRect());
+          return cs.some(r => q2.some(q => Math.min(r.right, q.right) - Math.max(r.left, q.left) > 4 && Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) > 4)) };
+        // 縮めないときにゲームが置く形で見る：--sx を 0 にして barSync に手札の上げ量（--sbh）を測り直させる（_sxPend の間は --sx を書かない）。前は縮めたときの上げ量のままで見ていて、上げすぎた手札が「かからない」と出た
+        const lift0 = gw.style.getPropertyValue('--sbh'); gw._sxPend = 1; gw.style.setProperty('--sx', '0px'); await fr(); try { barSync() } catch (e) {} await fr(); try { barSync() } catch (e) {} await fr();
+        const over = hit(), lift1 = gw.style.getPropertyValue('--sbh'); gw.style.setProperty('--sx', sx + 'px'); gw._sxPend = 0; try { barSync() } catch (e) {} await fr(); return { sx, over, lift: `${lift0}→縮めないとき ${lift1}` } }).catch(e => ({ err: String(e.message || e).slice(0, 80) })) }
+    if (/^縦/.test(vp.key) && (scene.myTurn || scene.handEnd) && !scene.noSubHand) { step = '字幕×自分の手札';
+      const SUB = scene.lang === 'en' ? "A tell only tells you about the one who bet. It says nothing about the players who act after him." : 'クセで分かるのは、賭けたそいつの手だけだ。このあとに動く人の手までは分からん';
+      // ゲームでは、案内が出ているあいだ師匠の字幕は待つ（.sensei.mwait＝visibility:hidden）。なので「字幕だけ」と「案内（字幕は待ち）」の2つの状態を別々に測る
+      //   前は両方いっしょに出したつもりで、字幕は待ちで隠れていて案内しか測っていなかった（CodeRabbit PR #126 の指摘で分かった）
+      const putSub = t => page.evaluate(t => { const se = $('sensei'), st = $('senseiText'); if (!se || !st) return false; try { if (typeof tipHide === 'function') tipHide() } catch (e) {}
+        se.hidden = false; st.textContent = t; se.classList.remove('mwait'); try { senseiFit() } catch (e) {} try { barSync() } catch (e) {} return true }, t);
+      const putTip = () => page.evaluate(() => { let tip = '';   // 案内を出せなかったら理由を返す（握りつぶすと、案内を測らずに ✅ になる。CodeRabbit PR #126）
+        try { if (typeof tipBar === 'function' && !tipBar()) return { noBar: true };   // 案内を置く帯（ボタンの帯など）が無い画面では、ゲームも案内を出さない
+          if (typeof tipShow !== 'function' || typeof TIPS !== 'object') tip = 'tipShow・TIPS が無い'; else { const k = Object.keys(TIPS).sort((a, b) => String(TIPS[b]).length - String(TIPS[a]).length)[0]; tipShow(k) } } catch (e) { tip = 'tipShow が失敗：' + String(e.message || e).slice(0, 60) }
+        try { barSync() } catch (e) {} return { tip } }).catch(e => ({ tip: '案内を出す処理が失敗：' + String(e.message || e).slice(0, 60) }));
+      const MEASURE = need => page.evaluate(need => { const cs = [...document.querySelectorAll('#mine .hold .card, #mine .card')].filter((e, i, a) => { if (a.indexOf(e) !== i || !e.getClientRects().length || !e.offsetParent) return false; let op = 1; for (let x = e; x && x !== document.body; x = x.parentElement) op *= +getComputedStyle(x).opacity; return op > .05 && getComputedStyle(e).visibility !== 'hidden' });   // 透明・visibility:hidden の札は数えない（CodeRabbit PR #126）
+          const vis = e => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05;
+          { const e = document.querySelector(need[0]);
+            if (!vis(e)) return { n: cs.length, over: [], err: need[1] + 'が見えていない（出したのに隠れた・消えた。' + (!e ? '要素なし' : `hidden=${e.hidden}・箱 ${e.getClientRects().length}・visibility ${getComputedStyle(e).visibility}・opacity ${getComputedStyle(e).opacity}`) + '）' } }   // 測る相手が出ていなければ「測れなかった」（CodeRabbit PR #126）
+          if (!cs.length) return { n: 0, over: [] };
+          const cover = [['#sensei', '師匠の字幕'], ['#tipLine', '案内の箱'], ['#controls', 'ボタンの帯'], ['#between', 'ハンドの間の帯']].map(([q, nm]) => [document.querySelector(q), nm]).filter(([e]) => vis(e));
+          const over = [];
+          cs.forEach((c, k) => { const r = c.getBoundingClientRect(); for (const [e, nm] of cover) { const q = e.getBoundingClientRect(), w = Math.min(r.right, q.right) - Math.max(r.left, q.left), h = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+            if (w > 4 && h > 4 && h > r.height * .12) over.push(`${k + 1}枚め×${nm} ${Math.round(w)}×${Math.round(h)}px（札の高さ ${Math.round(r.height)}px）`) } });
+          const R = q => q && vis(q) ? Math.round(q.getBoundingClientRect().top) + '-' + Math.round(q.getBoundingClientRect().bottom) : '-', up = [...document.querySelectorAll('#boardCards .card:not(.slot), #potSign, #potChips .chip')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .05).map(e => Math.round(e.getBoundingClientRect().bottom));
+          return { n: cs.length, over, lift: (document.querySelector('#game .gwrap') || { style: { getPropertyValue: () => '' } }).style.getPropertyValue('--sbh'), pos: `字幕 ${R($('sensei'))}・案内 ${R($('tipLine'))}・手札 ${R(document.querySelector('#mine .hold'))}・上の場札・ポットの額・チップの下端 ${up.length ? Math.max(...up) : '-'}` } }, need).catch(e => ({ err: String(e.message || e).slice(0, 80) }));
+      // 1) 師匠の字幕だけ（2行の長さ）
+      if (!(await putSub(SUB).catch(() => false))) subHand = { err: '師匠の字幕（#sensei）を出せなかった' };   // 出せなかったことも結果に残す（CodeRabbit PR #126）
+      else { await page.waitForTimeout(350); await putSub(SUB); await page.waitForTimeout(450);
+        if (process.env.QA_SUBSHOT) await page.screenshot({ path: path.join(dir, `${scene.key}_${vp.key}_字幕.png`) });   // 手元で見るとき：字幕を出した画面も撮る
+        const a = await MEASURE(['#sensei', '師匠の字幕']);
+        // 2) 案内の箱（一番長い案内。ゲームと同じく字幕は待ちになる）
+        let b = null; if (!a.err) { const p1 = await putTip(); if (p1.noBar) b = { n: a.n, over: [], lift: a.lift, pos: '案内を置く帯が無い画面（ゲームも案内を出さない）' }; else if (p1.tip) b = { err: '案内の箱を出せなかった（' + p1.tip + '）' };
+          else { await page.waitForTimeout(350); const p2 = await putTip(); await page.waitForTimeout(700); b = p2.tip ? { err: '案内の箱を出せなかった（' + p2.tip + '）' } : await MEASURE(['#tipLine', '案内の箱']);
+            // 待つあいだに帯が入れ替わる（ボタンの帯→ハンドの間の帯）と、ゲームが案内を消す。1回だけ出し直して測る。帯が無くなっていたら、ゲームも案内を出さない画面
+            for (let k = 0; k < 2 && b.err && !b.noBar; k++) { const p3 = await putTip(); if (p3.noBar) b = { n: a.n, over: [], lift: a.lift, pos: '待つあいだに案内を置く帯が無くなった（ゲームも案内を出さない）' };
+              else if (!p3.tip) { await page.waitForTimeout(700); const b2 = await MEASURE(['#tipLine', '案内の箱']); if (b2.err) { const why = await page.evaluate(() => { const e = $('tipLine'), bar = typeof tipBar === 'function' ? tipBar() : null; return `tipK=${typeof tipK !== 'undefined' ? tipK : '?'}・帯 ${bar ? '#' + bar.id : 'なし'}・案内の親 ${e && e.parentElement ? '#' + e.parentElement.id : 'なし'}` }).catch(() => ''); b = Object.assign(b2, { err: b2.err + `（${k + 1}回出し直しても。` + why + '）' }) } else b = b2 } else b = { err: '案内の箱を出せなかった（' + p3.tip + '）' } }
+            if (process.env.QA_SUBSHOT) await page.screenshot({ path: path.join(dir, `${scene.key}_${vp.key}_案内.png`) }) } }
+        const err = a.err || (b && b.err);
+        subHand = err ? { err, n: a.n } : { n: Math.min(a.n, b.n), over: [...a.over.map(x => '字幕のとき ' + x), ...b.over.map(x => '案内のとき ' + x)], lift: a.lift + (b.lift !== a.lift ? '／案内のとき ' + b.lift : ''), pos: '字幕のとき ' + a.pos + '／案内のとき ' + b.pos } } }
     let innerParts = null; if (Array.isArray(face)) { innerParts = face; face = face.length }
     const lite = await page.evaluate(() => document.documentElement.classList.contains('ltLite')).catch(() => null);   // 動き「少なめ」で撮ったか（v89 レビュー）
-    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, errors: await page.evaluate(() => __qa.errors) };
+    return { scene: scene.key, vp: vp.key, issues, shot, rects, face, innerParts, vfresOn, innerD, lite, call, rs, hs, cover, stall, stallLong, plates, subHand, sxStuck, drift, fp, errors: await page.evaluate(() => __qa.errors) };
   } catch (e) {
     return { scene: scene.key, vp: vp.key, issues: [{ kind: '撮れなかった', el: String(e.message).slice(0, 80) + `（${step}で${closed ? '・ページが閉じた' : ''}${crashed ? '・ページが落ちた' : ''}）` }], shot: null, errors: [] };
   } finally { await ctx.close() }
@@ -391,6 +490,13 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const res = [];
   // 撮影は前と同じ「3つずつ」のまま（CIの高速化 案2 の pool は WebKit でブラウザが落ちる回が増えたように見えたので、ここだけ戻した。2026-10-17）
   for (let i = 0; i < jobs.length; i += parallel) res.push(...await Promise.all(jobs.slice(i, i + parallel).map(([s, v]) => shoot(browser, file, s, v, dir))));
+  // 場面がずれた（ゲームオーバーなど）ものは、配りと種を変えて1回だけ撮り直す。だめなら ⚠️「場面がずれた」（v0.97.10 レビュー 2）
+  for (let i = 0; i < res.length; i++) { const r = res[i]; if (!r.drift) continue; const s = SCENES.find(x => x.key === r.scene), v = VIEWPORTS.find(x => x.key === r.vp); if (!s || !v) continue;
+    // 種を変えて最大3回（第14章のハンドの終わりは、1回目の撮り直しでもゲームオーバーだった。v0.97.11 の手元）
+    let r2 = r, tried = [];
+    for (let k = 1; k <= 3 && r2.drift; k++) { const s2 = Object.assign({}, s, { seed: (s.seed || 1000 + SCENES.indexOf(s)) + 100 * k, deal: s.deal != null ? s.deal + k : s.deal }); tried.push(`種 ${s2.seed}${s2.deal != null ? `・配り ${s2.deal}` : ''}`);
+      r2 = await shoot(browser, file, s2, v, dir) }
+    r2.scene = r.scene; r2.redo = `場面がずれた（${r.drift}）ので、${tried.join('、')} で撮り直した`; res[i] = r2 }
   // ページやブラウザが途中で閉じた場面は、1回だけ撮り直す（WebKit でたまに起きる。ブラウザごと落ちていたら開き直す）
   let own = null;
   for (let i = 0; i < res.length; i++) {
@@ -402,9 +508,27 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     res[i].retried = true;
   }
   if (own) await own.close().catch(() => {});
+  // 同じ種なら同じ場面（改善提案 2026-10-22 §0-1）。ページが閉じた場面の撮り直しのあとで比べる（CodeRabbit PR #142）：sameSeed の場面をもう一度撮り、座る人・チップ・何ハンド目か・場札・見せた札を比べる。
+  //   違えば ❌（検査の乱数が演出に取られて、main と PR で別の場面を見ている）。前は main だけ ❌ が出て初めて気づいていた
+  const same = [];
+  for (const s of SCENES) if (s.sameSeed && (!only.length || only.some(o => s.key.includes(o)))) { const v = VIEWPORTS.find(x => x.key === s.sameSeed), i = res.findIndex(r => r.scene === s.key && r.vp === s.sameSeed); if (!v || i < 0) continue;
+    const d2 = path.join(dir, '_same'); fs.mkdirSync(d2, { recursive: true }); const a = res[i];
+    // 2回目はいつも新しいブラウザで撮る（v0.98.8・v0.98.9 の WebKit：100枚ほど撮ったあとのブラウザで開くと、ページが落ちた。1回目の同じ場面は撮れていた）。
+    //   新しいブラウザでも落ちたら、もう1つ新しいブラウザで1回だけ撮り直す。それでも落ちたら「新しいブラウザでも落ちた」と出す（ブラウザの疲れでなく場面の重さ）
+    let b, fresh = 0;
+    for (let k = 0; k < 2; k++) { let mine = null;
+      try { mine = await H.launch() } catch (e) { b = { fp: 'err:新しいブラウザを開けなかった：' + String(e.message || e).slice(0, 60) }; break }   // 疲れた元のブラウザには戻さない。開けなかったことを結果に残す（CodeRabbit PR #147）
+      try { b = await shoot(mine, file, s, v, d2) } catch (e) { b = { fp: 'err:' + String(e.message || e).slice(0, 60) } } finally { await mine.close().catch(() => {}) }
+      const crashLike = !b.shot && /落ちた|閉じた|closed|crash/i.test(((b.issues || [])[0] || {}).el || String(b.fp || ''));   // 落ちた回だけ数える（CodeRabbit PR #147）
+      if (crashLike) fresh++; else break }
+    const lost0 = !b.shot ? ((b.issues || [])[0] || {}).el || String(b.fp || '') : '';
+    same.push({ s, v, a: a.redo ? null : a.fp, b: b.fp, redo: !!a.redo, lost: lost0 && fresh >= 2 ? lost0 + '（新しいブラウザで2回とも落ちた）' : lost0 }) }
+  const items0 = []; for (const x of same) { const ok = x.a && x.b && !/^err/.test(x.a) && x.a === x.b;
+    items0.push({ id: `ui:same-seed:${x.s.key}:${x.v.key}`, title: `同じ種なら同じ場面（${x.s.key}・${x.v.key}）`, status: x.redo || (!ok && x.lost) ? 'warn' : ok ? 'ok' : 'fail',
+      detail: x.redo ? '1回目が撮り直しの種だったので比べられなかった' : ok ? '' : x.lost ? '2回目が撮れなかったので比べられなかった：' + x.lost : `同じ種で場面が変わった（検査の乱数が演出に取られている。qa/lib/harness.js の Math.random）：1回目 ${x.a || '読めなかった'} ／ 2回目 ${x.b || '読めなかった'}` }) }
   const rects = {}; for (const r of res) if (r.rects) rects[`${r.scene}_${r.vp}`] = r.rects;
   fs.writeFileSync(path.join(dir, process.env.QA_BROWSER === 'webkit' ? 'rects_WebKit.json' : 'rects.json'), JSON.stringify(rects));
-  const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [];
+  const known = new Set((baseline && baseline.uiIssues) || []), all = [], items = [...items0];
   // 基準を作ったときに撮っていなかった場面（uiScenes が無い古い基準では、案2で足した場面）
   const ADDED = ['第7章_ハンドの終わり', '第11章_自分の番', '店で遊ぶ_自分の番', '裏の卓_自分の番', '英語_第1章の会話'];
   const isNewScene = k => baseline && baseline.uiScenes ? !baseline.uiScenes.includes(k) : ADDED.includes(k);
@@ -426,8 +550,10 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   }
   // 基準は前の基準に足していく（配られる札で毎回出たり出なかったりする問題があるため）。消すときは baseline.json を手で直す
   // 会話の話し手が箱に隠れる割合（絵の高さの 25% を超えたら ⚠️。肩の先が少しかかるのは許す）
-  for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`, status: r.face === 0 ? 'ok' : 'warn',
-    detail: r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
+  for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'inner') items.push({ id: `ui:${r.scene === 'フリー6人_人だかり' ? 'crowd' : r.scene === 'フリー6人_人だかりと勝ち負け' ? 'crowdres' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'dcallov' : 'inner'}:${r.vp}`, title: `${r.scene === 'フリー6人_人だかり' ? '人だかりの声' : r.scene === 'フリー6人_人だかりと勝ち負け' ? '人だかりの声（勝ち負けの帯が出ているとき）' : r.scene === 'フリー6人_ディーラーの呼び名' ? 'ディーラーの呼び名の声' : '心の声の字幕'}がほかの部品に重ならない（${r.vp}）`,
+    // 人だかりの声が勝ち負けの帯に重なると両方読めないので、PC では ❌（v0.98.7 レビュー）。スマホは最低限なので ⚠️
+    status: SCENES.find(s => s.key === r.scene).needVfres && !r.vfresOn ? (/^PC/.test(r.vp) ? 'fail' : 'warn') : r.face === 0 ? 'ok' : r.scene === 'フリー6人_人だかりと勝ち負け' && /^PC/.test(r.vp) && (r.innerParts || []).some(t => /vfres/.test(t)) ? 'fail' : 'warn',
+    detail: SCENES.find(s => s.key === r.scene).needVfres && !r.vfresOn ? '勝ち負けの帯が出ていなかったので、帯との重なりを見られなかった（帯の出るハンドの終わりが来なかった）' : r.face < 0 ? '字幕・声が出なかった' : `重なっている部品 ${r.face}個` + (r.innerParts && r.innerParts.length ? '：' + r.innerParts.join('、') : '（ボタン・手札・場札・名札・クセの札・ディーラーの声・ポットの額・D ボタン・席番号・吹き出し）') });
   for (const r of res) if (r.rs !== undefined && SCENES.find(s => s.key === r.scene).rsCheck) { const x = r.rs || { has: false };
     items.push({ id: `ui:readscope:${r.vp}`, title: `3人以上のクセの札に「〇〇だけ」の印（12px 以上・画面の中・師匠のひとこと1回）（${r.vp}）`, status: x.has && x.fs >= 12 && !x.out && x.line && x.shown && x.seen ? 'ok' : 'fail',
       detail: !x.has ? '印が出ていない' : `「${x.text}」${x.fs}px` + (x.out ? `・画面の外へ ${x.out}px` : '') + (x.line ? '' : '・師匠のひとことが出ていない') + (x.seen ? '' : '・セーブに残っていない') + (x.line && x.seen ? '' : `（4秒待った。案内 ${x.tip || 'なし'}・帯の待ち ${x.mwait ? 'あり' : 'なし'}）`) });
@@ -453,6 +579,17 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   const STALL_OWN = /./;
   for (const r of res) if (r.innerD) items.push({ id: `ui:innerD:${r.vp}`, title: `心の声の字幕が、D がどの席にあっても重ならない（${r.vp}）`, status: r.innerD.length ? 'warn' : 'ok', detail: r.innerD.slice(0, 4).join(' ／ ') + (r.innerD.length > 4 ? ` ほか${r.innerD.length - 4}` : '') });
   // 描かれた場所で場札・見せた札にかぶる部品（v0.97.4 レビュー）。隠れた点が 塗った点の COVER_FRAC 以上、かつ COVER_PX 以上で ❌（ブラウザによらない）
+  // 場面のずれ（v0.97.10 レビュー 2）：撮り直してもずれたままなら ⚠️。撮り直して直ったら ✅ に何をしたかを書く
+  for (const r of res) if (r.drift || r.redo) { const noShot = !r.drift && !r.shot;   // 撮り直しが撮れなかったのを「直った」にしない（CodeRabbit PR #126）
+    items.push({ id: `ui:drift:${r.scene}:${r.vp}`, title: `撮った画面が決めた場面のまま（${r.scene}・${r.vp}）`, status: r.drift || noShot ? 'warn' : 'ok',
+      detail: (r.redo ? r.redo + '。' : '') + (r.drift ? `場面がずれた：${r.drift}。この場面の検査はふだんの画面を見ていない` : noShot ? '撮り直しが撮れなかった：' + ((r.issues || []).map(i => i.el).join('、') || '理由不明') : '撮り直した画面は決めた場面') }) }
+  // 字幕×自分の手札（v0.97.10 レビュー 1）：縦の対戦場面で、字幕と案内を出したときに自分の手札が隠れたら ❌
+  for (const r of res) if (r.sxStuck && (r.sxStuck.sx || r.sxStuck.err)) { const x = r.sxStuck, stuck = !x.err && !x.over;
+    items.push({ id: `ui:sx:${r.scene}:${r.vp}`, title: `卓を縮めるのは字幕が手札にかかるときだけ（${r.scene}・${r.vp}）`, status: x.err ? 'warn' : stuck ? 'fail' : 'ok', shot: stuck && r.shot ? path.relative(outDir, r.shot) : undefined,
+      detail: x.err ? `測れなかった：${x.err}` : stuck ? `卓を ${x.sx}px 縮めたままだが、縮めなくても手札は字幕・案内・場札・ポットにかからない（手札の上げ量 ${x.lift}。一瞬の足りなさで縮めて戻っていない。30c_ui64.js の barSync）` : `卓を ${x.sx}px 縮めている（縮めないと手札がかかる。手札の上げ量 ${x.lift}）` }) }
+  for (const r of res) if (r.subHand) { const x = r.subHand, sc = SCENES.find(s => s.key === r.scene), none = x.n === 0 && sc && sc.myTurn, drifted = !!r.drift && (x.n === 0 || !!x.err), bad = !drifted && (!!x.err || none || (x.over && x.over.length > 0));   // 自分の番で手札が見えない（測れない）のも ❌（CodeRabbit PR #126）。ただし撮り直しても場面がずれたまま（ゲームオーバーなど）なら、ui:drift と同じ ⚠️
+    items.push({ id: `ui:subhand:${r.scene}:${r.vp}`, title: `字幕・案内を出しても自分の手札が隠れない（${r.scene}・${r.vp}）`, status: bad ? 'fail' : drifted ? 'warn' : 'ok', shot: bad && r.shot ? path.relative(outDir, r.shot) : undefined,
+      detail: drifted ? `場面がずれたまま（${r.drift}）で${x.err ? x.err : '手札が無く'}、測れなかった（ui:drift と同じ ⚠️）` : x.err ? '測れなかった：' + x.err : x.n === 0 ? (none ? '自分の番なのに、見えている手札が無い（測れない）' : '自分の手札なし（降りた・席がない）') : bad ? '隠れた：' + x.over.join('、') + `（手札を上げた量 ${x.lift || '0'}。${x.pos || ''}）` : `手札 ${x.n}枚、字幕・案内・ボタンの帯にかからない（手札を上げた量 ${x.lift || '0'}）` }) }
   for (const r of res) if (r.cover) { const c = r.cover, bad = c.err || c.lost >= COVER_PX && c.lost >= COVER_FRAC * c.all;
     items.push({ id: `ui:cover:${r.scene}:${r.vp}`, title: `場札・見せた札に帯・名札・顔がかぶっていない（描かれた場所で。${r.scene}・${r.vp}）`, status: bad ? 'fail' : 'ok',
       detail: c.err ? '測れなかった：' + c.err : !c.n ? '' : `札 ${c.n}枚、隠れた点 ${c.lost}px²／${c.all}px²` + (c.by && c.by.length ? '：' + c.by.join('、') : '') }) }
@@ -483,6 +620,9 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
     items.push(...r.items) }
   catch (e) { items.push({ id: 'sharp:error', title: '画質（高精細の画面でくっきりしているか）の検査', status: 'fail', detail: String(e && e.message || e).slice(0, 200) }) }
   finally { if (own) await own.close().catch(() => {}) }
+  // 2026-10-21 satou「スマホは諦めてPCでやることを基本にする」→「最低限だけ」（ok 14:02）：スマホ（縦・横・スマホ3倍）は ❌ でなく ⚠️ にして公開を止めない。
+  //   ただし遊べなくなる崩れ（止まる・エラー・撮れない・ボタンが隠れて押せない）は ❌ のまま
+  for (const it of items) if (it.status === 'fail' && /(縦_|横_|スマホ)/.test(it.id) && !/^ui:stall:/.test(it.id) && !/エラー|撮れなかった|落ちた|隠れ: (button|#btn|#acts|#controls|#between)/.test(it.detail || '')) { it.status = 'warn'; it.detail = '（スマホは最低限：遊べなくなる崩れではないので ⚠️）' + (it.detail || '') }
   return { name: '画面チェック', items, baselineOut: { uiIssues: [...new Set([...known].filter(k => k.split('|').length === 3).concat(all))], uiScenes: SCENES.map(s => s.key) } };
 }
 module.exports = { run, VIEWPORTS, SCENES };

@@ -83,10 +83,10 @@ const all = groups.flatMap(g => g.items);
 let prevErr = '';
 const prevVers = (() => { try {
   const vk = v => v.replace(/^v/, '').split('.').map(Number), cmp = (a, b) => { const x = vk(a), y = vk(b); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0 };
-  if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && v !== 'v' + ver && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
+  if (process.env.QA_PREV_RESULTS) { const d = process.env.QA_PREV_RESULTS; return fs.readdirSync(d).filter(v => /^v\d/.test(v) && cmp(v, 'v' + ver) < 0 && fs.existsSync(path.join(d, v, 'result.json'))).sort(cmp).slice(-3).map(v => JSON.parse(fs.readFileSync(path.join(d, v, 'result.json'), 'utf8'))) }
   const git = (...a) => require('child_process').execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 });   // 引数は配列で渡す（シェルを通さない）
   git('fetch', '-q', '--depth', '1', 'origin', 'qa-results');
-  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && v !== 'v' + ver).sort(cmp).slice(-3)
+  return git('ls-tree', '--name-only', 'origin/qa-results').split('\n').filter(v => /^v\d/.test(v) && cmp(v, 'v' + ver) < 0).sort(cmp).slice(-3)
     .map(v => { try { return JSON.parse(git('show', `origin/qa-results:${v}/result.json`)) } catch (e) { prevErr += (prevErr ? '／' : '') + `${v} が読めない（${String(e && e.message || e).split('\n')[0].slice(0, 60)}）`; return null } }).filter(Boolean);   // 読めない版は黙って飛ばさず ⚠️ に出す（CodeRabbit PR #119）
 } catch (e) { prevErr += (prevErr ? '／' : '') + String(e && e.message || e).split('\n')[0].slice(0, 120); return [] } })();   // 読めなかったことは ⚠️ で出す（CodeRabbit PR #119）
 if (prevErr) { const it = { id: 'ci:repeat', title: 'くり返しの ⚠️ の検査（前の版の結果を読む）', status: 'warn', detail: '前の版の結果を読めなかった：' + prevErr };
@@ -103,12 +103,71 @@ if (prevVers.length) {
     else if (it.repeat >= 3) { it.status = 'fail'; it.detail = `くり返しの ⚠️（${it.repeat}回目：直近${prevVers.length}版のうち${n}版にも出た）。直すか、known.json に期限付きで入れる${exp ? `（known.json の期限 ${exp} が過ぎた）` : k ? '（known.json に期限がない）' : ''}：` + it.detail }
     else it.detail = `くり返し（${it.repeat}回目）：` + it.detail } }
 
+// ページが落ちた（v0.98.9 レビュー）：「撮れなかった」⚠️ と分けて数える。同じ場面（画面の大きさは問わない）で直前の版にも落ちていたら ❌（Safari で本当に落ちるなら遊べない崩れ）
+//   前は「2回目が撮れなかった」⚠️ のくり返しとして、3版目まで ❌ にならなかった
+{ const CRASH = /ページが落ちた/, sceneOf = id => ((/ui:(?:same-seed:|drift:)?([^:]+):/.exec(id || '') || [])[1]) || null;
+  const prevCrash = prevVers.length ? new Set((prevVers[prevVers.length - 1].groups || []).flatMap(g => g.items || []).filter(i => i.status !== 'ok' && CRASH.test(String(i.detail || ''))).map(i => sceneOf(i.id)).filter(Boolean)) : new Set();
+  const crashed = all.filter(it => it.status !== 'ok' && CRASH.test(String(it.detail || '')));
+  for (const it of crashed) { const sc = sceneOf(it.id); it.crash = true;
+    if (sc && prevCrash.has(sc) && it.status !== 'fail') { it.status = 'fail'; it.detail = `ページが落ちた（2版続けて同じ場面「${sc}」。メモリ不足か場面の重さを調べる）：` + it.detail } }
+  const scenes = [...new Set(crashed.map(x => sceneOf(x.id) || x.id))];   // 場面ごとに1件（同じ場面の撮り直し・ずれの項目を重ねて数えない。CodeRabbit PR #147）
+  if (crashed.length) { const it = { id: 'ci:page-crash', title: `ページが落ちた場面 ${scenes.length}件（撮れなかったとは別に数える）`, status: 'warn', warnOnly: '数を出すだけ。2版続いた場面は項目のほうで ❌（v0.98.9 レビュー）', detail: scenes.join('、') + '（項目：' + crashed.map(x => x.id).join('、') + '）' };
+    all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) } }
+
+// 3版まとめの勝率（v0.97.9 レビュー：第2章が 13%→0%→0% と3版続いたが、1版8回だと許す幅が ±38 もあり、どの版も ✅ だった）
+//   今の版と直近の公開版（qa-results の v<版>/result.json）の勝ち負け（games）を足して、基準と比べる。回数が増えるので幅は 2×標準誤差（最低の 15 ポイントは付けない）
+//   ⚠️ だけ（版が重なるので、くり返しで ❌ に上げない）
+if (prevVers.length >= 2) {
+  const prevWr = id => prevVers.slice(-2).map(r => (r.groups || []).flatMap(g => g.items || []).find(i => i.id === id)).filter(i => i && i.games);
+  const g = groups.find(x => x.key === 'winrate');
+  for (const it of g ? [...g.items] : []) { const m = /^winrate:ch(\d+)$/.exec(it.id); if (!m || !it.games) continue;
+    const ps = prevWr(it.id); if (ps.length < 2) continue;
+    const gs = [it.games, ...ps.map(i => i.games)].join('').replace(/E/g, ''), w = (gs.match(/W/g) || []).length, n = gs.length, rate = n ? w / n : 0;
+    const base = baseline.winrate && baseline.winrate['ch' + m[1]]; if (!base || !n) continue;
+    const se = Math.sqrt(Math.max(base.rate * (1 - base.rate), 0.05) * (1 / base.n + 1 / n)), tol = 2 * se, low3 = base.rate >= 0.1 && rate < base.rate / 3, out3 = Math.abs(rate - base.rate) > tol || low3;   // 下の線：幅の下端が 0 未満になる章（第2章 基準17%±22）は外れが出ないので、基準の 1/3 より下も ⚠️（v0.97.10 レビュー 3）
+    const it3 = { id: 'winrate3:ch' + m[1], title: `第${m[1]}章の勝率（3版まとめ）`, status: out3 ? 'warn' : 'ok', warnOnly: '3版まとめは版が重なるので ⚠️ だけ（v0.97.9 レビュー）',
+      detail: `勝率 ${Math.round(rate * 100)}%（${w}/${n}、今の版と ${ps.length}版前まで）、基準 ${Math.round(base.rate * 100)}%（許す幅 ±${Math.round(tol * 100)}${base.rate - tol < 0 ? `、下は基準の1/3＝${Math.round(base.rate / 3 * 100)}%` : ''}）${out3 ? `：3版続けて基準から外れている。章の強さか、打ち手（qa の自動の打ち手）を見る` : ''}` };
+    g.items.splice(g.items.indexOf(it) + 1, 0, it3); all.push(it3) } }
+
+// main の QA が ❌ のまま（v0.97.9 レビュー：main の ❌ の Issue #124 が開いたまま、次の版の PR が ✅ で出ていった）
+//   ラベル ci-failure の開いた Issue があれば、PR のまとめの一番上に「main の CI ❌ のまま（#番号）」を出す。読めなかったら ⚠️（黙って飛ばさない）
+//   QA だけでなく、公開・リンク・サイトの見張りなどの Issue も出す（どれも main が壊れたままという知らせ。CodeRabbit PR #125 で QA だけと誤って読める題を直した）
+let mainRed = '';
+if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
+  const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
+  try {
+    // ページをたどる（PR も Issue の一覧に混ざるので、PR を除く前に全部読む。CodeRabbit PR #125）
+    const raw = [];
+    for (let pg = 1; pg <= 10; pg++) {
+      const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues?labels=ci-failure&state=open&per_page=100&page=${pg}`];
+      const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 }));   // 100件の本文が 1MB（既定）を超えても読めるように（CodeRabbit PR #125）
+      raw.push(...page); if (page.length < 100) break }
+    const iss = raw.filter(i => !i.pull_request);
+    if (iss.length) { mainRed = iss.map(i => `#${i.number}「${String(i.title).slice(0, 40)}」`).join('、');
+      // PR では、どの Issue も「本文に Closes #番号」か「Issue に人（ボットでない）の書き込み＝直さない理由」が無ければ ❌（v0.98.5 レビュー：#131・#139 と2回、決まりを書いただけでは守られなかった）
+      //   本文を直しても CI は回り直さない（qa.yml の types）ので、Closes は PR を作るときに書く。main への push では ⚠️ のまま
+      let ev = {}; try { ev = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')) } catch (e) {}
+      const pr = ev.pull_request, body = String(pr && pr.body || ''), unhandled = [];
+      if (pr) for (const i of iss) {
+        if (new RegExp(`\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\s+#${i.number}\\b`, 'i').test(body)) continue;
+        let cm = []; try { for (let pg = 1; pg <= 10; pg++) {   // 書き込みも全ページ読む（100件を超えた理由を見落とさない。CodeRabbit PR #140）
+            const a = ['-sfS', '--max-time', '20', '-H', 'Accept: application/vnd.github+json', ...(tok ? ['-H', 'Authorization: Bearer ' + tok] : []), `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/issues/${i.number}/comments?per_page=100&page=${pg}`];
+            const page = JSON.parse(require('child_process').execFileSync('curl', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64e6 })); cm.push(...page); if (page.length < 100) break } } catch (e) { cm = null }
+        if (cm && cm.some(c => c.user && c.user.type !== 'Bot' && /(直さない理由|\breason)\s*[:：]\s*\S{2,}/i.test(String(c.body || '')))) continue;   // 「直さない理由：<説明>」「reason: <説明>」の形の人の書き込みだけ（「再現しました」「理由はありません」では通さない。CodeRabbit PR #140）
+        unhandled.push(`#${i.number}${cm ? '' : '（書き込みを読めなかった）'}`) }
+      const it = unhandled.length ? { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'fail', detail: `開いている CI 失敗の Issue：${mainRed}。${unhandled.join('・')} は、この PR の本文に「Closes #番号」も、Issue に「直さない理由：…」の書き込みも無い。直すなら PR の本文に「Closes #番号」、直さないなら Issue に「直さない理由：…」と書いてから CI を回し直す` }
+        : { id: 'ci:main-red', title: 'main の CI が ❌ のまま', status: 'warn', warnOnly: 'Issue を閉じれば消える（v0.97.9 レビュー）', detail: `開いている CI 失敗の Issue：${mainRed}。${pr ? 'どれもこの PR の本文の Closes か Issue の理由の書き込みがある' : 'この PR で直すなら本文に「Closes #番号」、直さないなら Issue に理由を書く'}` };
+      all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
+  } catch (e) { const it = { id: 'ci:main-red', title: 'main の CI が ❌ のままかの確認', status: 'warn', detail: 'CI 失敗の Issue を読めなかった：' + String(e && e.message || e).split('\n')[0].slice(0, 120) };
+    all.push(it); let g = groups.find(x => x.key === 'ci'); if (!g) groups.unshift(g = { key: 'ci', name: 'CI', items: [] }); g.items.push(it) }
+}
+
 const cnt = s => all.filter(i => i.status === s).length;
 const icon = { ok: '✅', fail: '❌', warn: '⚠️', known: '🟡' };
 const fails = all.filter(i => i.status === 'fail'), warns = all.filter(i => i.status === 'warn').sort((a, b) => (b.repeat || 0) - (a.repeat || 0)), fixed = all.filter(i => i.fixed);   // くり返しの ⚠️ を上に
 const line = i => `- ${i.title}：${String(i.detail).replace(/\n/g, ' ')}${i.shot ? `（${i.shot.replace(/\.png$/, '.jpg')}）` : ''}`;
 const sha = (process.env.GITHUB_SHA || '').slice(0, 7), when = new Date().toISOString().slice(0, 16).replace('T', ' ');
-const head = `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
+const head = (mainRed ? `> **⚠️ main の CI ❌ のまま（${mainRed}）**\n\n` : '') + `対象: index.html（APP_VERSION ${ver}）、${quick ? '短い版' : '長い版（公開前）'}、GitHub ${sha}、${when} UTC\n\n` +
   `**${fails.length ? '❌ 不合格' : '✅ 合格'}**　✅ ${cnt('ok')}　❌ ${fails.length}　⚠️ ${warns.length}　🟡 修正待ち・前からある ${cnt('known')}\n\n`;
 
 // 画面の変化

@@ -1,0 +1,249 @@
+<title>LAST TELL トランプの絵柄</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Zen+Old+Mincho:wght@700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* 卓のフェルトの上に案を並べる。1案 = 1段（近くで / 座った目で / 裏） */
+:root{
+  --bg:#0c1312; --felt:#17463f; --felt2:#0f3530; --ink:#e9e4d8; --dim:#a9b3ad; --gold:#c9a24c; --line:#2a3d39;
+  --f-disp:"Oswald","Arial Narrow",sans-serif; --f-body:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 60px}
+main{max-width:1100px;margin:0 auto;display:grid;gap:36px}
+h1{font-family:var(--f-disp);font-weight:600;letter-spacing:.04em;font-size:30px;margin:0;text-wrap:balance}
+h1 small{display:block;font-family:var(--f-body);font-size:14px;color:var(--dim);letter-spacing:0;font-weight:400}
+h2{font-size:20px;margin:0;text-wrap:balance}
+h2 .tag{font-family:var(--f-disp);color:var(--gold);margin-right:10px;letter-spacing:.06em}
+.rec{display:inline-block;font-size:12px;border:1px solid var(--gold);color:var(--gold);padding:0 8px;border-radius:3px;margin-left:8px;vertical-align:3px}
+p{margin:0;max-width:68ch}
+.note{color:var(--dim);font-size:13px}
+section.plan{display:grid;gap:14px;padding-top:24px;border-top:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
+.lab{font-size:12px;color:var(--dim);letter-spacing:.08em;margin-bottom:6px}
+.box{min-width:0}
+.cards{display:flex;gap:8px;flex-wrap:wrap}
+.cards img{width:96px;height:auto;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.backs img{width:72px}
+.box.wide{flex:1 1 480px}
+.scene{width:100%;max-width:560px;height:300px;border-radius:8px;overflow:hidden;
+  background:linear-gradient(#07100e 0,#0b1513 30%,var(--felt2) 31%,var(--felt) 100%);
+  perspective:600px;perspective-origin:50% 0;position:relative}
+.table{position:absolute;left:50%;top:84px;width:560px;height:420px;transform:translateX(-50%) rotateX(56deg);transform-origin:50% 0;
+  background:radial-gradient(ellipse at 50% 40%,#1c5249 0,#11392f 75%);border-radius:50%/40%;box-shadow:0 0 0 10px #2a1a10}
+.table img{position:absolute;width:57px;height:89px;box-shadow:0 2px 3px rgba(0,0,0,.4);border-radius:4px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.cmp div{background:#111c1a;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:13px}
+.cmp b{font-family:var(--f-disp);font-size:22px;color:var(--gold);display:block;font-weight:600}
+.src{font-size:13px;color:var(--dim)}
+.src a{color:var(--ink)}
+ul{margin:0;padding-left:1.2em}
+</style>
+
+<main>
+<header style="display:grid;gap:10px">
+  <h1>トランプの絵柄の見本<small>座った目で見るようになった卓に合わせた、3つの案（どれも自作の絵。実物のブランドの絵やロゴは使いません）</small></h1>
+  <p>今のカードは、真ん中にマークが1つだけで、裏は明るい赤一色に近く見えます。3D の卓では「おもちゃっぽい」側に寄っていました。本物の店のカードに近づけつつ、座った位置から数字とマークが読めることを優先しました。4色（♦青・♣緑）は前に satou さんが決めたので、どの案も残します（色だけ本物の4色デッキに近い深い色にします）。</p>
+</header>
+
+<section class="plan" id="now">
+  <h2><span class="tag">いま</span>今のカード（比べる用）</h2>
+  <div class="row">
+    <div class="box"><div class="lab">近くで</div><div class="cards" data-set="now" data-kind="faces"></div></div>
+    <div class="box wide"><div class="lab">座った目で（ボード5枚＋自分の2枚）</div><div class="scene" data-set="now"></div></div>
+    <div class="box"><div class="lab">裏</div><div class="cards backs" data-set="now" data-kind="backs"></div></div>
+  </div>
+</section>
+
+<section class="plan" id="a">
+  <h2><span class="tag">案A</span>カジノの定番（2隅ジャンボインデックス）<span class="rec">おすすめ</span></h2>
+  <p>ポーカールームで一番よく見る形。角の数字を縦長で太く大きくし、真ん中は本物と同じくマークを数だけ並べます。絵札は自作の額入りの絵（上下対称）。裏は白いふちに細かい菱形の網目で、赤と青の2組を手ごとに替えます（店で2組を交互に使うのと同じ）。</p>
+  <div class="row">
+    <div class="box"><div class="lab">近くで</div><div class="cards" data-set="a" data-kind="faces"></div></div>
+    <div class="box wide"><div class="lab">座った目で</div><div class="scene" data-set="a"></div></div>
+    <div class="box"><div class="lab">裏（赤・青の2組）</div><div class="cards backs" data-set="a" data-kind="backs"></div></div>
+  </div>
+</section>
+
+<section class="plan" id="b">
+  <h2><span class="tag">案B</span>4隅ジャンボ・黒と金</h2>
+  <p>数字を4隅すべてに入れます。のぞくとき（角を少し持ち上げる）にどの角でも読め、向きを気にしなくてよい形。そのぶん数字は案Aより少し細め。裏は黒地に金の細い線の幾何学模様で、夜の店の落ち着いた雰囲気に寄せます。</p>
+  <div class="row">
+    <div class="box"><div class="lab">近くで</div><div class="cards" data-set="b" data-kind="faces"></div></div>
+    <div class="box wide"><div class="lab">座った目で</div><div class="scene" data-set="b"></div></div>
+    <div class="box"><div class="lab">裏</div><div class="cards backs" data-set="b" data-kind="backs"></div></div>
+  </div>
+</section>
+
+<section class="plan" id="c">
+  <h2><span class="tag">案C</span>店ごとの裏柄（表は案A）</h2>
+  <p>本物の店は、店の名前や印を入れた裏柄のカードを使うことが多いです。章の店ごとに裏の色と印を変えます（錨亭＝錨、銀の扉＝扉、月影＝三日月、天空＝星、王冠＝冠）。表は案Aと同じ。店に入った感じが強くなりますが、絵の数は増えます。</p>
+  <div class="row">
+    <div class="box wide"><div class="lab">座った目で（天空）</div><div class="scene" data-set="c"></div></div>
+    <div class="box"><div class="lab">店ごとの裏</div><div class="cards backs" data-set="c" data-kind="backs"></div></div>
+  </div>
+</section>
+
+<section class="plan">
+  <h2>読みやすさ（1280×720 の画面、ボードのカードの角の数字の高さの目安）</h2>
+  <div class="cmp">
+    <div><b data-m="now">–</b>いま</div>
+    <div><b data-m="a">–</b>案A・案C</div>
+    <div><b data-m="b">–</b>案B</div>
+  </div>
+  <p class="note">いまの実測（検査 check_props）が 15.8px。各案は角の数字の高さの比から出した目安です。作るときは検査で 14px 以上（今の決まりは 12px 以上）を確かめます。</p>
+</section>
+
+<section class="plan">
+  <h2>調べたこと</h2>
+  <ul>
+    <li>カジノのポーカールームは、プラスチックのカード（KEM・Copag など）が多い。大きさはブリッジ（57×89mm）とポーカー（63×89mm）。数字はふつうとジャンボの2種類。</li>
+    <li>WSOP のふつうの卓は Copag のふつうの数字、テレビの卓はジャンボ（読み取り機能つき）。</li>
+    <li>Copag や Modiano には、4隅すべてに数字があるジャンボもある。</li>
+    <li>4色デッキはテレビ（WPT）とオンラインで広まった。ライブの卓では2色がふつう。</li>
+  </ul>
+  <p class="src">出典：<a href="https://mrcpoker.com/blogs/news/everything-you-need-to-know-about-kem-poker-playing-cards" target="_blank" rel="noopener">MRC Poker（KEM のカード）</a>・<a href="https://www.pokerchipforum.com/threads/wsop-vs-jumbo-index-cards.59326/latest" target="_blank" rel="noopener">Poker Chip Forum（WSOP とジャンボ）</a>・<a href="https://www.pokerchipforum.com/threads/poker-cards.56587/" target="_blank" rel="noopener">Poker Chip Forum（4隅ジャンボ）</a>・<a href="https://en.wikipedia.org/wiki/Four-color_deck" target="_blank" rel="noopener">Wikipedia「Four-color deck」</a></p>
+</section>
+</main>
+
+<script>
+// カードは全部この場で描く（ゲームでは PropTex が同じ描き方で 512×800 に描く）
+const W=228,H=356; // 57×89mm ×4
+const SUITS=['s','h','d','c'];
+const COL4={now:['#17171d','#c3122d','#1d58b5','#167a39'], deep:['#16161a','#b3132b','#1b4a96','#1d6b3a']};
+const RT=['','','2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function suit(g,s,cx,cy,k,col){
+  g.save();g.translate(cx,cy);g.scale(k,k);g.fillStyle=col;g.beginPath();
+  if(s==='h'){g.moveTo(0,.5);g.bezierCurveTo(-.55,.05,-.55,-.5,0,-.22);g.bezierCurveTo(.55,-.5,.55,.05,0,.5);}
+  else if(s==='d'){g.moveTo(0,-.55);g.quadraticCurveTo(.2,-.2,.4,0);g.quadraticCurveTo(.2,.2,0,.55);g.quadraticCurveTo(-.2,.2,-.4,0);g.quadraticCurveTo(-.2,-.2,0,-.55);}
+  else if(s==='s'){g.moveTo(0,-.55);g.bezierCurveTo(.5,-.1,.62,.28,.22,.3);g.bezierCurveTo(.08,.3,.04,.22,.03,.2);g.lineTo(.15,.52);g.lineTo(-.15,.52);g.lineTo(-.03,.2);g.bezierCurveTo(-.04,.22,-.08,.3,-.22,.3);g.bezierCurveTo(-.62,.28,-.5,-.1,0,-.55);}
+  else {g.arc(0,-.25,.21,0,7);g.moveTo(-.22,.08);g.arc(-.24,.08,.21,0,7);g.moveTo(.45,.08);g.arc(.24,.08,.21,0,7);g.moveTo(0,0);g.moveTo(-.04,.05);g.lineTo(-.15,.52);g.lineTo(.15,.52);g.lineTo(.04,.05);}
+  g.fill();g.restore();
+}
+function paper(g){rr(g,0,0,W,H,15);g.fillStyle='#f6f3ea';g.fill();g.save();g.clip();
+  const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,'rgba(255,255,255,.35)');gr.addColorStop(1,'rgba(0,0,0,.05)');g.fillStyle=gr;g.fillRect(0,0,W,H);g.restore();}
+function idx(g,txt,s,col,x,y,fs,ss,cond){
+  g.fillStyle=col;g.textAlign='center';g.textBaseline='alphabetic';
+  g.font=`${cond?700:600} ${fs}px Oswald`;
+  g.save();g.translate(x,y);if(txt==='10')g.scale(.78,1);g.fillText(txt,0,0);g.restore();
+  suit(g,s,x,y+ss*.72,ss,col);
+}
+function pips(g,r,s,col,box,k){
+  const L=box[0],R=box[1],T=box[2],B=box[3],C=(L+R)/2;
+  const y=t=>T+(B-T)*t;
+  const P={2:[[C,0],[C,1]],3:[[C,0],[C,.5],[C,1]],4:[[L,0],[R,0],[L,1],[R,1]],5:[[L,0],[R,0],[C,.5],[L,1],[R,1]],
+    6:[[L,0],[R,0],[L,.5],[R,.5],[L,1],[R,1]],7:[[L,0],[R,0],[C,.25],[L,.5],[R,.5],[L,1],[R,1]],
+    8:[[L,0],[R,0],[C,.25],[L,.5],[R,.5],[C,.75],[L,1],[R,1]],9:[[L,0],[R,0],[L,.333],[R,.333],[C,.5],[L,.667],[R,.667],[L,1],[R,1]],
+    10:[[L,0],[R,0],[C,.167],[L,.333],[R,.333],[L,.667],[R,.667],[C,.833],[L,1],[R,1]]}[r];
+  for(const [px,t] of P){const py=y(t);g.save();if(t>.5){g.translate(px,py);g.rotate(Math.PI);g.translate(-px,-py);}suit(g,s,px,py,k,col);g.restore();}
+}
+function court(g,r,s,col,frame){
+  const [x0,y0,x1,y1]=frame,w=x1-x0,h=y1-y0;
+  g.fillStyle='rgba(201,162,76,.10)';g.fillRect(x0,y0,w,h);
+  g.strokeStyle='#b08a34';g.lineWidth=3;g.strokeRect(x0,y0,w,h);
+  g.strokeStyle=col;g.globalAlpha=.5;g.lineWidth=1;g.strokeRect(x0+6,y0+6,w-12,h-12);g.globalAlpha=1;
+  // 上下対称の半身：冠/ティアラ/羽根 + 文字 + マーク
+  for(const flip of [false,true]){
+    g.save();if(flip){g.translate(x0+w/2,y0+h/2);g.rotate(Math.PI);g.translate(-(x0+w/2),-(y0+h/2));}
+    const cx=x0+w/2, top=y0+14;
+    g.fillStyle='#c9a24c';g.beginPath();
+    if(r===13){g.moveTo(cx-22,top+22);g.lineTo(cx-22,top+6);g.lineTo(cx-11,top+14);g.lineTo(cx,top);g.lineTo(cx+11,top+14);g.lineTo(cx+22,top+6);g.lineTo(cx+22,top+22);}
+    else if(r===12){g.moveTo(cx-20,top+20);g.quadraticCurveTo(cx,top-6,cx+20,top+20);g.closePath();}
+    else {g.moveTo(cx-3,top+22);g.quadraticCurveTo(cx+18,top+4,cx+4,top-2);g.quadraticCurveTo(cx-2,top+12,cx-3,top+22);}
+    g.fill();
+    g.fillStyle=col;g.font='700 44px "Zen Old Mincho",serif';g.textAlign='center';g.fillText(['J','Q','K'][r-11],cx,top+70);
+    suit(g,s,cx,top+100,22,col);
+    g.restore();
+  }
+  g.strokeStyle='rgba(176,138,52,.6)';g.lineWidth=1.5;g.beginPath();g.moveTo(x0+8,y0+h/2);g.lineTo(x1-8,y0+h/2);g.stroke();
+}
+function face(set,r,s){
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const si=SUITS.indexOf(s);
+  paper(g);
+  if(set==='now'){
+    const col=COL4.now[si];
+    for(const f of [0,1]){g.save();if(f){g.translate(W,H);g.rotate(Math.PI);}
+      g.fillStyle=col;g.textAlign='center';g.font=`500 ${RT[r]==='10'?68:84}px Oswald`;g.fillText(RT[r],44,88);suit(g,s,44,118,46,col);g.restore();}
+    if(r>=11&&r<=13){g.strokeStyle='#b8902f';g.lineWidth=3;g.strokeRect(W/2-39,H/2-55,78,110);g.fillStyle=col;g.font='700 54px "Zen Old Mincho",serif';g.fillText(['J','Q','K'][r-11],W/2,H/2+2);suit(g,s,W/2,H/2+30,28,col);}
+    else suit(g,s,W/2,H/2,r===14?84:62,col);
+    return c;
+  }
+  const col=COL4.deep[si];
+  if(set==='a'||set==='c'){
+    for(const f of [0,1]){g.save();if(f){g.translate(W,H);g.rotate(Math.PI);}idx(g,RT[r],s,col,36,84,96,40);g.restore();}
+    if(r>=11&&r<=13) court(g,r,s,col,[66,30,W-66,H-30]);
+    else if(r===14){suit(g,s,W/2,H/2,92,col);g.strokeStyle='#f6f3ea';g.lineWidth=2;g.beginPath();g.arc(W/2,H/2+2,10,0,7);g.stroke();}
+    else pips(g,r,s,col,[W/2-30,W/2+30,48,H-48],30);
+  } else { // b：4隅
+    for(const f of [0,1]) for(const m of [0,1]){g.save();
+      if(f){g.translate(W,H);g.rotate(Math.PI);} if(m){g.translate(W,0);g.scale(-1,1);}
+      g.save();if(m){g.translate(32,0);g.scale(-1,1);g.translate(-32,0);} idx(g,RT[r],s,col,32,72,78,32);g.restore();g.restore();}
+    if(r>=11&&r<=13) court(g,r,s,col,[62,40,W-62,H-40]);
+    else if(r===14) suit(g,s,W/2,H/2,80,col);
+    else pips(g,r,s,col,[W/2-26,W/2+26,64,H-64],26);
+  }
+  rr(g,1,1,W-2,H-2,14);g.strokeStyle='rgba(0,0,0,.12)';g.lineWidth=2;g.stroke();
+  return c;
+}
+const VENUE={anchor:['錨亭','#1e3b33','#cbb98a','anchor'],silver:['銀の扉','#2b2f36','#c9ced6','door'],moon:['月影','#2a1d3a','#d9c48e','moon'],sky:['天空','#16244a','#c9d2ea','star'],crown:['王冠','#4a1420','#d4af5a','crown']};
+function emblem(g,kind,cx,cy,col){
+  g.save();g.strokeStyle=col;g.fillStyle=col;g.lineWidth=3;g.beginPath();
+  if(kind==='anchor'){g.arc(cx,cy-20,6,0,7);g.moveTo(cx,cy-14);g.lineTo(cx,cy+18);g.moveTo(cx-12,cy-6);g.lineTo(cx+12,cy-6);g.moveTo(cx-18,cy+6);g.quadraticCurveTo(cx,cy+30,cx+18,cy+6);g.stroke();}
+  else if(kind==='door'){g.rect(cx-14,cy-22,28,44);g.moveTo(cx-14,cy-10);g.arc(cx,cy-10,14,Math.PI,0);g.stroke();g.beginPath();g.arc(cx+7,cy+2,2.5,0,7);g.fill();}
+  else if(kind==='moon'){g.arc(cx,cy,20,0,7);g.fill();g.globalCompositeOperation='destination-out';g.beginPath();g.arc(cx+9,cy-6,17,0,7);g.fill();}
+  else if(kind==='star'){for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr2=i%2?8:21;g.lineTo(cx+Math.cos(a)*rr2,cy+Math.sin(a)*rr2);}g.closePath();g.fill();}
+  else {g.moveTo(cx-20,cy+12);g.lineTo(cx-20,cy-8);g.lineTo(cx-10,cy+2);g.lineTo(cx,cy-16);g.lineTo(cx+10,cy+2);g.lineTo(cx+20,cy-8);g.lineTo(cx+20,cy+12);g.closePath();g.fill();}
+  g.restore();
+}
+function back(set,v){
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  if(set==='now'){rr(g,0,0,W,H,15);g.fillStyle='#f6f3ea';g.fill();rr(g,13,13,W-26,H-26,6);g.fillStyle='#c0392b';g.fill();
+    g.fillStyle='#c9a24c';g.beginPath();g.arc(W/2,H/2,30,0,7);g.fill();g.fillStyle='#c0392b';g.beginPath();g.arc(W/2,H/2,22,0,7);g.fill();g.fillStyle='#dcbc62';g.beginPath();g.arc(W/2,H/2,12,0,7);g.fill();return c;}
+  if(set==='b'){
+    rr(g,0,0,W,H,15);g.fillStyle='#111114';g.fill();
+    g.save();rr(g,10,10,W-20,H-20,8);g.clip();g.strokeStyle='rgba(201,162,76,.55)';g.lineWidth=1;
+    for(let k=-H;k<W+H;k+=14){g.beginPath();g.moveTo(k,0);g.lineTo(k+H*.55,H);g.stroke();g.beginPath();g.moveTo(k+H*.55,0);g.lineTo(k,H);g.stroke();}
+    g.restore();g.strokeStyle='#c9a24c';g.lineWidth=2;rr(g,10,10,W-20,H-20,8);g.stroke();rr(g,18,18,W-36,H-36,5);g.stroke();
+    g.fillStyle='#111114';g.beginPath();g.ellipse(W/2,H/2,40,52,0,0,7);g.fill();g.strokeStyle='#c9a24c';g.lineWidth=2;g.stroke();
+    g.fillStyle='#c9a24c';g.font='600 22px Oswald';g.textAlign='center';g.fillText('LT',W/2,H/2+8);return c;}
+  // a と c：白ふち＋網目
+  let base,ln,mark;
+  if(set==='a'){base=v==='blue'?'#1f3f7a':'#8e1d26';ln='rgba(255,240,220,.38)';mark=null;}
+  else {const V=VENUE[v];base=V[1];ln=V[2]+'66';mark=V;}
+  rr(g,0,0,W,H,15);g.fillStyle='#f6f3ea';g.fill();
+  rr(g,12,12,W-24,H-24,5);g.fillStyle=base;g.fill();
+  g.save();rr(g,12,12,W-24,H-24,5);g.clip();g.strokeStyle=ln;g.lineWidth=1.2;
+  const st=10;for(let y=12,row=0;y<H;y+=st/2,row++)for(let x=12+(row%2?st/2:0);x<W;x+=st){g.beginPath();g.moveTo(x,y-st/2+1);g.lineTo(x+st/2-1,y);g.lineTo(x,y+st/2-1);g.lineTo(x-st/2+1,y);g.closePath();g.stroke();}
+  g.restore();
+  g.strokeStyle=set==='a'?'rgba(255,240,220,.7)':mark[2];g.lineWidth=2;rr(g,20,20,W-40,H-40,4);g.stroke();
+  if(mark){g.fillStyle=base;g.beginPath();g.arc(W/2,H/2,34,0,7);g.fill();g.strokeStyle=mark[2];g.lineWidth=2;g.stroke();emblem(g,mark[3],W/2,H/2,mark[2]);}
+  return c;
+}
+const FACES=[[14,'s'],[13,'h'],[10,'d'],[7,'c'],[12,'d'],[9,'s']];
+const BOARD=[[14,'s'],[10,'d'],[7,'c'],[13,'h'],[4,'d']];
+const HAND=[[12,'s'],[9,'h']];
+const BACKS={now:['x'],a:['red','blue'],b:['x'],c:Object.keys(VENUE)};
+function url(c){return c.toDataURL('image/png');}
+function build(){
+  document.querySelectorAll('.cards').forEach(el=>{
+    const set=el.dataset.set;
+    if(el.dataset.kind==='faces')FACES.forEach(([r,s])=>{const i=new Image();i.src=url(face(set,r,s));i.alt=RT[r]+s;el.appendChild(i);});
+    else BACKS[set].forEach(v=>{const i=new Image();i.src=url(back(set,v));i.alt='裏';i.title=set==='c'?VENUE[v][0]:'';el.appendChild(i);});
+  });
+  document.querySelectorAll('.scene').forEach(el=>{
+    const set=el.dataset.set, fs=set==='c'?'a':set;
+    const t=document.createElement('div');t.className='table';el.appendChild(t);
+    BOARD.forEach(([r,s],k)=>{const i=new Image();i.src=url(face(fs,r,s));i.style.left=(280-2.5*62+k*62)+'px';i.style.top='70px';t.appendChild(i);});
+    HAND.forEach(([r,s],k)=>{const i=new Image();i.src=url(face(fs,r,s));i.style.left=(262+k*30)+'px';i.style.top='190px';i.style.transform=`rotate(${k?6:-6}deg)`;t.appendChild(i);});
+    const bv=set==='c'?'sky':(set==='a'?'blue':'x');
+    [[90,150,-20],[440,150,20],[60,250,-35]].forEach(([x,y,a])=>{for(const d of [0,10]){const i=new Image();i.src=url(back(set,bv));i.style.left=(x+d)+'px';i.style.top=y+'px';i.style.transform=`rotate(${a+d/2}deg)`;t.appendChild(i);}});
+  });
+  // 角の数字の高さ（いま 84px 字 → 実測 15.8px）
+  const m={now:15.8,a:15.8*96/84,b:15.8*78/84};
+  document.querySelectorAll('[data-m]').forEach(e=>e.textContent=m[e.dataset.m].toFixed(1)+'px');
+}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>Promise.all(['600 20px Oswald','700 20px "Zen Old Mincho"'].map(f=>document.fonts.load(f).catch(()=>{})))).then(build);
+</script>

@@ -57,7 +57,7 @@ function awPlace(){
   const els=[...document.querySelectorAll('#plates .plate > .ltact:not([hidden])')];if(!els.length)return;
   const vis=e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
   // チップの山の端に少しかかるのは読めるので軽く、席番号・D・吹き出し・札・ほかの席の名札・語と顔は重く数える（v91.2 レビュー：縦で左の席の頭に乗った）
-  const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #mine .mybet .chipwrap, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&(!e.classList.contains('say')||+getComputedStyle(e).opacity>.05))
+  const av=[...document.querySelectorAll('.felt .spot .chipwrap, .felt .spot .mystack, #mine .mybet .chipwrap, #dbtn, .dbadge, .llseats i:not([hidden]), #sayLayer .say.go, #plates .say.go, #potSign, #boardCards .card:not(.slot), #plates .cue, #plates .plate, #plates .plate > .ltact:not([hidden]), #sayLayer .say, #plates .say')].filter(e=>vis(e)&&LT.sayOn(e))
     .map(e=>{const r=e.getBoundingClientRect(),pl=e.closest('.plate'),bu=e.closest('.bust');return {r,el:e,k:/chipwrap|mystack/.test(e.className)&&!e.closest('#mine')?1:/dbadge/.test(e.className)||e.id==='dbtn'?8:4,pl,bu}}).filter(o=>o.r.width>1);
   // 自分が前に出したチップ（#mine .mybet）は重く（v94 レビュー 4：WebKit 横の第1章でゲンの「コール」が下半分隠れた）
   // 吹き出しは .go に限らず、見えている物はすべて（v92 CI：出し終わって残った #say1 に「フォールド」がかかった）

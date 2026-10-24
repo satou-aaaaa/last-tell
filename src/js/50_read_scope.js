@@ -15,9 +15,12 @@ const rsNarrow=()=>innerWidth<520&&innerHeight>innerWidth;
 function rsTag(p){const n=typeof who==='function'?who(p.name):'';return n&&!(rsNarrow()&&n.length>4)?READ_SCOPE_TAG_JA.replace('{0}',n):READ_SCOPE_TAG0_JA}
 // v94.1 レビュー：はじめての人の案内（30b の tipShow）が師匠の帯を止めている間は言わない（見たことにもしない）。案内が消えた後の描き直しで言う
 const rsTipHeld=()=>{try{const s=$('sensei');return !!(typeof tipK!=='undefined'&&tipK)||!!(s&&s.classList.contains('mwait'))}catch(e){return false}};
-function rsLine(){if(S.rsSaid||rsTipHeld())return;const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
+// 待ち（案内・「見えた！」の帯の待ち）で言えなかったときは、待ちが明けたら描き直して言う（v0.98.0 手元：PC の横長の卓で「見えた！」の待ち 1.8秒の間に
+//   描き直しが1回だけ来て、そのあと自分の番で描き直しが来ず、ひとことが出なかった）
+function rsRetry(){clearTimeout(rsRetry.t);rsRetry.t=setTimeout(()=>{try{if(!S||!S.players||S.rsSaid||S.handOver)return;if(rsTipHeld())return rsRetry();render()}catch(e){}},400)}
+function rsLine(){if(S.rsSaid)return;if(rsTipHeld()){rsRetry();return}const s=saveGet(RS_KEY,{v:1,seen:false})||{};if(s.seen)return;S.rsSaid=1;
   if(typeof uraLv==='function'&&uraLv()>=7)return;   // 裏の卓7段目からは師匠のひとことが出ないので、見たことにしない
-  jinNote(READ_SCOPE_LINE_JA,0);saveSet(RS_KEY,{v:1,seen:true},1);
+  jinNote(READ_SCOPE_LINE_JA,0,1);saveSet(RS_KEY,{v:1,seen:true},1);
   // v94 レビュー 1：描き直しの中で決めるので、#senseiText はもう書かれている。もう一度描いて、このハンドのうちに出す（41_more_fun の mfBigFirst と同じ）。
   // 0 ハンド：1 にすると第4章のクセの手引きが2ハンド止まる
   setTimeout(()=>{try{render()}catch(e){}},0)}
@@ -41,7 +44,7 @@ function rsEyeAvoid(){const P=$('plates'),L=$('sayLayer');if(!P||!L||typeof face
 // 吹き出しを空いている横へ寄せる（入らなければ札の下へ）。吹き出しは札より手前の層なので、印が読めなくなる。追いかけ（sayFollow）が margin を書き直した後にも見る
 function rsSayAvoid(){const P=$('plates'),L=$('sayLayer');if(!P||!L)return;
   const cs=[...P.querySelectorAll(':scope > .cue')].filter(cb=>{const t=cb.querySelector('.rsOnly');return t&&!t.hidden&&cb.offsetParent}).map(cb=>cb.getBoundingClientRect()).filter(r=>r.width>1);if(!cs.length)return;
-  const lr=L.getBoundingClientRect(),list=[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>e.offsetParent&&e.textContent.trim()),R=list.map(e=>e.getBoundingClientRect());   // 全部測ってから全部書く
+  const lr=L.getBoundingClientRect(),list=[...document.querySelectorAll('#sayLayer .say.go, #plates .say.go')].filter(e=>e.offsetParent&&e.textContent.trim()),R=list.map(e=>e.getBoundingClientRect());   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */   // 全部測ってから全部書く
   const ov=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
   list.forEach((e,k)=>{const r=R[k];const c=cs.find(q=>ov(r,q));if(!c)return;
     const sh=(x,y)=>({left:r.left+x,right:r.right+x,top:r.top+y,bottom:r.bottom+y}),okB=q=>q.left>=lr.left+2&&q.right<=lr.right-2&&q.top>=lr.top+2&&q.bottom<=lr.bottom-2;

@@ -1,0 +1,4 @@
+/* ===== v0.98.1 PC 向け：部屋の光と煙（js/53_pc_air.js）。卓の布の上・名札の下に重ねる絵。押せない ===== */
+#pcAir{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#pcAir[hidden]{display:none}
+html:not(.pcw) #pcAir{display:none}

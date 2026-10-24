@@ -1,0 +1,115 @@
+<title>配り札の操作の見本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho+B1:wght@700&display=swap">
+<style>
+/* Layout: one column of option panels on a dark felt; each panel shows a table before → after the deal adjustment */
+:root{
+  --bg:#0d1412; --felt:#123228; --felt2:#0f2a21; --ink:#e8eee9; --mute:#9db0a6; --line:#2a4a3e;
+  --gold:#d9b46a; --red:#e0626a; --card:#f4f1ea; --cardink:#18201c; --ok:#7fd6a2;
+  --disp:"Shippori Mincho B1",serif; --body:"Zen Kaku Gothic New",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+main{max-width:920px;margin:0 auto;display:grid;gap:22px}
+h1{font-family:var(--disp);font-size:clamp(1.5rem,4vw,2.1rem);margin:0;letter-spacing:.04em;text-wrap:balance}
+.lead{color:var(--mute);margin:4px 0 0;max-width:65ch}
+.now{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:#101c18}
+.now h2{font-size:1rem;margin:0 0 6px;color:var(--gold);letter-spacing:.08em}
+.now ul{margin:0;padding-left:1.2em;color:var(--mute)}
+.now b{color:var(--ink)}
+.opt{background:linear-gradient(160deg,var(--felt),var(--felt2));border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+.opt.rec{border-color:var(--gold)}
+.hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.hd h3{font-family:var(--disp);margin:0;font-size:1.2rem}
+.tag{font-size:.75rem;letter-spacing:.1em;padding:1px 8px;border:1px solid var(--gold);color:var(--gold);border-radius:99px}
+.tag.no{border-color:var(--mute);color:var(--mute)}
+.desc{margin:0;color:var(--mute);max-width:70ch}
+.scene{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+@media (max-width:640px){.scene{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
+.tbl{background:rgba(0,0,0,.22);border-radius:8px;padding:10px;display:grid;gap:6px;min-width:0}
+.tbl .cap{font-size:.75rem;color:var(--mute);letter-spacing:.08em}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.who{font-size:.8rem;min-width:4.6em;color:var(--mute)}
+.cd{width:34px;height:48px;border-radius:4px;background:var(--card);color:var(--cardink);display:grid;place-items:center;font-weight:700;font-size:.9rem;
+  box-shadow:0 1px 0 rgba(0,0,0,.4);transition:transform .45s ease, background .3s}
+.cd.r{color:#b3262f}
+.cd.back{background:repeating-linear-gradient(45deg,#3b1d22 0 4px,#4a242a 4px 8px);color:transparent}
+.cd.hl{outline:2px solid var(--gold);outline-offset:1px}
+.cd.flip{transform:rotateY(90deg)}
+.res{font-size:.85rem}
+.res.good{color:var(--ok)} .res.bad{color:var(--red)}
+.arrow{color:var(--gold);font-size:1.4rem}
+.three{font-size:.85rem;color:var(--mute);border-top:1px dashed var(--line);padding-top:8px;display:grid;gap:2px}
+.three span b{color:var(--ink);font-weight:700}
+button{font:inherit;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 14px;cursor:pointer;justify-self:start}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cd{transition:none}}
+</style>
+
+<main>
+  <header>
+    <h1>配り札と場札の操作の見本</h1>
+    <p class="lead">LAST TELL 物語の章で、札をどこまで寄せるかの5案です。左が今、右が案を入れたとき。札の並びは見本用の例です。「配り直す」で動きを見られます。</p>
+  </header>
+
+  <section class="now">
+    <h2>今の作り</h2>
+    <ul>
+      <li><b>弱い手の引き直し</b>：物語の章で自分の2枚が一番弱い組なら、3割（第5・6・14章は6割）で引き直し</li>
+      <li><b>強い手への入れ替え</b>：第6・14章だけ。しばらく強い手が来ないと TT 以上か AK に</li>
+      <li><b>場札</b>：第6・14章でボスと他の客がオールインしたときだけ、ボスが勝つ並びに（自分の結果は変えない）</li>
+      <li><b>決まった札</b>：第5章の AA、第4・5章の一騎打ち、第7章の最後、回想、第二部の2場面</li>
+      <li><b>運まかせ</b>：章の目標の場面（スチール・ブラフ・ブラフを見抜く）と、テルを読んだあとの場札</li>
+    </ul>
+  </section>
+
+  <div id="opts"></div>
+</main>
+
+<script>
+const OPTS=[
+ {id:1,rec:true,name:'案1　目標の場面を配る',desc:'目標が何ハンドも進んでいないとき、次のハンドを「習うことができる場面」に寄せます。例は第2章のスチール：自分がボタンで前が全員降りたとき、ブラインドの2人に弱い手を配ります。',
+  before:{cap:'今：ブラインドが強い手を持っていることがある',rows:[['あなた (D)','9♣','4♦'],['ロク (SB)','A♠','Q♠'],['ハル (BB)','J♥','J♦']],board:[],res:['bad','レイズ → ロクが3ベット。スチール失敗']},
+  after:{cap:'案1：ブラインドに弱い手',rows:[['あなた (D)','9♣','4♦'],['ロク (SB)','7♠','2♦'],['ハル (BB)','8♥','3♣']],board:[],res:['good','レイズ → 2人とも降りる。スチール成功（1/3）'],hl:[[1,1],[1,2],[2,1],[2,2]]},
+  three:['テルを読む・師弟の物語（教わったことをすぐ試せる）','第2章の詰まりが減る','1.0']},
+ {id:2,rec:true,name:'案2　読み勝ちを場札で守る',desc:'相手がブラフのクセを見せて賭け、自分がコールした時点で勝っていれば、残りの場札で逆転させません。テルを正しく読めば勝つ、が必ず伝わります。',
+  before:{cap:'今：コールのあと、場札で逆転される',rows:[['あなた','K♥','T♣'],['カオル','Q♦','J♦']],board:['K♠','8♦','3♣','4♦','9♦'],res:['bad','ブラフを見抜いてコール → リバーの 9♦ でフラッシュ負け']},
+  after:{cap:'案2：勝ったままの並び',rows:[['あなた','K♥','T♣'],['カオル','Q♦','J♦']],board:['K♠','8♦','3♣','4♦','2♠'],res:['good','見抜いたとおりブラフ。Kのペアで勝ち'],hlb:[4]},
+  three:['テルを読む（主軸そのもの）','影響なし（テルは第4章から）','1.0']},
+ {id:3,name:'案3　手札の助けを広げる',desc:'弱い手の引き直しを全章5割に、強い手への入れ替えを第1〜5章にも。勝ちやすくはなりますが、目標の場面が来るかは変わりません。',
+  before:{cap:'今：3割で引き直し',rows:[['あなた','7♣','2♦']],board:[],res:['bad','そのまま弱い手']},
+  after:{cap:'案3：5割で引き直し＋ときどき強い手',rows:[['あなた','A♦','K♣']],board:[],res:['good','強い手。でもスチールの数は増えない'],hl:[[0,1],[0,2]]},
+  three:['どれにも弱い（勝ちやすくなるだけ）','第1章がさらに易しい（すでに9割勝ち）','公開後でもよい']},
+ {id:4,name:'案4　決まった札の見せ場を増やす',desc:'第二部の2場面（急ぐ1手・師匠の最後）を3パターンに。前に決めた「配り札固定 案B」の残り（第6章の最初の一騎打ち、第1〜3章のジンの見本）も入れます。',
+  before:{cap:'今：第二部の最後は毎回同じ札',rows:[['タロウ','A♣','K♦'],['師匠','9♥','9♠']],board:['A♠','9♦','2♣','J♥','4♠'],res:['bad','2回目から同じ札']},
+  after:{cap:'案4：3パターンから選ぶ',rows:[['タロウ','Q♠','J♠'],['師匠','8♥','8♦']],board:['Q♦','8♣','5♠','T♥','2♦'],res:['good','前回と違うパターン']},
+  three:['師弟の物語','ジンの見本が入れば第1章で見せ場が1つ増える','公開後（前の決定どおり）']},
+ {id:5,name:'案5　今のまま',desc:'配りは変えず、説明と検査の漏れだけ直します（場札の並べ替えを説明と検査に入れる）。',
+  before:{cap:'今',rows:[['あなた (D)','9♣','4♦'],['ロク (SB)','A♠','Q♠']],board:[],res:['bad','目標の場面は運まかせ']},
+  after:{cap:'案5',rows:[['あなた (D)','9♣','4♦'],['ロク (SB)','A♠','Q♠']],board:[],res:['bad','変わらない']},
+  three:['—','—','—']}
+];
+const red=s=>/[♥♦]/.test(s);
+function cardsHTML(arr,hl){return arr.map((c,i)=>`<span class="cd${red(c)?' r':''}${hl&&hl.includes(i)?' hl':''}" data-c="${c}">${c}</span>`).join('')}
+function tbl(t){
+  const rows=t.rows.map((r,ri)=>{const hl=(t.hl||[]).filter(h=>h[0]===ri).map(h=>h[1]-1);
+    return `<div class="row"><span class="who">${r[0]}</span>${cardsHTML(r.slice(1),hl)}</div>`}).join('');
+  const b=t.board.length?`<div class="row"><span class="who">場札</span>${cardsHTML(t.board,t.hlb)}</div>`:'';
+  return `<div class="tbl"><span class="cap">${t.cap}</span>${rows}${b}<span class="res ${t.res[0]}">${t.res[1]}</span></div>`}
+document.getElementById('opts').innerHTML=OPTS.map(o=>`
+ <section class="opt${o.rec?' rec':''}" id="o${o.id}">
+  <div class="hd"><h3>${o.name}</h3>${o.rec?'<span class="tag">おすすめ</span>':''}</div>
+  <p class="desc">${o.desc}</p>
+  <div class="scene">${tbl(o.before)}<span class="arrow" aria-hidden="true">→</span>${tbl(o.after)}</div>
+  <div class="three"><span><b>柱</b>　${o.three[0]}</span><span><b>最初の5分</b>　${o.three[1]}</span><span><b>入れる時期</b>　${o.three[2]}</span></div>
+  <button type="button" id="b${o.id}" data-id="${o.id}">配り直す</button>
+ </section>`).join('');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function redeal(id){
+  const cds=[...document.querySelectorAll(`#o${id} .cd`)];
+  cds.forEach(c=>{c.classList.add('back','flip')});
+  cds.forEach((c,i)=>setTimeout(()=>{c.classList.remove('flip');setTimeout(()=>c.classList.remove('back'),reduce?0:200)},reduce?0:300+i*110));
+}
+document.querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>redeal(+b.dataset.id)));
+</script>

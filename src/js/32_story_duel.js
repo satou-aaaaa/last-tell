@@ -62,7 +62,8 @@ function openPen59(pen){const hd=penLi59(pen.no);if(!hd)return;$('logBox').open=
   const L=$('log');L.querySelectorAll('.hl59').forEach(x=>x.classList.remove('hl59'));
   hd.classList.add('hl59');for(let e=hd.previousElementSibling;e&&!e.classList.contains('hd');e=e.previousElementSibling)e.classList.add('hl59');
   if(!hd.previousElementSibling||!hd.previousElementSibling.classList.contains('pen59')){const li=document.createElement('li');li.className='pen59 hl59';
-    li.textContent=`赤ペン：${pen.line}`;if(pen.x){const sp=document.createElement('span');sp.textContent=pen.x;li.appendChild(sp)}hd.before(li)}
+    li.textContent=`赤ペン：${pen.line}`;if(pen.x){const sp=document.createElement('span');sp.textContent=pen.x;li.appendChild(sp)}hd.before(li);
+    while(L.childElementCount>1500){const o=L.lastElementChild;if(o===hd||o===li)break;o.remove()}}
   try{hd.scrollIntoView({block:'center',behavior:reducedMotion()?'auto':'smooth'})}catch(e){}}
 $('review').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.penbtn59');if(b&&reviewHTML.pen&&String(reviewHTML.pen.no)===b.dataset.no)openPen59(reviewHTML.pen)});
 // startHand の頭：一騎打ちなら相手役以外は席を立つ（配らない・ブラインドなし）。終わったら戻す
@@ -71,7 +72,7 @@ $('review').addEventListener('click',e=>{const b=e.target.closest&&e.target.clos
     S.players.forEach(p=>{p.sitOut=!!b&&!p.human&&p!==b})}}catch(e){}
   const r=o.apply(this,arguments);
   try{if(S&&S.players){const hd=$('log').querySelector('li.hd');if(hd&&!hd.dataset.h59)hd.dataset.h59=S.handNo;
-    if(S.storyHand)log(STORY_HAND_LOG59);const m=S.mh59=S.mh59||{};m[S.handNo]=hand59(S.players[0].hand);delete m[S.handNo-5];
+    const m=S.mh59=S.mh59||{};m[S.handNo]=hand59(S.players[0].hand);delete m[S.handNo-5];
     if(S.duelHand){const no=duelCh59(),D=FINAL_DUEL59[no],b=duelBoss59();S.duelSaid={};
       D.start.forEach(l=>{const q=S.players.find(p=>p.name===l.who);say59(q,l.ja);log(`${l.who}「${l.ja}」`)});
       const t=`${D.boss}との一騎打ち`;log(t);if(!S.msg)S.msg=t;render()}}}catch(e){}
@@ -110,14 +111,8 @@ $('review').addEventListener('click',e=>{const b=e.target.closest&&e.target.clos
         if(ch.no===6){const j=lines.findIndex(l=>Array.isArray(l)&&l[2]&&l[2].brk==='crow');if(j>=0)lines.splice(j,1)}
         const a=[...arguments];a[1]=lines;return o.apply(this,a)}}}catch(e){}
   return o.apply(this,arguments)}}
-const DUEL_DEALS59={"4": [{"hero": ["K♥", "J♣"], "boss": ["Q♠", "T♠"], "board": ["J♦", "9♠", "4♠", "2♥", "3♦"]}, {"hero": ["8♣", "8♦"], "boss": ["A♥", "5♥"], "board": ["K♥", "7♥", "3♣", "T♠", "2♦"]}, {"hero": ["A♦", "9♣"], "boss": ["6♠", "5♠"], "board": ["9♥", "8♦", "2♠", "K♣", "Q♥"]}], "5": [{"hero": ["Q♣", "Q♦"], "boss": ["A♠", "J♠"], "board": ["T♦", "6♣", "3♥", "8♠", "2♣"]}, {"hero": ["7♠", "7♥"], "boss": ["5♦", "4♦"], "board": ["9♣", "6♦", "2♠", "K♥", "J♣"]}, {"hero": ["A♣", "Q♠"], "boss": ["J♥", "T♥"], "board": ["Q♥", "8♥", "3♣", "2♠", "5♦"]}]};
-const FINAL_DEALS59=[{"hero": ["A♣", "K♦"], "boss": ["7♥", "7♠"], "board": ["A♠", "7♦", "2♣", "9♥", "4♠"]}, {"hero": ["K♠", "Q♠"], "boss": ["J♣", "T♣"], "board": ["K♦", "Q♣", "9♥", "8♦", "3♠"]}, {"hero": ["J♥", "J♦"], "boss": ["A♥", "A♣"], "board": ["9♠", "5♣", "2♥", "3♦", "K♣"]}];
-const STORY_HAND_TAG59="物語の一手",STORY_HAND_LOG59="このハンドは、物語のために決まった札で配られます";
-
-// 前回と違うパターンを選んで shisho-story.deal に残す
-function pickDeal59(key,n){const t=loadStory();t.deal=t.deal||{};const prev=t.deal[key];let k=Math.floor(Math.random()*n);
-  if(n>1&&prev!==undefined&&k===+prev)k=(k+1+Math.floor(Math.random()*(n-1)))%n;t.deal[key]=k;saveStory(t);S.dealPick59={key,k};return k}
-function dealOf59(d,boss){rig({[S.players[0].name]:d.hero.map(cardOf),[boss]:d.boss.map(cardOf)},d.board.map(cardOf))}
+// 決まった札は「型」で持ち、配るたびにばらす（js/54_deal_mod.js の kataDeal。research/配り札と場札の操作_実装仕様.md §8）。
+// 「物語の一手」の札とログの1行は出さない（決まった札だと気づかれないように。S.storyHand は中で使う）
 function revOn(p){const T=TELLS[p.name];return !!T&&!!T.reverse&&(S.handNo>=10||p.chips<p.start/2||uraRule(p.name))}
 // 一騎打ちの相手役：ブラフで押し切りにくる（降りなければこちらの勝ち）
 function duelAI59(i){const p=S.players[i],b=duelBoss59();if(!b||p!==b)return null;const tc=S.currentBet-p.bet,pot=potTotal(),all=p.bet+p.chips;
@@ -129,10 +124,6 @@ function duelAI59(i){const p=S.players[i],b=duelBoss59();if(!b||p!==b)return nul
   if(tc>0||all<=S.currentBet)return{type:'call',state:'bluff'};
   return{type:'raise',to:Math.min(all,Math.max(BB(),Math.round(pot*2/3/1000)*1000)),state:'bluff'}}
 {const o=setupScript;setupScript=function(){const r=o.apply(this,arguments);
-  try{if(S.duelHand&&!CFG.flashback){const no=duelCh59();if(no){dealOf59(DUEL_DEALS59[no][pickDeal59(String(no),3)],FINAL_DUEL59[no].boss);S.scriptAI=duelAI59;S.duelTold=false}}
+  try{if(S.duelHand&&!CFG.flashback){const no=duelCh59();if(no){kataDeal(String(no),FINAL_DUEL59[no].boss);S.scriptAI=duelAI59;S.duelTold=false}}
     S.storyHand=!!(S.scriptAI&&CFG.ch&&!CFG.ura&&!CFG.flashback&&!CFG.run)}catch(e){}
-  return r}}
-// 「物語の一手」：ハンド番号の横
-{const o=render;render=function(){const r=o.apply(this,arguments);
-  try{const m=$('meta');if(m&&S&&S.storyHand&&!m.querySelector('.storytag')){const t=document.createElement('span');t.className='storytag';t.textContent=STORY_HAND_TAG59;m.appendChild(t)}}catch(e){}
   return r}}

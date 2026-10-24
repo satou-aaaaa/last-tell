@@ -1,0 +1,93 @@
+{
+ "accent_phrases": [
+  {
+   "moras": [
+    {
+     "text": "イ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "i",
+     "vowel_length": 0.10815107077360153,
+     "pitch": 4.407398223876953
+    },
+    {
+     "text": "イ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "i",
+     "vowel_length": 0.07431180030107498,
+     "pitch": 4.8812255859375
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  },
+  {
+   "moras": [
+    {
+     "text": "ショ",
+     "consonant": "sh",
+     "consonant_length": 0.10699911415576935,
+     "vowel": "o",
+     "vowel_length": 0.07194001227617264,
+     "pitch": 4.862667083740234
+    },
+    {
+     "text": "オ",
+     "consonant": null,
+     "consonant_length": null,
+     "vowel": "o",
+     "vowel_length": 0.06275937706232071,
+     "pitch": 4.805181980133057
+    },
+    {
+     "text": "ブ",
+     "consonant": "b",
+     "consonant_length": 0.04562101885676384,
+     "vowel": "u",
+     "vowel_length": 0.04419291019439697,
+     "pitch": 4.641643524169922
+    },
+    {
+     "text": "デ",
+     "consonant": "d",
+     "consonant_length": 0.04647672921419144,
+     "vowel": "e",
+     "vowel_length": 0.07033231854438782,
+     "pitch": 4.587186336517334
+    },
+    {
+     "text": "シ",
+     "consonant": "sh",
+     "consonant_length": 0.08087043464183807,
+     "vowel": "I",
+     "vowel_length": 0.04897984117269516,
+     "pitch": 0.0
+    },
+    {
+     "text": "タ",
+     "consonant": "t",
+     "consonant_length": 0.02748149260878563,
+     "vowel": "a",
+     "vowel_length": 0.1864558756351471,
+     "pitch": 4.550580978393555
+    }
+   ],
+   "accent": 1,
+   "pause_mora": null,
+   "is_interrogative": false
+  }
+ ],
+ "speedScale": 1.0,
+ "pitchScale": 0.0,
+ "intonationScale": 1.0,
+ "volumeScale": 1.0,
+ "prePhonemeLength": 0.1,
+ "postPhonemeLength": 0.1,
+ "pauseLength": null,
+ "pauseLengthScale": 1.0,
+ "outputSamplingRate": 24000,
+ "outputStereo": false,
+ "kana": "イ'イ/ショ'オブデ_シタ"
+}

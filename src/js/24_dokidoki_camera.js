@@ -115,7 +115,7 @@ function roundComplete(){
 function proceed(){
   const live=S.players.filter(inHand);
   if(live.length===1)return winUncontested(live[0]);
-  const hold=S.hold||0;S.hold=0;
+  const hold=S.hold||0;S.hold=0;S.procAt=Date.now();S.procN=(S.procN||0)+1;   // 止まったときに調べるため（qa の自動対戦が読む：v0.98.9 WebKit 第5章の1ハンド目の止まり）
   const s0=S,h0=S.handNo; // 章を出入りしたあとに古いタイマーが動かないように
   if(roundComplete()){
     S.toAct=-1; // 通りの区切りでは誰の番でもない（待っている間にボタンを押せないように）
@@ -168,9 +168,10 @@ function proceed(){
       if(angle){S.angleHand=S.handNo;d.type='call';delete d.to}
     }
     const wait=(fast?200:650+Math.random()*600+(talk&&!big?700:0)+(big?1600:0))*SPEED()*(S.camSkip===i?.8:1)+hold+rdT;   // 客の降りは少しだけ速く（.5 だと「早い早い」：第6章の録画 #21）
-    if(angle){setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
+    const cq=S.cpuQ={i,w:Math.round(wait),at:Date.now(),h:S.handNo};   // アングルの時も記録する（CodeRabbit PR #145）
+    if(angle){setTimeout(()=>{if(S.cpuQ===cq)cq.ran=Date.now();if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)angleCall(i,angle)},wait);
       setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)askQuiz(angle==='faketap'?'tap':'onechip',()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i){S.angleActing=i;act(i,'call');angleRuling(i,angle)}})},wait+1300*SPEED());return}
-    setTimeout(()=>{if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
+    setTimeout(()=>{if(S.cpuQ===cq)cq.ran=Date.now();if(S===s0&&S.handNo===h0&&!S.handOver&&S.toAct===i)act(i,d.type,d.to)},wait);
   }
 }
 function act(i,type,to){
@@ -234,8 +235,8 @@ function afterAct(i,type,toCall){
 }
 // ===== カメラ演出 案2 =====
 const camSet=()=>SETTINGS.cam||(reducedMotion()?'soft':'strong');
-const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4},tell:{port:2.7,land:2.2,pc:2.4}};
-const camView=()=>matchMedia('(orientation:landscape) and (max-height:520px)').matches?'land':innerWidth<700?'port':'pc';
+const CAM_Z={mid:{port:1.5,land:1.3,pc:1.4,pcw:1.2},tell:{port:2.7,land:2.2,pc:2.4,pcw:1.6}};
+const camView=()=>matchMedia(PCW_Q).matches?'pcw':matchMedia(LAND_Q).matches?'land':innerWidth<700?'port':'pc';   // pcw：PC の横長の卓（顔が大きいので寄りは控えめ）
 // テルの場所：顔の中心からのずれ（顔の大きさに対する割合）。chips は相手の前のチップの山
 const CAM_SPOT={sweat:{dx:.15,dy:-.18},smile:{dx:0,dy:.14},talk:{dx:0,dy:.14},stare:{dx:0,dy:-.1},still:{dx:0,dy:0,z:2},
   glance:{chips:.45,zk:.8},fast:{chips:1},glove:{dx:-.28,dy:.42},scar:{dx:.06,dy:.16},release:{dx:.06,dy:.16}};
@@ -250,7 +251,7 @@ function camGeom(i){const b=$('bust'+i),t=$('table');if(!b||!t)return null;const
 function camTopPad(){const e=$('street'),t=$('table');if(!e||!t||!e.offsetParent)return 2;const r=e.getBoundingClientRect();return Math.max(2,r.bottom-t.getBoundingClientRect().top+4)}
 // 動作の重さの改善 案3：毎コマの呼び出しは 36_layout_pass（sayWake）から。出ている吹き出しが無くなったら false を返し、止まる
 function sayFollow(){const L=$('sayLayer'),c=$('cam');if(!L||!c||$('game').hidden)return false;
-  const now=performance.now(),list=[...L.querySelectorAll('.say.go')].filter(sy=>now-(sy._t||0)<(sy.classList.contains('long')?3700:2800));if(!list.length)return false;
+  const now=performance.now(),list=[...L.querySelectorAll('.say.go')].filter(sy=>now-(sy._t||0)<(sy.classList.contains('long')?3700:2800));if(!list.length)return false;   /* say-go-ok：吹き出しそのものを扱う所（よける一覧ではない） */
   list.forEach(sy=>{sy.style.marginLeft='';sy.style.marginTop=''});   // 先に全部戻してから測る（測る→書く→測る…をしない）
   const m=new DOMMatrix(getComputedStyle(c).transform),W=L.clientWidth,H=L.clientHeight,lr=L.getBoundingClientRect(),pad=4,tp=sayTopPad();
   list.forEach(sy=>{
@@ -423,7 +424,7 @@ function showdown(){
   if(CFG.ch&&!CFG.ura&&!CFG.ch.p2&&CFG.ch.no===4&&!S.bookSaid&&contS.some(p=>!p.human&&(p.tellLog||[]).length)){S.bookSaid=true;jinNote("クセは人それぞれだ。本に書いてある意味を信じるな",0)}
   if(CFG.tells||CFG.ch)renderNotes();
   const ag=S.players[S.aggr];
-  if(S.aggr>0&&S.lastCalled===S.aggr&&ag&&!ag.extra&&ag.show&&S.players[0].won>0&&(ag.lastState==='bluff'||isWeak(ag.hand,S.board))){S.reads=(S.reads||0)+1;S.readMsg=true}
+  if(S.aggr>0&&S.lastCalled===S.aggr&&ag&&!ag.extra&&ag.show&&Rules.readCaught(S.players[0].won,ag.won,ag.lastState==='bluff'||isWeak(ag.hand,S.board))){S.reads=(S.reads||0)+1;S.readMsg=true}
   const ws=S.players.filter(p=>p.won>0);
   ws.forEach(w=>log(`${w.name}が ${fmt(w.won)} を獲得`));
   S.msg=ws.map(w=>`${w.name}の勝ち（${w.hname}・+${fmt(w.won)}）`).join(' / ');
@@ -460,7 +461,7 @@ function showdown(){
   potPush();potCall();
 }
 function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
-  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote('AAでも負ける。……ここからだ。少ないチップで、一つずつ取り返せ',1);
+  if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote(Rules.kata.bbLine(S.players[0].hand,'jin'),1);
     S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？'};render()}},1400*SPEED())}
   {const me=S.players[0];if(penOn()&&(S.myActs||[]).length&&(hasLesson('pen')?me.total-me.won>0:me.total-me.won>=BB()*10&&(S.penCount||0)<3))S.penReady=S.handNo}
   if(S.finalHand&&CFG.ch&&CFG.ch.p2)p2FinalEnd();

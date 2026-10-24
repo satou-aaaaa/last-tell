@@ -1,7 +1,7 @@
 /* ---------- ストーリー系の要素：負けたときの一言・次回予告・名乗り・見えた・回想・ノート・後日談 ---------- */
 const STORY_KEY='shisho-story';
 function loadStory(){const o=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
-  try{const t=JSON.parse(localStorage.getItem(STORY_KEY))||{};return{loses:o(t.loses),brk:o(t.brk),ep:o(t.ep),mieta:+t.mieta||0,alt:!!t.alt,il:o(t.il),deal:o(t.deal),bt:o(t.bt),tempt:t.tempt==='refuse'||t.tempt==='silent'?t.tempt:undefined,mfBig:+t.mfBig||0}}catch(e){return{loses:{},brk:{},ep:{},mieta:0,alt:false,il:{},deal:{},bt:{}}}}
+  try{const t=JSON.parse(localStorage.getItem(STORY_KEY))||{};return{loses:o(t.loses),brk:o(t.brk),ep:o(t.ep),mieta:+t.mieta||0,alt:!!t.alt,il:o(t.il),deal:(d=>{const z={};for(const k in d){const v=(Array.isArray(d[k])?d[k]:[d[k]]).filter(x=>typeof x==='number'||typeof x==='string'&&x.trim()!=='').map(x=>+x).filter(x=>Number.isInteger(x)&&x>=0).slice(-3);if(v.length)z[k]=v}return z})(o(t.deal)),bt:o(t.bt),tempt:t.tempt==='refuse'||t.tempt==='silent'?t.tempt:undefined,mfBig:+t.mfBig||0}}catch(e){return{loses:{},brk:{},ep:{},mieta:0,alt:false,il:{},deal:{},bt:{}}}}
 function saveStory(t){try{localStorage.setItem(STORY_KEY,JSON.stringify({v:1,...t}))}catch(e){}}
 // 口癖がいつもと違う場面（全部見ると称号）
 const BREAKS=['hero','jin','hayato','crow','gen','roku','seki','reika','sou','hal','mina','tenshu'];

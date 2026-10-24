@@ -1,0 +1,88 @@
+<title>物語の場面を絞る見本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Shippori+Mincho+B1:wght@700&display=swap">
+<style>
+/* Layout: one column of option panels on a dark felt; each panel shows a table before → after the deal adjustment */
+:root{
+  --bg:#0d1412; --felt:#123228; --felt2:#0f2a21; --ink:#e8eee9; --mute:#9db0a6; --line:#2a4a3e;
+  --gold:#d9b46a; --red:#e0626a; --card:#f4f1ea; --cardink:#18201c; --ok:#7fd6a2;
+  --disp:"Shippori Mincho B1",serif; --body:"Zen Kaku Gothic New",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+main{max-width:920px;margin:0 auto;display:grid;gap:22px}
+h1{font-family:var(--disp);font-size:clamp(1.5rem,4vw,2.1rem);margin:0;letter-spacing:.04em;text-wrap:balance}
+.lead{color:var(--mute);margin:4px 0 0;max-width:65ch}
+.now{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:#101c18}
+.now h2{font-size:1rem;margin:0 0 6px;color:var(--gold);letter-spacing:.08em}
+.now ul{margin:0;padding-left:1.2em;color:var(--mute)}
+.now b{color:var(--ink)}
+.opt{background:linear-gradient(160deg,var(--felt),var(--felt2));border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+.opt.rec{border-color:var(--gold)}
+.hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.hd h3{font-family:var(--disp);margin:0;font-size:1.2rem}
+.tag{font-size:.75rem;letter-spacing:.1em;padding:1px 8px;border:1px solid var(--gold);color:var(--gold);border-radius:99px}
+.tag.no{border-color:var(--mute);color:var(--mute)}
+.desc{margin:0;color:var(--mute);max-width:70ch}
+.scene{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+@media (max-width:640px){.scene{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
+.tbl{background:rgba(0,0,0,.22);border-radius:8px;padding:10px;display:grid;gap:6px;min-width:0}
+.tbl .cap{font-size:.75rem;color:var(--mute);letter-spacing:.08em}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.who{font-size:.8rem;min-width:4.6em;color:var(--mute)}
+.cd{width:34px;height:48px;border-radius:4px;background:var(--card);color:var(--cardink);display:grid;place-items:center;font-weight:700;font-size:.9rem;
+  box-shadow:0 1px 0 rgba(0,0,0,.4);transition:transform .45s ease, background .3s}
+.cd.r{color:#b3262f}
+.cd.back{background:repeating-linear-gradient(45deg,#3b1d22 0 4px,#4a242a 4px 8px);color:transparent}
+.cd.hl{outline:2px solid var(--gold);outline-offset:1px}
+.cd.flip{transform:rotateY(90deg)}
+.res{font-size:.85rem}
+.res.good{color:var(--ok)} .res.bad{color:var(--red)}
+.arrow{color:var(--gold);font-size:1.4rem}
+.three{font-size:.85rem;color:var(--mute);border-top:1px dashed var(--line);padding-top:8px;display:grid;gap:2px}
+.three span b{color:var(--ink);font-weight:700}
+button{font:inherit;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:4px 14px;cursor:pointer;justify-self:start}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cd{transition:none}}
+</style>
+<style>
+.strip{display:flex;flex-wrap:wrap;gap:4px}
+.h{width:30px;height:40px;border-radius:4px;display:grid;place-items:center;font-size:.7rem;font-weight:700;transition:opacity .3s}
+.h.w{background:#2a2f2d;color:#8a948f}
+.h.p{background:var(--card);color:var(--cardink)}
+.h.s{background:var(--gold);color:#1b1408}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--mute)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.stat{font-size:.9rem}
+</style>
+<main>
+ <header><h1>物語の場面を絞る見本</h1>
+ <p class="lead">同じ20ハンドを、今と各案で配ったときの例です（計算上の確率で作った例）。「配り直す」で別の20ハンドになります。</p></header>
+ <div class="legend"><span><i style="background:#2a2f2d"></i>弱い手（降りるだけ）</span><span><i style="background:var(--card)"></i>遊べる手（外＝フロップで何も絡まない、絡＝絡んだ）</span><span><i style="background:var(--gold)"></i>習う場面／フロップが絡んだ</span></div>
+ <div id="opts"></div>
+</main>
+<script>
+const Q=.702, HIT=.49;
+const OPTS=[
+ {id:0,name:'今',desc:'弱い手が約7割。参加してもフロップで何も絡まないことが約半分。'},
+ {id:1,rec:1,name:'案A　弱い手は続けない',desc:'弱い手のあとは必ず遊べる手（第1章は2回まで続いてよい）。',three:['師弟の物語','第1章の降りるだけの時間が減る','1.0']},
+ {id:2,rec:1,name:'案B　フロップを自分の手に絡める',desc:'遊べる手で参加したら、6割でフロップを自分の手にペアかドローがつく並びに。金の枠＝フロップが絡んだ手。',three:['テルを読む（勝負が続く）','勝負になるハンドが増える','1.0']},
+ {id:3,rec:1,name:'案C　目標の章は場面を絞る',desc:'第2・3・4章では3ハンドのうち2ハンドが習う場面（金）。',three:['師弟の物語・テルを読む','第2章が早く進む','1.0']},
+ {id:4,name:'案D　関係ないハンドは飛ばす',desc:'弱い手で自分がブラインドでないときは自動で降りて次へ（薄い四角＝飛ばした手）。',three:['どれにも弱い','影響小（第1章は外す）','公開後でもよい']}
+];
+function gen(id){const out=[];let st=0;
+ for(let i=0;i<20;i++){
+  let w=Math.random()<Q;
+  if((id===1||id===5)&&st>=1)w=false;
+  if(id===3&&i%3!==2){out.push('s');st=0;continue}
+  if(w){st++;out.push(id===4&&Math.random()<.75?'x':'w')}
+  else{st=0;const hit=id===2?Math.random()<HIT+(1-HIT)*.6:Math.random()<HIT;out.push(hit?'ph':'p')}
+ }return out}
+function draw(id){const a=gen(id),el=document.getElementById('st'+id);
+ el.innerHTML=a.map(t=>t==='s'?'<span class="h s">場面</span>':t==='w'?'<span class="h w">降</span>':t==='x'?'<span class="h w" style="opacity:.35">飛</span>':t==='ph'?'<span class="h p" style="outline:2px solid var(--gold)">絡</span>':'<span class="h p">外</span>').join('');
+ const w=a.filter(t=>t==='w'||t==='x').length,ph=a.filter(t=>t==='ph'||t==='s').length;
+ document.getElementById('sum'+id).textContent=`降りるだけ ${w}／20ハンド　・　勝負になる手 ${ph}／20ハンド`}
+document.getElementById('opts').innerHTML=OPTS.map(o=>`<section class="opt${o.rec?' rec':''}"><div class="hd"><h3>${o.name}</h3>${o.rec?'<span class="tag">おすすめ</span>':''}</div><p class="desc">${o.desc}</p><div class="strip" id="st${o.id}"></div><span class="stat" id="sum${o.id}"></span>${o.three?`<div class="three"><span><b>柱</b>　${o.three[0]}</span><span><b>最初の5分</b>　${o.three[1]}</span><span><b>入れる時期</b>　${o.three[2]}</span></div>`:''}<button type="button" id="b${o.id}">配り直す</button></section>`).join('');
+OPTS.forEach(o=>{draw(o.id);document.getElementById('b'+o.id).addEventListener('click',()=>draw(o.id))});
+</script>
