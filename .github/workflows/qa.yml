@@ -32,8 +32,9 @@ concurrency:
 # 検査の組（時間のかかる検査を分けて、同時に回す）。CIの見直し 案2・案3（2026-10-10）、CIの高速化 案1（2026-10-17）
 # 新しい検査を qa/ に足したら、ここのどれかの組に入れる。入れ忘れると「検査の一覧」が ❌ になる
 # part: 1つの検査を n 個の組に分けた k 番目（run_all.js --part k/n）。結果は「検査のまとめ」が混ぜる（勝率は混ぜてから判定する）
-#   rules は 1:S1・A2、2:A1、3:S2 に分ける（混ぜて見る検査ごと）。fuzz はモードを、winrate は全部の章の対戦を順に配る
-# GitHub の無料枠は同時に20組まで。長い版で20組、短い版で14組（長い組を先に並べる）
+#   rules は短い版で 1:S1・A2、2:A1、3:S2、4:物語の章の配り の4組、長い版は20組に収めるため 1 と 4 を1組にした3組（混ぜて見る検査ごと。qa/checks/rules.js の FAM_PARTS）。
+#   短い版の 4組目は、いちばん長かった rules 1/3（約17分、2026-10-29 CI の時間短縮）を分けたもの。fuzz はモードを、winrate は全部の章の対戦を順に配る
+# GitHub の無料枠は同時に20組まで。長い版で20組、短い版で15組（長い組を先に並べる）
 # browser: webkit の組は iPhone の Safari と同じ WebKit で回す（CIのチェック充実 案3。画面の新しい問題は ⚠️、止まる・エラーは ❌）
 # nightly: ここでは回さない組（通しで遊ぶ。1時間かかるので playthrough.yml が毎晩回す）
 # full: 長い版のときだけ回す組。quick: 短い版のときだけ回す組（勝率は短い版が第1〜4章の8回ずつなので4組、長い版は10組）
@@ -41,9 +42,13 @@ concurrency:
 env:
   QA_GROUPS: >-
     [
-      {"name": "rules 1/3（S1・A2）,basics", "only": "rules,basics", "ch": "", "part": "1/3"},
-      {"name": "rules 2/3（A1）", "only": "rules", "ch": "", "part": "2/3"},
-      {"name": "rules 3/3（S2）", "only": "rules", "ch": "", "part": "3/3"},
+      {"name": "rules 1/3（S1・A2・配り）,basics", "only": "rules,basics", "ch": "", "part": "1/3", "full": true},
+      {"name": "rules 2/3（A1）", "only": "rules", "ch": "", "part": "2/3", "full": true},
+      {"name": "rules 3/3（S2）", "only": "rules", "ch": "", "part": "3/3", "full": true},
+      {"name": "rules 1/4（S1・A2）,basics", "only": "rules,basics", "ch": "", "part": "1/4", "quick": true},
+      {"name": "rules 2/4（A1）", "only": "rules", "ch": "", "part": "2/4", "quick": true},
+      {"name": "rules 3/4（S2）", "only": "rules", "ch": "", "part": "3/4", "quick": true},
+      {"name": "rules 4/4（配り）", "only": "rules", "ch": "", "part": "4/4", "quick": true},
       {"name": "fuzz 1/3", "only": "fuzz", "ch": "", "part": "1/3"},
       {"name": "fuzz 2/3", "only": "fuzz", "ch": "", "part": "2/3"},
       {"name": "fuzz 3/3（英語）", "only": "fuzz", "ch": "", "part": "3/3"},
