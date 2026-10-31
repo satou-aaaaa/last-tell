@@ -47,7 +47,9 @@ async function run({ file }) {
 
   // 4. 応援（Ko-fi）は support ページのただのリンク。外のスクリプトを読まない（2026-10-31 satouさんが Ko-fi に決めた）
   const sup = ['support.html', 'support-en.html'].filter(has).map(f => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
-  const bad = sup.filter(([, s]) => !/<a id="kofi" href="https:\/\/ko-fi\.com\/satouaaaaa"[^>]*rel="noopener/.test(s) || /<script[^>]+src=/.test(s)).map(([f]) => f);
+  const okLink = s => { const a = (s.match(/<a id="kofi" href="https:\/\/ko-fi\.com\/satouaaaaa"[^>]*>/) || [''])[0];
+    return ((a.match(/\brel="([^"]*)"/) || [])[1] || '').split(/\s+/).includes('noopener'); };
+  const bad = sup.filter(([, s]) => !okLink(s) || /<script\b[^>]*\bsrc\s*=/i.test(s)).map(([f]) => f);
   items.push({ id: 'pages:kofi', title: 'サポートのページに Ko-fi の応援リンクがある（ただのリンク・外のスクリプトなし）', status: bad.length || !sup.length ? 'fail' : 'ok',
     detail: bad.length ? '無い・形が違う: ' + bad.join('、') : `${sup.length}ページ` });
 
