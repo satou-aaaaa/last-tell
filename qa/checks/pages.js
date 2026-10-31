@@ -45,6 +45,14 @@ async function run({ file }) {
     detail: !core.size ? 'sw.js に const CORE = [...] が見つからない'
       : [notCached.length && 'sw.js の CORE に無い: ' + notCached.join('、'), coreMiss.length && 'CORE にあるのにファイルが無い（入れると sw.js が動かない）: ' + coreMiss.join('、')].filter(Boolean).join('／') || `${want.length}件とも CORE に入っている` });
 
+  // 4. 応援（Ko-fi）は support ページのただのリンク。外のスクリプトを読まない（2026-10-31 satouさんが Ko-fi に決めた）
+  const sup = ['support.html', 'support-en.html'].filter(has).map(f => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
+  const okLink = s => { const a = (s.match(/<a id="kofi" href="https:\/\/ko-fi\.com\/satouaaaaa"[^>]*>/) || [''])[0];
+    return ((a.match(/\brel="([^"]*)"/) || [])[1] || '').split(/\s+/).includes('noopener'); };
+  const bad = sup.filter(([, s]) => !okLink(s) || /<script\b[^>]*\bsrc\s*=/i.test(s)).map(([f]) => f);
+  items.push({ id: 'pages:kofi', title: 'サポートのページに Ko-fi の応援リンクがある（ただのリンク・外のスクリプトなし）', status: bad.length || !sup.length ? 'fail' : 'ok',
+    detail: bad.length ? '無い・形が違う: ' + bad.join('、') : `${sup.length}ページ` });
+
   return { name: 'ゲームが開くページ', items };
 }
 module.exports = { run };
