@@ -3,6 +3,7 @@
 # - 下書きのもの、ラベル「自動マージしない」が付いたもの、.github/ を変えるもの、ゲームも検査（qa/）も変えないものはマージしない
 #   （2026-10-14、QA を全部の PR で回すようにしたため。説明だけの PR は QA が ✅ でも手でマージする）
 # - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
+# - Secret scan（scan / scan）が同じコミットで ✅ でないとマージしない（2026-10-22 の incident）
 # GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、公開とタグをここから起こす。
 name: Auto merge
 
@@ -14,6 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  checks: read   # require_checks で同じコミットの check run を読むのに要る
   actions: write
 
 jobs:
@@ -23,3 +25,5 @@ jobs:
       require_paths: '^([^/]+\.html$|sw\.js$|style\.css$|licenses/|qa/)'
       dispatch: pages.yml release.yml
       delete_branch: true
+      require_checks: |
+        scan / scan
