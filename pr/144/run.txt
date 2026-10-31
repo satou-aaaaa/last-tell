@@ -1,0 +1,5 @@
+branch: v0988-wk-flat
+sha: 990fc15ec22bda7f080241a9feb9004f0ac2cbaf
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39732466113
+full: false
+at: 2026-10-22T06:30:08Z

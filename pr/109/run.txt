@@ -1,0 +1,5 @@
+branch: check-sharp-webkit
+sha: 19b59342d4bf4fb01957dcfa56c62b4ffc9efe8b
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39314141948
+full: false
+at: 2026-10-19T20:03:38Z

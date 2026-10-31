@@ -1,0 +1,5 @@
+branch: qa-handend-why
+sha: 57cb7e4136cb16cb00ebeb96af887d1f818c28aa
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39362401975
+full: false
+at: 2026-10-20T03:18:26Z

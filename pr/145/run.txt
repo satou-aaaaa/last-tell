@@ -1,0 +1,5 @@
+branch: v0989-ask-panel
+sha: 9735e512079d0d351a3959c43752f0b8439d37e0
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39746301220
+full: false
+at: 2026-10-22T08:42:38Z

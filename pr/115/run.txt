@@ -1,0 +1,5 @@
+branch: v0972-potpush
+sha: 95447d5594e1e302f9371f280f20c5ad6d7b0dc3
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39369292520
+full: false
+at: 2026-10-20T04:33:26Z

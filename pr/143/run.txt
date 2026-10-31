@@ -1,0 +1,5 @@
+branch: v0987-pc-touch
+sha: 4ccb71d397d14a24c739a233d949ae0aacf713c3
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39724663939
+full: false
+at: 2026-10-22T05:08:30Z

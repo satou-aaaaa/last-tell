@@ -1,0 +1,5 @@
+branch: qa-seed-per-callsite
+sha: c8e02235923f9e92fa7a3082497c4764e970f7d5
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39716424956
+full: false
+at: 2026-10-22T03:54:50Z

@@ -1,0 +1,5 @@
+branch: v0975-feltflat
+sha: 970762b84871f06bb8b1f2f9be082341efdd6bf5
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39404064835
+full: false
+at: 2026-10-20T10:12:19Z

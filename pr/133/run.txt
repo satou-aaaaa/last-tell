@@ -1,0 +1,5 @@
+branch: v0982-dealmod
+sha: fdda332689e4cbc649d10c5b6a665d364ff70ec2
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39680712170
+full: false
+at: 2026-10-21T22:01:51Z

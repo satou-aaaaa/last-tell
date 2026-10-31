@@ -1,0 +1,5 @@
+branch: v0980-pcwide
+sha: a6691a977b470f3c511f8c91080092452bca877f
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39643579100
+full: false
+at: 2026-10-21T17:42:51Z

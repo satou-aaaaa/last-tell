@@ -1,0 +1,5 @@
+branch: v0974-sweep
+sha: cb31ba032df46222de54bb8460de629495009c0b
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39383456568
+full: false
+at: 2026-10-20T07:09:54Z

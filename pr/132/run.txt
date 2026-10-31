@@ -1,0 +1,5 @@
+branch: v0981-pcair
+sha: 2fd01db7bf12a16bfaebd3bd4696038cf5812cb4
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39676650073
+full: false
+at: 2026-10-21T21:26:32Z

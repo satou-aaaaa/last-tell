@@ -1,0 +1,5 @@
+branch: qa-page-crash
+sha: ce92e4bdec2689f831dd4691b76e2b328932aa2f
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39757523700
+full: false
+at: 2026-10-22T10:01:42Z

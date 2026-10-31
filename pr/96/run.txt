@@ -1,0 +1,5 @@
+branch: publish-v95.0
+sha: f226640eb7c4088687d7d070cd2240c32f2b9fc3
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/39154191856
+full: true
+at: 2026-10-18T18:43:32Z
