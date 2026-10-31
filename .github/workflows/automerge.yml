@@ -4,12 +4,13 @@
 #   （2026-10-14、QA を全部の PR で回すようにしたため。説明だけの PR は QA が ✅ でも手でマージする）
 # - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
 # - Secret scan（scan / scan）が同じコミットで ✅ でないとマージしない（2026-10-22 の incident）
+# - QA と Secret scan のどちらが後に終わっても再評価する。どちらから起きても QA（検査のまとめ）と scan / scan の両方が要る（2026-10-31）
 # GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、公開とタグをここから起こす。
 name: Auto merge
 
 on:
   workflow_run:
-    workflows: [QA]
+    workflows: [QA, Secret scan]
     types: [completed]
 
 permissions:
@@ -23,7 +24,10 @@ jobs:
     uses: satou-aaaaa/shared-workflows/.github/workflows/automerge.yml@main
     with:
       require_paths: '^([^/]+\.html$|sw\.js$|style\.css$|licenses/|qa/)'
-      dispatch: pages.yml release.yml
+      # きっかけが Secret scan のとき recheck_main は secret-scan.yml を起こそうとするので、QA は dispatch で明示して main で回し直す
+      dispatch: pages.yml release.yml qa.yml
+      recheck_main: false
       delete_branch: true
       require_checks: |
+        検査のまとめ
         scan / scan
