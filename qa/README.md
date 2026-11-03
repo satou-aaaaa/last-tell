@@ -61,7 +61,7 @@ node /mnt/project-files/qa/unit/run.js [作った.html|src]   # ルールの単�
 | save | セーブの引き継ぎ：保存される鍵が全部 SAVE_KEYS にある。前の版の控え（dev/snapshots/）で遊んだセーブを新しい版で開いて、消えない・進みが戻らない・続けて遊べる・引き継ぎコードが往復する（短い版は1つ前、長い版は全部の控え。控えが無い GitHub では飛ばす） | 同上 |
 | a11y | uiux の残り：カードのマークが字で出ている、4色にできる（B4）、「動きを減らす」で動き続けるものがない | 同上 |
 | lines | 台詞の変化：前の版（CI では main の index.html）から足した・変えた・消した台詞を話す人ごとに `lines_diff.md` に。英語なし・一人称・言ってはいけない言い方・長さ・お金・「夜」に ⚑。印の付いた新しい台詞があれば ⚠️。レビューはゲームのファイルを読まずにこれを読む | CIのチェック充実 案6（2026-10-14） |
-| site | 公開サイト：manifest とアイコン、sw.js が保存するファイル、オフラインで開き直してタイトルが出るか、ページの中のリンク切れ、Lighthouse の点（CI だけ。前の版より5点下がったら ⚠️）。テスト公開のリポジトリでだけ回る | 同 案4 |
+| site | 公開サイト：manifest とアイコン、sw.js が保存するファイル、オフラインで開き直してタイトルが出るか、ページの中のリンク切れ、Lighthouse の点（CI だけ。3回測った真ん中の値が前の版より5点下がったら ⚠️。qa/lib/lighthouse.js）。テスト公開のリポジトリでだけ回る | 同 案4 |
 | playthrough | 通しで遊ぶ：まっさらなセーブから会話も飛ばさず第1章→第7章→第二部へ。止まる・エラー・勝っても章が開かない は ❌、ボットが勝てない章は ⚠️ にして進みだけ書いて続ける。約1時間。`--only playthrough` のときだけ（毎晩 playthrough.yml） | 同 案5 |
 | perf | 重さ・速さ：CPU 4倍遅くで起動の時間。長い版は120ハンド打って引っかかりとメモリの増え方。前の版より悪くなったら ⚠️ | 同上 |
 | pages | ゲームが開くページ：「その他」の LINKS（プライバシー・利用規約・サポート）の日本語と -en.html、クレジットのライセンス全文（licenses/）があり、sw.js の CORE に入っている（オフラインでも開ける）。ブラウザを使わない。テスト公開のリポジトリでだけ回り、pages.yml も公開の前に同じ検査をする | オフラインで規約がゲームになる件（2026-10-14） |
@@ -133,6 +133,8 @@ node /mnt/project-files/qa/unit/run.js [作った.html|src]   # ルールの単�
 - ぶれ対策（案1）：rules・basics・fuzz・ftue の「続きから」も乱数を場面ごとに固定。コール率などの割合は、外れたキャラが20回以上測れていなければ ⚠️。
 - iPhone の Safari（案3）：WebKit で ui・fuzz を回す組。画面の新しい問題は ⚠️（字の幅が違うため）、止まる・エラーは ❌。画像は `ui/WebKit_*.jpg`・`ui/_一覧_WebKit_縦.jpg` ほか。
 - 画面（案2）：前の公開版から変わった画面は `ui/_比べ_<場面>.jpg`（前｜今｜違う所）。新しく足した場面は、基準（baseline.json の uiScenes）に入るまで ⚠️。
+- 揺れ止め（2026-11-03 CI の失敗を減らす）：入れる段階（apt・npm ci・Playwright のブラウザ）は間を空けてやり直す（apt は apt_try、ほかは qa/tools/retry.sh）。検査そのものはやり直さない（本物の不具合を隠すため）。揺れる測り方は何回か測って真ん中の値で見る（顔の細かさ・Lighthouse）。`node qa/unit/run.js` が、ワークフローの npm ci・playwright install が retry.sh を通っているかも見る。
+- 「検査のまとめ › 合否」だけが ❌ のとき：まとめでしか決まらない ❌（WebKit の組・くり返しの ⚠️・組を混ぜた勝率・main の CI ❌ の Issue）。理由は「合否」のログと注釈に出る。
 - 部品の版は qa/package-lock.json と Actions の SHA で固定（案7）。Playwright を上げるときは package.json と package-lock.json の両方。
 - 毎晩（案5）：.github/workflows/playthrough.yml が main で「通しで遊ぶ」を回し、結果を qa-results の `nightly/` に置く（`sh qa/ci_result.sh nightly`）。❌ なら Issue「通しで遊ぶ検査が ❌」。
 - 人が見るとき：プルリクエストの Checks →「検査のまとめ」の Summary。画像は qa-results ブランチの `pr/<番号>/ui/` か、Actions の成果物 qa-report-*（PNG）。

@@ -3,13 +3,14 @@
 //   2. オフライン：一度開いたあと、ネットを切って開き直してもタイトルが出る（sw.js）
 //   2b. 電波が弱いとき：一度開いたあと、index.html の返事が止まっても6秒以内にタイトルが出る（sw.js が4秒で保存した版を出す）
 //   3. リンク切れ：となりの .html（プライバシー・利用規約・サポート）と index.html の、手元のファイルへのリンク
-//   4. Lighthouse の点（速さ・読みやすさ・作法・検索）：QA_LIGHTHOUSE=1 のときだけ（CI）。前の版より5点以上下がったら ⚠️
+//   4. Lighthouse の点（速さ・読みやすさ・作法・検索）：QA_LIGHTHOUSE=1 のときだけ（CI）。3回測った真ん中の値が前の版より5点以上下がったら ⚠️（qa/lib/lighthouse.js）
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { execFile } = require('child_process');
 const H = require('../lib/harness');
+const LH = require('../lib/lighthouse');
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml' };
 function serve(root) {
@@ -96,19 +97,24 @@ async function run({ browser, file, baseline }) {
       detail: broken.length ? `切れている ${broken.length}件: ` + [...new Set(broken)].slice(0, 5).join('、') : `${pages.length}ページ、手元へのリンクは全部ある（外のサイトへのリンク ${ext}件は見ていない）` });
 
     // 4. Lighthouse
-    const scores = {};
+    let scores = {};
     if (process.env.QA_LIGHTHOUSE === '1') {
-      try {
+      // 1回の点は揺れるので、順に LH.RUNS 回測って項目ごとの真ん中の値で見る（qa/lib/lighthouse.js。同時に測ると互いに遅くなるので順に）
+      const runs = [], errs = [];
+      for (let n = 0; n < LH.RUNS; n++) try {
         // 同じプロセスでページを配っているので、待つ間も止めない（execFileSync だと配れなくなって止まる）
         const out = await new Promise((ok, ng) => execFile('npx', ['-y', 'lighthouse@12.8.2', url, '--quiet', '--output=json', '--only-categories=performance,accessibility,best-practices,seo', '--form-factor=mobile',
           '--chrome-flags=--headless=new --no-sandbox'], { env: { ...process.env, CHROME_PATH: process.env.CHROMIUM_PATH || H.pw.chromium.executablePath() }, maxBuffer: 1 << 28, timeout: 420000 }, (e, so) => e ? ng(e) : ok(String(so))));
-        const j = JSON.parse(out); for (const [k, c] of Object.entries(j.categories)) scores[k] = Math.round(c.score * 100);
-      } catch (e) { items.push({ id: 'site:lighthouse', title: 'Lighthouse の点', status: 'warn', detail: '測れなかった: ' + String(e.message).slice(0, 160) }) }
+        const j = JSON.parse(out), one = {}; for (const [k, c] of Object.entries(j.categories)) one[k] = Math.round(c.score * 100); runs.push(one);
+      } catch (e) { errs.push(String(e.message).slice(0, 160)) }
+      scores = LH.medianScores(runs);
+      if (!Object.keys(scores).length) items.push({ id: 'site:lighthouse', title: 'Lighthouse の点', status: 'warn', detail: '測れなかった: ' + (errs[0] || '点が無い') });
       if (Object.keys(scores).length) {
         const prev = (baseline && baseline.site && baseline.site.lighthouse) || {}, down = Object.entries(scores).filter(([k, v]) => prev[k] != null && v < prev[k] - 5);
         const name = { performance: '速さ', accessibility: '読みやすさ', 'best-practices': '作法', seo: '検索' };
         items.push({ id: 'site:lighthouse', title: 'Lighthouse の点（スマホ、前の版より5点以上下がらない）', status: down.length ? 'warn' : 'ok',
-          detail: Object.entries(scores).map(([k, v]) => `${name[k] || k} ${v}${prev[k] != null ? `（前 ${prev[k]}）` : ''}`).join('、') });
+          detail: Object.entries(scores).map(([k, v]) => `${name[k] || k} ${v}${prev[k] != null ? `（前 ${prev[k]}）` : ''}`).join('、') +
+            `（${runs.length}回測った真ん中の値。各回 ${runs.map(r => r.performance).join('・')}（速さ）${errs.length ? `、測れなかった回 ${errs.length}` : ''}）` });
       }
     }
     return { name: '公開サイト', items, baselineOut: Object.keys(scores).length ? { site: { lighthouse: scores } } : {} };
