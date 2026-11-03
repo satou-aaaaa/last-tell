@@ -147,10 +147,12 @@ jobs:
           apt_try update -q
           apt_try install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
           cd qa
+          # npm ci と Playwright のブラウザも、間を空けて3回までやり直す（2026-10-21 main で cdn.playwright.dev が一時的に別の証明書を返し、
+          # Playwright 自身のやり直しが2秒で尽きて組ごと ❌ になった。run 39683777941。qa/tools/retry.sh）
           # 部品の版は package-lock.json で固定（CIのチェック充実 案7）
-          npm ci --no-audit --no-fund
+          bash tools/retry.sh 3 300 npm ci --no-audit --no-fund
           # 画面の一覧づくり（qa/tools/ci_shots.js）は Chromium を使うので、WebKit の組も両方入れる
-          npx playwright install --with-deps chromium ${{ matrix.browser == 'webkit' && 'webkit' || '' }}
+          bash tools/retry.sh 3 420 npx playwright install --with-deps chromium ${{ matrix.browser == 'webkit' && 'webkit' || '' }}
       - name: 前の版を用意する（セーブの引き継ぎ・画面の比べ）
         if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'lines') || contains(matrix.only, 'ui') }}
         env:
@@ -284,4 +286,17 @@ jobs:
               --comment "✅ になったので閉じます: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID（main ${GITHUB_SHA::7}）"
           fi
       - name: 合否
-        run: exit ${{ steps.s.outputs.code || 0 }}
+        # 「合否」だけが ❌ のとき（ほかの組は ✅）は、まとめでしか決まらない ❌ がある：WebKit の組（continue-on-error で組は緑）、
+        # くり返しの ⚠️（3版目で ❌）、組を混ぜてからの勝率、main の CI ❌ の Issue（ci:main-red）。
+        # 前はここが exit だけで、このステップのログを開いても理由が無かった（2026-10-21〜24 の 12回）。❌ の一覧をここにも出す
+        run: |
+          code=${{ steps.s.outputs.code || 0 }}
+          if [ "$code" != 0 ]; then
+            if [ -f qa-summary/summary.md ]; then
+              echo "❌ の一覧（qa-summary/summary.md。WebKit：で始まるものは WebKit の組、くり返し・勝率・main の CI はまとめで決まる）"
+              awk '/^## ❌ 直すもの/{p=1;next} /^## /{p=0} p' qa-summary/summary.md
+            else
+              echo "まとめ（qa/tools/ci_summary.js）そのものが失敗した："; tail -n 40 /tmp/summary.log 2>/dev/null || true
+            fi
+          fi
+          exit "$code"
