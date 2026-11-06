@@ -1,0 +1,5 @@
+branch: dependabot/github_actions/actions-4af230c318
+sha: 661b220bd9dbd44b160e125c78a59437cb83d12c
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/41348696575
+full: false
+at: 2026-11-01T21:09:55Z

@@ -1,0 +1,5 @@
+branch: dependabot/npm_and_yarn/qa/qa-c4b57d7147
+sha: c9a298ee279d7172b2dc828edaf320f003c862f4
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/41348691223
+full: false
+at: 2026-11-01T21:04:43Z

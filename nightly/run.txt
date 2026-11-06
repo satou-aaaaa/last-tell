@@ -1,0 +1,5 @@
+branch: main
+sha: 9fa67965e837f03c5e3485a48d215b4c8f8303b5
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/42306918643
+full: nightly
+at: 2026-11-06T22:59:12Z
