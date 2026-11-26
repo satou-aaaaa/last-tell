@@ -136,23 +136,80 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+      # apt で入れる部品（字体と Playwright が要るもの、.deb）を取っておき、次からはそれを先に dpkg で入れる。
+      # Ubuntu の置き場が遅い・届かない日も、apt で落とす物がほぼ無くなる（2026-11-26 #167 WebKit ui：置き場が遅く、
+      # 入れる段階だけで 25分を使い切った。shared-workflows incidents/2026-11-26-last-tell-qa-apt-slow.md。game-qa.yml と同じやり方）
+      - name: apt の取り置きの名前
+        if: ${{ !matrix.nobrowser }}
+        id: apt-key
+        # Playwright の版で要る部品が変わり、WebKit の組は部品が多いので、package-lock.json とブラウザも鍵に入れる
+        env:
+          LOCK_HASH: ${{ hashFiles('qa/package-lock.json') }}
+        # 戻すのは同じ機械の版の取り置きだけ（古い版の .deb を dpkg -i すると、機械に入っている新しい部品を古くしてしまう）
+        run: |
+          echo "prefix=qa-apt-$ImageOS-$ImageVersion-" >> "$GITHUB_OUTPUT"
+          echo "key=qa-apt-$ImageOS-$ImageVersion-$QA_BROWSER-$LOCK_HASH" >> "$GITHUB_OUTPUT"
+      - name: apt の取り置きを戻す
+        if: ${{ !matrix.nobrowser }}
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qa-apt
+          key: ${{ steps.apt-key.outputs.key }}
+          restore-keys: ${{ steps.apt-key.outputs.prefix }}
       - name: Playwright と日本語の字体を入れる
         if: ${{ !matrix.nobrowser }}
         # 入れる段階で止まっても、組ごと 60分待って取り消されないようにする（2026-10-22 main の fuzz 3/3 が apt-get update で 60分止まった。#151）
         timeout-minutes: 25
+        env:
+          APT_KEEP: ${{ runner.temp }}/qa-apt
         run: |
+          # 取り置きがあれば、apt を通さず先に dpkg で入れる（このあとの apt はほぼ落とす物が無くなる）
+          kept=0
+          if compgen -G "$APT_KEEP/*.deb" >/dev/null; then
+            if sudo dpkg -i --skip-same-version "$APT_KEEP"/*.deb >/dev/null; then kept=1; echo "apt の取り置きを入れた（$(find "$APT_KEEP" -name '*.deb' | wc -l) 個）"
+            else echo "::warning::apt の取り置きを入れられなかった。ふだんどおり apt で入れる"; sudo timeout 300 apt-get -f install -y -q || true; fi
+          fi
           # apt は 1回 5分で打ち切り、3回までやり直す（root の apt を止められるよう sudo timeout）
           apt_try() { for i in 1 2 3; do sudo timeout 300 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 "$@" && return 0; echo "::warning::apt-get $1 が失敗か5分で止まった（$i 回目）。やり直す"; sleep 10; done; return 1; }
           # 基準（qa/baseline.json）を作った環境と同じ字体にする。字の幅が変わると画面の判定がずれるため
-          apt_try update -q
-          apt_try install -y -q fonts-ipafont-gothic fonts-wqy-zenhei
+          # 取り置きで字体が入っていれば、置き場に届かなくても続ける
+          apt_try update -q || [ "$kept" = 1 ]
+          apt_try install -y -q fonts-ipafont-gothic fonts-wqy-zenhei || { [ "$kept" = 1 ] && fc-list | grep -qi ipagothic; }
           cd qa
           # npm ci と Playwright のブラウザも、間を空けて3回までやり直す（2026-10-21 main で cdn.playwright.dev が一時的に別の証明書を返し、
           # Playwright 自身のやり直しが2秒で尽きて組ごと ❌ になった。run 39683777941。qa/tools/retry.sh）
           # 部品の版は package-lock.json で固定（CIのチェック充実 案7）
           bash tools/retry.sh 3 300 npm ci --no-audit --no-fund
           # 画面の一覧づくり（qa/tools/ci_shots.js）は Chromium を使うので、WebKit の組も両方入れる
-          bash tools/retry.sh 3 420 npx playwright install --with-deps chromium ${{ matrix.browser == 'webkit' && 'webkit' || '' }}
+          browsers=(chromium)
+          [ "$QA_BROWSER" = webkit ] && browsers+=(webkit)
+          if ! bash tools/retry.sh 3 420 npx playwright install --with-deps "${browsers[@]}"; then
+            # 置き場に届かなくても、取り置きで部品がそろっていればブラウザだけ入れて続ける（足りなければ検査で起動に失敗して分かる）
+            if [ "$kept" = 1 ] && bash tools/retry.sh 2 300 npx playwright install "${browsers[@]}"; then
+              echo "::warning::Ubuntu の置き場に届かなかったので、apt の取り置きの部品で続けた"
+            else
+              echo "::error::Playwright を入れられなかった。ログに apt の Ign: や Temporary failure resolving が並ぶなら Ubuntu の置き場の不調（コードのせいではない）。今の main で Run workflow し直す"
+              exit 1
+            fi
+          fi
+          # 今回 apt が落とした .deb を取り置きに足す。同じ名前の古い版は消す（dpkg -i で版が混ざらないように）
+          mkdir -p "$APT_KEEP"
+          for f in /var/cache/apt/archives/*.deb; do
+            [ -e "$f" ] || continue
+            name=$(dpkg-deb -f "$f" Package)
+            find "$APT_KEEP" -name "${name}_*.deb" -delete
+            cp "$f" "$APT_KEEP"/
+          done
+          echo "apt の取り置き: $(find "$APT_KEEP" -name '*.deb' | wc -l) 個"
+      - name: apt の取り置きをしまう
+        # main・手動の実行でだけしまう（PR からしまった物は main から使えない）。同じ鍵の組が同時にしまっても先の1つが残るだけなので、失敗は無視
+        if: ${{ !matrix.nobrowser && steps.apt-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qa-apt
+          key: ${{ steps.apt-key.outputs.key }}
       - name: 前の版を用意する（セーブの引き継ぎ・画面の比べ）
         if: ${{ contains(matrix.only, 'save') || contains(matrix.only, 'lines') || contains(matrix.only, 'ui') }}
         env:
