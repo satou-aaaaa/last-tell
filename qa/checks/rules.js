@@ -55,12 +55,12 @@ const PROBE = `(() => {
     const r = _dh.apply(this, arguments); try { const after = me && me.hand ? me.hand.map(c => c.r + c.s).join() : ''; if (free) { P.dealFreeCalls++; if (after !== before) P.dealFreeChanged++ } else { P.dealStoryCalls++; if (after !== before) P.dealStoryChanged++ } } catch (e) { P.errs.push(e.message) } return r } }
   // 物語の章の配り（仕様 §6・§7 の「できた」）：章ごとに、弱い手の続き・フロップの絡み・目標の場面の回数・読み勝ちのあとの負け
   if (P.dealEntry) {
-    const chKey = () => CFG && CFG.ch ? (CFG.ch.p2 ? 10 + CFG.ch.p2 : CFG.ch.no) : 0, D = () => { const k = chKey(); return P.deal[k] = P.deal[k] || { hands: 0, weak2: 0, weak3: 0, flop: 0, air: 0, lesson: 0, lessonBad: 0, rg: 0, rgLost: 0, mods: {} } };
+    const chKey = () => CFG && CFG.ch ? (CFG.ch.p2 ? 10 + CFG.ch.p2 : CFG.ch.no) : 0, D = () => { const k = chKey(); return P.deal[k] = P.deal[k] || { hands: 0, weak2: 0, weak3: 0, weak4: 0, flop: 0, air: 0, lesson: 0, lessonBad: 0, rg: 0, rgLost: 0, mods: {} } };
     const draw4 = (h, b) => { const cs = h.concat(b); for (let s = 0; s < 4; s++) if (cs.filter(c => c.s === s).length >= 4 && h.some(c => c.s === s)) return true;
       const rs = new Set(cs.map(c => c.r)); if (rs.has(14)) rs.add(1); for (let lo = 1; lo <= 10; lo++) { let n = 0, m = false; for (let r = lo; r < lo + 5; r++) if (rs.has(r)) { n++; if (h.some(c => c.r === r || (r === 1 && c.r === 14))) m = true } if (n >= 4 && m) return true } return false };
     LT.on('startHand', () => { try { if (!CFG.ch || !LT.dealOk('board')) return; const d = D(), me = S.players[0]; if (!me || me.out || !me.hand || me.hand.length !== 2) return; d.hands++;
       if (S.mistakeHand === S.handNo) { S.__wr = 0; return }   // ディーラーのミスで配り直したハンドは数えない
-      S.__wr = preTier(me.hand) === 0 ? (S.__wr || 0) + 1 : 0; if (S.__wr === 2) d.weak2++; if (S.__wr === 3) d.weak3++ } catch (e) { P.errs.push(e.message) } });
+      S.__wr = preTier(me.hand) === 0 ? (S.__wr || 0) + 1 : 0; if (S.__wr === 2) d.weak2++; if (S.__wr === 3) d.weak3++; if (S.__wr === 4) d.weak4++ } catch (e) { P.errs.push(e.message) } });
     LT.on('nextStreet', () => { try { if (!CFG.ch || S.street !== 'flop' || !LT.dealOk('board')) return; const me = S.players[0]; if (!inHand(me)) return; const d = D(); d.flop++;
       if (isWeak(me.hand, S.board) && !draw4(me.hand, S.board)) d.air++ } catch (e) { P.errs.push(e.message) } });
     // 読み勝ち：今のストリートで残っている相手がブラフ（本当がブラフ）のクセで賭け、自分は残っていて、その時点で勝っている（入口の後に呼ばれる合図）
@@ -299,14 +299,16 @@ async function run({ browser, file, quick, part = null }) {
     const all = of('D').map(k => res[k]).reduce(merge, EMPTY), dd = all.deal || {}, name = c => c > 10 ? `第二部第${c - 10}章` : `第${c}章`, sumOf = (cs, k) => cs.reduce((a, c) => a + ((dd[c] || {})[k] || 0), 0);
     if (!all.dealEntry) items.push({ id: 'rule:deal-story', title: '物語の章の配り（入口 LT.dealRun）', status: 'warn', detail: '入口が無い版なので測っていない' });
     else {
-      const c15 = [1, 2, 3, 4, 5], hands = sumOf(c15, 'hands'), w2 = c15.filter(c => c !== 1).map(c => [c, (dd[c] || {}).weak2 || 0]).filter(x => x[1]), w3 = sumOf(c15, 'weak3');
-      items.push({ id: 'rule:deal-weakrun', title: '物語の章で、弱い手が続かない（2回続くのは第1章だけ、3回続くのは0回）', status: hands < 100 ? 'warn' : (w2.length || w3) ? 'fail' : 'ok',
-        detail: `第1〜5章 ${hands}ハンド：弱い手が2回続いた 第1章 ${(dd[1] || {}).weak2 || 0}回${w2.length ? '、' + w2.map(x => `${name(x[0])} ${x[1]}回`).join('、') + '（第1章のほかで続いた）' : '、ほかの章 0回'}、3回続いた ${w3}回（ディーラーのミスで配り直したハンドは数えない）${hands < 100 ? '（100ハンドは見たい）' : ''}` });
-      const fl = sumOf(c15, 'flop'), air = sumOf(c15, 'air'), pa = fl ? Math.round(air / fl * 100) : 0;
-      items.push({ id: 'rule:deal-flop', title: 'フロップまで残ったハンドで、自分に何も絡まない割合が 25% 以下（第1〜5章）', status: fl < 60 ? 'warn' : pa > 25 ? 'fail' : 'ok',
-        detail: `フロップまで残った ${fl}ハンドのうち、ペア（自分の札で）も4枚のドローも無い ${air}回（${pa}%）${fl < 60 ? '（60ハンドは見たい）' : ''}` });
-      const cl = [2, 3, 4], ln = sumOf(cl, 'lesson'), lb = sumOf(cl, 'lessonBad'), lo = [1, 5].concat([11, 13, 14]).filter(c => (dd[c] || {}).lesson);
-      items.push({ id: 'rule:deal-lesson', title: '章の目標の場面（lessonScene）は第2・3・4章（と第二部第2章）だけ、3ハンドのうち2ハンドまで', status: (lb || lo.length) ? 'fail' : !ln ? 'warn' : 'ok',
+      // 2026-11-26 PC 版に合わせた（11/23 録画の指摘）：弱い手のあとの手助けは第1章だけ 3 回目に（2回まで続く）、ほかの章は 4 回目に（3回まで続く）。
+      // フロップに絡める手助けは第1章だけ。章の目標の場面は第2〜4章と第二部の章（目標の種類で決める。スチールの章は第二部第3章へ動いた）
+      const c15 = [1, 2, 3, 4, 5], hands = sumOf(c15, 'hands'), w3a = (dd[1] || {}).weak3 || 0, w4 = c15.map(c => [c, (dd[c] || {}).weak4 || 0]).filter(x => x[1]);
+      items.push({ id: 'rule:deal-weakrun', title: '物語の章で、弱い手が続かない（第1章は3回続くのが0回、ほかの章は4回続くのが0回）', status: hands < 100 ? 'warn' : (w3a || w4.length) ? 'fail' : 'ok',
+        detail: `第1〜5章 ${hands}ハンド：第1章で3回続いた ${w3a}回、4回続いた ${w4.length ? w4.map(x => `${name(x[0])} ${x[1]}回`).join('、') : '0回'}（2回続いた ${sumOf(c15, 'weak2')}回・3回続いた ${sumOf(c15, 'weak3')}回は数えるだけ。ディーラーのミスで配り直したハンドは数えない）${hands < 100 ? '（100ハンドは見たい）' : ''}` });
+      const fl = sumOf([1], 'flop'), air = sumOf([1], 'air'), pa = fl ? Math.round(air / fl * 100) : 0;
+      items.push({ id: 'rule:deal-flop', title: 'フロップまで残ったハンドで、自分に何も絡まない割合が 25% 以下（第1章）', status: fl < 30 ? 'warn' : pa > 25 ? 'fail' : 'ok',
+        detail: `第1章でフロップまで残った ${fl}ハンドのうち、ペア（自分の札で）も4枚のドローも無い ${air}回（${pa}%）${fl < 30 ? '（30ハンドは見たい）' : ''}。第2〜5章は ${sumOf([2, 3, 4, 5], 'flop')}ハンド中 ${sumOf([2, 3, 4, 5], 'air')}回（数えるだけ）` });
+      const cl = [2, 3, 4], ln = sumOf(cl, 'lesson'), lb = sumOf(cl.concat([11, 12, 13, 14, 15]), 'lessonBad'), lo = [1, 5, 6, 7].filter(c => (dd[c] || {}).lesson);
+      items.push({ id: 'rule:deal-lesson', title: '章の目標の場面（lessonScene）は第2・3・4章と第二部だけ、3ハンドのうち2ハンドまで', status: (lb || lo.length) ? 'fail' : !ln ? 'warn' : 'ok',
         detail: `第2〜4章 ${sumOf(cl, 'hands')}ハンドで ${ln}回（3の倍数のハンドで起きた ${lb}回）${lo.length ? '、ほかの章で起きた：' + lo.map(name).join('、') : ''}${ln ? '' : '（1回も起きていない）'}` });
       const rc = [4, 5, 11, 12, 13, 14], rg = sumOf(rc, 'rg'), rl = sumOf(rc, 'rgLost');
       items.push({ id: 'rule:deal-readguard', title: 'ブラフのクセにコールして、その時点で勝っていたハンドは、最後に負けない（第4・5章、第11〜14章）', status: rl ? 'fail' : rg < 3 ? 'warn' : 'ok',

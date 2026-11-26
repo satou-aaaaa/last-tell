@@ -1467,6 +1467,9 @@ html.c4 .card[aria-label^="♣"],html.c4 .card[aria-label^="♣"] *{color:#1d8a4
 .plate.turn{background:transparent;box-shadow:none}
 .plate.turn::before{background:rgba(60,46,14,.95);box-shadow:inset 0 0 0 2px var(--gold)}
 .plate.flash{animation:none}
+/* 名札の縁：考えている人（金）・降りた人（薄く）・ショーダウンに残った人（白）（PC 版 2026-11-08 録画 #49） */
+.plate.pfold::before{background:rgba(8,9,12,.55)}
+.plate.psd::before{box-shadow:inset 0 0 0 2px rgba(240,240,236,.85)}
 .plate.flash::before{animation:flash .7s ease-out}
 .plate .dbadge{position:absolute;left:-7px;right:auto;top:-7px;z-index:1;width:17px;height:17px;font-size:.6rem;box-shadow:0 1px 0 #9c9482,0 2px 4px rgba(0,0,0,.6)}
 /* 左半分の席（1人め、4人以上なら2人めも）は右上の角に */
@@ -2251,6 +2254,11 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 /* 札は滑って止まる（終わりで減速。行き過ぎて戻る動きはやめる） */
 :where(html.pcw .felt) .card{animation-timing-function:cubic-bezier(.12,.85,.22,1)}
 
+/* 章えらびをたたむ（js/61_chapter_fold.js） */
+.chfold{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.14);color:inherit;font:inherit;font-weight:700;padding:10px 4px;cursor:pointer}
+h3.chfold::before{content:attr(data-mark) ' ';opacity:.8}
+.chfold:focus-visible{outline:2px solid #f2d38a;outline-offset:2px}
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
           <radialGradient id="shadeHead" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></radialGradient>
@@ -2442,7 +2450,7 @@ html.pcw:not(.ltLite) .chipwrap.slide{animation:none}
 
 <script>
 // ===== 版とリンク（ドメインが決まったら LINKS を差し替え）=====
-const APP_VERSION='0.98.13';
+const APP_VERSION='0.98.14';
 const LINKS={privacy:'privacy.html',terms:'terms.html',support:'support.html',survey:'https://docs.google.com/forms/d/e/1FAIpQLSepuCk6Ob2-hwcnmLYWZLmOt-EFouCh_sYLLpP9qXJHjfCiog/viewform'};   // survey：テスト版の感想アンケート（2026-10-14 satou さんのフォーム。空にすると押せなくなる）
 // Web版の既定。アプリ版（Capacitor）はこれを上書きする
 window.LT_PLATFORM=window.LT_PLATFORM||{
@@ -2863,6 +2871,16 @@ Object.assign(EN_DICT,{'クセは賭けた本人のことしか教えん。後�
 EN_TPL.push(['{0}だけ','{0} only']);
 // v94 レビュー 5：smile の札「口元が緩んだ」は「レイカが口元が緩んだ」と「が」が重なるので言い換えた
 EN_DICT['にやりと笑った']='Cracked a smile';
+
+// 自動で作るファイル（web/tools/en_godot.py。元は game/data/EN_GODOT.json）。手で直さない。
+// PC 版で足した字の英語。ブラウザ版の EN_DICT・EN_TPL に無いものだけ足す
+{const D={"手を見せる": "Show hand", "いま": "Now", "閉店のあと": "After closing", "店主「さあ、撮るよ。身なりを整えといで」": "Owner: “Okay, picture time. Go tidy yourself up.”", "KKが来た。2番目に強いハンドだ": "Pocket kings. The second-best starting hand.", "何もない。だが相手も迷っている。ポットの半分ほど賭けてみろ。全部は賭けるな。": "You've got nothing. But neither do they. Bet about half the pot. Not everything.", "何もない。相手が二人以上いると、誰かが持っている。今回はチェックで様子を見ろ。": "You've got nothing. With two or more opponents, someone has something. Check and watch this time.", "QQが来た。3番目に強いハンドだ": "Pocket queens. The third-best starting hand.", "ハヤトのオールイン。KKで受けるか？": "Hayato is all-in. Call with your kings?", "ハヤトのオールイン。QQで受けるか？": "Hayato is all-in. Call with your queens?", "もう一度で確定": "Tap again to confirm", "鍵": "🔑", "羽": "🪶", "写": "📷", "ボスと縛りつきで再戦し、段位を上げます。本編には影響しません。": "Rematch a boss under a handicap to raise your rank. This doesn't affect the main story.", "カードプロテクター（お守り）": "Card protector (charm)", "章をクリアするともらえます。見た目だけで、勝ち負けには関係しません。": "Earned by clearing chapters. Cosmetic only; it doesn't affect winning or losing.", "あなたなら、どうする？": "What would you do?", "物語の章では、物語が進みやすいように、配る札を調整しています。フリー対戦は毎回ふつうにシャッフルしています。": "In story chapters, the deal is adjusted so the story can move forward. Free play is always shuffled normally.", "キーボード": "Keyboard", "朝まで勝ち続けた": "Kept winning until dawn", "LAST TELL　はしご": "LAST TELL Ladder", "ゲームエンジン": "Game engine", "チップは点数で、現金や景品とは交換できません。": "Chips are points and cannot be exchanged for cash or prizes.", "保存しました：": "Saved: ", "保存できませんでした。": "Couldn't save.", "最 後 の テ ル": "THE LAST TELL", "もどる": "Back", "章をえらぶ": "Choose a chapter", "アオ": "Ao", "もう、一人前だ": "Now you're the real thing.", "ジンが初めて、あなたの名前を呼んだ": "For the first time, Jin called you by name.", "ジンが手を開いた。スリーカード": "Jin opened his hand. Three of a kind.", "あなたの写真の隣に": "Next to your photo", "奥の卓に、灯りがついた": "A light came on at the back table.", "やり直す": "Retry", "持ち点": "Chips", "クロックが呼ばれた（1分）": "The clock was called (1 minute)", "読み的中！": "Read it!", "相手のチップを全部取った！": "You took all their chips!", "チップは点数です。お金とは交換しません。\n物語の章では、物語が進みやすいように、配る札を調整しています。フリー対戦は毎回ふつうにシャッフルしています。": "Chips are points. They are never traded for money.\nIn story chapters, the deal is adjusted so the story can move forward. Free play is always shuffled normally.", "このゲームに登場する人物・店・団体はすべて架空のものです。\nチップは点数で、現金や景品とは交換できません。": "All characters, venues and organizations in this game are fictional.\nChips are points and cannot be exchanged for cash or prizes.", "押してめくる": "Click to look", "前回は途中で終わりました": "The game closed unexpectedly last time", "ゲームが途中で止まったようです。よければ、記録（ログ）のファイルを「お問い合わせ」から送ってください。直すのに使います。": "It looks like the game stopped partway. If you can, please send us the log file via “Contact & Support”. It helps us fix the problem.", "記録のフォルダを開く": "Open the log folder", "重さの計測が終わりました": "Performance check finished", "終わる": "Quit", "結果は次のファイルにも書きました。中身をそのまま送ってください。": "The result is also saved in the file below. Please send us its contents as is.", "フォルダを開く": "Open folder", "3D の画質": "3D quality", "立体で描く人の細かさ。重いときは低にします（影・ふちのなめらかさを省き、一度に描き直す人数を減らします）": "How detailed the 3D characters are. Choose Low if the game feels slow (skips shadows and edge smoothing, and redraws fewer characters at once).", "低": "Low", "中": "Medium", "高": "High", "メニュー（Esc）": "Menu (Esc)", "進行の記録": "Hand log", "キーボードで画面を操作": "Keyboard navigation", "F フォールド　C チェック／コール　R レイズ（もう一度 R か Enter で決める。額は ↑↓、1＝½ポット・2＝⅔・3＝ポット）　A オールイン　P ハンドをめくる　L 進行の記録　Enter 次へ　Esc メニュー": "F Fold　C Check/Call　R Raise (press R or Enter again to confirm; amount with ↑↓, 1 = ½ pot, 2 = ⅔, 3 = pot)　A All-in　P Peek at your cards　L Hand log　Enter Next　Esc Menu", "矢印キーか Tab でボタンを選び、Enter で押します。Esc で閉じる・戻る。会話は Enter か Space で進みます。F11 か Alt+Enter で全画面と窓を切り替えます。": "Use the arrow keys or Tab to pick a button and Enter to press it. Esc closes or goes back. Press Enter or Space to advance dialogue. F11 or Alt+Enter switches between fullscreen and window.", "全画面": "Fullscreen", "画面いっぱいに広げます。F11 か Alt+Enter でも切り替えられます": "Fill the whole screen. F11 or Alt+Enter also switches it.", "伏せ札": "Face down", "フォールド・チェック／コール・レイズから選びます。迷ったら、右上の「≡」から役の一覧を見られます。": "Choose fold, check/call or raise. If unsure, open the hand rankings from the ≡ menu at the top right.", "ディーラーのイズミです。決まりで分からないことがあれば、いつでもどうぞ": "I’m Izumi, your dealer. If any rule is unclear, just ask.", "降りた札は、表を見せずにこちらへ。それも立派な一手です": "Folded cards come to me face down. That’s a fine move too.", "銀の扉へようこそ。ブラインドは、そちらのモニターのとおりです": "Welcome to the Silver Door. Blinds are shown on that monitor.", "曲が変わっても、配りは止めません。どうぞそのまま": "The music may change, but the deal doesn’t stop. Carry on.", "天空へようこそ。アクションは、声に出してお願いします": "Welcome to the Skyline. Please announce your actions out loud.", "ここの決まりも、上の店と同じです。順番だけはお守りください": "Same rules down here as upstairs. Just keep to your turn.", "クラウンのテーブルへようこそ。宣言は、はっきりとお願いします": "Welcome to the Crown’s table. Please make your declarations clearly.", "閉店後の卓は久しぶりです。……昔、この席によく座っていた方がいました": "It’s been a while since we dealt after closing. Someone used to sit in this seat often.", "ディーラーは、何も見ていないことにするんです。どうぞ、続けてください": "A dealer sees nothing. Please, go on.", "お帰りなさい。座り方が、前とは少し違いますね": "Welcome back. You sit a little differently than before.", "札は、配られたとおりに。私の仕事はそれだけです": "The cards fall as dealt. That’s all my job is.", "舫へようこそ。札は古いですが、枚数はそろっています": "Welcome to the Moorings. The deck is old, but it’s all there.", "地下の卓へようこそ。順番はお守りください": "Welcome to the table below. Please keep to your turn.", "クラウンへお帰りなさい。席は、前のままです": "Welcome back to the Crown. Your seat is just as you left it.", "最後の卓ですね。いつもどおり、配ります": "The last table, then. I’ll deal as always.", "降りるとき、迷わなくなりましたね。……いえ、独り言です": "You don’t hesitate when you fold anymore. Oh, never mind me.", "声": "Voice", "セリフの声。物語の場面だけにもできます（音の設定とは別）": "Spoken lines. Can be limited to story scenes (separate from Sound).", "物語の場面だけ": "Story scenes only", "セリフの声": "Voices", "VOICEVOX で作り、各音声ライブラリの規約に従って使用しています。": "Made with VOICEVOX and used under the terms of each voice library.", "よろしくお願いします": "Nice to meet you all.", "よろしくお願いします！": "Good luck, everyone!", "どうも、よろしくです": "Hey, good luck.", "ナイスハンド": "Nice hand.", "ナイスハンドです": "Nice hand.", "うわ、そこか……ナイスハンド": "Ugh, that was it... nice hand.", "ナイスハンド。読まれてたか": "Nice hand. You read me.", "お待たせしました、ホットコーヒーです": "Here's your hot coffee.", "お待たせしました、紅茶です": "Here's your tea.", "お待たせしました、ジンジャーエールです": "Here's your ginger ale.", "お水、置いておきますね": "I'll leave some water here.", "お待たせしました、ハイボールです": "Here's your highball.", "お待たせしました、ウーロン茶です": "Here's your oolong tea.", "ありがとうございます": "Thank you.", "どうも": "Thanks.", "あ、すみません": "Oh, thanks.", "店員": "Staff", "音楽の音量": "Music volume", "店で流れる曲の大きさ。0 で消えます": "How loud the club's music plays. 0 turns it off.", "効果音の音量": "Sound effects volume", "カード・チップ・ノックの音の大きさ": "How loud cards, chips and knocks sound.", "声の音量": "Voice volume", "登場人物の声の大きさ。字幕はいつも出ます": "How loud the characters' voices are. Subtitles always show.", "卓のキー": "Table keys", "フォールド・コールなどのキーを変えます": "Change the keys for fold, call and the rest.", "変える ▸": "Change ▸", "たたむ ▾": "Hide ▾", "キーを押す…": "Press a key…", "はじめに戻す": "Reset to default", "変えられないキー：Esc・Enter・Space・矢印・Tab・1〜3・F11": "Keys you can't use: Esc, Enter, Space, arrows, Tab, 1–3, F11", "チェック／コール": "Check / Call", "ハンドを見る": "Look at your cards", "%s フォールド　%s チェック／コール　%s レイズ（もう一度 %s か Enter で決める。額は ↑↓、1＝½ポット・2＝⅔・3＝ポット）　%s オールイン　%s ハンドをめくる　%s 進行の記録　Enter 次へ　Esc メニュー": "%s Fold　%s Check/Call　%s Raise (press %s or Enter again to confirm; amount with ↑↓, 1 = ½ pot, 2 = ⅔, 3 = pot)　%s All-in　%s Peek at your cards　%s Hand log　Enter Next　Esc Menu", "3D の人": "3D people", "Epic Games の MetaHuman を、Unreal Engine の使用許諾契約（MetaHuman のライセンス）に従って使っています。": "Uses Epic Games' MetaHuman under the Unreal Engine EULA (MetaHuman license).", "座った目は自分の席からの本物の卓、見わたすは同じ卓を椅子の後ろに立った高い目から見下ろす。次の卓から変わります": "Seated shows the real table from your chair; Overview looks down on the same table, standing behind your chair. Takes effect from the next table", "カメラは自動で動きます。相手の番にその人へそっと目を向け、ショーダウンで場札へ寄ります。強めは、クセが出た瞬間に顔へ寄ります": "The camera moves on its own: it glances at whoever is acting and leans in on the board at showdown. Strong also zooms in on a face when a tell shows", "心の声": "inner voice", "あなたへの耳打ち": "whispered to you", "手に入れた": "Obtained", "カードプロテクター（お守り）。章をえらぶ画面で選べます": "Card protector (charm). Pick it on the chapter screen", "「身なり」で着られます": "Wear it from “Outfit”", "新しい服": "New clothes", "役の強さは、右上の ≡ →「役の一覧」でいつでも見られます": "Hand rankings are always under ≡ (top right) → \"Hand rankings\".", "見せてもらう": "Ask to see", "右ドラッグか Q・E で、横の人の顔を見られます。W か右クリックで正面へ": "Right-drag or hold Q / E to look at the players beside you. W or right-click to face forward", "正面を見る（W）": "Face forward (W)", "横を見る": "Look sideways", "座った目の卓で、右ドラッグか Q・E で首を回して横の人の顔を見ます。Shift で身を乗り出します。見た向きのまま止まり、W か右クリックで正面に戻ります": "At the seated table view, right-drag or hold Q / E to turn your head and see the players beside you. Hold Shift to lean in. Your view stays put; press W or right-click to face forward.", "第一部": "Part One", "第一部　出てくれた人たち": "Part One — The Cast", "「%s」をもらった。「身なり」で着られる。": "Got “%s”. You can wear it from “Look”.", "その隣に、あなたの写真が貼られた。": "Next to it, your photo was pinned up.", "座れ。……ゲン、配ってやれ": "Sit. ...Gen, deal him in.", "おう、任せとけ！": "You got it!", "ジンはそれ以上何も言わず、封筒をこちらに手渡した。": "Jin said nothing more and handed you the envelope.", "第二部": "Part Two", "立体で描く人の細かさ。重いときは低にします（影・ふちのなめらかさを省き、一度に描き直す人数を減らします）。遊んでいて動きが重いと、自動で一段下げます": "How detailed the 3D people are. Use Low if the game is slow (no shadows or edge smoothing, fewer people redrawn at once). If play gets slow, it is lowered one step automatically.", "店のルール：強制ストラドル（ビッグブラインドの次の人は、配る前に必ずBBの2倍を置く。置いた人は、プリフロップで最後にアクションできる）": "House rule: Mandatory straddle (the player after the big blind must post 2x the BB before the deal, and acts last preflop)", "もう一度で降りる": "Again to fold", "チェックできます（払わずに次へ）。降りるなら、もう一度フォールド": "You can check for free. To fold anyway, press Fold again", "オールインです。2回めくり（ランイットツワイス）を申し出ますか？ 相手が受けたときだけ、残りの場札を2回めくって、ポットを半分ずつ分けます。": "All-in. Offer to run it twice? Only if your opponent agrees, the rest of the board is dealt twice and the pot is split in half.", "【見るだけの1手】": "[Watch-only hand] ", "合格の条件：ジンの「最後のクセ」が出たハンドで、降りること（ジンのチップを全部取っても合格）": "To pass: fold in the hand where Jin shows his “last tell” (taking all of Jin's chips also passes)", "傷に触れるのは、いつものことだ。……それだけで、手は読めんぞ": "Touching the scar is just my habit. ...That alone won't tell you my hand.", "ハヤトのオールイン。ジン「受けろ。……結果は、もう決まっている」": "Hayato goes all-in. Jin: “Take it. ...The result is already decided.”", "ジンは、いつものように、あごの傷に触れている": "As always, Jin is touching the scar on his chin", "1回めくります": "Running it once", "脱落": "Out", "ジンの最後のクセを読んで、負ける勝負から降りる（ジンのチップを全部取っても勝ち）": "Read Jin's last tell and fold the hand you would lose (taking all of Jin's chips also wins)", "あなたが飛ばした！": "You knocked them out!", "ここまでです。お疲れさまでした": "That's as far as you go. Thank you for playing.", "第四部": "Part Four", "第五部": "Part Five", "第六部": "Part Six", "第七部": "Part Seven", "最後のクセを読み切った": "You read the last tell", "店の音": "Room sounds", "店のざわめき・グラスやチップの音。オフにすると卓の音だけになります": "Room chatter, glasses and chips. Off leaves only the sounds of your table", "裏のテーブル・お守り": "Back tables / charms", "チップを全部取られてしまった。気持ちのいい負けだよ": "You took every chip I had. A pleasant way to lose", "まっすぐな打ち方だね。……怖くないのかね": "Such a straight game... aren't you scared?", "……チップを全部取られるなんて久しぶり。ジンさんの弟子ね": "...It's been a while since someone took all my chips. Jin's student, all right", "……チップを全部持っていかれたか。スチールより先に、こっちとはな": "...Took every chip, huh. Before any steals, even", "……チップを全部取られた。年かね": "...Took every chip. Must be my age", "……全部取られた。くそっ": "...Took it all. Damn", "お前、俺の顔ばっかり見てただろ": "You were watching my face the whole time, weren't you", "……全部取られた。やるじゃねえか": "...Took it all. Not bad", "……チップを全部持っていかれたか。ジンの打ち方とは、少しちがうな": "...Took every chip, huh. Not quite how Jin plays", "おじさん、今の見た？ 降りないで、全部持っていったよ": "Uncle, did you see that? Never folded, took it all", "もやい": "Moyai", "チップを8万にする": "Get your chips to 80,000", "弟子": "The Apprentice", "汐見の若者の名前を決めよう。付けなければ「タロウ」になる。": "Name the young man from Shiomi. Leave it blank and he'll be \"Taro.\"", "錨亭のある港から、連絡船で一時間。小さな港町、汐見（しおみ）。": "An hour by ferry from the port with the Anchor. A small harbor town: Shiomi.", "坂の上に、古い店が一軒ある。看板の字は「舫（もやい）」。船を岸につなぐ綱のことだ。": "At the top of the slope stands an old shop. The sign reads \"Moyai\" — the rope that ties a boat to the shore.", "タロウは港で網を直して暮らしている。仕事が終わると、幼なじみとこの店に寄る。": "Taro mends nets at the harbor. After work, he stops by this shop with his childhood friends.", "ケンジは船大工の見習い。手が大きくて、カードを持つと小さく見える。": "Kenji is a boatbuilder's apprentice. His hands are so big that cards look tiny in them.", "タロウ、遅いぞ。もう配りはじめてる": "Taro, you're late. We already started dealing.", "ミサキはこの店の手伝い。タロウとケンジとは、小学校から一緒だ。": "Misaki helps out at this shop. She's known Taro and Kenji since grade school.", "おかえり。今日も「もう1ハンドだけ」って言うんでしょ": "Welcome back. You're going to say \"just one more hand\" again today, right?", "先に言っとくね。ミヤコさん、この店の主。汐見でいちばん強い人": "Before I forget — that's Miyako, she runs this place. Strongest player in Shiomi.", "大げさだよ。……汐見の作法、忘れてないね。7と2で勝ったら、全員がチップを一枚ずつ出す": "Don't exaggerate. ...You haven't forgotten Shiomi's custom? Win with a 7-2 and everyone pays you one chip.", "よその港じゃ、とっくにやめた決まりらしいけどな": "Other ports dropped that rule ages ago, I hear.", "汐見は、古い決まりを捨てない港なのさ": "Shiomi is a port that doesn't throw away old rules.", "（今日こそ、ケンジとミサキからチップを全部取ってやる）": "(Today I'm taking every chip Kenji and Misaki have.)", "ここからは、汐見の若者タロウとして打つ。まずはケンジとミサキを相手に、チップを2倍にしよう。": "From here, you play as Taro, a young man from Shiomi. First, double your chips against Kenji and Misaki.", "よし、配るぞ": "Alright, dealing.", "今の、降りときゃよかった……": "Should've folded that one...", "ケンジはね、いい手のとき鼻の頭をかくの。本人だけ知らない": "Kenji scratches his nose when he has a good hand. Everyone knows but him.", "タロウ。あんた、勝ってるときほど座りっぱなしだね": "Taro. The more you're winning, the longer you stay glued to that seat.", "（勝ってるんだから、やめる理由がない）": "(I'm winning. Why would I stop?)", "まいった！ 今日のタロウ、ついてるな": "I give up! Taro's on a roll today.", "扉の鈴が鳴った。見たことのない人が、空いていた席に座った。": "The door bell rang. A stranger sat down in the empty seat.", "……おや。錨亭の": "...Well, now. From the Anchor.", "錨亭って、港の向こうの？": "The Anchor? The one across the water?", "あそこの看板を、今はこの人が持ってる。ジンの弟子だよ": "This one holds that shop's sign now. Jin's apprentice.", "空いているなら、座らせてもらおう": "If the seat's free, I'll take it.", "よその人": "Stranger", "タロウは勝ったチップを全部、前に出した。": "Taro pushed all his winnings forward.", "一回目。よその人は静かに降りた。二回目も、三回目も。": "First time, the stranger quietly folded. The second time too, and the third.", "四回目。タロウが大きく賭けると、よその人は少しだけ考えて、全部を前に出した。": "Fourth time, Taro bet big. The stranger thought for just a moment, then pushed everything in.", "（ここで降りたら、さっきまでの勝ちが逃げる）": "(If I fold now, everything I won walks away.)", "カードが開いた。タロウの手は、よその人の手に一つ届かなかった。": "The cards turned over. Taro's hand fell one short of the stranger's.", "チップが、きれいになくなった。": "The chips were gone. Every last one.", "さっきの手は、降りる手だった。勝っているときに降りる。それができる者だけが、明日も座れる": "That hand was one to fold. Folding while you're winning — only those who can do that get to sit down tomorrow.", "よその人は立ち上がって、ミヤコさんに頭を下げた。": "The stranger stood and bowed to Miyako.", "待ってください！ ……打ち方を、教えてください": "Wait! ...Teach me how to play.", "よその人は、指を一本立てた。": "The stranger raised one finger.", "師匠の型": "Mentor's style", "錨亭に来い": "Come to the Anchor", "見事だ": "Well done", "取りに行くんだ": "Go and take it", "錨亭で待つ。全力で来い": "I'll wait at the Anchor. Come at me with everything", "お前はもう、一人前だ": "You stand on your own now", "師匠は、指を一本立てた。": "The mentor raised one finger.", "（気づくと、指を一本立てていた。……師匠のクセが、うつっている）": "(I realized I was holding up one finger. ...My mentor's habit had rubbed off on me.)", "いいだろう。錨亭に来い。ただし「もう1ハンドだけ」は、この港に置いていけ": "Very well. Come to the Anchor. But leave \"just one more hand\" here in this port.", "行っておいで。汐見の外を見るのも、修業さ": "Go on. Seeing the world outside Shiomi is part of the training too.", "勝っているときほど、手を選べ": "The more you're winning, the pickier you should be.", "朝の連絡船で一時間。港の坂の途中に、古いバーがある。錨の看板。錨亭。": "An hour on the morning ferry. Halfway up the harbor slope, an old bar. An anchor on the sign. The Anchor.", "壁に写真が二枚。若い頃の男の人と、さっきのよその人。": "Two photos on the wall. A young man, and the stranger from before.", "いらっしゃい。……ああ、あんたが汐見の子か。話は聞いてるよ": "Welcome. ...Ah, you're the kid from Shiomi. I've heard about you.", "この店の主人だったジンさんはね、先月、外国へ旅に出た。行き先は、手紙で知らせるってさ": "Jin, who used to run this place, went traveling abroad last month. Said he'd write and tell us where.", "店は、あの人に任せていった。写真の、若いほうじゃないほう": "He left the shop to that one. In the photo — not the young one.", "来たな。待っていたぞ": "You came. I've been waiting.", "カウンターに、封の開いた手紙が一通置いてある。": "On the counter lies a single opened letter.", "ジンさんからだよ。読んでいいってさ": "It's from Jin. Says you can read it.", "『店を頼む。弟子を取るなら、一つだけ。教えるのは、打つより難しい。俺の師匠も、教えるのは下手だった。――ジン』": "\"Look after the shop. If you take an apprentice, just one thing. Teaching is harder than playing. My own teacher was bad at it too. — Jin\"", "おう、新顔か！ がっはっは、配られた札は全部勝負、それがポーカーってもんよ！": "Oh, a new face! Gahaha — play every hand you're dealt, that's what poker is!", "ゲンさんは錨亭の常連。昔は船に乗っていたらしい。": "Gen is a regular at the Anchor. They say he used to work the boats.", "勝負は、席に着く前から始まっている。ゲンのチップを全部取れ。取れたら、続きを教える": "The game starts before you even take your seat. Take every chip Gen has. Do that, and I'll teach you more.", "弱い手が来たら、迷わず降りろ": "Weak hand? Fold without hesitating.", "降りるのは逃げじゃない。次の勝負のための、ためだ": "Folding isn't running away. It's holding back for the next fight.", "待つな。ゲンは、待っていても崩れない": "Don't wait. Waiting won't make Gen crack.", "強い手が来たら、こっちから上げろ。先に打った者が、話を決める": "Strong hand? Raise first. Whoever bets first sets the story.", "カードばかり見るな。顔は、手より先にしゃべる": "Stop staring at your cards. A face talks before the hand does.", "ゲンは、いい手が来ると口元がゆるむ。見逃すな": "When Gen gets a good hand, his mouth goes slack. Don't miss it.", "ゲンは何にでも参加してくる。弱い手は降りて、強い手で勝負しよう。ゲンのチップを全部取れば勝ちだ。": "Gen joins every hand. Fold the weak ones and fight with the strong ones. Take all of Gen's chips to win.", "師匠と弟子で二人がかりか？ 来い来い！": "Teacher and student, two on one? Bring it on!", "今の、なんで降りた？ 降りたら何も起きねえぞ": "Why'd you fold that? Fold and nothing happens!", "何も起きないハンドを、いくつ我慢できるか。それが強さだ": "How many hands where nothing happens can you endure? That's strength.", "汐見か。昔、あそこの港に船をつけたことがある。坂の多い港は、いい港だ": "Shiomi, huh. I docked a boat there once. A port with lots of slopes is a good port.", "（汐見の坂は、毎朝のぼっている）": "(I climb Shiomi's slopes every morning.)", "まいった！ お前、急に降りるようになりやがったな": "I give up! You've suddenly learned to fold!", "「もう1ハンド」って言いかけると、隣でにらまれるんで": "Whenever I start to say \"one more hand,\" I get glared at from the next seat.", "ジンさんも、昔はそうやってにらんでたよ": "Jin used to glare at people like that too.", "見事だ。今日から、二階の部屋を使え。汐見に帰るのは、看板を取ってからだ": "Well done. From today, use the room upstairs. You go home to Shiomi once you've won a sign.", "はい！": "Yes!", "修業をはじめて、ひと月。師匠に連れられて、街の古いクラブ「銀の扉」へ。": "A month into training. The teacher brings Taro to an old club, the Silver Door.", "よう、錨亭の。……弟子を取ったって、本当だったか": "Hey, from the Anchor. ...So you really took an apprentice.", "弟子のタロウだ。汐見から来た。覚えておいてくれ": "My apprentice, Taro. From Shiomi. Remember the name.", "めいのハルだ。歳も、そっちと同じくらいだろう": "This is my niece, Haru. About your age, I'd say.", "はじめまして。おじさん、慎重すぎて誰も勝負してくれないの。来てくれてよかった": "Nice to meet you. My uncle's so careful nobody will play with him. Glad you came.", "慎重な相手ほど、後ろの席から先に打てば降りる。ためた分を、ここで使え": "The more careful the opponent, the more they fold when you bet first from the back seats. Spend what you've saved up here.", "後ろの席で、誰も入っていなかったら、先に打て。迷ったら負けだ": "From a back seat, if no one's in yet, bet first. Hesitate and you lose.", "ディーラーボタン（D）に近い席（レイト）から先にレイズすれば、慎重な相手は弱い手を降りる。全員が降りれば、ブラインドスチールだ。2回決めれば勝ち。": "Raise first from the seats near the dealer button (D) — late position — and a careful opponent folds weak hands. If everyone folds, that's a blind steal. Pull it off twice to win.", "……さ、座りな": "...Now, sit.", "今の、取られた？ ……おじさん、また降りた": "Did he just take that? ...Uncle, you folded again.", "降りるのが、俺の商売みたいなもんだ": "Folding's practically my trade.", "ねえ、汐見ってどんなところ？": "Hey, what's Shiomi like?", "坂ばっかり。……でも、海はきれいだよ": "Nothing but slopes. ...But the sea is beautiful.", "ブラインドを持っていかれたな。……二回も": "Took my blinds. ...Twice.", "お前の師匠は、昔ここで、俺から一度もスチールできなかった": "Your teacher never once managed to steal from me here, back in the day.", "それは、言わなくていい！": "You didn't need to say that!", "来月、クラウンに港の看板持ちが集まるんだって。おじさんも呼ばれてる": "Next month the sign holders from every port gather at the Crown. My uncle's invited too.", "タロウ、お前も出ろ": "Taro, you're entering too.", "え、でも、ぼく看板なんて持ってません": "Huh? But I don't have a sign.", "取りに行くんだ。看板は、待っていても降ってこない": "You go and win one. A sign doesn't fall from the sky while you wait.", "前の席で無理をしたな。スチールは、後ろの席からだ": "You forced it from an early seat. Steals come from the back seats.", "看板持ちの卓": "The Sign Holders' Table", "クラウンの前の日。錨亭に、汐見のミヤコさんが来た。": "The day before the Crown. Miyako from Shiomi came to the Anchor.", "タロウ。あんたに渡すものがある": "Taro. I've got something for you.", "手のひらに乗るくらいの、古い木の札。「舫」と彫ってある。汐見の看板だ。": "An old wooden plaque that fits in the palm of a hand. \"Moyai\" is carved into it. Shiomi's sign.", "汐見から外へ出たのは、あんたが初めてだ。これを持って座りな": "You're the first from Shiomi to go out into the world. Take this and sit down with it.", "……いいんですか": "...Are you sure?", "明日、取り返すつもりで座るよ": "I'll sit down tomorrow planning to win it back.", "それとね。舫の壁に、もう一枚古い看板があったろう": "One more thing. There's another old sign on the wall at Moyai, isn't there?", "店の名前のところだけ、彫った字が削り取られてるやつですか": "The one where only the shop's name has been scraped off the carving?", "そう。この辺りの古い店には、どこにも一枚ずつあるのさ。誰が削ったかは、わからない": "That one. Every old shop around here has one. Nobody knows who scraped them.", "ばあさんの代から言われてる。「あの看板の前では、降りるのを恥ずかしがるな」ってね": "My grandmother's generation used to say: \"In front of that sign, don't be ashamed to fold.\"", "――次の日。ポーカールーム「クラウン」。": "—The next day. The poker room Crown.", "地下の看板持ち、カイ。……汐見の新顔って、あんたか": "Kai, sign holder of the Underground. ...So you're the new face from Shiomi.", "……その座り方。錨亭で習ったか": "...That way of sitting. You learned it at the Anchor?", "そうか。……イサナの、ひ孫弟子か": "I see. ...Isana's great-grand-apprentice, then.", "（イサナ。初めて聞く名前だ。観客席の師匠も、顔を上げた）": "(Isana. A name I've never heard. In the gallery, the teacher looked up too.)", "……あとのことは、ジンが帰ったら聞け": "...Ask Jin about the rest when he's back.", "5人いれば、待つ時間も長い。ためて、ためて、ブラインドが上がる前に一度だけ行け": "With five players, the waits are long. Hold, hold, and strike once before the blinds go up.", "ブラインドが上がったら、先に打った者が残る。行けと思ったら、行け": "Once the blinds rise, whoever bets first survives. If you think \"go,\" go.", "5人分の顔がある。いちばんよくしゃべる顔から見ろ。顔は、手より先にしゃべる": "Five faces at the table. Watch the chattiest one first. A face talks before the hand does.", "……負けた。待たれた": "...I lost. He waited me out.", "取り返しそこねたね。……舫の看板は、あんたが持ってな": "Couldn't win it back. ...Keep Moyai's sign.", "長生きは、するもんだな": "Live long enough and you see things.", "クロウさんの視線の先に、観客席の師匠がいた。": "Crow's gaze fell on the teacher in the gallery.", "師匠。……最後の試験、やってください": "Teacher. ...Give me the final test.", "いいだろう。錨亭で待つ。全力で来い": "Very well. I'll be waiting at the Anchor. Come at me with everything.", "扉の鈴が鳴った。日に焼けた男が、旅の鞄を一つ下げて立っていた。写真の、若い頃の男だ。": "The door bell rang. A sunburnt man stood there with a single travel bag. The young man from the photo.", "……ジンさん！ 帰るなら、言ってくれれば": "...Jin! You could've told us you were coming back.", "……いい。今日は、見に来ただけだ": "...It's fine. I only came to watch tonight.", "ジンさんは、カウンターの奥の席に座った。カードは持たない。": "Jin sat at the far end of the counter. He didn't touch the cards.", "座れ、タロウ": "Sit, Taro.", "お前はもう、一人前だ。だから今日は、本気で打つ": "You're already your own player. That's why today I play for real.", "それから、今日は何も教えない。……俺も、待つことを覚える番だ": "And today, I won't teach you anything. ...It's my turn to learn how to wait.", "俺にもクセがある。見つけてみろ。見つけられたら、お前の勝ちだ": "I have a tell too. Find it. Find it, and you win.", "見事だ、タロウ": "Well done, Taro.", "お前の師匠は、しゃべりすぎる。だが、それでいい": "Your teacher talks too much. But that's fine.", "ジンさんが、チップを一枚、指の上で転がした。": "Jin rolled a single chip across his fingers.", "錨亭の壁。写真が一枚、新しく貼られた。": "The Anchor's wall. One new photo went up.", "ジン、師匠、タロウ。壁の写真は、三枚になった。": "Jin, the teacher, Taro. Three photos on the wall now.", "海の向こうのテーブルに行ってくる。店を頼むぞ、タロウ": "I'm going to the table across the sea. Look after the shop, Taro.", "その日も、タロウは錨亭の奥のテーブルに座った。「もう1ハンドだけ」とは、もう言わなかった。": "That day too, Taro sat at the back table of the Anchor. He never said \"just one more hand\" again.", "LAST TELL　第二部　―完―": "LAST TELL — Part Two — The End", "今のが、俺のクセだ。昔、何度も読まれた。直さずに、取っておいた": "That was my tell. People read it many times, long ago. I never fixed it. I kept it.", "チップを全部取られたか。読み合いの前に、勝負が決まったな": "You took all my chips. The game was decided before any reading.", "だが、最後まで座っていたのは、お前だ": "But the one still sitting at the end was you.", "先に打った者が、話を決める": "Whoever bets first sets the story.", "顔は、手より先にしゃべる": "A face talks before the hand does.", "ジンゆずりの師匠": "A teacher in Jin's mold", "勝負は、席に着く前から始まっている": "The game starts before you even take your seat.", "配られた札は全部勝負、それがポーカーってもんよ！": "Play every hand you're dealt, that's what poker is!", "よう、錨亭の。弟子を取ったって、本当だったか": "Hey, from the Anchor. So you really took an apprentice.", "弱い手は降りろ。降りた回数を数えておけ。それがお前のためだ": "Fold your weak hands. Count how many times you fold. It's for your own good.", "賭ける前に、相手の顔を一回見ろ。顔は、手より先にしゃべる": "Before you bet, look at your opponent's face once. A face talks before the hand does.", "いい降り方だ。それでいい": "Good fold. Just like that.", "顔を見て降りたな。見事だ": "You folded after reading the face. Well done.", "錨亭の窓から、となりの港へ向かう朝の連絡船が見えた。": "From the Anchor's window, the morning ferry to the neighboring port came into view.", "勝っているときほど、やめどきが見えなくなる": "The more you're winning, the harder it is to see when to stop.", "ロクさんは、降りる前に一度、天井を見る。それを覚えてから打て": "Before Roku folds, he looks up at the ceiling once. Learn that, then bet.", "遊ぶ ▸": "Play ▸", "遊ぶ ◂": "Play ◂", "遊ぶ": "Play", "ゲームを終わる": "Quit game", "◂ 戻る": "◂ Back", "音と声": "Sound & voice", "画面": "Display", "卓": "Table", "遊び": "Gameplay", "操作": "Controls", "プレイヤー": "Player", "遊び方と設定": "How to play & settings", "音・画面・卓・操作など": "Sound, display, table, controls and more"},T=[["{0}段の縛り ▸", "Rank {0} handicap ▸"], ["{0}段の縛り {1}", "Rank {0} handicap {1}"], ["今のあなたの役：{0}", "Your hand now: {0}"], ["{0}テーブル目で力尽きた", "Ran out of steam at table {0}"], ["{0}に{1}段で勝った！", "Beat {0} at rank {1}!"], ["おかえりなさい、{0}さん", "Welcome back, {0}"], ["第{0}章", "Chapter {0}"], ["第{0}部 第{1}章", "Part {0} · Chapter {1}"], ["{0} 賭ける", "Bet {0}"], ["{0} に上げる", "Raise to {0}"], ["称号：{0}", "Title: {0}"], ["{0}（{1}番）", "{0} (No. {1})"], ["持ち点 {0}", "Chips {0}"], ["{0}の記録　あるある称号", "{0}'s Classic Titles"], ["→ {0}へ", "→ to {0}"], ["（{0}に）", "(to {0})"], ["読み：{0} → {1}", "Read: {0} → {1}"], ["いま、{0}がテーブルを叩いてから「ベット」と言いました", "Just now, {0} tapped the table, then said “Bet.”"], ["いま、{0}が大きいチップを1枚だけ、黙って出しました", "Just now, {0} silently put out a single big chip."], ["答え合わせ：{0}の話「{1}」は当たっていた", "Answer: {0}'s tip “{1}” was right"], ["答え合わせ：{0}の話「{1}」は外れていた", "Answer: {0}'s tip “{1}” was wrong"], ["{0}として打つ", "Playing as {0}"], ["{0}が手を見せてくれた", "{0} showed their hand"], ["ショーダウン：{0}", "Showdown: {0}"], ["「{0}」をもらった。「身なり」で着られる。", "Got “{0}”. You can wear it from “Look”."], ["{0}が脱落（残り {1} 人）", "{0} is out ({1} players left)"], ["あなたが飛ばした！　残り {0} 人", "You knocked them out! {0} players left"], ["残り {0} 人", "{0} players left"], ["{0}さん、ここまでです", "{0}, that's the end for you."], ["{0}は2回めくりを断った。1回だけめくります", "{0} declined to run it twice. Running it once."], ["動きが重いので、3D の画質を「{0}」に下げました（設定の「3D の画質」で戻せます）", "The game was running slowly, so 3D quality was lowered to “{0}” (change it back in Settings → 3D quality)"], ["第四部 第{0}章 {1}", "Part Four, Ch.{0}: {1}"], ["第四部 第{0}章", "Part Four, Ch.{0}"], ["第五部 第{0}章 {1}", "Part Five, Ch.{0}: {1}"], ["第五部 第{0}章", "Part Five, Ch.{0}"], ["第六部 第{0}章 {1}", "Part Six, Ch.{0}: {1}"], ["第六部 第{0}章", "Part Six, Ch.{0}"], ["第七部 第{0}章 {1}", "Part Seven, Ch.{0}: {1}"], ["第七部 第{0}章", "Part Seven, Ch.{0}"], ["合格の条件：{0}の「最後のクセ」が出たハンドで、降りること（チップを全部取っても合格）", "To pass: fold in the hand where {0} shows the last tell (taking all the chips also passes)"]];
+for(const k in D)if(!(k in EN_DICT))EN_DICT[k]=D[k];const have=new Set(EN_TPL.map(t=>t[0]));T.forEach(t=>{if(!have.has(t[0]))EN_TPL.push(t)})}
+
+// ブラウザ版へ PC 版の直しを移したときに足した字の英語（PC 版の英語 game/data/EN_GODOT.json に無いものだけ。2026-11-26）
+Object.assign(EN_DICT,{'第一部　ジン':'Part One: Jin','第二部　師匠':'Part Two: The Mentor','役の強さは、左上の「≡」→「役の一覧」でいつでも見られます':'Hand rankings are always under ≡ → "Hand rankings" at the top left.','新しい方が入ります':'A new player is joining.','チッ……ついてるだけだろ':'Tch... just lucky.','……覚えてろよ':'...I won\'t forget this.','はあ？ そこで来るかよ':'What? You hit THAT?'});
+EN_TPL.push(['{0}は、表情ひとつ変えない','{0} doesn\'t move a muscle.'],['{0}が席を立ち、{1}が空いた席に座った','{0} left the table. {1} took the empty seat.'],
+  ['{0}がチップを買い足した','{0} bought more chips.'],['{0}さん、チップを買い足します','{0} is buying more chips.']);
 
 // v66（テスター目線 10）：最初の言語。設定の保存が無い（初めて開いた）ときだけ、ブラウザの言語が日本語以外なら英語で始める
 const LANG0=(()=>{try{const r=localStorage.getItem('shisho-settings');if(r!==null){const o=JSON.parse(r)||{};return o.lang==='en'?'en':'ja'}}catch(e){return'ja'}
@@ -4308,7 +4326,7 @@ function rig(hands,board){
   S.deck=rest.concat(order.reverse());
 }
 function setupScript(){
-  S.scriptAI=null;S.autoMe=false;S.finalHand=false;
+  S.scriptAI=null;S.autoMe=false;S.finalHand=false;S.finalRaised=false;
   if(CFG.flashback&&flashOf()){flashScript(flashOf());return}
   if(CFG.flashback){
     rig({'若き日のジン':[C(12,'♠'),C(11,'♠')],'クロウ':[C(9,'♥'),C(9,'♣')]},[C(14,'♠'),C(7,'♠'),C(2,'♦'),C(4,'♣'),C(13,'♥')]);
@@ -4334,7 +4352,9 @@ function setupScript(){
         if(!S.released){S.released=true;
           S.tellSeq=(S.tellSeq||0)+1;p.tell={cue:'release',meaning:'strong',truth:'strong',street:'river',seq:S.tellSeq};p.tellLog.push(p.tell);
           cutIn('ジン','……',true)}
-        return tc>0?{type:'raise',to:p.bet+p.chips,state:'strong'}:{type:'raise',to:Math.min(p.bet+p.chips,Math.max(BB()*4,Math.round(pot/1000)*1000)),state:'strong'}}
+        // 上から全部は押し込まない（ポットまで）・上げ返しは1回まで（PC 版 scripts.gd。11/12 録画 61:12「相手のチップが減らない」：最後の1手のたびに全部の勝負になり、取ったチップがジンに戻っていた）
+        if(tc>0){if(S.finalRaised)return{type:'call',state:'strong'};S.finalRaised=true;return{type:'raise',to:Math.min(p.bet+p.chips,S.currentBet+Math.max(BB()*2,Math.round(pot/1000)*1000)),state:'strong'}}
+        return{type:'raise',to:Math.min(p.bet+p.chips,Math.max(BB()*4,Math.round(pot/1000)*1000)),state:'strong'}}
       if(S.street==='turn'&&tc===0)return{type:'raise',to:Math.max(BB()*2,Math.round(pot/2/1000)*1000),state:'strong'};
       return{type:'call',state:'strong'}};
   }
@@ -4768,11 +4788,11 @@ function showNotebook(tab){
     body+=mobNotes(n,cl);
   }else if(noteTab==='rules'){
     body=CHAPTERS.filter(c=>c.no<=cl+1).map(c=>{const ls=[].concat(c.intro,...(c.beats||[]).map(b=>b.lines)).filter(l=>!Array.isArray(l)&&l.lesson),h=HOUSE[c.house];
-      return`<article class="rcard"><h4>第${c.no}章　${esc(c.venue)}</h4>${h?`<p class="hr">店のルール：${esc(h.name)}（${esc(h.desc)}）</p>`:c.lore?`<p class="hr">${esc(c.lore)}</p>`:''}
+      return`<article class="rcard"><h4>第${c.no}章　${esc(c.venue)}</h4>${h?`<p class="hr">${c.house==='straddle'?'店のルール：強制ストラドル（ビッグブラインドの次の人は、配る前に必ずBBの2倍を置く。置いた人は、プリフロップで最後にアクションできる）':`店のルール：${esc(h.name)}（${esc(h.desc)}）`}</p>`:c.lore?`<p class="hr">${esc(c.lore)}</p>`:''}
         ${ls.map(l=>`<details><summary>${esc(l.lesson)}</summary><p>${esc(l.body)}</p></details>`).join('')}</article>`}).join('');
   }else if(noteTab==='words'){
     const got=loadTitles();
-    body=CHAPTERS.filter(c=>c.no<=cl).map(c=>{const ws=[].concat(c.intro,...(c.beats||[]).map(b=>b.lines),typeof c.outro==='function'?[]:c.outro).filter(l=>Array.isArray(l)&&l[0]==='ジン'&&l[1].length>=6&&!(l[2]&&l[2].tempt)).map(l=>l[1]);
+    body=CHAPTERS.filter(c=>c.no<=cl).map(c=>{const ws=[].concat(c.intro,...(c.beats||[]).map(b=>b.lines),typeof c.outro==='function'?(()=>{try{return c.outro()||[]}catch(e){return[]}})():c.outro).filter(l=>Array.isArray(l)&&l[0]==='ジン'&&l[1].length>=6&&!(l[2]&&l[2].tempt)).map(l=>l[1]);
       return`<article class="rcard"><h4>第${c.no}章　${esc(c.title)}</h4><ul>${ws.map(w=>`<li>「${esc(w)}」</li>`).join('')}</ul></article>`}).join('')
       +(()=>{const R=loadReview(),it=Object.keys(R.ch).sort((a,b)=>a-b).map(k=>[`第${k}章`,R.ch[k]]).concat(R.free?[['フリー対戦・裏のテーブル',R.free]]:[]);
         return it.length?`<article class="rcard"><h4>これまでの三行</h4>${it.map(([h,r])=>`<details><summary>${esc(h)}</summary><ol>${r.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></details>`).join('')}</article>`:''})()
@@ -5000,7 +5020,9 @@ function lineFor(name,kind){
   const arr=L[kind]||(kind.includes('_')?L[kind.split('_')[0]]:null)||D[kind.split('_')[0]]||[];
   return arr[Math.floor(Math.random()*arr.length)]||'';
 }
-const talkRate=name=>(LINES[name]&&LINES[name].rate)||.75;
+// 卓のひとことは前の 4 割（PC 版 talk_lines.gd TALK_MUL。10/26 録画 #40「対局中にそんなに喋らない」：打つたびに 75%→30% ほど）。ハルはさらに半分（10/25 テストプレイ 26）
+const TALK_MUL=.4,RATE_PC={"ハル":.38};
+const talkRate=name=>(RATE_PC[name]||(LINES[name]&&LINES[name].rate)||.75)*TALK_MUL;
 
 /* ---------- CPUの性格（参加・レイズ・ブラフ・降りやすさ） ---------- */
 const STYLES={
@@ -6141,9 +6163,10 @@ function askTwice(live,then){
   const fin=yes=>{if(done)return;done=true;clearTimeout(t);box.hidden=true;
     if(yes){const ok=Math.random()<(TWICE_CAREFUL.includes(opp.name)?.8:mannerOf(opp)?.2:.5);
       opp.say={seq:(S.saySeq=(S.saySeq||0)+1)+7000,act:'',line:ok?'いいだろう、2回だ':'1回で決めよう'};
-      if(ok)startTwice();else log(`${opp.name}は1回めくりを選んだ`)}
+      // 断ったのが吹き出しだけだと「2回めくりを選んだのに1回だった」に見えた（11/12 録画 63:15）。字幕とディーラーの声でも言う
+      if(ok)startTwice();else{log(`${opp.name}は1回めくりを選んだ`);S.msg=`${opp.name}は2回めくりを断った。1回だけめくります`;try{dealerSay('1回めくります')}catch(e){}}}
     then()};
-  const q1=twiceTermSeen?'オールインです。残りの場札を2回めくって、ポットを半分ずつ分けますか？':'オールインです。2回めくり（ランイットツワイス）にしますか？ 残りの場札を2回めくって、ポットを半分ずつ分けます。';twiceTermSeen=true;
+  const q1=twiceTermSeen?'オールインです。2回めくり（ランイットツワイス）を申し出ますか？ 相手が受けたときだけ、残りの場札を2回めくって、ポットを半分ずつ分けます。':'オールインです。2回めくり（ランイットツワイス）を申し出ますか？ 相手が受けたときだけ、残りの場札を2回めくって、ポットを半分ずつ分けます。';twiceTermSeen=true;
   box.innerHTML=`<div class="qin twicebox"><p class="qq">${q1}</p><div class="qopts"><button id="twY">2回めくる</button><button id="twN">1回でいい</button></div></div>`;
   box.hidden=false;$('twY').onclick=()=>fin(true);$('twN').onclick=()=>fin(false);
   const t=setTimeout(()=>fin(false),10000)}
@@ -6219,15 +6242,19 @@ function startHand(){nextvClear();if(typeof CFG!=='undefined'&&CFG)nvLamp();preA
   S.strdl=0;
   if(CFG.house==='straddle'&&alive>=3){
     const u=S.players[S.toAct];
-    const want=u.human?myStraddle:(u.chips>BB()*6&&Math.random()<.35);
+    // 物語の店（第5章「この店のルールはストラドルだ」）は強制ストラドル：BB の次の人は、自分も含めて必ず置く（PC 版 hand.gd straddle_forced。11/12 録画 11:40）
+    const forced=!!(CFG.ch&&CFG.ch.house==='straddle'&&!CFG.flashback);
+    const want=forced?u.chips>BB()*2:u.human?myStraddle:(u.chips>BB()*6&&Math.random()<.35);
     if(want){post(u,BB()*2);S.strdl=BB()*2;u.lastAct=`ストラドル ${fmt(BB()*2)}`;u.lastType='raise';
       log(`${u.name}：ストラドル ${fmt(BB()*2)}`);S.msg=`${u.name}がストラドル（${fmt(BB()*2)}）`;
       S.currentBet=Math.max(...S.players.map(p=>p.bet));S.minRaise=BB()*2;S.toAct=nextIdx(S.toAct,needs);if(!mq)mq='straddle'}
   }
-  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように、あごの傷に触れている……':'ジンは、あごの傷に触れている';
+  if(CFG.ch&&CFG.ch.no===7&&!S.msg)S.msg=S.finalHand?'ジンは、いつものように、あごの傷に触れている……':'ジンは、いつものように、あごの傷に触れている';   // ふだんも「いつものように」（11/12 録画 59:13：そのハンドのクセ（弱い）に読めた）
   const go=()=>{S.hold=startBanter();proceed()};
   mq?askQuiz(mq,go):go();
 }
+// 口の悪い人（マナーの悪い客・荒い人）は「ナイスハンド」と言わない（PC 版 game/data/TABLE_MANNERS.json の sour・sourLine。2026-11-12 録画）
+const NICE_SOUR={who:['ゴウ','カオル','ハヤト'],line:['チッ……ついてるだけだろ','……覚えてろよ','はあ？ そこで来るかよ']};
 /* ---------- ドキドキ演出 ---------- */
 // 1. オールイン後の勝率：残りの場札を全部（多いときは無作為に）試して数える
 function calcEq(){
@@ -6670,7 +6697,7 @@ function showdown(){
       if(me.score[0]>=7)grantTitle('quads');
       if(me.allIn)grantTitle('allin');
       const loser=cont.filter(q=>!q.human&&!q.won).pop();
-      if(loser&&!CFG.flashback){loser.say={seq:(loser.actSeq||0)+1000,act:'',line:'ナイスハンド'}}   // 負けた人に「降りるわ」（降りるときの台詞）を言わせていた（第6章の録画 #2）
+      if(loser&&!CFG.flashback){loser.say={seq:(loser.actSeq||0)+1000,act:'',line:NICE_SOUR.who.includes(loser.name)?NICE_SOUR.line[S.handNo%NICE_SOUR.line.length]:'ナイスハンド'}}   // 負けた人に「降りるわ」（降りるときの台詞）を言わせていた（第6章の録画 #2）
     }else{
       const ws2=cont.filter(q=>q.won>0);
       if(me.hand[0].r===14&&me.hand[1].r===14)grantTitle('aalose');
@@ -6692,13 +6719,16 @@ function showdown(){
 }
 function endHand(){if(S&&S.players){leakEnd();mobCount()}talkEnd();
   if(CFG.ch&&CFG.ch.script==='badbeat'&&(S.autoMe||(S.vf&&S.vf.bb))){S.autoMe=false;jinNote(Rules.kata.bbLine(S.players[0].hand,'jin'),1);
-    S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？'};render()}},1400*SPEED())}
+    S.twiceUnlocked=true;const te=S.players.find(q=>q.name==='テツ');if(te)setTimeout(()=>{if(S.handOver){te.say={seq:(S.saySeq=(S.saySeq||0)+1)+8000,act:'',line:'ひでえな。……次からは、2回めくるか？',must:true};render()}},1400*SPEED())}
   {const me=S.players[0];if(penOn()&&(S.myActs||[]).length&&(hasLesson('pen')?me.total-me.won>0:me.total-me.won>=BB()*10&&(S.penCount||0)<3))S.penReady=S.handNo}
   if(S.finalHand&&CFG.ch&&CFG.ch.p2)p2FinalEnd();
   else if(S.finalHand){const me=S.players[0];
     if(S.released&&me.folded&&S.street==='river'){S.finalRead=true;S.msg='ジンの最後のクセを読み切った';S.mietaNow={name:'ジン',cue:'release',big:true}}
-    else if(S.released&&!me.folded){jinNote('見えていたはずだ。……もう一度だ',3);if(!loadStory().alt)S.altEnd=true}
+    else if(S.released&&!me.folded){jinNote('見えていたはずだ。……もう一度だ',3);if(!loadStory().alt)S.altEnd=true;
+      // 一度しくじったら、合格の条件だけははっきり言う（どのクセかは言わない。PC 版 scripts.gd FINAL_RULE。11/12 録画 66:51）
+      S.msg=FINAL_RULE;log(FINAL_RULE)}
     else if(!S.released&&me.folded)jinNote('降りるのが早い。最後まで見ろ',3);}
+  scarHabit();
   if(CFG.ch&&CFG.ch.no===6&&!S.gouGone){const g=S.players.find(q=>q.name==='ゴウ');
     if(g&&g.chips<=0){S.gouGone=true;g.say={seq:(S.saySeq=(S.saySeq||0)+1)+5000,act:'',line:'ディーラーのせいだ！今の配り方はおかしいだろ！'};
       log('フロアの黒田が来て、ゴウを静かに店の外へ案内した');const cr=S.players.find(q=>q.name==='クロウ'&&!q.out);
@@ -7144,8 +7174,8 @@ function startBanter(){
   const B=bState(),talk=talkSet(),h0=S.handNo,ok=()=>!S.handOver||S.handNo===h0;
   if(sil&&sil.length){B.last=S.handNo;return bSay(sil,ok)}
   let pick=null;
-  if(rx&&talk!=='off'&&Math.random()<.7)pick=bReactPick(rx);
-  if(!pick&&B.rest!==S.handNo&&B.last!==S.handNo-1&&Math.random()<.35){
+  if(rx&&talk!=='off'&&Math.random()<.7*.5)pick=bReactPick(rx);   // ハンドの頭の掛け合いは前の半分（PC 版 banter.gd bmul。10/26 録画 #40）
+  if(!pick&&B.rest!==S.handNo&&B.last!==S.handNo-1&&Math.random()<.35*.5){
     // 案3：候補があれば 40% で優先。ただし、ふだんの組より何度も見ているときは譲る（同じ組がすぐ繰り返さないように）
     const A=bAny(),z=bLoad(),sn=b=>+z.seen[b.id]||0,am=A.length?Math.min(...A.map(sn)):1e9;
     if(talk!=='off'){const P=bProg().filter(b=>sn(b)<=am);if(P.length&&Math.random()<.4)pick=bLeast(P)}
@@ -7167,7 +7197,7 @@ function bDetect(){
     if(bp&&((sd&&!bp.folded&&bp.show)||(bp.folded&&S.aggr===0)))r={k:'meboss',s:bp.name}}
   if(!r&&sd&&S.runout&&S.board.length===5&&one){const live=P.filter(p=>!p.folded&&p.hand&&p.hand.length===2&&p.show);
     if(live.length>=2){const t=p=>bestN(p.hand.concat(S.board.slice(0,4)));if(live.some(q=>q!==one&&cmp(t(q),t(one))>0))r={k:'suckout',s:one.human?'':one.name}}}
-  if(!r&&sd&&S.aggr>0){const ag=P[S.aggr];if(ag&&!ag.human&&ag.show&&!ag.mucked&&!ag.folded&&ag.score&&ag.score[0]<=1)r={k:'bluff',s:ag.name}}
+  if(!r&&sd&&S.aggr>0){const ag=P[S.aggr];if(ag&&!ag.human&&ag.show&&!ag.mucked&&!ag.folded&&ag.score&&ag.score[0]<=1&&!(ag.won>0))r={k:'bluff',s:ag.name}}   // ブラフが開いて負けたときだけ（PC 版 2026-11-08 録画 #27）
   if(!r&&pot>0&&tot>0&&pot>=tot*.4){const w=won.slice().sort((a,b)=>b.won-a.won)[0];r={k:'bigpot',s:w.human?'':w.name}}
   if(!r&&B.streak&&B.streak.n>=3){r={k:'streak',s:B.streak.name};B.streak=null}
   if(!r&&sd&&!S.board2&&won.length>=2&&won.every(w=>w.score&&cmp(w.score,won[0].score)===0))r={k:'split',s:''};
@@ -7318,7 +7348,9 @@ function senseiLine(){
   if(CFG.hint==='bluff'){
     if(S.street==='preflop')return'フロップを見てから仕掛けろ。安く入れるなら参加していい。';
     const weak=isWeak(me.hand,S.board);
-    if(weak&&toCall<=0)return'何もない。だが相手も迷っている。賭けてみろ。';
+    if(weak&&toCall<=0){   // 「賭けてみろ」は相手が1人か、ブラフの場面だけ。額はポットの半分ほど（PC 版 mentor.gd bluff_advice。2026-10-26 satou「助言どおりにオールインしたら全部取られた」）
+      const ls=S.lesson,scene=ls&&ls.h===S.handNo&&ls.kind==='bluff',opps=S.players.filter(p=>!p.human&&!p.folded&&!p.out).length;
+      return scene||opps<=1?'何もない。だが相手も迷っている。ポットの半分ほど賭けてみろ。全部は賭けるな。':'何もない。相手が二人以上いると、誰かが持っている。今回はチェックで様子を見ろ。'}
     if(weak)return'相手が打ってきた。今回は引け。';
     return'手ができた。普通に勝負しろ。';
   }
@@ -7410,6 +7442,22 @@ function tapFace(i){const p=S&&S.players&&S.players[i];if(tapBlocked(p,i))return
 $('busts').addEventListener('click',e=>{const b=e.target.closest('.bust');if(!b)return;tapFace(+b.id.replace('bust',''))});
 {const _sh=startHand;startHand=function(){const was=S&&S.players?S.players.map(p=>p.out):[];const r=_sh.apply(this,arguments);
   try{S.players.forEach((p,k)=>{if(was[k]&&!p.out)p.tapBack=S.handNo})}catch(e){}return r}}
+
+// 卓の吹き出しの交通整理（PC 版 game/scenes/table/seat_view.gd と同じ。2026-11-26 ブラウザ版へ移す）
+//   ・吹き出しの字からカッコ書き（「（メモをめくる）」「（セキに）」などのしぐさ・宛先）を外す（11/23 satou「会話の感じが削られる」。docs/繰り返し指摘 R5）
+//   ・同じ人の同じ文は 10 分のあいだ二度は出さない（11/23 録画 #29「ゲンがずっと同じことを言う」。R4）
+//   ・ほかの席の吹き出しが出ている間に来た、ふつうのひとことは出さない（10/25 テストプレイ「全員が同時に喋ってうるさい」）
+//   出す：物語の台本（must・st）・物語の一手（S.storyHand）・掛け合い（bt）
+const SAY_REPEAT_MS=600000,SAY_SAID={};
+function sayText(t){return String(t||'').replace(/\s*[（(][^（）()]*[）)]\s*/g,'').trim()}
+function sayFloorOk(p,i,sy){
+  const s=p.say,t=sayText(s.line);if(!t)return false;
+  const now=performance.now(),k=p.name+'|'+t;
+  if(!(s.bt||s.must||s.st||S.storyHand)){
+    if(SAY_SAID[k]&&now-SAY_SAID[k]<SAY_REPEAT_MS)return false;
+    const busy=[...document.querySelectorAll('#sayLayer .say.go,#plates .say.go')].some(o=>o!==sy&&now-(o._t||0)<2800&&LT.sayOn(o));
+    if(busy)return false}
+  SAY_SAID[k]=now;return true}
 
 /* ---------- 描画 ---------- */
 function cardHTML(c,hidden,extra){
@@ -7562,9 +7610,10 @@ function render(){
     const sy=$('say'+i),pl=$('plate'+i);
     if(p.say&&sy.dataset.seq!==S.handNo+':'+p.say.seq){sy.dataset.seq=S.handNo+':'+p.say.seq;
       const tk=p.name==='タケル';if(tk&&p.say.line&&p.say.line[0]==='（'&&!p.say.line.startsWith('（メモ）')){S.msg=TK_GEST[p.say.line]||('タケル'+p.say.line);sy.classList.remove('go','memo')}
-      else if(p.say.line){sy.classList.toggle('memo',tk);sy.textContent=tk?p.say.line.replace(/^（メモ）/,''):p.say.line;if(p.say.sub){const sm=document.createElement('small');sm.className='rd';sm.textContent=p.say.sub;sy.appendChild(sm)}sy._ax=sy._ay=0;sy.classList.remove('go');sy.classList.toggle('bt',!!p.say.bt);sy.classList.toggle('long',!!p.say.bt&&p.say.line.length>=20);sy.style.clipPath='';if(p.say.bt){const cp=getComputedStyle(sy).clipPath;if(cp&&cp.startsWith('polygon'))sy.style.clipPath=cp.replace(/([ ,(])82%/g,(m,a)=>a+'calc(100% - 9px)').replace(/([ ,(])18%/g,(m,a)=>a+'9px')}void sy.offsetWidth;sy.classList.add('go');p.sayAt=sy._t=performance.now();if(camState.i===i&&camState.kind==='mid')camTo(i,'mid')}
+      else if(p.say.line&&!sayFloorOk(p,i,sy))sy.classList.remove('go');
+      else if(p.say.line){sy.classList.toggle('memo',tk);sy.textContent=sayText(tk?p.say.line.replace(/^（メモ）/,''):p.say.line);if(p.say.sub){const sm=document.createElement('small');sm.className='rd';sm.textContent=p.say.sub;sy.appendChild(sm)}sy._ax=sy._ay=0;sy.classList.remove('go');sy.classList.toggle('bt',!!p.say.bt);sy.classList.toggle('long',!!p.say.bt&&p.say.line.length>=20);sy.style.clipPath='';if(p.say.bt){const cp=getComputedStyle(sy).clipPath;if(cp&&cp.startsWith('polygon'))sy.style.clipPath=cp.replace(/([ ,(])82%/g,(m,a)=>a+'calc(100% - 9px)').replace(/([ ,(])18%/g,(m,a)=>a+'9px')}void sy.offsetWidth;sy.classList.add('go');p.sayAt=sy._t=performance.now();if(camState.i===i&&camState.kind==='mid')camTo(i,'mid')}
       if(!p.say.talk){pl.classList.add('flash');setTimeout(()=>pl.classList.remove('flash'),700)}}
-    pl.className='plate'+(turn?' turn':'')+(!p.out?' countable':'')+(pl.classList.contains('flash')?' flash':'');pl.title=approxOn()?'タップでチップを見る・ディーラーが数えます':'タップでチップを見る';
+    pl.className='plate'+(turn?' turn':'')+(!p.out?' countable':'')+(p.folded&&!p.out?' pfold':'')+(S.street==='showdown'&&!p.folded&&!p.out&&p.show?' psd':'')+(pl.classList.contains('flash')?' flash':'');pl.title=approxOn()?'タップでチップを見る・ディーラーが数えます':'タップでチップを見る';
     const ph=`<span class="nm">${esc(p.name)}<span class="stars">${stars(rankOf(p.name))}</span>${SHIP[p.name]&&!CFG.ch?`<small class="lang">${SHIP[p.name].lang}</small>`:''}</span>
       <span class="chp">${p.counting?'数えています…':approxOn()&&!p.out&&p.chips>0&&p.counted!==p.chips?'約'+approx(p.chips):fmt(p.chips)}</span>${tag}${N()>=4&&S.dealer===i?'<span class="dbadge" title="ディーラー">D</span>':''}${p.hname?`<span class="handname">${p.hname}</span>`:''}${eqBadge(p)}`;
     // 書かなかった時：名前を隠している間（33_names の nmAfterRender）に .nm から消えた .lang だけ戻す（名前を出す時に .lang を使うため）
@@ -7583,7 +7632,9 @@ function render(){
     else{rc=false;if(L&&L.body&&L.hand===S.handNo&&!S.handOver)tx='自分のチップをちらっと見た'}
     if(tx&&typeof whoText==='function')tx=whoText(tx);   // 名乗っていない相手は呼び名で
     t.hidden=!tx;t.classList.toggle('read',rc);if(tx&&t.textContent!==tx)t.textContent=tx}
-  {const b2=$('board2');if(S.board2){const k2=S.board2.map(cardStr).join();if(b2.dataset.k!==k2){b2.innerHTML=S.board2.map(c=>cardHTML(c)).join('');b2.dataset.k=k2}b2.hidden=false}else if(!b2.hidden){b2.hidden=true;b2.dataset.k=''}}
+  {const b2=$('board2');if(S.board2){const k2=S.board2.map(cardStr).join();if(b2.dataset.k!==k2){b2.innerHTML=S.board2.map(c=>cardHTML(c)).join('');b2.dataset.k=k2;
+    // 共通の場札は 2 列目に並べ直さない（めくり直した札だけを、1 列目のその札の向こうに。PC 版 #179、11/23 録画 指摘 2「同じ K♣ が 2 枚」）
+    const nb=(S.twiceBase||[]).length;[...b2.children].forEach((e,k)=>{if(k<nb){e.style.visibility='hidden';e.setAttribute('aria-hidden','true')}})}b2.hidden=false}else if(!b2.hidden){b2.hidden=true;b2.dataset.k=''}}
   if($('boardCards').dataset.k!==bk||!S.board.length){$('boardCards').innerHTML=[0,1,2,3,4].map(k=>S.tease&&k===S.board.length?cardHTML({},true,' tease'):cardHTML(S.board[k])).join('');$('boardCards').dataset.k=bk}
   const pot=potTotal()-S.players.reduce((a,p)=>a+p.bet,0);
   const paid=S.handOver&&S.players.some(p=>p.won>0);
@@ -8544,10 +8595,10 @@ setInterval(tipTick,250);
 document.addEventListener('pointerdown',e=>{if(tipK&&performance.now()-tipAt>250&&(!tipKeep||(e.target.closest&&e.target.closest('#controls'))))tipHide()},true);
 LT.on('act',i=>{if(i===0&&tipKeep)tipHide()});
 addEventListener('resize',()=>{if(tipK)tipPlace()});
-// はじめての人：第1章の最初のハンドが終わったら、役の一覧を1回だけ開く
+// はじめての人：第1章の最初のハンドが終わったら、役の一覧の場所を1行で知らせる（1回だけ。勝手に開くと次のハンドの邪魔になる：PC 版 table_guide.gd）
 setInterval(()=>{try{if(typeof S==='undefined'||!S||!S.players||!S.handOver||S.handNo<1||$('game').hidden)return;
   if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.ch.no!==1||CFG.ch.p2||CFG.flashback)return;const g=guideGet();if(g.novice!==true||g.handsShown)return;
-  if(['vs','quiz','help','setPanel','cutin','mieta','tour'].some(id=>$(id)&&!$(id).hidden))return;guideSet({handsShown:1});showHelp('hands')}catch(e){}},600);
+  if(['vs','quiz','help','setPanel','cutin','mieta','tour'].some(id=>$(id)&&!$(id).hidden))return;guideSet({handsShown:1});S.msg='役の強さは、左上の「≡」→「役の一覧」でいつでも見られます';render()}catch(e){}},600);
 // 「ポーカーは初めて？」：タイトルの「ストーリー」から初めて始めるときだけ（1回だけ聞く）
 // 改善提案 第5回 §1：最初の注意書き（#firstNotice の文をそのまま）も、この箱の上に一緒に出す。only=true は注意書きだけ（フリー対戦などから始める人）
 function askNovice(go,only){const seen=!!SETTINGS.seenNotice,ask=!only&&guideGet().novice===undefined;if(!ask&&seen)return go();
@@ -8777,12 +8828,15 @@ if(SETTINGS.look)SETTINGS.look=lookClean(SETTINGS.look);
 /* ---- 場面：〈主〉の置き換えと、主人公の行（名乗る・身なり・服） ---- */
 {const _ps=playScene;playScene=function(ch,lines,done){
   const got=+SETTINGS.fitNote||0,cl=loadCleared();
-  lines=(lines||[]).filter(l=>!(l&&l.gotFit&&(got>=l.gotFit||cl<l.gotFit)));   // 写しを渡す（〈主〉は表示の直前に置き換える）
+  lines=(lines||[]).filter(l=>!(l&&l.gotFit&&(got>=l.gotFit||cl<l.gotFit)));
+  // 章をえらぶで第2章より後から始めても、名前を一度だけ聞く（PC 版 2026-11-08 録画 #44。第1章で聞いた人・自分で決めた人には聞かない）
+  try{if(!SETTINGS.askedName&&!SETTINGS.hero&&ch&&CHAPTERS.includes(ch)&&ch.no>=2&&lines.some(l=>Array.isArray(l)&&typeof l[1]==='string'&&l[1].includes('〈主〉')))
+    lines=[['ジン','……お前は'],{askName:1}].concat(lines)}catch(e){}   // 写しを渡す（〈主〉は表示の直前に置き換える）
   return _ps.call(this,ch,lines,done)}}
 function heroLine(l){const st=$('stage'),bx=$('box');
   if(l.askName){setStage('ジン');SC.askPending=true;
     bx.innerHTML=`<div class="askname"><label class="askl" for="askHero">名前</label><input id="askHero" type="text" autocomplete="off" enterkeyhint="done" data-noi18n value="${esc(heroName())}" aria-label="主人公の名前"><button class="primary" id="askGo">名乗る</button></div>`;
-    const inp=$('askHero'),go=e=>{if(e)e.stopPropagation();const v=cleanNick(inp.value);SETTINGS.hero=v&&v!==HERO&&v!==HERO_EN?v:'';saveSettings();SC.askPending=false;advance()};
+    const inp=$('askHero'),go=e=>{if(e)e.stopPropagation();const v=cleanNick(inp.value);SETTINGS.hero=v&&v!==HERO&&v!==HERO_EN?v:'';SETTINGS.askedName=1;saveSettings();SC.askPending=false;advance()};
     bx.querySelector('.askname').onclick=e=>e.stopPropagation();
     $('askGo').onclick=go;inp.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'&&!e.isComposing){e.preventDefault();go()}};
     if(!(matchMedia&&matchMedia('(pointer:coarse)').matches))setTimeout(()=>{if($('askHero'))$('askHero').focus({preventScroll:true})},0);
@@ -8900,7 +8954,7 @@ function duelCh59(){if(typeof CFG==='undefined'||!CFG||!CFG.ch||CFG.ura||CFG.run
   const no=CFG.ch.no;if(no!==4&&no!==5||!S||!S.players)return 0;
   const b=S.players.find(p=>!p.human&&p.name===FINAL_DUEL59[no].boss);return b&&(b.chips>0||CFG.refill)?no:0}
 const duelBoss59=()=>{const no=duelCh59();return no?S.players.find(p=>!p.human&&p.name===FINAL_DUEL59[no].boss):null};
-function say59(p,line){if(p&&line)p.say={seq:(S.saySeq=(S.saySeq||0)+1)+9900,act:'',line}}
+function say59(p,line){if(p&&line)p.say={seq:(S.saySeq=(S.saySeq||0)+1)+9900,act:'',line,st:true}}
 // 勝利判定の手前（endHand）。第4章：一騎打ちで見抜いたときだけ。第5章：一騎打ちでハヤトのチップを取ったときだけ
 function duelGate59(){const no=duelCh59();if(!no||S.duelDone)return true;const me=S.players[0],g=CFG.goal;
   if(S.duelHand){if(no===4||me.won>me.total){S.duelDone=true;S.finalDuel=false;return true}return false}
@@ -11165,8 +11219,9 @@ function awCall(i,type,toCall){
   let t;
   if(en){const head=known?((typeof EN_DICT!=='undefined'&&EN_DICT[p.name])||p.name):`Seat ${i+1}`;
     t=head+', '+{fold:'fold',check:'check',call:'call',allin:'all-in',raise:bet==='bet'?`bet ${fmt(p.bet)}`:`raise to ${fmt(p.bet)}`}[kind]}
-  else{const head=nm+(known||nm===p.name?'さん':'の方');
-    t=head+'、'+{fold:'フォールド',check:'チェック',call:'コール',allin:'オールイン',raise:(bet==='bet'?'ベット ':'レイズ ')+fmt(p.bet)}[kind]}
+  else{// 名前を知らない相手は呼ばない（「赤い上着の方、レイズ」とは本物の卓では言わない。PC 版 2026-11-08 録画 #22）
+    const w={fold:'フォールド',check:'チェック',call:'コール',allin:'オールイン',raise:(bet==='bet'?'ベット ':'レイズ ')+fmt(p.bet)}[kind];
+    t=known?nm+'さん、'+w:w}
   dealerSay(t);
   // 席番号を小さく頭に（.llseats の番号と同じ）。英語で「Seat 3」と言うときは重なるので付けない
   try{const d=$('dcall');if(d&&!CFG.flashback&&!(en&&!known)){const sn=document.createElement('span');sn.className='sn';sn.textContent=String(i+1);d.prepend(sn);if(typeof dcallPlace==='function')dcallPlace()}}catch(e){}
@@ -11221,13 +11276,14 @@ LT.on('startHand:before',()=>{if(S)S.vf={h:S.handNo+1}});
 // ===== A1：第5章の AA のハンド。「自動でコールしたことになった」→ 自分で押す =====
 // オールインを受けるかは自分で決める（降りる・上げるは出さない。押せるのは「オールイン」だけ）。手札・場札・勝ち負けは今のまま
 const vfBadbeat=()=>!!(CFG&&CFG.ch&&!CFG.ch.p2&&CFG.ch.script==='badbeat'&&S&&S.handNo===1&&!CFG.flashback);
-LT.on('startHand',()=>{try{if(vfBadbeat()&&S.autoMe)S.msg=Rules.kata.bbLine(S.players[0].hand,'deal')}catch(e){}});
+// 2026-11-26（PC 版 #126、11/12 録画 10:17「フォールドが押せない」・10:31「負けが決まっているならそう見せる」）：
+// コールだけ押せるボタンは「選ばされて負ける」に見えたので、はじめから【見るだけの1手】と出して、ボタンは出さずに自動で受ける（結果は台本のまま）
+LT.on('startHand',()=>{try{if(vfBadbeat()&&S.autoMe){S.msg=WATCH_HEAD+Rules.kata.bbLine(S.players[0].hand,'deal')}}catch(e){}});
 LT.on('render',()=>{try{
   // 隠した「レイズ」は、ほかの描き直し（renderControls）では戻らないので、ここで戻す。戻さないと第5章の残りと回想（押せるのが「レイズ」だけ）で進めなくなる（v0.92.3）
   {const rb=$('btnRaise');if(rb&&rb.dataset.vfHid&&!(S&&S.vf&&S.vf.ask&&S.toAct===0&&!S.handOver)){rb.hidden=false;delete rb.dataset.vfHid}}
   if(!vfBadbeat()||S.handOver)return;const me=S.players[0];
-  if(S.autoMe&&S.toAct===0&&S.currentBet>me.bet&&!S.vf.ask){S.vf.ask=true;S.vf.bb=true;S.autoMe=false;S.msg=Rules.kata.bbLine(me.hand,'ask');
-    requestAnimationFrame(()=>{try{render()}catch(e){}})}
+  if(S.autoMe&&S.toAct===0&&S.currentBet>me.bet&&!S.vf.bb){S.vf.bb=true;S.msg=WATCH_HEAD+'ハヤトのオールイン。ジン「受けろ。……結果は、もう決まっている」'}
   const ask=!!S.vf.ask&&S.toAct===0;
   ['btnFold','btnRaise','quick','raisePanel'].forEach(id=>{const b=$(id);if(b&&ask){if(id==='btnRaise'&&!b.hidden)b.dataset.vfHid='1';b.hidden=true}});
   $('controls').classList.toggle('vfone',ask);
@@ -11277,12 +11333,12 @@ TIPS.act='フォールド＝降りる。コール＝同じ額を払って続け�
 // ===== A7・A8：勝ち負けと役を、ディーラーの言葉と卓の上の一行で =====
 // ライブのディーラーは「フラッシュで、○○さんの勝ちです」と言う。テレビ風の大きな札（.wstamp）は出さないまま
 function vfName(p){if(p.human)return VF.en()?'You':'あなた';const n=typeof who==='function'?who(p.name):p.name;
-  if(VF.en())return(typeof EN_DICT!=='undefined'&&EN_DICT[n])||n;return n+((typeof knownName!=='function'||knownName(p.name))?'さん':'の方')}
+  if(VF.en())return(typeof EN_DICT!=='undefined'&&EN_DICT[n])||n;return (typeof knownName!=='function'||knownName(p.name))?n+'さん':''}   // 知らない相手は呼ばない（PC 版 call_head）
 function vfHand(p){const h=p.hname||(p.score?handName(p.score):'');return VF.en()?((typeof EN_DICT!=='undefined'&&EN_DICT[h])||h):h}
 potCall=function(){const ws=S.players.filter(p=>p.won>0);if(!ws.length)return;
   const sd=S.street==='showdown'&&ws.every(p=>p.show&&p.score&&!p.folded)&&!S.board2,en=VF.en();let t;
-  if(sd&&ws.length===1){const w=ws[0],h=vfHand(w);t=en?`${w.human?'You win':vfName(w)+' wins'} with ${h}`:`${h}で、${vfName(w)}の勝ちです`}
-  else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):'ポットは'+ws.map(w=>w.human?'あなた':w.name+'さん').join('と')+'へ';
+  if(sd&&ws.length===1){const w=ws[0],h=vfHand(w);const nm=vfName(w);t=en?`${w.human?'You win':(nm||'Seat '+(S.players.indexOf(w)+1))+' wins'} with ${h}`:(nm?`${h}で、${nm}の勝ちです`:`${h}の勝ちです`)}
+  else t=en?'Pot goes to '+ws.map(w=>w.human?'you':vfName(w)).join(' and '):(ws.every(w=>w.human||vfName(w))?'ポットは'+ws.map(w=>w.human?'あなた':vfName(w)).join('と')+'へ':'ポットはこちらへ');
   dealerSay(t);Sound.sfx(ws.some(w=>w.human)?'win':'chip')};
 // .vfres が札（場札・自分の札・見せた札）にかかっているか。かかっていたら置き直す（場札も見る：v0.97.5 CI）
 // v0.97.5 CI：6人卓の縦で、帯が前の「オールイン！」の吹き出しにかかったまま残った。帯を置き直しても重なるなら、読み終わった吹き出しのほうを下げる（読みかけは切らない）
@@ -12101,7 +12157,10 @@ function dmSeats(){const dead=!!CFG.levels&&S.bbSeat>=0&&S.players[S.bbSeat]!=nu
 // 手札1人分を、山から ok を満たす2枚と入れ替える（元の2枚は山の底へ）
 function dmSwap(p,ok){const D=S.deck,k=Rules.deal.pick(D,ok,dmRnd);if(!k)return false;const nw=[D[k[0]],D[k[1]]];D.splice(k[1],1);D.splice(k[0],1);D.unshift(...p.hand);p.hand=nw;return true}
 // 弱い手が続いたとき、次は遊べる手以上にする回数（第1章は2回まで続いてよい）
-const dmWeakMax=()=>CFG.ch&&!CFG.ch.p2&&CFG.ch.no===1?2:1;
+// 第一部の第1章（はじめての人の章）。配りの手助けを強く残すのはここだけ（PC 版 deal_mods.gd first_ch）
+const dmFirstCh=()=>!!(CFG.ch&&!CFG.ch.p2&&!CFG.ch.px&&CFG.ch.no===1);
+// 第1章のほかは、弱い手が 3 回続いてから（11/23 録画 指摘 31：弱い手のあと毎回いい手が来るので、ほぼ全部参加した方が得だった）
+const dmWeakMax=()=>!dmFirstCh()?3:2;
 const dmNeedPlay=()=>(S.weakRun||0)>=dmWeakMax();
 
 // ===== 手札：強い手（第6章・第14章。中身は js/51_play6_fixes.js） =====
@@ -12119,7 +12178,7 @@ LT.on('startHand',()=>{try{if(!LT.dealOk('board'))return;const me=S.players[0];i
 
 // ===== 案1・§7 C lessonScene：章の目標の場面（第2・3・4章と第二部第2章。3ハンドのうち2ハンド） =====
 function lessonKind(){const ch=CFG.ch,g=CFG.goal;if(!ch||!g)return'';
-  if(!(ch.p2?ch.p2===2:[2,3,4].includes(ch.no)))return'';
+  if(!(ch.p2?true:[2,3,4].includes(ch.no)))return'';   // 第二部は目標の種類で決める（11/23 組み直しでスチールの章が第2→3章に動いた）
   const t=g.type,n=t==='steal'?S.steals:t==='bluff'?S.bluffs:t==='readcall'?(S.reads||0):-1;
   return ['steal','bluff','readcall'].includes(t)&&n>=0&&n<(g.n||0)?t:''}
 function lessonScene(){const kind=lessonKind();if(!kind||S.handNo%3===0)return false;
@@ -12127,21 +12186,41 @@ function lessonScene(){const kind=lessonKind();if(!kind||S.handNo%3===0)return f
   const st=dmSeats(),opps=ps.filter(p=>!p.out&&!p.human);if(!opps.length)return false;
   if(kind==='steal'){   // 自分がボタン（3人卓では最初に動く）のとき、ブラインドの人に弱い手
     if(st.dealer!==0)return false;let ch=false;
-    [st.sb,st.bb].filter((j,k,a)=>j>0&&a.indexOf(j)===k).forEach(j=>{const p=ps[j];if(p&&!p.out&&preTier(p.hand)>0&&dmSwap(p,h=>preTier(h)===0))ch=true});
+    // 自分より先に打つ人と SB・BB の全員を、とても弱い手（ペアでも同じマークでもなく、上が 10 以下で間が 3 以上）にする（PC 版：5 人卓で先の人が参加していた）
+    const trash=h=>{const a=Math.max(h[0].r,h[1].r),b=Math.min(h[0].r,h[1].r);return a!==b&&h[0].s!==h[1].s&&a<=10&&a-b>=3};
+    ps.forEach((p,j)=>{if(j>0&&p&&!p.out&&!trash(p.hand)&&dmSwap(p,trash))ch=true});
     if(ch)S.lesson={kind,h:S.handNo};return ch}
   // bluff：自分が最後に動ける席（ボタン）。readcall：相手の1人に弱い手、自分にフロップで2番目か3番目のペア
-  const mine=kind==='readcall',who=mine?[me,...opps]:opps;if(kind==='bluff'&&st.dealer!==0)return false;
+  const mine=kind==='readcall';if(mine)return readcallScene();
+  // ブラフの場面は自分の手も配り直す：参加したくなる手（ペアでない）で、フロップに何も絡まない（PC 版。10/26 録画：配りの調整が自分に役を作っていた）
+  const meAir=kind==='bluff',who=meAir?[me,...opps]:opps;if(kind==='bluff'&&st.dealer!==0)return false;
   const need=dmNeedPlay(),pool=who.flatMap(p=>p.hand).concat(S.deck);
   for(let t=0;t<300;t++){const d=dmShuf(pool.slice()),hs=who.map(()=>[d.pop(),d.pop()]),f=Rules.deal.flop(d);
     const ok=mine?(hs.slice(1).some(h=>preTier(h)===0)&&Rules.deal.midPair(hs[0],f)&&(!need||preTier(hs[0])>=1)&&!DM_MINE.includes(dmKey(hs[0])))   // 直近3回と同じ2枚は配らない（§8-1）
+      :meAir?(preTier(hs[0])>=1&&hs[0][0].r!==hs[0][1].r&&Rules.deal.air(hs[0],f)&&hs.slice(1).every(h=>preTier(h)===0&&Rules.deal.air(h,f)))
       :(hs.every(h=>preTier(h)===0)&&hs.every(h=>Rules.deal.air(h,f)));
     if(ok){who.forEach((p,k)=>{p.hand=hs[k]});S.deck=d;S.lesson={kind,h:S.handNo};if(mine){DM_MINE.push(dmKey(hs[0]));DM_MINE.splice(0,DM_MINE.length-3)}return true}}
+  return false}
+// 第4章「嘘を見抜け」の場面（PC 版 readcall_scene。11/8 録画 指摘 14「相手が全然ブラフを打ってくれない」）：3 ハンドに 1 回、
+// 自分＝参加したくなる手でフロップに真ん中のペア、主役の 1 人＝参加したくなる手でフロップに何も絡まない（ブラフ役 S.lesson.bluffer）、
+// ほかの人＝参加しにくい手か、フロップに絡まない手。ブラフ役はチェックで回ってきたら小さめにブラフで賭ける（47_ch5to7.js lessonBluff）
+function readcallScene(){if(S.handNo%3!==1)return false;
+  const ps=S.players,me=ps[0],mains=[];ps.forEach((p,j)=>{if(j>0&&!p.out&&!p.extra&&p.chips>BB()*4)mains.push(j)});if(!mains.length)return false;
+  const bj=mains[Math.floor(dmRnd()*mains.length)%mains.length],who=[me,ps[bj],...ps.filter((p,j)=>j>0&&j!==bj&&!p.out)];
+  const pool=who.flatMap(p=>p.hand).concat(S.deck);
+  for(let t=0;t<2000;t++){const d=dmShuf(pool.slice()),hs=who.map(()=>[d.pop(),d.pop()]),f=Rules.deal.flop(d);
+    if(preTier(hs[0])<1||!Rules.deal.midPair(hs[0],f)||DM_MINE.includes(dmKey(hs[0])))continue;
+    if(preTier(hs[1])<1||!Rules.deal.air(hs[1],f))continue;
+    if(!hs.slice(2).every(h=>preTier(h)===0||preTier(h)===1&&Rules.deal.air(h,f)))continue;
+    who.forEach((p,k)=>{p.hand=hs[k]});S.deck=d;S.lesson={kind:'readcall',h:S.handNo,bluffer:bj};DM_MINE.push(dmKey(hs[0]));DM_MINE.splice(0,DM_MINE.length-3);return true}
   return false}
 LT.dealMod('lessonScene','hand',lessonScene,{ja:'章の目標',en:'chapter goal'});
 
 // ===== §7 B flopConnect：フロップを自分の手に絡める（フロップを配る前だけ。相手の手は変えない） =====
 function flopConnect(){const me=S.players[0];if(S.street!=='preflop'||S.board.length||!me||!inHand(me)||me.hand[0].r===me.hand[1].r||S.deck.length<8)return false;
-  if(LT.rand()>=.6)return false;
+  if(lessonKind()==='bluff')return false;   // ブラフの目標がまだのあいだは絡めない（役ができてブラフにならない）
+  const roll=LT.rand();if(!dmFirstCh())return false;   // 第一部の第1章だけ（11/23 録画 指摘 31「ほぼ100%参加した方が良さそう」）
+  if(roll>=.6)return false;
   const opps=S.players.filter(p=>p!==me&&inHand(p)),bl=S.lesson&&S.lesson.h===S.handNo&&S.lesson.kind==='bluff';
   // 第3章の目標の場面（相手に絡まない場札）と同じハンドなら、両方が合う並びだけ。合わなければ目標の場面のまま
   const ok=d=>{const f=Rules.deal.flop(d);return Rules.deal.connects(me.hand,f)&&(!bl||opps.every(p=>Rules.deal.air(p.hand,f)))};
@@ -12373,6 +12452,149 @@ function pcTouchRender(){if(!pcTouchOk())return;
       {duration:480*SPEED(),easing:'cubic-bezier(.22,.7,.28,1)'},pcTouchLay)}}
 LT.on('render',()=>{try{pcTouchRender()}catch(e){PCTOUCH.errors++;console.error('[pcTouch]',e)}});
 
+// 第5〜7章の遊びとルール（PC 版 #126「11/12 録画の優先度高」を 2026-11-26 にブラウザ版へ移す）
+const FINAL_RULE='合格の条件：ジンの「最後のクセ」が出たハンドで、降りること（ジンのチップを全部取っても合格）';
+const SCAR_HABIT='傷に触れるのは、いつものことだ。……それだけで、手は読めんぞ';
+const WATCH_HEAD='【見るだけの1手】';
+// 第7章のふだんのハンド：ジンが傷に触れたまま、役のある手を開いて勝ったら、一度だけ「触れるのはいつものこと」と言う
+// （11/12 録画 59:13「顎の傷に触れる＝弱いと思ったらストレートで負けた」。本当のクセ（最後の1手で指が離れる）は変えない・言わない）
+function scarHabit(){
+  const c=CFG.ch;if(!c||c.no!==7||c.p2||S.finalHand||S.scarSaid)return;
+  for(const p of S.players)if(p.name==='ジン'&&p.show&&p.won>0&&S.board.length>=5&&p.hand&&p.hand.length&&bestN(p.hand.concat(S.board))[0]>=1){
+    S.scarSaid=true;say59(p,SCAR_HABIT);log(`ジン「${SCAR_HABIT}」`);return}
+}
+// 第7章のジン「堅実」：フロップから先に賭けられたら、役も引きも無い手はほとんど降りる（1割5分だけ付いてくる）。最後の1手（台本）は台本のまま
+// （11/12 録画 56:55「弱いはずなのに即コールしてくる」）
+function jinSteady(i,d){
+  if(!d||d.type!=='call')return d;const c=CFG.ch,p=S.players[i];
+  if(!c||c.no!==7||c.p2||p.name!=='ジン'||S.finalHand||S.scriptAI)return d;
+  const tc=S.currentBet-p.bet;if(S.street==='preflop'||tc<=0||!isWeak(p.hand,S.board)||drawOf(p.hand,S.board))return d;
+  return Math.random()<.15?d:{type:'fold',state:'none'};
+}
+// 第4章「嘘を見抜け」のブラフ役：チェックで回ってきたら、何も無い手で小さめ（ポットの4〜6割）に賭ける（PC 版 cpu.gd lesson_bluff）
+function lessonBluff(i,d){
+  const ls=S.lesson;if(!ls||!d||ls.kind!=='readcall'||ls.h!==S.handNo||ls.bluffer!==i)return d;
+  const p=S.players[i],me=S.players[0];
+  if(S.street==='preflop'||d.type!=='call'||!inHand(me)||S.currentBet-p.bet!==0)return d;
+  if(p.chips<=BB()*2||!isWeak(p.hand,S.board)||Math.random()>=({flop:.6,turn:.55,river:.75}[S.street]||.5))return d;
+  const size=Math.max(BB(),Math.round(potTotal()*(.4+Math.random()*.2)/1000)*1000);
+  return{type:'raise',to:S.currentBet+Math.min(p.chips,size),state:'bluff'};
+}
+{const _cd=cpuDecide;cpuDecide=function(i){let d=_cd.apply(this,arguments);try{d=lessonBluff(i,d);d=jinSteady(i,d)}catch(e){}return d}}
+// トーナメントで相手が飛んだら「○○ 脱落・残り○人」の帯と音とディーラーの声（PC 版 knockout.gd。11/12 録画 34:52「勝っても演出がない」）。
+// 自分が最後の一人（優勝）は、卓の終わりの帯と物語の結末が受け持つので出さない
+LT.on('endHand',()=>{try{
+  if(!CFG.levels||CFG.flashback||S.result)return;
+  const me=S.players[0],left=S.players.filter(p=>p.chips>0).length;
+  for(const p of S.players){if(p.human||p.extra||p.chips>0||!(p.total>0)||p.koSaid)continue;
+    p.koSaid=true;const byMe=(me.won||0)>0;
+    log(`${p.name}が脱落（残り ${left} 人）`);
+    const c=$('cutin');if(c){c.querySelector('.cav').innerHTML=avatar(p.name,'sad');
+      c.querySelector('.ctext').innerHTML=`<b>${esc(p.name)}</b><span>${esc(tr('脱落'))}</span><p>${esc(tr(byMe?`あなたが飛ばした！　残り ${left} 人`:`残り ${left} 人`))}</p>`;
+      c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');setTimeout(()=>{c.hidden=true},1800)}
+    try{Sound.sfx('chip')}catch(e){}
+    try{dealerSay(`${p.name}さん、ここまでです`)}catch(e){}}
+}catch(e){console.error(e)}});
+
+// ===== 会話が「効いている」ように（PC 版 #115。11/8 録画 指摘 5・21） =====
+// 揺さぶったら、その場で相手が一言返す。賭けてきた人なら、顔にクセが出ることもある（前は相手が次に打つときだけ返したので、
+// 賭けられて自分が答える番では何も起きなかった。指摘 5「押しても何も起きない」）
+function needleReact(style){
+  const ag=S.aggr,order=[];if(ag>0&&inHand(S.players[ag]))order.push(ag);
+  for(let k=1;k<S.players.length;k++)if(!order.includes(k)&&inHand(S.players[k]))order.push(k);
+  const i=order.find(k=>!(S.players[k].name==='タケル'&&style!=='stare')&&!S.players[k].sitOut);
+  if(i===undefined){if(order.length)S.msg=`${S.players[order[0]].name}は、表情ひとつ変えない`;return}
+  const p=S.players[i],shown=p.tell&&p.tell.street===S.street;
+  if(i===ag&&!shown&&S.street!=='preflop'&&p.lastType==='raise'&&CFG.tells)showTell(i,{type:'raise',state:p.lastState||''});
+  const line=(p.faked===S.street&&FAKE_LINE[p.name])||needledLine(p);p.answered=true;
+  setTimeout(()=>{try{if(inHand(p)&&!S.handOver){talkSay(p,line,3000);render()}}catch(e){}},350);
+}
+{const _dn=doNeedle;doNeedle=function(style){const r=_dn.apply(this,arguments);try{if(style!=='night'&&S.needle===S.street&&!S.handOver)needleReact(style)}catch(e){console.error(e)}return r}}
+// 同じ人が同じ考える一言を、6 ハンドのうちにもう一度言わない（指摘 21「同じセリフ（この前の大会でさ）しか言わない」）
+{const _tl=thinkLine;thinkLine=function(p){const l=_tl.apply(this,arguments);try{const m=S.saidMem=S.saidMem||{},k=p.name+'|'+l;
+  if(l&&m[k]!=null&&S.handNo-m[k]<6)return'';m[k]=S.handNo}catch(e){}return l}}
+
+// ===== 飛んだ相手は席を立ち、店の常連が空いた席に座る（PC 版 seat_swap.gd。10/25・10/26 録画「飛ばした相手が戻ってくる」） =====
+// 補充のある章（第2〜4章）で相手のチップが無くなったら、その店の常連（MOBS の store＝章）が座る。ディーラー「新しい方が入ります」。
+// 打ち方（styleKey）は席のまま（章の目標の難しさを変えない）。物語に要る人（第4章のレイカ）は「チップを買い足します」で続ける
+const SWAP_KEEP={4:'レイカ',5:'ハヤト',7:'ジン'};
+function swapPick(no,used,k){const seated=S.players.map(q=>q.name);
+  for(const want of [st=>st===no,st=>st<no]){const c=Object.keys(MOBS).filter(m=>want(+(MOBS[m].store||0))&&!seated.includes(m)&&!used.includes(m));if(c.length)return c[((k%c.length)+c.length)%c.length]}
+  return''}
+LT.on('startHand:before',()=>{try{
+  const c=CFG.ch;if(!S||!S.players||!CFG.refill||!c||c.p2||CFG.ura||CFG.run||CFG.flashback)return;
+  const used=S.swapUsed=S.swapUsed||[];let said=false;
+  S.players.forEach((p,i)=>{if(p.human||p.extra||p.chips>0)return;
+    if(SWAP_KEEP[c.no]===p.name){p.chips=p.start;log(`${p.name}がチップを買い足した`);try{dealerSay(`${p.name}さん、チップを買い足します`)}catch(e){}return}
+    const nm=swapPick(c.no,used,S.handNo+i);if(!nm)return;const old=p.name;
+    Object.assign(p,{name:nm,chips:p.start,tilt:0,hname:'',hname2:'',show:false,won:0,label:'',tell:null,tellLog:[],say:null});used.push(nm);
+    log(`${old}が席を立ち、${nm}が空いた席に座った`);if(!said){said=true;try{dealerSay('新しい方が入ります')}catch(e){}}});
+}catch(e){console.error(e)}});
+
+// ===== 見せずに伏せた相手に「見せてもらう」（PC 版 table.gd show_mucked。10/25 テストプレイ 13：伏せるのは本物どおり、頼めば見られる） =====
+function askShowSync(){const nx=$('btnNext');if(!nx||!S||!S.players)return;let b=$('btnAskShow');
+  const ms=S.handOver&&!S.result?S.players.filter(p=>!p.human&&p.mucked&&!p.shownAsk&&p.hand&&p.hand.length===2):[];
+  if(!ms.length){if(b)b.hidden=true;return}
+  if(!b){b=document.createElement('button');b.id='btnAskShow';b.className='act';b.textContent='見せてもらう';nx.before(b);
+    b.onclick=()=>{b.hidden=true;S.players.forEach(p=>{if(!p.human&&p.mucked&&!p.shownAsk&&p.hand&&p.hand.length===2){p.shownAsk=true;p.show=true;p.mucked=false;
+      log(`${p.name}：${p.hand.map(cardStr).join(' ')}（${p.hname||'見せてもらった'}）`)}});render()}}
+  b.hidden=false}
+LT.on('render',()=>{try{askShowSync()}catch(e){}});
+LT.on('startHand',()=>{try{const b=$('btnAskShow');if(b)b.hidden=true}catch(e){}});
+
+// ===== 11/23 録画の指摘（PC 版 #179） =====
+// スチールの練習の場面で、プリフロップに自分（ボタン）が上げたら相手は降りる（指摘 32「舫のスチールが全然決まらない」：BB アンティでポットが大きく、とても弱い手でもコールしていた）
+function lessonSteal(i,d){const ls=S.lesson;if(!ls||ls.kind!=='steal'||ls.h!==S.handNo||S.street!=='preflop')return d;
+  const p=S.players[i];if(p.human||!d||d.type==='fold'||d.type==='check')return d;if(!S.players[0].human||S.aggr!==0)return d;
+  return Object.assign({},d,{type:'fold',to:0})}
+{const _cd=cpuDecide;cpuDecide=function(i){const d=_cd.apply(this,arguments);try{return lessonSteal(i,d)}catch(e){return d}}}
+// 目標（スチール・ブラフ・読んでコール）に届く前に、相手のチップを全部取って勝ったら、終わりの会話を「全部取った」言い方に（指摘 3）
+const OUTRO_SHORT={
+  2:{0:["ロク","……チップを全部持っていかれたか。ジンの打ち方とは、少しちがうな"],1:["ハル","おじさん、今の見た？ 降りないで、全部持っていったよ"]},
+  3:{0:["セキ","チップを全部取られてしまった。気持ちのいい負けだよ"],1:["セキ","まっすぐな打ち方だね。……怖くないのかね"]},
+  4:{0:["レイカ","……チップを全部取られるなんて久しぶり。ジンさんの弟子ね"]},
+  13:{0:["ロク","……チップを全部持っていかれたか。スチールより先に、こっちとはな"]},
+  33:{0:["ミチ","……チップを全部取られた。年かね"]},
+  42:{0:["ハヤト","……全部取られた。くそっ"],1:["ハヤト","お前、俺の顔ばっかり見てただろ"]},
+  52:{0:["若き日のショウ","……全部取られた。やるじゃねえか"]}};
+function goalShort(){try{const g=CFG.goal||{},have={steal:S.steals||0,bluff:S.bluffs||0,readcall:S.reads||0};return S.result==='win'&&g.type in have&&have[g.type]<(g.n||0)}catch(e){return false}}
+[...CHAPTERS,...PART2].forEach(c=>{const sh=OUTRO_SHORT[c.no];if(!sh)return;const o=c.outro;
+  c.outro=function(){const base=typeof o==='function'?o.apply(this,arguments):o;if(!goalShort()||!Array.isArray(base))return base;
+    const out=base.slice();for(const k in sh)if(k<out.length)out[k]=sh[k];return out}});
+// ===== 昔の場面の行は見出しの札を「15年前」に、今に戻った最初の行で「いま」（PC 版 2026-10-26 録画 #52「回想と決勝の話の時系列がややこしい」） =====
+{const _rl=renderLine;renderLine=function(){const r=_rl.apply(this,arguments);
+  try{const l=SC&&SC.lines[SC.i];if(!Array.isArray(l)||SC.ilOn)return r;const past=l[2]&&l[2].past||'',v=$('venue');
+    if(SC.nowMark&&SC.vh){v.innerHTML=SC.vh;SC.nowMark=0}
+    const vc=v&&v.querySelector('.vchip');
+    if(past){if(vc)vc.textContent=past;SC.wasPast=1}
+    else{if(SC.wasPast&&vc){vc.textContent='いま';SC.nowMark=1}SC.wasPast=0}}catch(e){}
+  return r}}
+
+// 章えらびをたたむ（PC 版 chapter_menu.gd _section。11/23 録画 指摘「章えらびが長い」）：
+//   ・部ごとに見出しを押して開く・たたむ（はじめは今遊んでいる部だけ開く）
+//   ・称号・裏のテーブル・お守りも見出しを押すと開く（はじめはたたむ。一度に開くのは 1 つ）
+const CHF={open:null,ex:''};
+function chFoldApply(){
+  const ch=$('chapters');if(!ch||ch.hidden)return;
+  const l1=$('chList'),p2=$('p2Box');if(!l1)return;
+  let h1=$('chHead1');if(!h1){h1=document.createElement('button');h1.id='chHead1';h1.className='chfold';l1.before(h1)}
+  const p2on=!!(p2&&!p2.hidden);h1.hidden=!p2on;
+  if(CHF.open==null)CHF.open=p2on?2:1;
+  const sh=(btn,body,n,label)=>{const on=CHF.open===n;btn.textContent=(on?'▼ ':'▶ ')+label;btn.setAttribute('aria-expanded',String(on));body.hidden=!on;
+    btn.onclick=()=>{CHF.open=CHF.open===n?0:n;chFoldApply()}};
+  if(p2on){sh(h1,l1,1,tr('第一部　ジン'));
+    let h2=$('chHead2'),l2=$('chList2'),pn=$('p2Note'),ph=p2.querySelector('.p2head');
+    if(!h2){h2=document.createElement('button');h2.id='chHead2';h2.className='chfold';p2.insertBefore(h2,p2.firstChild)}
+    if(ph)ph.hidden=true;sh(h2,l2,2,tr('第二部　師匠'));if(pn)pn.hidden=CHF.open!==2}
+  else l1.hidden=false;
+  ['uraBox','protBox','titleBox'].forEach(id=>{const b=$(id);if(!b)return;const h=b.querySelector('h3');if(!h)return;
+    h.classList.add('chfold');h.setAttribute('role','button');h.tabIndex=0;const on=CHF.ex===id;h.setAttribute('aria-expanded',String(on));
+    if(!h.dataset.fold){h.dataset.fold='1';const t=()=>{CHF.ex=CHF.ex===id?'':id;chFoldApply()};h.onclick=t;h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t()}}}
+    h.dataset.mark=on?'▼':'▶';[...b.children].forEach(c=>{if(c!==h)c.hidden=!on})});
+}
+LT.on('show',id=>{if(id==='chapters')try{chFoldApply()}catch(e){console.error(e)}});
+{const _sc=showChapters;showChapters=function(){const r=_sc.apply(this,arguments);try{chFoldApply()}catch(e){console.error(e)}return r}}
+
 // 自動で作るファイル（dev/tools/sync_godot.js --late）。手で直さない。
 // PC 版（Godot）の game/data を元に、後のファイルが足す表をその場で置き換える（Web だけの関数は残す）。
 function __gs(t,v){const o=x=>x&&typeof x==="object";if(Array.isArray(t)&&Array.isArray(v)){const r=v.map((x,i)=>typeof t[i]==="function"?t[i]:(o(t[i])&&o(x)&&Array.isArray(t[i])===Array.isArray(x)?__gs(t[i],x):x));t.length=0;t.push(...r);return t}if(o(t)&&o(v)){for(const k of Object.keys(t))if(!(k in v)&&typeof t[k]!=="function")delete t[k];for(const k of Object.keys(v))t[k]=typeof t[k]==="function"||String(v[k]).startsWith("__fn__:")&&k in t?(typeof v[k]!=="function"&&v[k]!=null&&!String(v[k]).startsWith("__fn__:")&&((t.__godot=t.__godot||{})[k]=v[k]),t[k]):(o(t[k])&&o(v[k])&&Array.isArray(t[k])===Array.isArray(v[k])?__gs(t[k],v[k]):v[k]);return t}return v}
@@ -12433,7 +12655,8 @@ function lessonDue(at){const me=S.players[0];if(!me||!me.hand||me.hand.length<2|
 function lessonNow(){const c=CFG&&CFG.ch;if(!S||!c||!c.lesson||typeof c.lesson!=='object'||CFG.flashback||uraLv()>0)return'';
   if(!S.tLessonDone&&lessonDue(String(c.lesson.at||''))){S.tLessonDone=true;S.tLessonAt=S.myTurnKey||''}
   return S.tLessonAt&&S.tLessonAt===(S.myTurnKey||'')&&S.toAct===0&&!S.handOver?String(c.lesson.body||''):''}
-{const _sl=senseiLine;senseiLine=function(){try{const ls=lessonNow();if(ls)return ls}catch(e){}return _sl.apply(this,arguments)}}
+// ジンのその場のひとこと（jinNote：クセの読める範囲など）が出ている間は待つ。教えは次に場面が来た番に出す（last-tell #166 CI：第4章で「レイカだけ」の説明が教えに消されていた）
+{const _sl=senseiLine;senseiLine=function(){try{if(!(S&&S.jinNote&&S.handNo<=S.jinNote.until)){const ls=lessonNow();if(ls)return ls}}catch(e){}return _sl.apply(this,arguments)}}
 // ジンのノート「店のルール」にも章の教えを並べる（会話から卓へ移したので intro には無い）
 {const _sn=showNotebook;showNotebook=function(){const r=_sn.apply(this,arguments);try{if(noteTab==='rules')document.querySelectorAll('#noteBody .rcard').forEach(a=>{const m=(a.querySelector('h4')||{}).textContent||'';const no=+(m.match(/第(\d+)章/)||[])[1];const c=CHAPTERS.find(x=>x.no===no);
   if(c&&c.lesson&&c.lesson.lesson&&!a.querySelector('details[data-ls]')){const d=document.createElement('details');d.dataset.ls=1;d.innerHTML=`<summary>${esc(c.lesson.lesson)}</summary><p>${esc(c.lesson.body)}</p>`;const h=a.querySelector('.hr');(h||a.querySelector('h4')).after(d)}})}catch(e){}return r}}
