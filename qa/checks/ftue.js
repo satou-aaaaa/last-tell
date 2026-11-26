@@ -19,8 +19,10 @@ async function run({ browser, file }) {
       while (Date.now() - t0 < 60000 && !(await page.evaluate(() => __bot.firstDecisionClicks !== undefined))) await page.waitForTimeout(150);
       const n = await page.evaluate(() => __bot.firstDecisionClicks);
       const total = n === undefined ? null : taps + n;
-      items.push({ id: 'ftue:taps', title: 'はじめての人が最初の判断まで5回以内で着く（クリエイター目線 S1）', status: total === null ? 'fail' : total <= 5 ? 'ok' : 'fail',
-        detail: total === null ? '最初の判断まで着かなかった' : `タイトルから ${total}回押して最初の判断（5回以内で合格）` });
+      // 2026-11-26 PC 版に合わせて、第1章の頭に港の倉庫の仕事帰りの 4 行が入った（10-25 テストプレイ 32 で satou が足した場面）。その 4 行と店の扉の 1 枚の分だけ上げた（5→10。11-26 に PC 版の表を写す前の main は 5 回）
+      const MAX = 10;
+      items.push({ id: 'ftue:taps', title: `はじめての人が最初の判断まで${MAX}回以内で着く（クリエイター目線 S1。第1章の倉庫の場面を含む）`, status: total === null ? 'fail' : total <= MAX ? 'ok' : 'fail',
+        detail: total === null ? '最初の判断まで着かなかった' : `タイトルから ${total}回押して最初の判断（${MAX}回以内で合格）` });
     } finally { await ctx.close() }
   }
   // S3：章の途中で閉じて開き直すと「続きから」が出る

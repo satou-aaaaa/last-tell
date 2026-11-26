@@ -4,6 +4,8 @@
 
 LAST TELL（最後のテル）のテスト公開用サイト。ゲーム本体は別の場所（`story/shisho.html`）で作り、ここには公開用のコピーを置く。更新の手順は README.md。
 
+- 2026-11-26 から、ゲームの元のファイルは非公開の satou-aaaaa/last-tell-godot の `web/`（PC 版の表を写す道具も）。そこで直して `bash web/tools/publish.sh <このリポジトリ>` で index.html を作る（このリポジトリは公開なので、元のファイルは入れない）。
+
 ## 準備（最初に一度）
 
 ```bash
