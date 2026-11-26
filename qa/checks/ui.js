@@ -364,9 +364,9 @@ async function shoot(browser, file, scene, vp, dir) {
       await page.evaluate(d => { S.dealer = d; render(); try { layoutSoon() } catch (e) {} }, d0); await page.waitForTimeout(400) }
     if (scene.measure === 'talkFace') face = await page.evaluate(() => { const f = document.querySelector('#stage .portrait svg'), b = $('box'); if (!f || !b) return null;
       const r = f.getBoundingClientRect(), q = b.getBoundingClientRect(); if (!r.height) return null; return Math.round(Math.max(0, Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top)) / r.height * 100) });
-    // ディーラーの呼び名：#dcall に席番号（.sn）と「〜さん／〜の方」が入っているか
+    // ディーラーの呼び名：#dcall に席番号（.sn）と「〜さん」が入っているか。名前を知らない客は呼ばない（PC 版と同じ、2026-11-26）ので、そのときは席番号だけでよい
     const call = scene.callCheck ? await page.evaluate(() => { const d = $('dcall'); if (!d) return null; const sn = d.querySelector('.sn');
-      return { go: d.classList.contains('go'), sn: sn ? sn.textContent : '', text: (d.textContent || '').trim().slice(0, 40), name: /(さん|の方)、/.test(d.textContent || '') } }) : null;
+      return { go: d.classList.contains('go'), sn: sn ? sn.textContent : '', text: (d.textContent || '').trim().slice(0, 40), name: /(さん|の方)、/.test(d.textContent || ''), known: (() => { try { const p = S.players[Number(sn && sn.textContent) - 1]; return !p || typeof knownName !== 'function' || knownName(p.name) } catch (e) { return true } })() } }) : null;
     // クセの読める範囲：印（.rsOnly）が出ていて 12px 以上、画面の外へ出ず、クセの札が顔・札・吹き出し・名札に重ならないか。師匠のひとことが1回出て、セーブに残るか
     // 改善提案 第11回 0-2：師匠のひとことは、はじめての人の案内（tipK）や帯の待ち（#sensei.mwait）の間は出ずに待つ（ゲームの仕様）。
     // 1回だけ測ると案内が出ている回だけ落ちるので、印の台詞が S.jinNote に入ってセーブに残るまで最大4秒待つ（100ms ごと）
@@ -600,8 +600,8 @@ async function run({ browser, file, outDir, baseline, parallel = 3 }) {
   // 見せた相手の札が見える（不透明度 0.9 以上・幅 8px 以上・動きが終わっている。高さは卓の奥行きで 22px ほどになる札もあるので見ない）（v0.97.3 レビュー：WebKit 6人卓の縦で、勝った相手の見せた札が透明・横向きのまま。状態で見るので WebKit でも ❌）
   for (const r of res) if (r.hs && !r.hs.err) { const x = r.hs; const bad = x.shownBad || [];
     items.push({ id: `ui:shown:${r.scene}:${r.vp}`, title: `見せた相手の札が見える（${r.scene}・${r.vp}）`, status: bad.length ? 'fail' : 'ok', detail: bad.length ? '見えない札：' + bad.slice(0, 4).join('、') + '（撮って1秒あと）' : '' }) }
-  for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが呼び名と席番号で言う（${r.vp}）`,
-    status: r.call && r.call.sn && r.call.name ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : '・呼び名なし') });
+  for (const r of res) if (r.call !== undefined && SCENES.find(s => s.key === r.scene).callCheck) items.push({ id: `ui:dcall:${r.vp}`, title: `ディーラーが席番号と呼び名（知っている客だけ）で言う（${r.vp}）`,
+    status: r.call && r.call.sn && (r.call.name || !r.call.known) ? 'ok' : 'fail', detail: !r.call ? '#dcall が無い' : `「${r.call.text}」` + (r.call.sn ? '' : '・席番号なし') + (r.call.name ? '' : r.call.known ? '・呼び名なし' : '（名前を知らない客なので呼ばない）') });
   for (const r of res) if (r.face != null && SCENES.find(s => s.key === r.scene).measure === 'talkFace') items.push({ id: `ui:talkFace:${r.scene}:${r.vp}`, title: `会話の話し手が箱に隠れない（${r.scene}・${r.vp}）`, status: r.face > 25 ? 'warn' : 'ok',
     detail: `話し手の絵の ${r.face}% が会話の箱に隠れている（目安 25%まで）` });
   // ライブポーカーらしい見た目（2026-10-15）の「できた」の条件。Chromium と WebKit の両方で回るように、ここから呼ぶ
