@@ -18,7 +18,11 @@ const LONG = 70; // 吹き出しで3行を超えそうな長さ
 
 // ゲームのファイルから台詞を全部取り出す：[話す人, 日本語, 英語にしたとき日本語が残るか]（lines_diff.js も使う）
 async function collect(browser, file) {
-  const src = fs.readFileSync(file, 'utf8');
+  const all = fs.readFileSync(file, 'utf8');
+  // PC 版の表で後から置き換える部分（web/tools/sync_godot.js --late の __gs(…)）は、前のファイルの同じ表の写し。
+  // 両方を数えると同じ台詞が 2 倍になり「使い回し」が数百件に増える（2026-11-26 #166）。置き換えの部分は別に数え、前より多い分だけ足す
+  const gs = all.indexOf('\nfunction __gs('); let src = all, late = '';
+  if (gs >= 0) { let e = gs + 1; for (;;) { const n = all.indexOf('\n', e); if (n < 0) { e = all.length; break } const nx = all.slice(n + 1, n + 16); if (!/^(__gs\(|Object\.assign\()/.test(nx)) { e = n; break } e = n + 1 } late = all.slice(gs, e); src = all.slice(0, gs) + all.slice(e) }
   const { ctx, page } = await H.openGame(browser, file, { storage: H.UNLOCKED, lang: 'en' });
   let speakers, lines;
   try {
@@ -27,6 +31,8 @@ async function collect(browser, file) {
     const re = /\[\s*(['"])([^'"\]\n]{1,8})\1\s*,\s*(['"])((?:(?!\3)[^\n]){2,400})\3\s*\]/g;
     const raw = []; let m;
     while ((m = re.exec(src))) if (set.has(m[2])) raw.push([m[2], m[4].replace(/\\(['"])/g, '$1')]);
+    if (late) { const cnt = {}; raw.forEach(([w, t]) => cnt[w + '\u0000' + t] = (cnt[w + '\u0000' + t] || 0) + 1); re.lastIndex = 0; const lc = {};
+      while ((m = re.exec(late))) if (set.has(m[2])) { const t = m[4].replace(/\\(['"])/g, '$1'), k = m[2] + '\u0000' + t; lc[k] = (lc[k] || 0) + 1; if (lc[k] > (cnt[k] || 0)) raw.push([m[2], t]) } }
     // 章の扉の添え文 {door:1,cap:'…'}（改善提案 第5回 §1。v83 で追加）
     const reCap = /\{\s*door\s*:\s*\d+\s*,\s*cap\s*:\s*(['"])((?:(?!\1)[^\n]){2,200})\1/g;
     while ((m = reCap.exec(src))) raw.push(['扉の添え文', m[2]]);
