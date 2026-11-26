@@ -83,6 +83,7 @@ async function run({ browser, file, baseline }) {
   row('script:dupes', '同じセリフを3回以上使い回していない', dupes, 'dupes', 'なし');
   row('script:long', `長すぎるセリフがない（${LONG}字まで）`, long, 'long', 'なし');
   row('script:en', 'セリフが全部英語に訳せる（訳したあとに日本語が残らない）', enMiss, 'enMiss', `${lines.length}行、全部訳せる`);
+  items.push(...await require('./parts').run({ browser, file }));
   return { name: '台本', items, baselineOut: { script: { voice, never, dupes, long, enMiss } } };
 }
 module.exports = { run, collect, FIRST, FP, NEVER };
