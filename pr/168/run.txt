@@ -1,0 +1,5 @@
+branch: claude/project-thread-9xujuc
+sha: 3981cd1486ca2073708bb6dd9efed386bff1cf78
+run: https://github.com/satou-aaaaa/last-tell/actions/runs/45808199174
+full: false
+at: 2026-11-26T11:31:33Z
